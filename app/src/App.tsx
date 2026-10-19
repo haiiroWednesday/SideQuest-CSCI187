@@ -74,7 +74,7 @@ export default function App() {
             <h2 id="create-heading">Create an event</h2>
             <span>Step 1</span>
           </div>
-          <p className="panel-description">Add a campus event yourself. No preset events are included.</p>
+          <p className="panel-description">Add a campus event yourself.</p>
           <form className="event-form" onSubmit={handleCreate}>
             <label>
               <span>EVENT NAME</span>
@@ -181,7 +181,7 @@ export default function App() {
               ))}
             </ul>}
       </section>
-      <footer>M1 prototype · Events are saved only in this browser, not shared across devices. Same-day, full-attendance matching.</footer>
+      <footer>M1 prototype · Events are saved only in this browser, not shared across devices.</footer>
     </main>
   )
 }
