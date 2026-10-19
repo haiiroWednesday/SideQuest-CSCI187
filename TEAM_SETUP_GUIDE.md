@@ -72,9 +72,14 @@ Still inside `app`, type:
 npm run dev
 ```
 
-VS Code will show a **Local** address, often `http://localhost:5173/`. Open that link in your browser. You should see the SideQuest page with **FROM** and **UNTIL** times and sample events.
+VS Code will show a **Local** address, often `http://localhost:5173/`. Open that link in your browser. You should see **Create an event** and **When are you free?** forms. There are **no preset sample events**.
 
-Try setting **2:00 PM → 4:00 PM**. The Art Workshop fits; the later concert/choir events do not. This is a **walking skeleton**, with fictional sample events, not the finished website.
+1. Create an event with title **Art Workshop**, location **Arts Building**, today's date, and times **2:30 PM–3:30 PM**.
+2. In **When are you free?**, use the same date and **2:00 PM–4:00 PM**. The newly created Art Workshop appears in matching events.
+3. Change your free time to **3:45 PM–5:00 PM**. It should disappear from matching results.
+4. Refresh the webpage. The event remains under **Your created events** on this browser. You can also remove it.
+
+These events are saved only on your computer's browser (localStorage), **not synced across teammates' devices**. A future shared backend is required for that.
 
 **Leave this terminal running while the website is open.** To stop it, select the terminal and press **Control+C** (including on Mac).
 
@@ -96,7 +101,7 @@ The first `npm install` may create `app/package-lock.json`. Coordinate with the 
 ## How we'll work together in class
 
 1. Open the [React starter branch](https://github.com/haiiroWednesday/SideQuest-CSCI187/tree/react-starter).
-2. Agree that our first feature is **enter free time → show fully matching events**.
+2. Agree that our first feature is **create event → save locally → enter free time → show matching events**.
 3. Look at how our **View** (`app/src/App.tsx`), **Controller** (`app/src/controller/findEvents.ts`), and **Model** (`app/src/model/events.ts`) work together.
 4. Divide meaningful tasks. **Every teammate must write a distinct unit test and put their name in its comment.**
 5. For M1, also demonstrate a deliberately failing CI run (**red X**) on a **separate branch**, fix it, and confirm a passing run (**green check**). Never merge broken tests.

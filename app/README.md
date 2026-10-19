@@ -1,59 +1,52 @@
-# SideQuest — React starter (proposed M1 walking skeleton)
+# SideQuest — React M1 walking skeleton
 
-This is an **unofficial TypeScript + React alternative** to Professor Kandel's C++/Qt starter. The professor permits other languages, but the team must set up its own CI. This version is isolated inside `app/` until the group agrees on React.
+**Workflow:** create an event → save it in this browser → enter a free-time window → see matching events.
 
-## What this prototype does
+This is the team's **TypeScript + React** alternative to Professor Kandel's C++/Qt starter. It lives under `app/` on the `react-starter` branch; the original C++ template remains on `master`.
 
-A student selects when they are free. SideQuest returns fictional campus events that fit **entirely** inside that time period.
+## Run locally
 
-- **View**: `src/App.tsx` shows a web page with two time fields.
-- **Controller**: `src/controller/findEvents.ts` validates the request and asks for matches.
-- **Model**: `src/model/events.ts` contains mock events and the matching rule.
-- **Tests**: `tests/*.test.ts` using Vitest.
-- **CI**: the repository's `.github/workflows/react-ci.yml` runs tests and build after pushes.
-
-Not included yet: live SCU event data, logins, partial attendance, walking time, saved events, or overnight times. This is the FIRST working slice, not the full product.
-
-## Setup on Mac
-
-1. Install VS Code, Git, and **Node.js 24 LTS** from https://nodejs.org/en/download.
-2. Open the SideQuest repository in VS Code and go to **Terminal → New Terminal**.
-3. Type one command at a time, while located in the repository root:
+Install Node.js 24 LTS (Node 22.12+ also meets the project requirement), then inside `app/`:
 
 ```bash
-cd app
 npm install
 npm run dev
 ```
 
-4. Open the **Local** URL shown in the terminal (often http://localhost:5173/). Change the times and watch the matching event cards update.
-5. Press **Control+C** in the terminal to stop the site.
+If your computer encounters an npm `edgesOut` installation error, use `npm install --legacy-peer-deps`. Open the **Local** URL shown by Vite (often http://localhost:5173/).
 
-The first `npm install` creates `package-lock.json`; **commit it to GitHub** so installations are reproducible. Teammates should then use `npm ci` from `app/`.
+## Try the complete feature
 
-## Run tests and check the build
+1. On **Create an event**, enter **Art Workshop**, **Arts Building**, today's date, **14:30** to **15:30**; click **Create event**.
+2. Under **When are you free?**, choose the same date, **14:00** to **16:00**. The created event should appear in results.
+3. Change free time to **15:45** to **17:00**. The event should not match.
+4. Refresh: the event should remain under **Your created events** on this same browser. You can **Remove** it.
 
-From `app/`:
+**No fictional events are included by default.** Events are saved in your browser's `localStorage` only. Other browsers, computers and teammates **will not see each other's events** without a future shared backend/database. Full attendance on the same day is required; no walking-time or registration calculations.
+
+## MVC and source files
+
+- **View:** `src/App.tsx` — create/search forms, results and feedback.
+- **Controller:** `src/controller/findEvents.ts` — validates event creation and search requests; coordinates the Model.
+- **Model:** `src/model/events.ts` — event types, date/time matching, browser-storage helpers.
+- **Tests:** `tests/*.test.ts` — starter examples, not personally authored teammate tests.
+- **CI:** `../.github/workflows/react-ci.yml` — tests and builds automatically on GitHub.
+
+## Test and build
+
+Stop Vite with **Control+C**, then in `app/`:
 
 ```bash
 npm test
 npm run build
 ```
 
-GitHub → Actions → **SideQuest React CI** will repeat those checks whenever a change is pushed. If an old C++ workflow fails, review it separately; the original C++ files have deliberately been preserved.
+A `package-lock.json` should eventually be committed for reproducible `npm ci` installs. Coordinate its creation with teammates.
 
-## Before the Oct. 26 M1 deadline
+## M1 checklist
 
-- Team agrees on language, checks project architecture and documents user requirements.
-- Every teammate authors a **different, meaningful unit test** with their name commented in the file.
-- Confirm a full View → Controller → Model → View path works in the browser.
-- From a SEPARATE CI proof branch, deliberately fail a test, push, confirm red X on GitHub Actions; correct it, push and confirm green.
-- Update the TOP-LEVEL README with SideQuest requirements and project setup before final submission.
-- If repo stays private, add Professor Kandel's GitHub account `jade-kandel` as a collaborator.
-- Submit one team walking skeleton and every individual's reflection as assigned in Camino.
-
-## Notes
-
-This starter is intentionally added on `react-starter`, not merged into `master`. Avoid deleting original C++ files until the group confirms React. Never commit `node_modules`, API keys or `.env` secrets.
-
-This starter's dependencies still need to be installed and tested on a connected machine. ChatGPT and Cline may help you understand the commands, but they are optional to use the application.
+- Review and approve `../REQUIREMENTS.md`, `../SPECIFICATIONS.md` and the top-level README.
+- Each of the **four students** writes a separate meaningful unit test with their name in a comment. Existing AI-generated examples don't count as those individual tests.
+- Verify red-X CI on an isolated branch, then fix it and verify green; do not merge broken tests.
+- Share the repository with Professor Kandel (`jade-kandel`) if private.
+- Submit the group walking skeleton and individual reflections in Camino by October 26, beginning of class.
