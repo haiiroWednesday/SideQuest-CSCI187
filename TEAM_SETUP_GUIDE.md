@@ -98,6 +98,10 @@ npm run build
 
 The first `npm install` may create `app/package-lock.json`. Coordinate with the team before committing it, so only one consistent lockfile is added to the shared branch. Never commit `node_modules/`, `dist/`, passwords or API keys.
 
+## Eight ready-to-adapt unit test examples
+
+For eight concrete categories and copyable TypeScript test files, see [SideQuest M1 Unit-Test Starter Examples](docs/UNIT_TEST_STARTER_EXAMPLES.md). Each person must extend/adapt one different example and individually author their test; the guide itself does not count as completed student work.
+
 ## How we'll work together in class
 
 1. Open the [React starter branch](https://github.com/haiiroWednesday/SideQuest-CSCI187/tree/react-starter).
