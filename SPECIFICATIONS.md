@@ -58,7 +58,7 @@ These specifications describe the current TypeScript + React implementation. Eac
 
 **Collaborators:** Controller for search/creation decisions; View for browser-storage integration.
 
-## End-to-end demonstration / acceptance scenario
+## End-to-end acceptance check (informal walkthrough)
 
 1. Open SideQuest in a browser. Enter “Art Workshop,” “Arts Building,” a chosen date, and 14:30–15:30; select “Create event.”
 
