@@ -44,7 +44,7 @@ cd SideQuest-CSCI187/app
 - `-b react-starter` chooses our **React branch**, instead of the old C++ starter branch.
 - `cd SideQuest-CSCI187/app` enters the React app folder.
 
-**Already cloned the repository?** Don't clone it again. In VS Code, open your existing `SideQuest-CSCI187` folder, then run `git fetch`, `git switch react-starter` (or `git switch --track origin/react-starter` if needed), and `cd app`. If switching says you have uncommitted changes, stop and ask the team before proceeding.
+**Already cloned SideQuest, including the version used in class on October 19?** You **do not need to clone again**. The in-class copy may have been an earlier version. Open your existing repository in VS Code and run `git status` first. If there are uncommitted changes you need, stop and save/coordinate them before switching branches. Check your branch with `git branch --show-current`. If necessary, switch to `react-starter` (use `git switch --track origin/react-starter` if you do not yet have a local branch). Once on `react-starter`, run `git pull --ff-only origin react-starter`. Then enter `app/` if you are not already there and restart `npm run dev`. **Pulling is essential: changes on GitHub do not automatically arrive on classmates' laptops.**
 
 If cloning says `Repository not found`, check your GitHub account and that you accepted the collaborator invitation. The repo is private.
 
@@ -72,7 +72,7 @@ Still inside `app`, type:
 npm run dev
 ```
 
-VS Code will show a **Local** address, often `http://localhost:5173/`. Open that link in your browser. You should see **Create an event** and **When are you free?** forms. There are **no preset sample events**.
+VS Code will show a **Local** address, often `http://localhost:5173/`. Open that link in your browser. You should see **Create an event** and **When are you free?** forms. You should see the current maroon-and-gold SideQuest interface and the event-creation form.
 
 1. Create an event with title **Art Workshop**, location **Arts Building**, today's date, and times **2:30 PM–3:30 PM**.
 2. In **When are you free?**, use the same date and **2:00 PM–4:00 PM**. The newly created Art Workshop appears in matching events.
@@ -98,20 +98,23 @@ npm run build
 
 The first `npm install` may create `app/package-lock.json`. Coordinate with the team before committing it, so only one consistent lockfile is added to the shared branch. Never commit `node_modules/`, `dist/`, passwords or API keys.
 
-## Eight ready-to-adapt unit test examples
+## Eight example categories and individual unit tests
 
-For eight concrete categories and copyable TypeScript test files, see [SideQuest M1 Unit-Test Starter Examples](docs/UNIT_TEST_STARTER_EXAMPLES.md). Each person must extend/adapt one different example and individually author their test; the guide itself does not count as completed student work.
+For eight concrete categories, sample TypeScript code, specific exercises for designing an original test, and CI proof instructions, see the [SideQuest M1 Team Unit-Test Field Guide](docs/UNIT_TEST_STARTER_EXAMPLES.md). The examples are learning material; each teammate must design, explain, and author a meaningful **distinct** test.
 
-## How we'll work together in class
+## What remains after the October 19 in-class walkthrough
 
-1. Open the [React starter branch](https://github.com/haiiroWednesday/SideQuest-CSCI187/tree/react-starter).
-2. Agree that our first feature is **create event → save locally → enter free time → show matching events**.
-3. Look at how our **View** (`app/src/App.tsx`), **Controller** (`app/src/controller/findEvents.ts`), and **Model** (`app/src/model/events.ts`) work together.
-4. Divide meaningful tasks. **Every teammate must write a distinct unit test and put their name in its comment.**
-5. For M1, also demonstrate a deliberately failing CI run (**red X**) on a **separate branch**, fix it, and confirm a passing run (**green check**). Never merge broken tests.
-6. The team submits the walking skeleton by **Monday, October 26, beginning of class**; everyone also completes their individual reflection as required by the assignment. The individual setup deadline was Monday, October 19, beginning of class.
+Running an earlier SideQuest version during class is **not** the same as having the newest code. Every teammate should update their existing clone, then check the current **Create an event → save → search** flow and run `npm test` before contributing.
 
-**Before final submission:** update the top-level README with the project's real user requirements and setup steps. If the repo stays private, invite Professor Kandel (`jade-kandel`).
+1. Confirm everyone can access the private repository and is working on **`react-starter`**. The default `master` branch still contains the original C++ starter.
+2. Review the updated [requirements](REQUIREMENTS.md) and [specifications](SPECIFICATIONS.md), which correspond to the team's revised Google Docs.
+3. Each teammate chooses a different behavior, writes an individual unit test with their name in a comment, and demonstrates an intentional **red-X then green-check** React CI result on a separate branch. Use the [testing guide](docs/UNIT_TEST_STARTER_EXAMPLES.md).
+4. Once everyone's changes are ready, review the tests together and confirm `npm test`, `npm run build`, and the [React GitHub Actions check](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions) pass.
+5. **Team decision needed:** choose whether to merge the React project to the default `master` branch through a reviewed pull request before submission. Do not merge or remove C++ files unilaterally.
+6. **One group member** submits the repository in Camino by **Monday, October 26, beginning of class**, and adds all contributing group members. Make sure Professor Kandel (`jade-kandel`) can view the private repo.
+7. **Every student** separately submits an individual reflection Google Doc link in Camino, with anyone-with-link viewing enabled.
+
+The published [M1 assignment](https://docs.google.com/document/d/1xOsK1cmhXyVy8LsV7oHP_h9tr32ogga79DbsjQwo6yo/edit) and [walking skeleton slides](https://docs.google.com/presentation/d/1W_RSFcWNTL-NINOeRiGBVvvOtcZncaio5pE5-QtSRmw/edit) specify the submission deadline, but **do not schedule a separate live presentation**. The five-minute app walkthrough above is an internal self-check.
 
 ## Troubleshooting
 

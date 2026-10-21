@@ -8,7 +8,9 @@ For the SideQuest **TypeScript + React** walking skeleton. M1 due **Monday, Octo
 
 **Jump to:** [How to design a test](#how-to-design-a-test-of-your-own) · [All eight categories](#eight-test-categories-and-complete-code) · [Red X → green check](#demonstrate-a-red-x-then-a-green-check)
 
-**Useful links:** [Team setup guide](../TEAM_SETUP_GUIDE.md) · [Current starter tests](../app/tests/) · [Our React CI](../.github/workflows/react-ci.yml) · [GitHub Actions](../../actions)
+**Already ran SideQuest in class?** Update your existing clone with `git pull --ff-only origin react-starter` while on that branch before doing these tests. GitHub updates do not automatically change files on your laptop. See the [team setup guide](../TEAM_SETUP_GUIDE.md) if you are unsure which branch you are on.
+
+**Useful links:** [Team setup guide](../TEAM_SETUP_GUIDE.md) · [Current starter tests](../app/tests/) · [Our React CI](../.github/workflows/react-ci.yml) · [GitHub Actions](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions)
 
 ## What Professor Kandel wants
 
@@ -436,7 +438,7 @@ git commit -m "Demonstrate an intentionally failing test"
 git push -u origin ci-proof-yourname
 ```
 
-Open [GitHub Actions](../../actions), find **SideQuest React CI** for `ci-proof-yourname`, and verify the **red X** is due to the intentional test failure. Save that run's link.
+Open [GitHub Actions](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions), find **SideQuest React CI** for `ci-proof-yourname`, and verify the **red X** is due to the intentional test failure. Save that run's link.
 
 Now fix the assertion, save it, and run:
 

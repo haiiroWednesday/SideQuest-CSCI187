@@ -1,44 +1,89 @@
-# SideQuest — M1 Walking Skeleton Specifications
+# SideQuest — M1 Walking Skeleton: User Specifications
 
-These are M1-scoped technical specifications, to be reviewed against the team's CRC/system architecture.
+## Purpose and relationship to requirements
 
-## View — `app/src/App.tsx`
+These specifications describe the current TypeScript + React implementation. Each one supports the corresponding user requirement (R1–R4) in the User Requirements document. Scope: create an event → store it locally → enter free time → display matching events.
 
-- Display an event-creation form with title, location, date, start time and end time.
-- Display the events created in this browser, with an option to remove an event.
-- Collect the user's free date and time window and display matching event cards.
-- Display descriptive messages for invalid input, zero matches, and unavailable browser storage.
+## S1 — Event creation (supports R1)
 
-**Collaborates with:** Controller for creation/search; Model storage functions for browser persistence.
+- The View provides inputs for title, location, date, start time, and end time, plus a “Create event” button.
 
-## Controller — `app/src/controller/findEvents.ts`
+- The Controller’s createEvent(events, draft, id) trims title/location, requires nonempty values and a valid date, requires same-day start < end, and rejects a duplicate or empty ID.
 
-- `createEvent(events, draft, id)`: validate nonempty title/location, valid calendar date, chronological same-day times, and unique ID; return a new event list or an error.
-- `findEvents(events, date, start, end)`: validate the search interval, ask Model's matching rule to filter created events, and return matches sorted by start time.
-- Pass data to the View; do not render user-interface elements or access browser storage.
+- If valid, the Controller returns a new event array; the View updates its state and displays confirmation. Invalid submissions return an error and do not add an event.
 
-**Collaborates with:** View (receives requests and returns results), Model (date/time and matching rules).
+## S2 — Event list, removal, and persistence (supports R2)
 
-## Model — `app/src/model/events.ts`
+- The View renders “Your created events,” showing each event’s title, location, date, start, and end. Clicking “Remove” excludes that event from View state.
 
-- Define a `CampusEvent` with ID, title, location, date, start and end.
-- `toMinutes` validates and converts `HH:MM` strings; `isValidDate` checks real calendar dates.
-- `fitsFully` only returns true if the event and search dates agree and its full duration fits within the interval.
-- `readStoredEvents` and `saveStoredEvents` load/persist events through browser localStorage; invalid/corrupt data fails safely.
+- The Model provides readStoredEvents and saveStoredEvents helpers. The View loads events from localStorage on startup and saves the current list when it changes.
 
-**Collaborates with:** Controller for matching/validation, View for persistence.
+- Local storage is per browser, not a shared database. When writing to storage fails, the View warns that events may not survive a refresh.
 
-## End-to-end acceptance example
+## S3 — Availability search (supports R3)
 
-1. Open the app: there are **no sample events**.
-2. Create "Art Workshop" on today's date, 14:30–15:30, at "Arts Building".
-3. Set free time to the same date, 14:00–16:00. Art Workshop appears.
-4. Set free time to 15:45–17:00. The workshop disappears.
-5. Refresh the browser. The created event is still listed and searchable **in that browser**.
+- The View collects a free date, start time, and end time, and calls findEvents(events, date, start, end).
 
-## Testing / CI
+- The Controller rejects a missing/invalid date and invalid or reversed free-time intervals. Otherwise it filters the current event array through the Model’s fitsFully rule, sorts matches by start time, and returns the results.
 
-- `npm test`: automated Vitest unit tests for creation, validation, matching and storage.
-- `npm run build`: TypeScript check and production build.
-- `.github/workflows/react-ci.yml`: runs checks on GitHub after pushes and pull requests.
-- For M1, each student must author a distinct, named unit test and demonstrate a deliberate CI failure followed by a successful run on a separate branch. Starter tests are not individual submissions.
+- fitsFully accepts only an event with the same valid date, an event start at or after the free-time start, and an event end at or before the free-time end. Both windows must have start < end.
+
+- The View shows each matching event’s details and the number of results. No prewritten sample event list is required.
+
+## S4 — Feedback and edge cases (supports R4)
+
+- HTML date/time and required-field controls help users provide expected input types, but validation is also enforced by Controller and Model functions.
+
+- The View displays error messages from createEvent and findEvents, a successful creation message, and a clear empty state when no created events match.
+
+- The Model validates HH:MM with toMinutes, real YYYY-MM-DD calendar dates with isValidDate, and handles corrupted or unavailable browser-storage reads safely.
+
+## CRC — Classes/components, responsibilities, collaborators
+
+### VIEW — app/src/App.tsx
+
+**Responsibilities:** display the event-creation form and availability form; collect input; show errors, confirmation, event cards and saved-event list; maintain React state; load/save browser-local events; allow removal.
+
+**Collaborators:** Controller functions createEvent and findEvents; Model’s readStoredEvents and saveStoredEvents helpers.
+
+### CONTROLLER — app/src/controller/findEvents.ts
+
+**Responsibilities:** validate event-creation and search requests; coordinate Model checks; return { events, error } or { matches, error }; sort valid search matches; keep browser rendering and persistence out of the Controller.
+
+**Collaborators:** View (receives requests and displays results); Model (date/time validation, matching rule, CampusEvent type).
+
+### MODEL — app/src/model/events.ts
+
+**Responsibilities:** define CampusEvent and EventDraft; convert and validate dates/times; determine whether an event fits via fitsFully; serialize and restore locally stored events.
+
+**Collaborators:** Controller for search/creation decisions; View for browser-storage integration.
+
+## End-to-end demonstration / acceptance scenario
+
+1. Open SideQuest in a browser. Enter “Art Workshop,” “Arts Building,” a chosen date, and 14:30–15:30; select “Create event.”
+
+2. Confirm the event appears in “Your created events.” Choose that same date and free time 14:00–16:00. Confirm “Art Workshop” appears in “Made for your window.”
+
+3. Change free time to 15:45–17:00, or change to a different date. Confirm “Art Workshop” is not listed as a match.
+
+4. Refresh the same browser and confirm the event is still present if localStorage is available. Select “Remove” and verify the event disappears.
+
+5. Try an event ending before it starts and a reversed search window. Confirm each is rejected with explanatory feedback.
+
+## Verification and M1 workflow
+
+- Unit tests live under app/tests/*.test.ts and run with npm test (Vitest). Type checking and production build run with npm run build.
+
+- .github/workflows/react-ci.yml runs install, unit tests, and build on GitHub pushes and pull requests. This is separate from the professor’s original C++ workflow.
+
+- Each teammate must individually author a distinct, meaningful test with their name in a comment and demonstrate intentional red-X then corrected green-check CI results on a separate branch. Existing AI-generated starter tests do not represent individual contributions.
+
+- Future-MVP work outside M1: live SCU events, shared backend/accounts, travel time, registration/eligibility, and partial or overnight attendance.
+
+## Document status
+
+Revised to reflect the current code on react-starter. Team should review responsibilities and confirm agreement before final M1 submission.
+
+---
+
+**Related document:** [SideQuest User Requirements](REQUIREMENTS.md) · [Google Docs source](https://docs.google.com/document/d/1CUcQPC5-_3Lziyf88H2oCPYRIR1wrgaSF1K15VK5_Gs/edit)
