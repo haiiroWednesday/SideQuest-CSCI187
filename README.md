@@ -57,7 +57,7 @@ npm run build
 - **View:** [`app/src/App.tsx`](app/src/App.tsx) — forms, results, saved-event list, feedback.
 - **Controller:** [`app/src/controller/findEvents.ts`](app/src/controller/findEvents.ts) — creation/search validation and coordination.
 - **Model:** [`app/src/model/events.ts`](app/src/model/events.ts) — event data, date/time matching, local storage.
-- **Unit tests:** [`app/tests/`](app/tests/) — AI-assisted starter tests; each student must contribute a separate, meaningful individual test.
+- **Unit tests:** [`app/tests/`](app/tests/) — shared starter tests plus each student's distinct, meaningful test. Professor Kandel permits AI assistance with test code, but students must choose the behavior and verify assertions.
 - **React CI:** [`.github/workflows/react-ci.yml`](.github/workflows/react-ci.yml) — GitHub Actions runs tests and the build on pushes and pull requests.
 - **Individual testing guide:** [Eight test examples and CI red/green instructions](docs/UNIT_TEST_STARTER_EXAMPLES.md).
 

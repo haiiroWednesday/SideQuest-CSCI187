@@ -22,11 +22,11 @@ Each teammate must:
 4. On a **separate branch**, deliberately make CI fail (red X), fix the issue, and confirm it passes (green check).
 5. Coordinate with the team so everyone tests different behaviors.
 
-Our test examples are **AI-assisted learning materials**, not four students' finished contributions. Create your own scenario and assertions before claiming authorship.
+**What the lecture actually permits:** On slide 10 of Professor Kandel's *Unit Testing, CI, Git Teamwork* lecture, she explicitly says **AI may write unit-test code**. The student's responsibilities are **(1) deciding what to test, and (2) checking that each test asserts what the student intended**. You may use an AI-assisted starter template or ask AI to generate TypeScript. What makes the submission yours is choosing a distinct, meaningful testing question, verifying the test's inputs and expected results, understanding its behavior, and identifying your work in the test file. Merely copying the shared starter unchanged and adding your name does not demonstrate those decisions.
 
 ## Unit test versus CI: the big picture
 
-- A **unit test** is a little question written in TypeScript: “If this happens, does the function give the correct result?”
+- A **unit test** checks a **real function** in isolation: “For this input, does it return the expected output or reject invalid input?” (Lecture slides 3, 6–7, and 15.)
 - **CI** (Continuous Integration) is GitHub's automatic checking system. GitHub runs all the tests whenever your code is pushed or a pull request is opened/updated.
 - **Vitest** runs the test files under `app/tests/`.
 - The file `.github/workflows/react-ci.yml` tells GitHub to install the packages, run `npm test`, and run `npm run build`.
@@ -49,7 +49,7 @@ flowchart TD
 ### What does a test actually look like?
 
 ```ts
-// Author: [Your Name] — put your name here only on your own finished test.
+// Test owner: [Your Name] — after choosing and verifying your test case.
 import { expect, it } from 'vitest'
 import { isValidDate } from '../src/model/events'
 
@@ -60,7 +60,7 @@ it('rejects an impossible calendar date', () => {
 
 | Part | Meaning |
 | --- | --- |
-| `// Author: ...` | A **comment** saying who actually wrote the test |
+| `// Test owner: ...` | A **comment** identifying who selected, checked, and contributed this test; disclose AI assistance if your course requires it |
 | `it('...', ...)` | The **test name**, describing the checked behavior |
 | `isValidDate('2026-04-31')` | A call to a **real function** in SideQuest |
 | `.toBe(false)` | What you **expect** the correct result to be |
@@ -76,7 +76,7 @@ flowchart TD
     A["1. Read the starter example"] --> B["2. Identify the rule it checks"]
     B --> C["3. Think of a different mistake the program could make"]
     C --> D["4. Choose your own input and expected answer"]
-    D --> E["5. Write assertion(s) that detect that mistake"]
+    D --> E["5. Write or generate assertions, then inspect them"]
     E --> F["6. Run the test and explain the result"]
 ```
 
@@ -88,7 +88,33 @@ flowchart TD
 | Search mixed eligible, invalid-date, and out-of-order events | Add your name to the unchanged starter code |
 | Handle a corrupted JSON value in saved events | Reformat spaces or comments |
 
-**The key is the behavior, not the number of edits.** One thoughtful new case with a justified expected outcome beats many arbitrary changes.
+**The key is the behavior, not the number of edits or whether AI generated the syntax.** One thoughtful new case with a justified expected outcome beats many arbitrary changes.
+
+### Warning from the lecture: don't test a fact you already know
+
+Slides 11–15 show that an AI-generated test may pass trivially while failing to check the actual rule. For example, testing that a manually chosen start time comes before an end time does **not** prove SideQuest *rejects* an invalid event. Your test must call the real function and verify its response.
+
+**Weak (doesn't exercise SideQuest):**
+
+```ts
+expect(14 < 16).toBe(true) // Of course it passes, regardless of SideQuest!
+```
+
+**Meaningful (exercises the real Controller):**
+
+```ts
+import { createEvent } from '../src/controller/findEvents'
+
+const result = createEvent([], {
+  title: 'Study Group', location: 'Library',
+  date: '2026-10-23', start: '17:00', end: '16:00',
+}, 'bad-times')
+
+expect(result.error).not.toBeNull()
+expect(result.events).toEqual([])
+```
+
+**A real test may fail at first.** The lecture's examples show that a failure can reveal a rule that hasn't been implemented yet. Investigate and fix the implementation when appropriate; never weaken the expected result merely to force a green check. This is different from the separately required, *intentional* red-X/green-check CI demonstration.
 
 ### Worked example: the one-minute boundary
 
@@ -149,7 +175,7 @@ There are **eight options for four teammates**. Agree on who is taking which cat
 Suggested file: `app/tests/student-create-event.test.ts`
 
 ```ts
-// Practice template — Author: [Your Name] (after you write your own test).
+// Practice template — Test owner: [Your Name] (after choosing/verifying your case).
 import { expect, it } from 'vitest'
 import { createEvent } from '../src/controller/findEvents'
 
@@ -176,7 +202,7 @@ it('creates an event and trims accidental spaces', () => {
 Suggested file: `app/tests/student-duplicate-id.test.ts`
 
 ```ts
-// Practice template — Author: [Your Name] (after you write your own test).
+// Practice template — Test owner: [Your Name] (after choosing/verifying your case).
 import { expect, it } from 'vitest'
 import { createEvent } from '../src/controller/findEvents'
 
@@ -204,7 +230,7 @@ it('does not create another event using an existing ID', () => {
 Suggested file: `app/tests/student-date-validation.test.ts`
 
 ```ts
-// Practice template — Author: [Your Name] (after you write your own test).
+// Practice template — Test owner: [Your Name] (after choosing/verifying your case).
 import { expect, it } from 'vitest'
 import { isValidDate } from '../src/model/events'
 
@@ -222,7 +248,7 @@ it('rejects a non-existent calendar date', () => {
 Suggested file: `app/tests/student-clock-times.test.ts`
 
 ```ts
-// Practice template — Author: [Your Name] (after you write your own test).
+// Practice template — Test owner: [Your Name] (after choosing/verifying your case).
 import { expect, it } from 'vitest'
 import { toMinutes } from '../src/model/events'
 
@@ -241,7 +267,7 @@ it('converts valid boundary clock times and rejects 24:00', () => {
 Suggested file: `app/tests/student-start-boundary.test.ts`
 
 ```ts
-// Practice template — Author: [Your Name] (after you write your own test).
+// Practice template — Test owner: [Your Name] (after choosing/verifying your case).
 import { expect, it } from 'vitest'
 import { fitsFully, type CampusEvent } from '../src/model/events'
 
@@ -267,7 +293,7 @@ it('rejects an event that starts one minute before free time', () => {
 Suggested file: `app/tests/student-sorting.test.ts`
 
 ```ts
-// Practice template — Author: [Your Name] (after you write your own test).
+// Practice template — Test owner: [Your Name] (after choosing/verifying your case).
 import { expect, it } from 'vitest'
 import { findEvents } from '../src/controller/findEvents'
 import type { CampusEvent } from '../src/model/events'
@@ -294,7 +320,7 @@ it('lists qualifying events from earliest to latest', () => {
 Suggested file: `app/tests/student-save-events.test.ts`
 
 ```ts
-// Practice template — Author: [Your Name] (after you write your own test).
+// Practice template — Test owner: [Your Name] (after choosing/verifying your case).
 import { expect, it } from 'vitest'
 import { readStoredEvents, saveStoredEvents, type CampusEvent } from '../src/model/events'
 
@@ -323,7 +349,7 @@ it('restores both saved events in the original order', () => {
 Suggested file: `app/tests/student-storage-errors.test.ts`
 
 ```ts
-// Practice template — Author: [Your Name] (after you write your own test).
+// Practice template — Test owner: [Your Name] (after choosing/verifying your case).
 import { expect, it } from 'vitest'
 import { readStoredEvents, saveStoredEvents } from '../src/model/events'
 
@@ -350,7 +376,7 @@ it('does not crash when browser storage is blocked', () => {
 
 **Step 1.** In VS Code, open the `SideQuest-CSCI187` folder and find the `app/tests/` folder.
 
-**Step 2.** Create a NEW file ending in `.test.ts` (for example, `yourname-calendar-dates.test.ts`). Paste a starter example and **write the new scenario you designed**. Give the file an accurate author comment when you've completed your own work.
+**Step 2.** Create a NEW file ending in `.test.ts` (for example, `yourname-calendar-dates.test.ts`). Paste a starter example or ask AI to draft the TypeScript for **your chosen testing scenario**. Inspect every assertion against the actual specification and verify it exercises the correct function. Add your name as the responsible student in a comment.
 
 **Step 3.** In the terminal, enter the `app/` folder. If `npm run dev` is occupying the terminal, press **Control+C** first. Then run:
 
@@ -452,11 +478,15 @@ Wait for the **green check** and save the second run link. Your team can review 
 
 > **Terminal location matters for file paths:** These Git commands assume you're in the repository root. If you're still in `app/`, use paths like `git add tests/yourname-calendar-dates.test.ts` instead.
 
+### Team integration: pull requests and code review
+
+Professor Kandel's lecture (slides 26–28 and 40–42) distinguishes **push** (upload your branch) from a **pull request** (ask your teammates to review and merge). After your **working** individual test passes, open a pull request targeting **`react-starter`**; ask a teammate to verify the scenario, assertions, and CI. Merge only after approval and passing checks. Pull often, make small commits, and avoid committing generated `node_modules/` or build output.
+
 ## Final M1 test checklist
 
 - [ ] My behavior is meaningfully distinct from my teammates' tests.
 - [ ] I can finish: “My test catches a bug where SideQuest ______.”
-- [ ] I personally designed the test's scenario and correct expectations.
+- [ ] I chose the testing scenario and independently verified the expected results, including any AI-generated code.
 - [ ] My test file is inside `app/tests/` and ends in `.test.ts`.
 - [ ] The test includes my name in a comment identifying my work.
 - [ ] `npm test` passes.
@@ -465,6 +495,6 @@ Wait for the **green check** and save the second run link. Your team can review 
 - [ ] I saved the **red X** and **green check** GitHub Actions run links.
 - [ ] The team reviewed the passing tests and confirmed they all work together.
 
-**A good test doesn't have to be long; it has to check a rule that matters, with an expected result you understand.**
+**A good test doesn't have to be long or hand-typed; it has to exercise the real function and assert the rule you decided to check.** Lecture source: *12_Git_Unit_Testing_CI.pdf*, especially slides 3, 6–15, 17, and 26–42.
 
 Professor's references: [M1 assignment](https://docs.google.com/document/d/1xOsK1cmhXyVy8LsV7oHP_h9tr32ogga79DbsjQwo6yo/edit) · [Unit Testing and CI instructions](https://docs.google.com/document/d/15lPHkDDmZ3ZGUDSTBmNY9pQHpd8339qXaa1iSF7pbyY/edit)

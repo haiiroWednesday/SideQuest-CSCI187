@@ -17,7 +17,7 @@ This is our **React starter**, on the **`react-starter` branch**. Our original C
 - **Node.js:** runs the tools used to build and preview the React website.
 - **npm:** downloads the project's required packages.
 - **React + TypeScript:** our web app technology.
-- **Cline/Claude:** optional AI assistance. Not required for setup or tests.
+- **Cline/Claude:** optional AI assistance, including generating test code when you choose the scenario and verify the assertions. Not needed to run tests.
 
 ## Step 1: Check that Node, npm and Git are installed
 
@@ -100,7 +100,7 @@ The first `npm install` may create `app/package-lock.json`. Coordinate with the 
 
 ## Eight example categories and individual unit tests
 
-For eight concrete categories, sample TypeScript code, specific exercises for designing an original test, and CI proof instructions, see the [SideQuest M1 Team Unit-Test Field Guide](docs/UNIT_TEST_STARTER_EXAMPLES.md). The examples are learning material; each teammate must design, explain, and author a meaningful **distinct** test.
+For eight categories, sample TypeScript code, precise scenario challenges, and red/green CI instructions, see the [SideQuest M1 Team Unit-Test Field Guide](docs/UNIT_TEST_STARTER_EXAMPLES.md). **Professor Kandel explicitly permits AI to write unit-test code** (lecture slide 10); each teammate must still decide which distinct behavior to test, verify the assertions and expected answers, explain the test, and add their name in a code comment.
 
 ## What remains after the October 19 in-class walkthrough
 

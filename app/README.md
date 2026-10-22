@@ -57,7 +57,7 @@ A `package-lock.json` should eventually be committed for reproducible `npm ci` i
 ## M1 checklist
 
 - Review the GitHub requirements/specifications (synchronized with the revised Google Docs) and agree to the final M1 scope.
-- Each of the **four students** writes a separate meaningful unit test with their name in a comment. Existing AI-generated examples don't count as those individual tests.
+- Each of the **four students** contributes a distinct, meaningful unit test and includes their name in a comment. Professor Kandel permits AI to generate test code, but the student chooses what to test, checks every assertion, and can explain the results. Shared examples are references, not automatically four individual submissions.
 - Verify red-X CI on an isolated branch, then fix it and verify green; do not merge broken tests.
 - Share the repository with Professor Kandel (`jade-kandel`) if private.
 - Confirm which branch the team is submitting. The current React project is on `react-starter`; the default `master` branch still contains the C++ starter. Share the direct branch link until a team-approved merge.
