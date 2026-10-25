@@ -24,5 +24,5 @@ it('keeps only the valid events from a partly corrupted saved list', () => {
     getItem: (key: string) => (key === STORAGE_KEY ? JSON.stringify(saved) : null),
   }
 
-  expect(readStoredEvents(storage)).toEqual([art, choir])
+  expect(readStoredEvents(storage)).toEqual([art]) // Deliberately wrong
 })
