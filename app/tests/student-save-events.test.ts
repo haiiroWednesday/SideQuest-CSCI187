@@ -20,7 +20,7 @@ it('keeps removed events removed after each save, down to an empty list', () => 
 
   // Remove the middle event, the same way App.tsx's removeEvent filters by id.
   expect(saveStoredEvents(storage, [art, yoga, choir].filter(event => event.id !== 'yoga'))).toBe(true)
-  expect(readStoredEvents(storage)).toEqual([art, yoga, choir]) // Deliberately wrong
+  expect(readStoredEvents(storage)).toEqual([art, choir])
   expect(memory.get(STORAGE_KEY)).not.toContain('yoga')
 
   // Remove everything that is left.
