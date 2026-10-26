@@ -1,4 +1,4 @@
-// Test owner: haiiroWednesday (AI-assisted draft, scenarios chosen and checked for M1).
+// Test owner: Cynthia (AI-assisted draft, scenarios chosen and checked for M1).
 // Category #5 — Boundary times: an event must fit ENTIRELY within the free window.
 import { expect, it } from 'vitest'
 import { fitsFully, type CampusEvent } from '../src/model/events'
