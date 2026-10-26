@@ -6,7 +6,7 @@ import { expect, it } from 'vitest'
 import { toMinutes } from '../src/model/events'
 
 it('validates clock-time formatting', () => {
-    expect(toMinutes('09:05')).toBe(999)
+    expect(toMinutes('09:05')).toBe(545)
     expect(toMinutes('09:60')).toBeNull()
     expect(toMinutes('9:05')).toBeNull()
     expect(toMinutes('00:00')).toBe(0)
