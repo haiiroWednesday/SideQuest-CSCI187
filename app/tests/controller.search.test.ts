@@ -1,4 +1,4 @@
-// Starter examples written with AI assistance. NOT an individual teammate's M1 submission.
+// Shared controller regression tests (AI-assisted starter examples).
 import { describe, expect, it } from 'vitest'
 import { createEvent, findEvents } from '../src/controller/findEvents'
 import type { EventDraft } from '../src/model/events'
