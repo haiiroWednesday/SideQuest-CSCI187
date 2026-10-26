@@ -18,8 +18,7 @@ it('accepts an exact end boundary but rejects an event one minute outside free t
 
   // Ending at 5:01 PM is outside our available time.
   const lateEvent = { ...event, end: '17:01' }
-  // INTENTIONAL FAILURE for M1 red-X CI demonstration; repair in next commit.
-  expect(fitsFully(lateEvent, '2026-10-26', '14:00', '17:00')).toBe(true)
+  expect(fitsFully(lateEvent, '2026-10-26', '14:00', '17:00')).toBe(false)
 
   // Starting at 1:59 PM is also outside our available time.
   const earlyEvent = { ...event, start: '13:59' }
