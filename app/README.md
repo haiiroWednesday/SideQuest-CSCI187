@@ -2,7 +2,7 @@
 
 **Workflow:** create an event → save it in this browser → enter a free-time window → see matching events.
 
-This is the team's **TypeScript + React** alternative to Professor Kandel's C++/Qt starter. It lives under `app/` on the `react-starter` branch; the original C++ template remains on `master`.
+This is the team's **TypeScript + React** alternative to Professor Kandel's C++/Qt starter. It lives under `app/` on the default `master` branch, alongside the merged individual tests. The original C++ starter files remain in the repository as legacy material.
 
 ## Run locally
 
@@ -17,7 +17,7 @@ If your computer encounters an npm `edgesOut` installation error, use `npm insta
 
 ## Update an existing in-class copy
 
-If you ran an earlier version during the October 19 class, **do not clone again**. Check `git status`, confirm the `react-starter` branch, then pull its updates with `git pull --ff-only origin react-starter`. If Git reports local changes or a conflict, ask the team instead of overwriting files. Restart `npm run dev` and refresh the browser. GitHub commits do not automatically update your computer. For branch-switching instructions, see the [team setup guide](../TEAM_SETUP_GUIDE.md).
+If you ran an earlier version during the October 19 class, **do not clone again**. Check `git status` first; if you have uncommitted work, stop and protect it. Switch to `master` with `git switch master`, then run `git pull --ff-only origin master`. If Git reports local changes or a conflict, ask the team instead of overwriting files. Restart `npm run dev` and refresh the browser. GitHub commits do not automatically update your computer. For branch-switching instructions, see the [team setup guide](../TEAM_SETUP_GUIDE.md).
 
 ## Try the complete feature
 
@@ -33,7 +33,7 @@ Events are entered through the creation form, rather than loaded from a preset e
 - **View:** `src/App.tsx` — create/search forms, results and feedback.
 - **Controller:** `src/controller/findEvents.ts` — validates event creation and search requests; coordinates the Model.
 - **Model:** `src/model/events.ts` — event types, date/time matching, browser-storage helpers.
-- **Tests:** `tests/*.test.ts` — starter examples, not personally authored teammate tests.
+- **Tests:** `tests/*.test.ts` — the original starter examples plus merged, named individual M1 tests from teammates.
 - **CI:** `../.github/workflows/react-ci.yml` — tests and builds automatically on GitHub.
 
 ## Test and build
@@ -60,6 +60,6 @@ A `package-lock.json` should eventually be committed for reproducible `npm ci` i
 - Each of the **four students** contributes a distinct, meaningful unit test and includes their name in a comment. Professor Kandel permits AI to generate test code, but the student chooses what to test, checks every assertion, and can explain the results. Shared examples are references, not automatically four individual submissions.
 - Verify red-X CI on an isolated branch, then fix it and verify green; do not merge broken tests.
 - Share the repository with Professor Kandel (`jade-kandel`) if private.
-- Confirm which branch the team is submitting. The current React project is on `react-starter`; the default `master` branch still contains the C++ starter. Share the direct branch link until a team-approved merge.
+- Submit the default `master` branch: it now contains the React implementation and reviewed individual tests. The old C++ template remains as separate legacy files.
 - One person submits the group walking skeleton in Camino and adds the participating group members. Every student separately submits an individual reflection Google Doc (anyone-with-link view) by October 26, beginning of class.
 - An informal app walkthrough is useful for verifying the feature; no separate live demo time is listed in the published M1 assignment/slides.
