@@ -2,7 +2,7 @@
 
 **For everyone on the CSCI 187 SideQuest team.** Follow this once on your own laptop. You do **not** need to install C++, Qt, CMake, Docker, Cline, or Claude to run the website.
 
-This is our **React starter**, on the **`react-starter` branch**. Our original C++ teacher template is still on `master`, so the branch matters.
+The official SideQuest React walking skeleton and team tests now live on **`master`**. The original C++ template remains in the repository as legacy files; the running React app is in `app/`.
 
 ## Before you begin
 
@@ -36,15 +36,15 @@ You should see three version numbers. If any command says `command not found` or
 Pick a location on your computer to save the project. For example, open a terminal in your Documents folder. Type:
 
 ```bash
-git clone -b react-starter https://github.com/haiiroWednesday/SideQuest-CSCI187.git
+git clone https://github.com/haiiroWednesday/SideQuest-CSCI187.git
 cd SideQuest-CSCI187/app
 ```
 
 - `git clone` makes a copy of the shared project on your laptop.
-- `-b react-starter` chooses our **React branch**, instead of the old C++ starter branch.
+- Cloning without `-b` checks out our default **`master` branch**, which now contains the React app and tests.
 - `cd SideQuest-CSCI187/app` enters the React app folder.
 
-**Already cloned SideQuest, including the version used in class on October 19?** You **do not need to clone again**. The in-class copy may have been an earlier version. Open your existing repository in VS Code and run `git status` first. If there are uncommitted changes you need, stop and save/coordinate them before switching branches. Check your branch with `git branch --show-current`. If necessary, switch to `react-starter` (use `git switch --track origin/react-starter` if you do not yet have a local branch). Once on `react-starter`, run `git pull --ff-only origin react-starter`. Then enter `app/` if you are not already there and restart `npm run dev`. **Pulling is essential: changes on GitHub do not automatically arrive on classmates' laptops.**
+**Already cloned SideQuest, including the October 19 version?** You **do not need to clone again**. In VS Code run `git status` first. If you have uncommitted work, stop and save/coordinate it before switching branches. Check the current branch with `git branch --show-current`, then run `git switch master` and `git pull --ff-only origin master`. If `master` is not available locally, try `git fetch origin` followed by `git switch --track origin/master`. Enter `app/`, restart `npm run dev`, and refresh your browser. **Pulling is essential: GitHub updates do not automatically change files on classmates' laptops.**
 
 If cloning says `Repository not found`, check your GitHub account and that you accepted the collaborator invitation. The repo is private.
 
@@ -106,11 +106,11 @@ For eight categories, sample TypeScript code, precise scenario challenges, and r
 
 Running an earlier SideQuest version during class is **not** the same as having the newest code. Every teammate should update their existing clone, then check the current **Create an event → save → search** flow and run `npm test` before contributing.
 
-1. Confirm everyone can access the private repository and is working on **`react-starter`**. The default `master` branch still contains the original C++ starter.
+1. Confirm everyone can access the private repository and has updated to **`master`**, which now contains the React walking skeleton and merged tests.
 2. Review the updated [requirements](REQUIREMENTS.md) and [specifications](SPECIFICATIONS.md), which correspond to the team's revised Google Docs.
 3. Each teammate chooses a different behavior, writes an individual unit test with their name in a comment, and demonstrates an intentional **red-X then green-check** React CI result on a separate branch. Use the [testing guide](docs/UNIT_TEST_STARTER_EXAMPLES.md).
 4. Once everyone's changes are ready, review the tests together and confirm `npm test`, `npm run build`, and the [React GitHub Actions check](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions) pass.
-5. **Team decision needed:** choose whether to merge the React project to the default `master` branch through a reviewed pull request before submission. Do not merge or remove C++ files unilaterally.
+5. The React walking skeleton and reviewed tests have been merged into default `master`. Run all tests and the build again on the integrated code before submission. Keep isolated red-X demonstration branches unmerged.
 6. **One group member** submits the repository in Camino by **Monday, October 26, beginning of class**, and adds all contributing group members. Make sure Professor Kandel (`jade-kandel`) can view the private repo.
 7. **Every student** separately submits an individual reflection Google Doc link in Camino, with anyone-with-link viewing enabled.
 
@@ -124,7 +124,7 @@ The published [M1 assignment](https://docs.google.com/document/d/1xOsK1cmhXyVy8L
 - **`npm install` fails:** Try the `--legacy-peer-deps` fallback above. Share the full error with the group.
 - **The browser doesn't open:** Use the exact **Local** link shown by `npm run dev`; the port might not be 5173.
 - **`Missing script: dev`:** You're probably not inside `app/`.
-- **Old C++ files appear:** You may be looking at `master` rather than `react-starter`.
+- **Old C++ files appear:** Legacy C++ template files are still in the repo; SideQuest's active React application is under `app/` on `master`.
 - **Git says you have local changes and can't switch branch:** Stop. Don't force the switch or delete your files; ask the team to help preserve your work.
 
 **Optional AI:** Use ChatGPT/Claude/Cline for explanations or debugging, but Cline is not needed to run SideQuest and requires separate API configuration. Never share or commit API keys.
