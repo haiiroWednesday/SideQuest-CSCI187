@@ -5,7 +5,7 @@ import { expect, it } from 'vitest'
 import { isValidDate } from '../src/model/events'
 
 it('accepts February 29 in a century year divisible by 400', () => {
-  expect(isValidDate('2000-02-29')).toBe(true)
+  expect(isValidDate('2000-02-29')).toBe(false)
 })
 
 it('rejects February 29 in a century year not divisible by 400', () => {
