@@ -8,7 +8,7 @@ For the SideQuest **TypeScript + React** walking skeleton. M1 due **Monday, Octo
 
 **Jump to:** [How to design a test](#how-to-design-a-test-of-your-own) · [All eight categories](#eight-test-categories-and-complete-code) · [Red X → green check](#demonstrate-a-red-x-then-a-green-check)
 
-**Already ran SideQuest in class?** Update your existing clone with `git pull --ff-only origin react-starter` while on that branch before doing these tests. GitHub updates do not automatically change files on your laptop. See the [team setup guide](../TEAM_SETUP_GUIDE.md) if you are unsure which branch you are on.
+**Already ran SideQuest in class?** Check `git status` first and protect uncommitted work. Then switch to `master` and run `git pull --ff-only origin master` before doing these tests. GitHub updates do not automatically change files on your laptop. See the [team setup guide](../TEAM_SETUP_GUIDE.md) if you are unsure which branch you are on.
 
 **Useful links:** [Team setup guide](../TEAM_SETUP_GUIDE.md) · [Current starter tests](../app/tests/) · [Our React CI](../.github/workflows/react-ci.yml) · [GitHub Actions](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions)
 
@@ -435,8 +435,8 @@ Run these from the **repository root** (`SideQuest-CSCI187/`). Start with `git s
 **Create your own normal test branch:**
 
 ```bash
-git switch react-starter
-git pull origin react-starter
+git switch master
+git pull --ff-only origin master
 git switch -c tests-yourname
 ```
 
@@ -480,7 +480,7 @@ Wait for the **green check** and save the second run link. Your team can review 
 
 ### Team integration: pull requests and code review
 
-Professor Kandel's lecture (slides 26–28 and 40–42) distinguishes **push** (upload your branch) from a **pull request** (ask your teammates to review and merge). After your **working** individual test passes, open a pull request targeting **`react-starter`**; ask a teammate to verify the scenario, assertions, and CI. Merge only after approval and passing checks. Pull often, make small commits, and avoid committing generated `node_modules/` or build output.
+Professor Kandel's lecture (slides 26–28 and 40–42) distinguishes **push** (upload your branch) from a **pull request** (ask your teammates to review and merge). After your **working** individual test passes, open a pull request targeting **`master`**; ask a teammate to verify the scenario, assertions, and CI. Merge only after approval and passing checks. Pull often, make small commits, and avoid committing generated `node_modules/` or build output.
 
 ## Final M1 test checklist
 
