@@ -82,7 +82,7 @@ These specifications describe the current TypeScript + React implementation. Eac
 
 ## Document status
 
-Revised to reflect the current code on react-starter. Team should review responsibilities and confirm agreement before final M1 submission.
+Revised to reflect the current React code on the default `master` branch. Team should review responsibilities and confirm agreement before final M1 submission.
 
 ---
 
