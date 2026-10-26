@@ -42,10 +42,4 @@ Users should be informed when required event details are missing, dates or times
 
 - “Realistically participate” remains the wider MVP goal. M1 tests the narrower, measurable question of whether the event’s entire scheduled time fits the user’s free-time window.
 
-## Document status
-
-Revised to match the current TypeScript + React SideQuest walking skeleton. Team should review and approve wording before final M1 submission.
-
----
-
-**Related document:** [SideQuest Technical Specifications](SPECIFICATIONS.md) · [Google Docs source](https://docs.google.com/document/d/1yTrAU-RBO4YYBJLUYtjB1kb0U94_vN3iIjDeQBZ-gk0/edit)
+**Related document:** [SideQuest Technical Specifications](SPECIFICATIONS.md) · [Google Docs version](https://docs.google.com/document/d/1CUcQPC5-_3Lziyf88H2oCPYRIR1wrgaSF1K15VK5_Gs/edit)
