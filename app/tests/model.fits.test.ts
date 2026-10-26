@@ -1,4 +1,4 @@
-// Starter examples written with AI assistance. NOT an individual teammate's M1 submission.
+// Shared model regression tests (AI-assisted starter examples).
 import { describe, expect, it } from 'vitest'
 import { fitsFully, isValidDate, toMinutes, type CampusEvent } from '../src/model/events'
 
