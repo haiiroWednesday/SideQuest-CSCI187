@@ -1,28 +1,22 @@
-# SideQuest M1 · Team Guide to Individual Unit Tests
+# SideQuest — Internal Unit-Test Examples
 
 **8 ready-to-adapt code examples • Visual diagrams • Specific ways to design a meaningful original test**
 
-For the SideQuest **TypeScript + React** walking skeleton. M1 due **Monday, October 26, 2026, at the beginning of class**.
+Optional contributor reference for the SideQuest **TypeScript + React** walking skeleton. These are example test cases, not files required for the final project.
 
 > **You do not have to invent everything from scratch.** Choose one of the eight categories below, study the example, and use it to design a **different meaningful behavior or edge case** that you personally understand and can explain. A different event name, filename, or author comment by itself is not enough.
 
 **Jump to:** [How to design a test](#how-to-design-a-test-of-your-own) · [All eight categories](#eight-test-categories-and-complete-code) · [Red X → green check](#demonstrate-a-red-x-then-a-green-check)
 
-**Already ran SideQuest in class?** Update your existing clone with `git pull --ff-only origin react-starter` while on that branch before doing these tests. GitHub updates do not automatically change files on your laptop. See the [team setup guide](../TEAM_SETUP_GUIDE.md) if you are unsure which branch you are on.
+**Before starting:** Check `git status`, preserve any uncommitted work, and update `master` with `git pull --ff-only origin master`. See the [team setup guide](../TEAM_SETUP_GUIDE.md) for help.
 
 **Useful links:** [Team setup guide](../TEAM_SETUP_GUIDE.md) · [Current starter tests](../app/tests/) · [Our React CI](../.github/workflows/react-ci.yml) · [GitHub Actions](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions)
 
-## What Professor Kandel wants
+## Writing meaningful tests
 
-Each teammate must:
+A contributor should choose a distinct, relevant behavior; add their name in a comment; run and understand the test; and check that the expected results match the specification. A separate practice branch can demonstrate that CI catches an intentional mistake (red X) and passes after the correction (green check).
 
-1. Write a **distinct, meaningful** unit test related to our walking skeleton.
-2. Put **their own name in a comment** in the test file.
-3. Run the test and be able to explain what it proves.
-4. On a **separate branch**, deliberately make CI fail (red X), fix the issue, and confirm it passes (green check).
-5. Coordinate with the team so everyone tests different behaviors.
-
-**What the lecture actually permits:** On slide 10 of Professor Kandel's *Unit Testing, CI, Git Teamwork* lecture, she explicitly says **AI may write unit-test code**. The student's responsibilities are **(1) deciding what to test, and (2) checking that each test asserts what the student intended**. You may use an AI-assisted starter template or ask AI to generate TypeScript. What makes the submission yours is choosing a distinct, meaningful testing question, verifying the test's inputs and expected results, understanding its behavior, and identifying your work in the test file. Merely copying the shared starter unchanged and adding your name does not demonstrate those decisions.
+AI can help draft syntax, but the contributor still needs to choose and verify the assertions.
 
 ## Unit test versus CI: the big picture
 
@@ -30,7 +24,7 @@ Each teammate must:
 - **CI** (Continuous Integration) is GitHub's automatic checking system. GitHub runs all the tests whenever your code is pushed or a pull request is opened/updated.
 - **Vitest** runs the test files under `app/tests/`.
 - The file `.github/workflows/react-ci.yml` tells GitHub to install the packages, run `npm test`, and run `npm run build`.
-- The old `.github/workflows/ci.yml` is the professor's original **C++** workflow. Our **React** CI is separate.
+- The separate `.github/workflows/ci.yml` belongs to the legacy C++ starter. For the React app, use **React CI**.
 
 ```mermaid
 flowchart TD
@@ -43,8 +37,6 @@ flowchart TD
     G -->|Yes| H["✅ GREEN CHECK"]
     G -->|No| I["❌ RED X"]
 ```
-
-**Running tests and CI does not use your Claude API credits.**
 
 ### What does a test actually look like?
 
@@ -65,7 +57,7 @@ it('rejects an impossible calendar date', () => {
 | `isValidDate('2026-04-31')` | A call to a **real function** in SideQuest |
 | `.toBe(false)` | What you **expect** the correct result to be |
 
-**Using example events inside a test is allowed and normal.** Our professor wanted us to replace the app's *hardcoded event list* with event creation, not eliminate controlled test inputs.
+**Using example events inside a test is allowed and normal.** The application uses user-created events; controlled example inputs in unit tests are still appropriate.
 
 ## How to design a test of your own
 
@@ -90,9 +82,9 @@ flowchart TD
 
 **The key is the behavior, not the number of edits or whether AI generated the syntax.** One thoughtful new case with a justified expected outcome beats many arbitrary changes.
 
-### Warning from the lecture: don't test a fact you already know
+### Avoid tests that check the wrong thing
 
-Slides 11–15 show that an AI-generated test may pass trivially while failing to check the actual rule. For example, testing that a manually chosen start time comes before an end time does **not** prove SideQuest *rejects* an invalid event. Your test must call the real function and verify its response.
+A test can pass trivially while failing to check the rule it is supposed to exercise. For example, testing that a manually chosen start time comes before an end time does **not** prove SideQuest *rejects* an invalid event. Your test must call the real function and verify its response.
 
 **Weak (doesn't exercise SideQuest):**
 
@@ -387,18 +379,9 @@ npm run build
 
 **Step 4.** Confirm the new test appears in Vitest's results and passes. If it fails unexpectedly, inspect the **Expected** and **Received** values before changing anything. A passing test with the wrong expectation isn't helpful.
 
-### Coordinate the four individual contributions
-
-| Teammate | Category | Your original test question | Your `.test.ts` filename |
-| --- | --- | --- | --- |
-| Teammate 1 | _Choose_ | _What bug would this catch?_ | _To be written_ |
-| Teammate 2 | _Choose_ | _What bug would this catch?_ | _To be written_ |
-| Teammate 3 | _Choose_ | _What bug would this catch?_ | _To be written_ |
-| Teammate 4 | _Choose_ | _What bug would this catch?_ | _To be written_ |
-
 ## Demonstrate a red X then a green check
 
-**The professor wants proof that CI detects a mistake, and that fixing it makes CI pass.** Do this on a **separate experimental branch**, not on the shared team branch.
+To verify that CI detects an error, use a **separate experimental branch**, not the shared team branch.
 
 ```mermaid
 flowchart TD
@@ -435,8 +418,8 @@ Run these from the **repository root** (`SideQuest-CSCI187/`). Start with `git s
 **Create your own normal test branch:**
 
 ```bash
-git switch react-starter
-git pull origin react-starter
+git switch master
+git pull --ff-only origin master
 git switch -c tests-yourname
 ```
 
@@ -480,9 +463,9 @@ Wait for the **green check** and save the second run link. Your team can review 
 
 ### Team integration: pull requests and code review
 
-Professor Kandel's lecture (slides 26–28 and 40–42) distinguishes **push** (upload your branch) from a **pull request** (ask your teammates to review and merge). After your **working** individual test passes, open a pull request targeting **`react-starter`**; ask a teammate to verify the scenario, assertions, and CI. Merge only after approval and passing checks. Pull often, make small commits, and avoid committing generated `node_modules/` or build output.
+**Push** uploads your branch; a **pull request** asks teammates to review and merge it. After your working individual test passes, open a pull request targeting **`master`**; ask a teammate to verify the scenario, assertions, and CI. Merge only after approval and passing checks. Pull often, make small commits, and avoid committing generated `node_modules/` or build output.
 
-## Final M1 test checklist
+## Contributor test checklist
 
 - [ ] My behavior is meaningfully distinct from my teammates' tests.
 - [ ] I can finish: “My test catches a bug where SideQuest ______.”
@@ -495,6 +478,4 @@ Professor Kandel's lecture (slides 26–28 and 40–42) distinguishes **push** (
 - [ ] I saved the **red X** and **green check** GitHub Actions run links.
 - [ ] The team reviewed the passing tests and confirmed they all work together.
 
-**A good test doesn't have to be long or hand-typed; it has to exercise the real function and assert the rule you decided to check.** Lecture source: *12_Git_Unit_Testing_CI.pdf*, especially slides 3, 6–15, 17, and 26–42.
-
-Professor's references: [M1 assignment](https://docs.google.com/document/d/1xOsK1cmhXyVy8LsV7oHP_h9tr32ogga79DbsjQwo6yo/edit) · [Unit Testing and CI instructions](https://docs.google.com/document/d/15lPHkDDmZ3ZGUDSTBmNY9pQHpd8339qXaa1iSF7pbyY/edit)
+**A good test doesn't have to be long or hand-typed; it has to exercise the real function and assert the rule you decided to check.**
