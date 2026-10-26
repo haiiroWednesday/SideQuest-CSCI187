@@ -1,5 +1,5 @@
-// Test owner: Cynthia (AI-assisted draft, scenarios chosen and checked for M1).
-// Category #5 — Boundary times: an event must fit ENTIRELY within the free window.
+// Author: Cynthia
+// Tests exact time boundaries and rejects events outside available hours.
 import { expect, it } from 'vitest'
 import { fitsFully, type CampusEvent } from '../src/model/events'
 
