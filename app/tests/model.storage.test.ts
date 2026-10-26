@@ -1,4 +1,4 @@
-// Starter example written with AI assistance. Every teammate must write a distinct named test for M1.
+// Shared browser-storage regression test (AI-assisted starter example).
 import { expect, it } from 'vitest'
 import { readStoredEvents, saveStoredEvents, STORAGE_KEY, type CampusEvent } from '../src/model/events'
 
