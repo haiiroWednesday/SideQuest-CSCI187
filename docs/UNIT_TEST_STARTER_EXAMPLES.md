@@ -1,12 +1,12 @@
 # SideQuest — Internal Unit-Test Examples
 
-**8 ready-to-adapt code examples • Visual diagrams • Specific ways to design a meaningful original test**
+**Eight optional examples • Visual diagrams • Guidance for designing your own meaningful tests**
 
-Optional contributor reference for the SideQuest **TypeScript + React** walking skeleton. These are example test cases, not files required for the final project.
+Optional contributor reference for the SideQuest **TypeScript + React** walking skeleton. **Our team brainstormed these eight example topics; Professor Kandel did not assign numbered testing categories.** Students choose their own meaningful tests, and these examples are not required project files.
 
-> **You do not have to invent everything from scratch.** Choose one of the eight categories below, study the example, and use it to design a **different meaningful behavior or edge case** that you personally understand and can explain. A different event name, filename, or author comment by itself is not enough.
+> **These are suggestions, not an official checklist.** You can start from one of the examples below, adapt it to explore a different meaningful behavior, or devise a completely new test. Changing only an event name or filename does not make a test meaningfully distinct.
 
-**Jump to:** [How to design a test](#how-to-design-a-test-of-your-own) · [All eight categories](#eight-test-categories-and-complete-code) · [Red X → green check](#demonstrate-a-red-x-then-a-green-check)
+**Jump to:** [How to design a test](#how-to-design-a-test-of-your-own) · [Optional example topics](#optional-test-ideas-and-example-code) · [Red X → green check](#demonstrate-a-red-x-then-a-green-check)
 
 **Before starting:** Check `git status`, preserve any uncommitted work, and update `master` with `git pull --ff-only origin master`. See the [team setup guide](../TEAM_SETUP_GUIDE.md) for help.
 
@@ -147,22 +147,22 @@ Try to complete this sentence for your own work: **“My test would catch a bug 
 
 ---
 
-## Eight test categories and complete code
+## Optional test ideas and example code
 
-There are **eight options for four teammates**. Agree on who is taking which category before writing your final tests. Every sample below imports real SideQuest functions and can be used inside `app/tests/`.
+The team brainstormed the following topics as starting points. They are **not official categories or required assignments**. Every student should select and verify an appropriate behavior for the actual SideQuest implementation; the team can coordinate to avoid duplicating tests. The code below uses real project functions.
 
-| # | Category | A distinctive behavior to explore |
-| --- | --- | --- |
-| 1 | Creating events | Does adding a second event preserve the first? |
-| 2 | Event IDs | Are empty IDs rejected while new IDs succeed? |
-| 3 | Calendar dates | Does leap-year logic work for century years? |
-| 4 | Clock times | Are malformed and out-of-range times rejected? |
-| 5 | Availability matching | What happens at the exact end-time boundary? |
-| 6 | Event sorting | Does sorting still work when some events don't match? |
-| 7 | Saving events | Do removed events stay removed after saving? |
-| 8 | Storage errors | Does malformed saved data fail safely? |
+| Example topic | A behavior worth exploring |
+| --- | --- |
+| Creating events | Does adding a second event preserve the first? |
+| Event IDs | Are empty IDs rejected while new IDs succeed? |
+| Calendar dates | Does leap-year logic work for century years? |
+| Clock times | Are malformed and out-of-range times rejected? |
+| Availability matching | What happens at the exact end-time boundary? |
+| Event sorting | Does sorting still work when some events don't match? |
+| Saving events | Do removed events stay removed after saving? |
+| Storage errors | Does malformed saved data fail safely? |
 
-### 1. Event creation — successful creation
+### Event creation — successful creation
 
 Suggested file: `app/tests/student-create-event.test.ts`
 
@@ -187,9 +187,9 @@ it('creates an event and trims accidental spaces', () => {
 })
 ```
 
-**Your precise M1 design challenge:** First create event A, then create event B with a *different* ID. Verify the result has **two events**, that A's title/date remain unchanged, and that B's time is correct. This checks **preserving existing data**, not merely creating the first event. Decide your own event values and write the final assertions.
+**Optional variation to try:** First create event A, then create event B with a *different* ID. Verify the result has **two events**, that A's title/date remain unchanged, and that B's time is correct. This checks **preserving existing data**, not merely creating the first event. Decide your own event values and write the final assertions.
 
-### 2. Duplicate events — reject a reused ID
+### Duplicate events — reject a reused ID
 
 Suggested file: `app/tests/student-duplicate-id.test.ts`
 
@@ -215,9 +215,9 @@ it('does not create another event using an existing ID', () => {
 })
 ```
 
-**Your precise M1 design challenge:** Starting with an existing event, compare an attempt with an **empty ID** against one with a **new ID**. The empty-ID request should return an error and leave the list unchanged; the new ID should succeed. **Important:** duplicate *titles* and duplicate *IDs* are not the same thing.
+**Optional variation to try:** Starting with an existing event, compare an attempt with an **empty ID** against one with a **new ID**. The empty-ID request should return an error and leave the list unchanged; the new ID should succeed. **Important:** duplicate *titles* and duplicate *IDs* are not the same thing.
 
-### 3. Calendar dates — reject impossible dates
+### Calendar dates — reject impossible dates
 
 Suggested file: `app/tests/student-date-validation.test.ts`
 
@@ -233,9 +233,9 @@ it('rejects a non-existent calendar date', () => {
 })
 ```
 
-**Your precise M1 design challenge:** Compare **February 29, 2000** with **February 29, 1900**. Decide which is a legitimate leap day, then write assertions for both. Optionally check a malformed date format like `2026/10/23`. This tests a different calendar rule from the sample's April 31.
+**Optional variation to try:** Compare **February 29, 2000** with **February 29, 1900**. Decide which is a legitimate leap day, then write assertions for both. Optionally check a malformed date format like `2026/10/23`. This tests a different calendar rule from the sample's April 31.
 
-### 4. Clock-time input — handle midnight and the end of the day
+### Clock-time input — handle midnight and the end of the day
 
 Suggested file: `app/tests/student-clock-times.test.ts`
 
@@ -252,9 +252,9 @@ it('converts valid boundary clock times and rejects 24:00', () => {
 })
 ```
 
-**Your precise M1 design challenge:** Compare `09:05`, `09:60`, `9:05`, and an empty string. Determine which strings satisfy SideQuest's **HH:MM** format and what `toMinutes` should return. Include both a valid case and invalid cases. A missing leading zero matters to the current function.
+**Optional variation to try:** Compare `09:05`, `09:60`, `9:05`, and an empty string. Determine which strings satisfy SideQuest's **HH:MM** format and what `toMinutes` should return. Include both a valid case and invalid cases. A missing leading zero matters to the current function.
 
-### 5. Availability matching — reject an event starting one minute too early
+### Availability matching — reject an event starting one minute too early
 
 Suggested file: `app/tests/student-start-boundary.test.ts`
 
@@ -278,9 +278,9 @@ it('rejects an event that starts one minute before free time', () => {
 })
 ```
 
-**Your precise M1 design challenge:** Choose an event ending **exactly when** free time ends, then create a second version ending **one minute late**. Which matches? Write the two expected answers, or test the same clock times on a *different date*. This checks a specific boundary rather than changing one arbitrary minute.
+**Optional variation to try:** Choose an event ending **exactly when** free time ends, then create a second version ending **one minute late**. Which matches? Write the two expected answers, or test the same clock times on a *different date*. This checks a specific boundary rather than changing one arbitrary minute.
 
-### 6. Search results — order matching events chronologically
+### Search results — order matching events chronologically
 
 Suggested file: `app/tests/student-sorting.test.ts`
 
@@ -305,9 +305,9 @@ it('lists qualifying events from earliest to latest', () => {
 })
 ```
 
-**Your precise M1 design challenge:** Build a list of **four events in scrambled order**: two qualifying events, one on the wrong day, and one ending too late. Check the returned **IDs in the correct start-time order**. To demonstrate sorting, don't place the two matching events in order in the input.
+**Optional variation to try:** Build a list of **four events in scrambled order**: two qualifying events, one on the wrong day, and one ending too late. Check the returned **IDs in the correct start-time order**. To demonstrate sorting, don't place the two matching events in order in the input.
 
-### 7. Browser storage — save and restore multiple events
+### Browser storage — save and restore multiple events
 
 Suggested file: `app/tests/student-save-events.test.ts`
 
@@ -334,9 +334,9 @@ it('restores both saved events in the original order', () => {
 })
 ```
 
-**Your precise M1 design challenge:** Save two events using the in-memory storage object, then **save a shorter array** containing only one of them. Read storage again and check that the removed event does **not** return. This tests an updated saved state, not just the first save. It does not simulate clicking the UI Remove button.
+**Optional variation to try:** Save two events using the in-memory storage object, then **save a shorter array** containing only one of them. Read storage again and check that the removed event does **not** return. This tests an updated saved state, not just the first save. It does not simulate clicking the UI Remove button.
 
-### 8. Storage errors — handle blocked browser storage safely
+### Storage errors — handle blocked browser storage safely
 
 Suggested file: `app/tests/student-storage-errors.test.ts`
 
@@ -360,7 +360,7 @@ it('does not crash when browser storage is blocked', () => {
 })
 ```
 
-**Your precise M1 design challenge:** Make a fake storage object's `getItem` return the corrupt string `{bad json`. Check that reading produces an **empty list without throwing**. Compare it with the valid JSON string `[]`. A blocked exception and corrupted JSON are different failure scenarios.
+**Optional variation to try:** Make a fake storage object's `getItem` return the corrupt string `{bad json`. Check that reading produces an **empty list without throwing**. Compare it with the valid JSON string `[]`. A blocked exception and corrupted JSON are different failure scenarios.
 
 ---
 
