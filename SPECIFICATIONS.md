@@ -70,20 +70,14 @@ These specifications describe the current TypeScript + React implementation. Eac
 
 5. Try an event ending before it starts and a reversed search window. Confirm each is rejected with explanatory feedback.
 
-## Verification and M1 workflow
+## Verification
 
-- Unit tests live under app/tests/*.test.ts and run with npm test (Vitest). Type checking and production build run with npm run build.
+- Unit tests live in `app/tests/*.test.ts` and run with `npm test` from `app/`.
+- `npm run build` checks TypeScript and produces the React build.
+- `.github/workflows/react-ci.yml` runs the tests and build automatically for GitHub pushes and pull requests.
 
-- .github/workflows/react-ci.yml runs install, unit tests, and build on GitHub pushes and pull requests. This is separate from the professor’s original C++ workflow.
-
-- Each teammate must individually author a distinct, meaningful test with their name in a comment and demonstrate intentional red-X then corrected green-check CI results on a separate branch. Existing AI-generated starter tests do not represent individual contributions.
-
-- Future-MVP work outside M1: live SCU events, shared backend/accounts, travel time, registration/eligibility, and partial or overnight attendance.
-
-## Document status
-
-Revised to reflect the current code on react-starter. Team should review responsibilities and confirm agreement before final M1 submission.
+The next MVP steps beyond M1 include live SCU events, a shared backend, travel-time checks, registration eligibility, and broader attendance rules.
 
 ---
 
-**Related document:** [SideQuest User Requirements](REQUIREMENTS.md) · [Google Docs source](https://docs.google.com/document/d/1CUcQPC5-_3Lziyf88H2oCPYRIR1wrgaSF1K15VK5_Gs/edit)
+**Related document:** [SideQuest User Requirements](REQUIREMENTS.md) · [Google Docs version](https://docs.google.com/document/d/1yTrAU-RBO4YYBJLUYtjB1kb0U94_vN3iIjDeQBZ-gk0/edit)
