@@ -1,5 +1,5 @@
-// Test owner: Cynthia (AI-assisted draft, scenarios chosen and checked for M1).
-// Category #6 — Search must reject nonmatching events and sort matching events by start time.
+// Author: Cynthia
+// Tests that searches exclude nonmatching events and sort results by start time.
 import { expect, it } from 'vitest'
 import { findEvents } from '../src/controller/findEvents'
 import type { CampusEvent } from '../src/model/events'
