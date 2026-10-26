@@ -2,7 +2,7 @@
 
 SideQuest helps Santa Clara University students discover campus activities that fit into the free time they have.
 
-> **Current M1 implementation is on [`react-starter`](https://github.com/haiiroWednesday/SideQuest-CSCI187/tree/react-starter).** The repository's default `master` branch still contains the professor's original C++ starter. Until the team reviews and merges the React work, **share the direct `react-starter` link**, not just the repository's default landing page.
+> **Current M1 implementation is on the default [`master` branch](https://github.com/haiiroWednesday/SideQuest-CSCI187/tree/master).** The React walking skeleton and approved individual unit tests have been merged. The old C++ template remains in the repository, but the active SideQuest app lives in `app/`.
 
 ## M1 walking skeleton — one complete feature
 
@@ -17,10 +17,10 @@ The app is built with **React, TypeScript, Vite, and Vitest**. This is a working
 
 ## Start the current version
 
-**First-time setup:** Install [Git](https://git-scm.com/downloads) and [Node.js](https://nodejs.org/en/download) (Node 24 LTS recommended; Node 22.12+ supported). Clone the correct branch:
+**First-time setup:** Install [Git](https://git-scm.com/downloads) and [Node.js](https://nodejs.org/en/download) (Node 24 LTS recommended; Node 22.12+ supported). Clone the repository's default `master` branch:
 
 ```bash
-git clone -b react-starter https://github.com/haiiroWednesday/SideQuest-CSCI187.git
+git clone https://github.com/haiiroWednesday/SideQuest-CSCI187.git
 cd SideQuest-CSCI187/app
 npm install
 npm run dev
@@ -28,10 +28,11 @@ npm run dev
 
 Open the **Local** address shown by Vite (often http://localhost:5173/). If `npm install` produces an `edgesOut` dependency error, try `npm install --legacy-peer-deps`.
 
-**Already ran SideQuest in class?** You **do not need to clone again**. That may have been an earlier version. Open your existing repository in VS Code, check `git status`, make sure you are on `react-starter`, and run:
+**Already ran SideQuest in class?** You **do not need to clone again**. Open your existing repository in VS Code, check `git status` to protect any uncommitted work, then switch to the updated `master` branch and pull:
 
 ```bash
-git pull --ff-only origin react-starter
+git switch master
+git pull --ff-only origin master
 ```
 
 If Git warns about local changes, stop rather than overwriting them. Restart `npm run dev` from `app/` and refresh the browser. **A GitHub update does not automatically update teammates' local copies.** See the [step-by-step team setup and update guide](TEAM_SETUP_GUIDE.md).
@@ -77,6 +78,6 @@ Per [Professor Kandel's M1 assignment](https://docs.google.com/document/d/1xOsK1
 - **Group:** One teammate submits the working repository through Camino, then adds all contributing teammates under **Group Members**. Required repository files: code, unit tests, `README.md`, `REQUIREMENTS.md`, and `SPECIFICATIONS.md`.
 - **Individual tests/CI:** Each person authors a distinct named test with an identifying comment, then proves a deliberately failing CI run (red X) followed by a passing run (green check), using a separate branch for the error experiment.
 - **Individual reflection:** Each person writes a Google Doc answering the assignment questions, sets **anyone with the link can view**, and submits its link through Camino.
-- **Repository access:** If private, invite the professor's GitHub account **`jade-kandel`**. Access and final branch choice still need team confirmation.
+- **Repository access:** If private, invite the professor's GitHub account **`jade-kandel`** and verify access before submitting the default `master` branch.
 
 **Live demonstration timing:** The published M1 assignment and walking skeleton slides do **not** specify a separate presentation/demo appointment. The quick acceptance check above is preparation, not another confirmed deadline.
