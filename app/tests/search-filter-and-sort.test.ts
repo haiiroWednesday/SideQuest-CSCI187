@@ -1,4 +1,4 @@
-// Test owner: haiiroWednesday (AI-assisted draft, scenarios chosen and checked for M1).
+// Test owner: Cynthia (AI-assisted draft, scenarios chosen and checked for M1).
 // Category #6 — Search must reject nonmatching events and sort matching events by start time.
 import { expect, it } from 'vitest'
 import { findEvents } from '../src/controller/findEvents'
