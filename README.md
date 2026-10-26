@@ -54,3 +54,4 @@ The repository also contains the original C++ course starter files, but they are
 - [User Requirements](REQUIREMENTS.md)
 - [Technical Specifications and MVC/CRC responsibilities](SPECIFICATIONS.md)
 - [Team setup and troubleshooting](TEAM_SETUP_GUIDE.md)
+- [MVP Chen ER diagram and database-design rationale](docs/MVP_ER_DIAGRAM.md) — proposed P5 database design; separate from the M1 code and draw.io submission.
