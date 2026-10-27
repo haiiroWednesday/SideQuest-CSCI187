@@ -8,7 +8,7 @@
 
 ![Simple SideQuest ER model](assets/playbook/er-mvp.svg)
 
-[Open the diagram](assets/playbook/er-mvp.svg) · [MVP team implementation playbook](MVP_TEAM_PLAYBOOK.md)
+[Open the diagram](assets/playbook/er-mvp.svg) · [Open editable proposed P5 draw.io](SideQuest_P5_Simple_ER_Proposed.drawio) · [MVP team implementation playbook](MVP_TEAM_PLAYBOOK.md)
 
 ## Event host name versus user account
 
