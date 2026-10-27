@@ -1,5 +1,7 @@
 # SideQuest MVP — Chen ER diagram and database design rationale
 
+> **IMPORTANT — SUPERSEDED IMPLEMENTATION PROPOSAL (27 October 2026).** The team has confirmed the simpler P4 MVP: no user accounts/USER data, no cost/registration, no saved availability entity, and no server-side PLANNED_ATTENDANCE table. Anyone may post to the same shared EventCatalog. Each browser holds its own local Schedule of planned Event IDs; removing a plan does not delete a public Event. The detailed USER/AVAILABILITY_WINDOW/PLANS TO ATTEND schema below is preserved only as an earlier exploratory P5 draft, **not** the team's chosen application architecture or instructions for coding agents. For the approved scope, see [the MVP Team Playbook](MVP_TEAM_PLAYBOOK.md) and the [original P4 draw.io diagram](https://drive.google.com/file/d/1xiZGXQeScuJx14yKNUcwj1XtWTfOb-l4/view). The professor's P5 "each model class is its own entity" instruction must still be addressed in the separate ER submission.
+
 **Course:** CSCI 187 · **Assignment:** P5 MVP ER Diagram  
 **Status:** proposed **MVP database** design for team review. This is not a description of the existing M1 browser-only storage.
 
