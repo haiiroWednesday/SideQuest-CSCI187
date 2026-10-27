@@ -57,7 +57,7 @@ The [original P3 requirements](https://docs.google.com/document/d/11Yq8sW1aOphzn
 
 **Two different meanings of “save” must not be conflated:** `EventCatalog` persists **publicly posted events** for everyone; `Schedule` persists **local references to events planned by this device**. `app/src/model/events.ts` currently stores **the events created locally in M1**, which is a third, transitional state. It must not become the public catalog or planned-events list by renaming the header.
 
-**Before coding, two implementation contracts still need team sign-off:** (1) the *single* Event date/time shape—P4 shows start/end dates and times while M1 uses a same-day date/start/end trio; (2) the concrete shared catalog backend and how two browsers will connect to it. These are practical decisions, **not** permission to reopen the agreed MVP feature scope. `hostName` is a required proposed addition for display, not a USER login or verified poster ID.
+**Selected implementation proposal (27 Oct):** preserve M1's single `date` and `start`/`end` HH:mm fields (**same-day events only**, no overnight entries) and use **Supabase Postgres** for the one shared public EventCatalog. Full technical contract: [MVP Implementation Contract](MVP_IMPLEMENTATION_CONTRACT.md). This narrows P4's separate start/end-date model; make the simplification explicit in MVP specs and tests. `hostName` is a display value, not a login. Daven still needs to create/configure a Supabase project, and the team should review the contract before independently editing consuming files.
 
 ## Data-model alignment — P4 is the implementation source of truth
 
@@ -93,7 +93,7 @@ The original P4 Event lists ID, title, description, location and times but **doe
 
 ### Proposed TypeScript contract — exact names to be reviewed by the team
 
-This is illustrative code for the chosen architecture, **not code already implemented**. P4 names start and end *dates and times*. M1 only has one `date`, `start`, and `end` for same-day events, so agree how to migrate or deliberately limit MVP events to one day before writing either adapter.
+This is the **selected MVP contract**, not code already implemented. To reuse M1 validation and matching, the MVP deliberately permits **same-day events only**. The P4 diagram depicted separate start and end dates/times, so this restricted subset must be documented in the MVP specifications and tested. See [the frozen contract](MVP_IMPLEMENTATION_CONTRACT.md).
 
 ```ts
 export type EventRecord = {
@@ -102,10 +102,9 @@ export type EventRecord = {
   hostName: string // proposed addition: person, club, or organization running it
   description: string
   location: string
-  startDate: string // YYYY-MM-DD
-  startTime: string // HH:MM
-  endDate: string   // YYYY-MM-DD
-  endTime: string   // HH:MM
+  date: string  // YYYY-MM-DD, campus local date
+  start: string // HH:mm, same day
+  end: string   // HH:mm, same day, must be after start
 }
 
 export interface EventCatalogPort {
@@ -163,7 +162,7 @@ The P5 assignment currently states **Wednesday, October 28, 2026, end of day**. 
 Use the **EventRecord, EventCatalogPort and SchedulePort** proposal in [the Data-model alignment section above](#proposed-typescript-contract--exact-names-to-be-reviewed-by-the-team). It reflects the chosen P4-simple design. Finalize names with the team before merging code; there is no alternative user-scoped Path B in this MVP.
 
 - Keep Event IDs stable from publishing through Browse, Search and Schedule. Two events may have identical titles; IDs distinguish them.
-- Agree on the P4 start/end date/time representation versus the M1 same-day fields. Do not let each coding agent invent a different interface.
+- Use the selected M1-compatible `date`/`start`/`end` contract (same-day only). Do not let any agent independently introduce `startDate`, `endDate`, or timestamp fields into shared TypeScript props.
 - Keep `fitsFully` as the validated source of truth for temporal matching. Exact matching boundaries are inclusive.
 - `Schedule` keeps **only event IDs in this browser's local storage**. It asks EventCatalog for current details when rendering; it does not copy an Event or add a global `saved` property.
 - Never use `sidequest.created-events.v1` as the planned-attendance key. That legacy M1 key stores browser-created events, not planned event IDs or a cross-browser catalog.
@@ -226,21 +225,14 @@ This is a foundational workstream. M1 create/validate logic already exists. Buil
 
 **Data ownership:** Daven owns the shared Event records, unique IDs, creation and retrieval API, and integration with the posting form. There is **no user foreign key or planned-attendance table** in the chosen implementation.
 
-**First decision — storage strategy:**
-
-| Route | What it proves | Risk / when to use |
-|---|---|---|
-| Shared service + datastore (recommended if feasible) | Two browsers see the same newly posted event | Requires deployment, safe write path, and clear setup; agree on host and credentials |
-| One local shared development server on a reachable machine | Two local clients can read/write one catalog | Suitable only for a controlled demo, not a claim of internet-wide availability |
-| Fixed sample dataset | Browsing and matching UI can be rehearsed | **Not equivalent to user-posted shared persistence**; fallback only with explicit scope disclosure |
-| Browser `localStorage` only (current M1) | One-browser create→search works | **Does not implement a shared posted catalog** |
+**Selected backend: Supabase Postgres.** Create one shared `events` table, expose a typed catalog adapter through `@supabase/supabase-js`, and keep planned-event IDs in browser localStorage. For a restricted classroom prototype, anonymous readers may use SELECT and anonymous posters INSERT only, with RLS **and narrow SQL grants**; deny anonymous UPDATE and DELETE. Add database-side constraints, and acknowledge that no-login anonymous posting cannot reliably prevent spam or impersonation. Do not claim production-grade safety; add a server-side rate-limited write gate before broad public deployment. See [contract and security caveats](MVP_IMPLEMENTATION_CONTRACT.md).
 
 **Implementation path:**
 
-1. Agree on the P4 `EventRecord` fields and port before changing `events.ts`. **Description comes from P4.** Add hostName for display, not authentication. No login, cost, or USER table. An optional anonymous posterId is not verified identity. Resolve same-day M1 fields versus P4 start/end dates deliberately.
+1. Start from the selected same-day `EventRecord` type (`id`, `title`, `hostName`, `description`, `location`, `date`, `start`, `end`) and shared catalog interface in the [implementation contract](MVP_IMPLEMENTATION_CONTRACT.md). No login, cost, USER table, or alternate timestamp type.
 2. Keep existing `createEvent` validation behavior or reuse its rules behind the new posting controller. Don't overwrite tested logic without replacement tests.
 3. Build `listUpcoming`, `getById`, and `create` against a fake in-memory adapter **first**. Include unique IDs and persistent ordering.
-4. Choose the shared storage route the team can operate, document how to start/deploy it, and keep secrets off GitHub and outside browser bundles. Never ship an unrestricted public write API or a server admin key in React code.
+4. Configure Supabase Postgres and version the table schema/privileges/RLS policy in a SQL migration; integrate it with the `@supabase/supabase-js` adapter. The **publishable** key is intended for client-side use; NEVER put a secret/service-role key in React or GitHub. For classroom anonymous inserts, enforce data constraints and SELECT/INSERT-only role permissions, and document the spam risk. For wider public access, add a server-side rate-limited write endpoint.
 5. Connect the creation form to the agreed controller/port; return clear field-level errors and a success message containing the created event ID or stable reference.
 6. Verify a new event can be retrieved in a **second browser/session**. Restart the service if persistence is promised and verify again.
 7. Write model/controller/API tests: empty title/host name, invalid date, `end <= start`, duplicate IDs, hostName surviving create/read, server failure.
