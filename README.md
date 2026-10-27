@@ -54,6 +54,7 @@ The repository also contains the original C++ course starter files, but they are
 - [User Requirements](REQUIREMENTS.md)
 - [Technical Specifications and MVC/CRC responsibilities](SPECIFICATIONS.md)
 - [Team setup and troubleshooting](TEAM_SETUP_GUIDE.md)
-- [MVP Chen ER diagram and database-design rationale](docs/MVP_ER_DIAGRAM.md) — proposed P5 database design; separate from the M1 code and draw.io submission.
+- [MVP ER model and host information](docs/MVP_ER_DIAGRAM.md) — proposed simple P5 classroom ER design; no user-account table, with a host display name on events.
 
+- [Editable proposed P5 draw.io diagram](docs/SideQuest_P5_Simple_ER_Proposed.drawio) — working draft, not a submitted Gradescope artifact.
 - [MVP Team Playbook](docs/MVP_TEAM_PLAYBOOK.md) — proposed feature ownership, architecture and sequence diagrams, Git/CI workflow, AI-agent safeguards, integration steps, and sprint plan.
