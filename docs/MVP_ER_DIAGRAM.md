@@ -173,7 +173,7 @@ This table listing is a logical translation from Chen ER to relational tables, *
 
 This Markdown document is excellent for **version-controlled discussion**: GitHub automatically renders the embedded Mermaid code. It belongs in the repository's docs/ folder and can be linked from README.
 
-However, **GitHub Mermaid is not the required P5 deliverable**. The [P5 assignment](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit?usp=sharing) requires (1) a **photo of the hand-drawn class ER diagram** and (2) a completed **draw.io** diagram shared as “Anyone with the link can comment,” with the link submitted through **Gradescope**. The assignment page says **Friday, October 30, 2026, end of day**; the final lecture slide says Wednesday, so use the currently posted Gradescope deadline if they disagree.
+However, **GitHub Mermaid is not the required P5 deliverable**. The [P5 assignment](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit?usp=sharing) requires (1) a **photo of the hand-drawn class ER diagram** and (2) a completed **draw.io** diagram shared as “Anyone with the link can comment,” with the link submitted through **Gradescope**. The currently accessible P5 assignment page says **Wednesday, October 28, 2026, end of day**. Verify the posted Gradescope deadline before submitting if it differs.
 
 Use this Mermaid as the editable conceptual source, and recreate the same rectangles, **true ovals**, underlined keys and diamond in draw.io before submission.
 
