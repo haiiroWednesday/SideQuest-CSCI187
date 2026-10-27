@@ -1,8 +1,8 @@
 # SideQuest MVP — the team's build playbook
 
-**Revised guide · 27 October 2026 · CSCI 187 · ER-aligned edition**  
+**Corrected 27 October 2026 · CSCI 187 · P4-simple MVP edition**  
 **Repository:** [`haiiroWednesday/SideQuest-CSCI187`](https://github.com/haiiroWednesday/SideQuest-CSCI187) · **Branch:** `master`  
-**Status:** Suggested implementation plan for team review. Role preferences are confirmed in group discussion; architecture contracts, dates, and technical decisions below are **proposals**, not a new professor-approved specification.
+**Status:** Team-confirmed small MVP scope, checked against both pages of the original P4 draw.io diagram. Technical interfaces and the proposed daily schedule remain implementation suggestions, not additional course requirements.
 
 > **Read this first.** The target is a small experience that works end to end: someone posts an event; another student can browse it; a student can search for events that completely fit their free time; and they can add an event to a list of things they plan to attend. Do not spend the week implementing the full aspirational SideQuest product.
 
@@ -39,7 +39,7 @@ flowchart LR
 - `app/src/controller/findEvents.ts` has `createEvent` and `findEvents`. `app/src/model/events.ts` has `CampusEvent`, `fitsFully`, date/time checks, and local-storage helpers.
 - Current `master` has **26 passing tests in 11 files** and a passing React build (verified 27 October). The test suite proves the M1 slice, **not** the future shared catalog or Personal Schedule.
 - The default branch is **`master`**, not `main`. App commands run inside `app/`.
-- `docs/MVP_ER_DIAGRAM.md` is our **proposed P5 ER design**. This guide now maps its USER, EVENT, AVAILABILITY_WINDOW, and PLANS TO ATTEND concepts to possible MVP code, while clearly marking the conflicts with P4. It is **not an approved implementation mandate**.
+- `docs/MVP_ER_DIAGRAM.md` is an **earlier exploratory P5 proposal**, not the chosen MVP. Its USER, AVAILABILITY_WINDOW, PLANNED_ATTENDANCE and cost/registration fields should **not** be implemented for this sprint.
 
 ## 1. Start from the course materials, not assumptions
 
@@ -47,129 +47,142 @@ The professor's [MVP lecture](https://docs.google.com/presentation/d/1G3QYEDONfO
 
 Your team's [P4 draw.io diagram](https://drive.google.com/file/d/1xiZGXQeScuJx14yKNUcwj1XtWTfOb-l4/view) defines **Event**, **EventCatalog**, and **Schedule**. It says **full-event** time matching, planned events on the **current device**, and a **shared** posted catalog. Partial attendance, travel estimates, accounts, cross-device personal schedules and calendar sync are postponed. “Save” in this diagram means **plan to attend**, not a second bookmark collection.
 
-The [original P3 requirements](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit) were broader. Professor Kandel suggested create → find → save/revisit as a useful end-to-end path, but explicitly marked that suggestion optional. The team must agree on any changes that make P3 and P4 differ, rather than silently adding features. **The newer P5 ER draft is a third source to reconcile: do not equate an ER entity with an already-built or approved feature.**
+The [original P3 requirements](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit) were broader, but the team chose the smaller P4 implementation. Professor Kandel suggested create → find → save/revisit as a useful end-to-end path and marked that suggestion optional. Our personal Schedule supplies that simple list of plans. Do not reintroduce discarded P3 features or the exploratory P5 schema simply because they appear in older documents.
 
 **One professor comment to resolve:** on the [P4 submission](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit), she said the EventCatalog–Event relationship should use **composition (filled diamond)** because posted Events live in the catalog. The current drawing depicts aggregation and says records outlive the catalog. Discuss the intended lifecycle and correct the diagram/documentation consistently. That is a diagram-and-ownership decision, not an invitation to delete events when somebody removes them from a personal Schedule.
 
-### A scope-decision board — settle these before major coding
+### The settled MVP rules — do not reopen these inside coding prompts
 
-| Question | Default recommended for this sprint | Why it matters / who decides |
+| Decision | Our agreed behavior | Owner / consequence |
 |---|---|---|
-| Is only **full fit** in the MVP? | **Yes**, as in P4 | Sembiyan, with team agreement; do not build partial-fit math by accident |
-| Is Personal Schedule a bookmark or an attendance plan? | **Plan to attend** | Sembiyan/Cynthia wording and behavior: add once, remove link only |
-| Do posted events need to be visible across devices? | **Yes**, if claiming a shared catalog | Daven leads implementation proposal; everyone tests it |
-| Does `USER` imply a login? | **Not by itself.** Decide whether USER is a real persisted identity or only a conceptual/prototype reference. | P5 draws USER; P4 defers accounts. A display name or browser ID is not authentication. |
-| Does `AVAILABILITY_WINDOW` really persist? | **Undecided**: P5 draws saved windows; P4 uses temporary free-time input. | If saved, Sembiyan owns operations; if not, revise the ER proposal to avoid promising a table. |
-| How are anonymous posting and edit/delete handled? | Publish only into a controlled class demo catalog; **public deletion, moderation and identity claims deferred** | Daven proposes safeguards and documents limitations; no exposed write credentials |
-| Do costs, registration, SCU source label ship now? | Agree a small display-only subset; do not implement registration enforcement | P3 requests them, P4 does not model them in detail |
-| Is the M2 deadline exactly November 2/4/6? | **Not verified**. Course timeline puts the M2 prototype in the week of Nov 2–6. | Confirm the live Camino/Gradescope due time before setting calendar dates |
+| Users | **No accounts, profiles, login, separate user identities or user database.** People use the same shared posting/browsing experience. | Nobody implements authentication or `USER` rows. |
+| Posted events | **One shared EventCatalog.** Anyone can create a public event; everyone sees the same catalog. | Daven builds the shared posted-event store and write/read operations. |
+| Event content | **ID, title, description, location, start date/time, end date/time.** No price/cost or registration system. | Daven defines the event data contract; Devonny and Sembiyan consume it. |
+| Finding events | Events must fit **completely** inside the input free-time window; equal start/end boundaries are valid. | Sembiyan uses the existing full-fit rule. No partial/travel features. |
+| Schedule | **A list of events this browser/device currently plans to attend.** Store only stable event IDs, not copies of event data. | Sembiyan owns the local planned-ID list. No server-side per-user plans. |
+| Removing a plan | Remove the event ID from this browser's Schedule only. The posted Event stays in the public catalog. | Test after removing a planned event. |
+| Free-time input | Enter date and available start/end times for a search; don't store availability windows as records. | No `AVAILABILITY_WINDOW` table. |
+| Time and delivery | P5 assignment says **Wednesday, Oct. 28, end of day**; M2 exact time must be verified in the course portal. | Treat proposed team dates as internal targets. |
 
-**P5 warning:** the new ER diagram explicitly says its USER and AVAILABILITY_WINDOW choices are proposals, and that omitting EventCatalog/Schedule database entities differs from a literal P5 classroom instruction. Do **not** implement that whole diagram as a fait accompli. The currently available P5 assignment says **Wednesday, October 28, 2026, end of day**. That replaces the mistaken October 30 date in the earlier guide. Check the active Gradescope page before submitting.
+**Two different meanings of “save” must not be conflated:** `EventCatalog` persists **publicly posted events** for everyone; `Schedule` persists **local references to events planned by this device**. `app/src/model/events.ts` currently stores **the events created locally in M1**, which is a third, transitional state. It must not become the public catalog or planned-events list by renaming the header.
 
-## ER alignment — what our P5 graph changes (read before Section 2)
+## Data-model alignment — P4 is the implementation source of truth
 
-**Source checked:** [`docs/MVP_ER_DIAGRAM.md`](MVP_ER_DIAGRAM.md) is the versioned **proposed** Chen-style ER graph in this repository. The linked [P5 instructions](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit) say **each model class is its own entity**. The repository graph intentionally takes a different logical-database approach, so the team must decide whether to revise its draw.io submission or get the professor's approval for the deviation. The actual finalized P5 draw.io submission is **not verified here**; do not label the proposal as the submitted diagram.
+I checked both pages of the [original P4 draw.io file](https://drive.google.com/file/d/1xiZGXQeScuJx14yKNUcwj1XtWTfOb-l4/view). They define precisely **three model classes**: EventCatalog, Event and Schedule. The diagram says: “Posts stay in the shared catalog. Planned Event identities stay on the current device. Accounts and cross-device schedules are Wants.” It also says “Save means plan to attend.”
 
-### A faithful reading of the proposed ER graph
-
-```mermaid
-flowchart LR
-    U["USER\nuser_id · display_name"]
-    E["EVENT\nevent_id · title · description\nlocation · start_at · end_at\nsource_type · optional cost/registration"]
-    W["AVAILABILITY_WINDOW\navailability_id · start_at · end_at"]
-    P{"PLANS TO ATTEND\nmany-to-many"}
-    U -->|"posts: one user, many events"| E
-    U -->|"has: one user, many windows"| W
-    U --- P
-    P --- E
-    classDef entity fill:#e9f3f3,stroke:#2e797e,color:#183f43,stroke-width:2px
-    classDef relation fill:#fff0d3,stroke:#b98831,color:#604814,stroke-width:2px
-    class U,E,W entity
-    class P relation
-```
-
-This is an **annotated simplification of the repository proposal**, not the professor-required Chen drawing. The original needs true Chen entity rectangles, attribute ovals, underlined identifiers, and the relationship diamond. In that proposal, `USER` **posts** `EVENT` (one-to-many), `USER` **has** `AVAILABILITY_WINDOW` (one-to-many), and `USER` **PLANS TO ATTEND** `EVENT` (many-to-many).
-
-| ER concept (proposal) | Relational representation **if implemented literally** | Who would own the application behavior | What cannot be assumed |
-|---|---|---|---|
-| `USER` (`user_id`, `display_name`) | `users`, stable key | Team agrees identity; Daven coordinates schema; each feature consumes scoped ID | Having a USER row does **not** mean login, secure authentication, or verified authorship. |
-| `EVENT` (`event_id`, title, location, description, timestamps, source, optional cost/registration) | `events`, `posted_by_user_id` foreign key | **Daven** writes/validates/persists; **Devonny** lists/displays | Don't let individual browsers invent conflicting event IDs or claim official verification. |
-| `AVAILABILITY_WINDOW` (`availability_id`, start/end timestamps) | `availability_windows`, `user_id` foreign key | **Sembiyan**, *only if saved windows are approved*; Cynthia supplies UI components | P4 currently accepts a temporary window; the P5 record is an unapproved new persistence feature. |
-| `PLANS TO ATTEND` (`USER` ↔ `EVENT`) | `planned_attendance` with **composite key `(user_id, event_id)`** | **Sembiyan** writes/reads plan association; Devonny/Cynthia show actions | A plan is not a global `event.saved` flag. Removing the link must not delete EVENT. |
-| `EventCatalog` and `Schedule` (from P4) | **Not drawn as tables in this proposed P5 graph** | Catalog API remains **Daven**; Schedule logic remains **Sembiyan** | Professor says each model class is an entity. This omission needs an explicit P5 review; don't treat it as approved. |
-
-### The identity and storage fork — the decision that affects everyone
+### The chosen three-class design
 
 ```mermaid
 flowchart TB
-    Start["Team checks P4 against proposed P5 ER"] --> Q{"Which model is approved for MVP?"}
-    Q -->|"P4 scope retained"| P4["Shared EVENT catalog\nTemporary free-time query\nPer-device planned-event IDs\nNo persistent USER requirement"]
-    Q -->|"P5 persistence adopted"| P5["USER identity and records\nEVENT posted_by_user_id\nOptional saved AVAILABILITY_WINDOW\nPLANNED_ATTENDANCE join records"]
-    P4 --> Review["Update diagram + tests to describe chosen behavior"]
-    P5 --> Identity["Specify identity ownership and authorization\nbefore implementing user-scoped reads/writes"]
-    Identity --> Review
-    classDef choice fill:#fff0d3,stroke:#b98831,color:#604814,stroke-width:2px
-    classDef option fill:#e9f3f3,stroke:#2e797e,color:#183f43
-    class Q choice
-    class P4,P5,Identity,Review option
+    Visitor["Any visitor — no account"]
+    Poster["Post event"]
+    Browser["Browse / find full fit"]
+    Event["Event
+ID · title · description · location
+start and end date/time"]
+    Catalog["EventCatalog
+public add / list / getById / full-fit search"]
+    Shared[("Shared posted-event storage")]
+    Schedule["Schedule
+unique planned Event IDs
+chronological resolved list"]
+    Local[("Current-device plan IDs")]
+    Visitor --> Poster & Browser
+    Poster --> Catalog
+    Browser --> Catalog
+    Catalog --> Event
+    Catalog --> Shared
+    Visitor -->|"Plan to attend / remove plan"| Schedule
+    Schedule -->|"Look up Event by ID"| Catalog
+    Schedule --> Local
+    classDef model fill:#f4e5e7,stroke:#97293c,color:#411f29,stroke-width:2px
+    classDef store fill:#fff1d7,stroke:#b48323,color:#4b3914
+    class Event,Catalog,Schedule model
+    class Shared,Local store
 ```
 
-**Path A — preserve P4's smaller MVP (recommended for the short prototype schedule unless your team revises it).** Persist a shared posted-event catalog, keep each browser's planned IDs locally, and use a temporary availability input. A real `USER` record, saved-window entity, and persisted `PLANNED_ATTENDANCE` junction would then be **future or diagram-only proposals**, not functioning MVP tables. The P5 drawing and its explanation must clearly disclose that mismatch or be revised for the professor's model-entity instruction.
+**Class responsibilities drawn directly from P4:**
 
-**Path B — implement the P5 proposal literally (substantial scope increase).** Daven coordinates shared database schema and event posting, while Sembiyan implements user-specific plan association and, if approved, saved availability-window operations. The team must define how a stable `user_id` is obtained and what authorizes one person to access or alter another person's records. **A random local user ID is not a secure account** and must never be described as one; if no safe identity route can be established for the demo, do not claim multi-user personal persistence. A complete solution needs more tests and time than Path A.
+- **EventCatalog:** accepts posts; supplies current/upcoming events; finds by unique ID; finds events completely inside a free-time window; keeps the shared collection.
+- **Event:** provides event data, duration calculation, full-fit comparison and valid end-after-start time rules.
+- **Schedule:** retrieves selected Event by ID from EventCatalog; adds it once; removes only its local reference; shows planned events in time order; uses current Event details without copying them.
 
-**Either way:** do not implement two competing versions of `Schedule` (one local IDs list and one remote join table) without an intentional migration decision. The existing M1 `sidequest.created-events.v1` localStorage key contains **created events**, not personal attendance plans. Do not silently reuse it as either planned-attendance storage or the shared catalog.
+**P4 relationship notes:** The drawing uses a hollow aggregation diamond for `EventCatalog`→`Event` and for `Schedule`→`Event`, plus a dashed `Schedule`→`EventCatalog` lookup dependency. Professor Kandel specifically suggested **composition** for the catalog-to-event relationship because posts live in the catalog. That is an open **UML notation/lifecycle feedback item**, not a reason to add accounts, erase plans, or create another feature.
 
-### ER constraints become tests, not just labels on a diagram
+### Implementation storage: simple, not a new account system
 
-| Relationship or rule | Concrete acceptance test | Owner |
-|---|---|---|
-| `EVENT.event_id` is unique and stable | Create two distinct events; both remain addressable after refresh | Daven |
-| `USER` posts `EVENT` (Path B only) | Stored event references an existing `user_id`; reject or handle invalid author according to agreed policy | Daven |
-| Catalog is shared | Post in one session; discover in a second independent browser; refresh and still see the event | Daven + Devonny |
-| Full-fit matching | Exact start/end boundaries match; events outside the window never appear | Sembiyan |
-| `PLANS TO ATTEND` unique per user/event (Path B only) | Adding the same `(user_id,event_id)` twice creates only one link | Sembiyan |
-| Remove a plan without removing the event | Remove association or local ID, then confirm the event is still in public browsing | Sembiyan + Devonny |
-| `AVAILABILITY_WINDOW` ownership (if saved) | Each window has an owner, valid start/end and isolated access | Sembiyan |
-| Missing referenced event | An old planned-event link resolves to a clear unavailable state, not a crash | Sembiyan + Cynthia |
+```mermaid
+flowchart LR
+    A["Browser A: anyone can post"] -->|"POST event"| API["Public catalog service"]
+    API <--> EVENTS[("Shared EVENT records")]
+    EVENTS -->|"GET events"| API
+    API -->|"Browse / full-fit source"| B["Browser B: same event catalog"]
+    B -->|"Plan to attend (event ID)"| LOCAL[("Browser B localStorage
+planned-event IDs only")]
+    LOCAL -->|"Resolve by ID"| API
+    C["Browser C"] -->|"Own independent plans"| CLOCAL[("Browser C localStorage")]
+    C -->|"Browse same events"| API
+    classDef store fill:#fff1d7,stroke:#b48323,color:#4b3914
+    class EVENTS,LOCAL,CLOCAL store
+```
 
-### Practical ER-to-code contract, without deciding the database prematurely
+**No `USER` rows, no author foreign keys, no `PLANNED_ATTENDANCE` join table, no saved `AVAILABILITY_WINDOW` table, no cost fields.** Each visitor can post and read the same public catalog. Because there is no identity system, the app cannot securely distinguish who posted an event or restrict who may modify another person's posts; omit public edit/delete operations and be explicit that the prototype is not production-secure. The shared service must still protect its credentials and apply basic validation/rate limits where feasible.
 
-Keep **database records**, **model objects**, and **React props** separate. This is a *proposed* naming sketch; do not copy into code until the team settles Path A or B.
+This is a conceptual database view. An implementation might use **one `events` collection/table** behind EventCatalog with stable event IDs. `EventCatalog` and `Schedule` remain real *application classes/services* in the MVC design even if one is backed by a single events table and the other by browser localStorage. That distinction does **not** mean the P5 classroom ER diagram is automatically correct: [P5 instructions](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit) ask the group to show each model class as an entity, so the team should make the hand drawing and draw.io submission reflect its chosen simplification and confirm notation with the professor if needed. The older [P5 GitHub proposal](MVP_ER_DIAGRAM.md) explores a different model and is explicitly superseded as an implementation plan; the actual final P5 draw.io submission has not been verified here.
+
+### Proposed TypeScript contract — exact names to be reviewed by the team
+
+This is illustrative code for the chosen architecture, **not code already implemented**. P4 names start and end *dates and times*. M1 only has one `date`, `start`, and `end` for same-day events, so agree how to migrate or deliberately limit MVP events to one day before writing either adapter.
 
 ```ts
-// P5 relational view (only if persistence choices are approved)
-type UserRow = { user_id: string; display_name: string }
-type EventRow = {
-  event_id: string; posted_by_user_id: string;
-  title: string; description: string; location: string;
-  start_at: string; end_at: string; source_type: 'scu' | 'student';
-  cost_amount?: number | null; registration_details?: string | null;
+export type EventRecord = {
+  id: string
+  title: string
+  description: string
+  location: string
+  startDate: string // YYYY-MM-DD
+  startTime: string // HH:MM
+  endDate: string   // YYYY-MM-DD
+  endTime: string   // HH:MM
 }
-type PlannedAttendanceRow = { user_id: string; event_id: string }
-type AvailabilityWindowRow = {
-  availability_id: string; user_id: string;
-  start_at: string; end_at: string;
+
+export interface EventCatalogPort {
+  create(draft: Omit<EventRecord, 'id'>): Promise<EventRecord>
+  listUpcoming(): Promise<EventRecord[]>
+  getById(eventId: string): Promise<EventRecord | null>
 }
-// P4-facing APIs can still expose EventRecord, EventCatalogPort, SchedulePort.
-// An adapter translates rows to the current date + HH:MM model if needed.
+
+export interface SchedulePort { // stored only in this browser
+  listPlannedIds(): string[]
+  add(eventId: string): { added: boolean }
+  remove(eventId: string): void
+}
 ```
 
-If the team chooses full timestamps, specify the time zone and test conversion: the current M1 model uses separate `date`, `start`, and `end` strings with **same-day** assumptions. A database `start_at` timestamp cannot be silently substituted without updating matching, UI and tests.
+The catalog service is the only authority for public Event IDs and data. The Schedule holds just local IDs and asks EventCatalog for current details. Never set `event.saved = true` in shared Event data; that would confuse a device's plan with a public property.
 
-### P5 deliverables — separate from the MVP software build
+### Contract tests that match the diagram
 
-The [current P5 assignment](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit) says **Wednesday, October 28, end of day** and requires **both** (1) a picture of the in-class hand-drawn ER diagram and (2) the **draw.io** version with “everyone with the link can comment,” submitted via **Gradescope**. One group member submits and lists all contributors. A Mermaid diagram in GitHub, this playbook, or a Word diagram **cannot replace those submissions**.
+| Check | Expected | Primary reviewer |
+|---|---|---|
+| Post then retrieve an Event | A created ID survives a reload, and another browser sees the same title/details | Daven + Devonny |
+| Full-fit matching | Equal time boundaries count; an event ending one minute late is excluded | Sembiyan |
+| Plan twice | Schedule includes one ID, not two duplicates | Sembiyan |
+| Remove a plan | Only this device's ID disappears; the public Event remains accessible | Sembiyan + Daven |
+| Different browser Schedule | Browser A and B can read same catalog, but their local plans do not synchronize | Sembiyan + Devonny |
+| Planned ID no longer in catalog | My Schedule shows a clear unavailable state instead of a crash | Sembiyan + Cynthia |
+| M1 → MVP model migration | Event descriptions, dates and full-fit behavior remain correct after adapting old fields | Daven + Sembiyan |
 
-**Team checkpoint before that submission:** check the P4 class names against the P5 “each model class is its own entity” instruction; choose what the P5 ER is meant to describe; review keys and user-to-event attendance links; then make the **draw.io** reflect the agreed graph. If the graph remains a future persistence proposal rather than MVP scope, state that clearly when asking the professor about the design. This checkpoint should be completed **on October 28, not October 29**.
+### P5 assignment checkpoint, separate from implementation
 
-### Changed handoffs because of the ER graph
+The P5 assignment currently states **Wednesday, October 28, 2026, end of day**. It asks for **a photo of the in-class hand-drawn ER diagram** plus a **draw.io ER diagram** shared as “everyone with the link can comment,” submitted through **Gradescope**. One teammate submits and adds contributors. GitHub Markdown or this playbook does not replace either file. **Do not submit the old USER/AVAILABILITY_WINDOW proposal as though it were the agreed simple architecture.** Check the professor's “each model class is its own entity” instruction and ask about the correct representation if your actual database has only public Event records plus local planned IDs.
 
-- **Daven → Devonny:** an EventCatalog read API returning stable event IDs, public details, and documented error/empty behavior; `posted_by_user_id` only when the team chooses Path B.
-- **Daven → Sembiyan:** event lookup by ID and the catalog's authoritative event identity. If Path B, coordinate migration ownership; Sembiyan should own the *plan operations*, not independently change Daven's `events` table.
-- **Sembiyan → Cynthia/Devonny:** clear `isPlanned`, `addPlan`, `removePlan`, `listPlans` interface; include a user scope only if Path B is approved, and decide who handles missing events.
-- **Cynthia ↔ Devonny:** agree how event source, optional cost/registration and plan status appear in cards and details; labels distinguish **created events** from **planned events**.
-- **Whole team:** make a one-paragraph decision record with selected path, schema fields, naming, identities, and deferred items. Update the P4/P5 diagrams and tests *together*, not through separate agent guesses.
+### Clear handoffs, no schema split
+
+- **Daven → Devonny:** public list and lookup results, event fields, stable IDs and loading/error responses. Devonny owns Browse, *not* the catalog datastore.
+- **Daven → Sembiyan:** public event lookup by ID and agreed temporal fields. Sembiyan implements full-fit and the **local** planned-ID Schedule; no user table or attendance join table.
+- **Cynthia ↔ Devonny:** shared card/details components with Event props and distinct “Plan to attend” action. No price blocks or account UI.
+- **Whole team:** agree field names and which class owns `fitsFully`; then agents implement independent slices. Changing EventRecord requires a coordinated PR and matching tests.
 
 ## 2. How the pieces should fit together
 
@@ -230,38 +243,16 @@ sequenceDiagram
     Note over Sch,Store: Delete only local plan link; do not delete public event
 ```
 
-### The P4-facing contract: agree first, then code
+### One agreed contract, not two competing schemas
 
-The team should approve one typed interface before anyone changes storage or component props. This is the **Path A P4-facing interface** (local plans, temporary windows). If Path B is chosen, extend it explicitly with user-scoped methods; do not pretend this local-only SchedulePort implements the `PLANNED_ATTENDANCE` database relationship. Below is **illustrative TypeScript, not implemented production code**. Don't commit these names as public API until the team has checked them.
+Use the **EventRecord, EventCatalogPort and SchedulePort** proposal in [the Data-model alignment section above](#proposed-typescript-contract--exact-names-to-be-reviewed-by-the-team). It reflects the chosen P4-simple design. Finalize names with the team before merging code; there is no alternative user-scoped Path B in this MVP.
 
-```ts
-// PROPOSAL — shape to discuss, not current app/src/model/events.ts
-export type EventRecord = {
-  id: string; title: string; description?: string; location: string;
-  date: string; start: string; end: string; // existing YYYY-MM-DD / HH:MM
-  sourceType?: 'scu' | 'student';
-};
-
-export interface EventCatalogPort {
-  listUpcoming(): Promise<EventRecord[]>;
-  getById(id: string): Promise<EventRecord | null>;
-  create(draft: Omit<EventRecord, 'id'>): Promise<EventRecord>;
-}
-
-export interface SchedulePort {
-  listPlannedIds(): string[];
-  add(eventId: string): { added: boolean };
-  remove(eventId: string): void;
-}
-```
-
-- Keep **`id` stable** across posting, browsing, searching and Schedule. Do not use the event title as identity.
-- Keep dates/times consistent with the M1 code until the team deliberately migrates them. If you change to timezone-aware timestamps, update **every** consumer and test together.
-- Keep `fitsFully(event, date, start, end)` as the source of truth for temporal matching unless the team deliberately replaces it. Boundary equality counts as a match.
-- A Schedule stores **event IDs**, not a second copy of title/date/location. If a public event disappears, render a sensible “event unavailable” state rather than crashing.
-- Distinguish **catalog shared storage** from **this browser's planned list**. P4 deliberately does not promise that a student's plans follow them to another device.
-- Do not make a `saved: true` flag on a public Event: it would wrongly represent one student's choice as global state.
-- For demo storage, separate the port/interface from its implementation; this makes it possible to test with fake data and switch strategies without rewriting views.
+- Keep Event IDs stable from publishing through Browse, Search and Schedule. Two events may have identical titles; IDs distinguish them.
+- Agree on the P4 start/end date/time representation versus the M1 same-day fields. Do not let each coding agent invent a different interface.
+- Keep `fitsFully` as the validated source of truth for temporal matching. Exact matching boundaries are inclusive.
+- `Schedule` keeps **only event IDs in this browser's local storage**. It asks EventCatalog for current details when rendering; it does not copy an Event or add a global `saved` property.
+- Never use `sidequest.created-events.v1` as the planned-attendance key. That legacy M1 key stores browser-created events, not planned event IDs or a cross-browser catalog.
+- Keep a fake EventCatalog adapter for isolated UI tests, clearly labeled as a test fixture; do not call it shared persistence in the demo.
 
 ### Feature dependency map
 
@@ -283,14 +274,14 @@ flowchart LR
 
 ## 3. Cynthia — design the experience, and build it
 
-**ER handoff:** use the agreed EventRow-to-EventRecord mapper; show `source_type` and optional event details only when the team actually supports them. If plans are user-scoped under Path B, never guess the current user from a public Event.
+**Architecture handoff:** design components around the agreed Event fields and local `isPlanned` state. No account screens, price labels or account-scoped props.
 
 **What you own:** visual direction and reusable interface patterns. You co-design browsing with Devonny, rather than taking over all her feature code. You still implement real React components and test their states.
 
 **First pass — decisions (one focused session):**
 
 1. Open the working M1 app and draw four tiny screen sketches: Browse, Event Detail, Search, My Schedule. Decide whether these are separate routes or sections; don't invent a router if a small tab/section layout is enough.
-2. Inventory what every event card must show at a glance: title, date/time, place, and a clear way to inspect details. Decide how optional fields are represented without awkward blank labels.
+2. Inventory what every event card must show at a glance: title, date/time, place, and a clear way to inspect details. Include the description in the detail presentation; omit cost and other unapproved fields rather than adding placeholders.
 3. Define tokens once (e.g., `--color-*`, spacing, corner radius, font scale). Keep the existing SCU maroon/gold identity unless the group agrees otherwise. Avoid global CSS changes that unexpectedly restyle everyone's forms.
 4. Sketch real **states**: no events, loading, error, full list, no match, an event missing after being planned, mobile narrow screen.
 5. Share a screenshot/Figma frame or annotated sketch and ask Devonny to confirm the component interface **before** implementation.
@@ -304,13 +295,13 @@ flowchart LR
 5. Avoid overly ambitious animation and redesign of every page in the same PR. First deliver a usable UI kit and one screen.
 6. Review Devonny's Browse PR for information hierarchy and consistency; she reviews your components for integration practicality.
 
-**Your acceptance checks:** Browse cards don't overflow on a phone; essential event facts are legible; tab order and buttons work; missing optional data doesn't produce “undefined”; an empty catalog shows a useful message; the UI doesn't perform matching or storage itself.
+**Your acceptance checks:** Browse cards don't overflow on a phone; essential event facts are legible; tab order and buttons work; missing event data doesn't produce “undefined”; an empty catalog shows a useful message; the UI doesn't perform matching or storage itself.
 
 **Handoff to Devonny:** a screenshot or link, component names/props, tokens, sample empty/loading/error screens, and which files you'll edit. Agree that Devonny owns catalog-to-browse behavior while you own cross-screen patterns.
 
 ## 4. Devonny — make discovery real, with Cynthia
 
-**ER handoff:** read EVENT data through Daven's catalog contract. You do not need to create a separate EventCatalog SQL table just to render public events; confirm that architectural decision with the team and the professor before finalizing P5.
+**Architecture handoff:** read shared Event records through Daven's EventCatalog interface; the browsing page never reads or edits database internals directly.
 
 **What you own:** presenting events from an agreed catalog read interface, navigating/selecting an event, and the Browse feature's state transitions. Help choose UI details with Cynthia. You **do not** separately own catalog persistence internals.
 
@@ -328,9 +319,9 @@ flowchart LR
 
 ## 5. Daven — posting plus the catalog's one source of truth
 
-This is a larger, more foundational workstream. It is reasonable because the M1 create/validate logic already exists, **but do not build database accounts, saved availability and production moderation at the same time**.
+This is a foundational workstream. M1 create/validate logic already exists. Build the shared posted-event catalog, not accounts, user profiles, saved availability, prices, or a production-scale moderation system.
 
-**ER ownership:** coordinate the EVENT persistence schema, foreign keys and migrations. If USER identity is approved, collaborate on who creates/resolves `user_id`. Do **not** leave PLANNED_ATTENDANCE and AVAILABILITY_WINDOW operations unassigned; Sembiyan can own those feature operations after the schema is agreed.
+**Data ownership:** Daven owns the shared Event records, unique IDs, creation and retrieval API, and integration with the posting form. There is **no user foreign key or planned-attendance table** in the chosen implementation.
 
 **First decision — storage strategy:**
 
@@ -343,7 +334,7 @@ This is a larger, more foundational workstream. It is reasonable because the M1 
 
 **Implementation path:**
 
-1. Agree on `EventRecord` fields and port before changing `events.ts`. Decide if description/sourceType is required now or optional.
+1. Agree on the P4 `EventRecord` fields and port before changing `events.ts`. **Description is in the original P4 Event class;** no sourceType, price, registration or user ID is needed. Resolve same-day M1 fields versus P4 start/end dates deliberately.
 2. Keep existing `createEvent` validation behavior or reuse its rules behind the new posting controller. Don't overwrite tested logic without replacement tests.
 3. Build `listUpcoming`, `getById`, and `create` against a fake in-memory adapter **first**. Include unique IDs and persistent ordering.
 4. Choose the shared storage route the team can operate, document how to start/deploy it, and keep secrets off GitHub and outside browser bundles. Never ship an unrestricted public write API or a server admin key in React code.
@@ -358,7 +349,7 @@ This is a larger, more foundational workstream. It is reasonable because the M1 
 
 ## 6. Sembiyan — full-fit search and the Personal Schedule
 
-**ER ownership:** under Path A, plan references stay local and free-time inputs are temporary. Under Path B, your scope explicitly expands to PLANNED_ATTENDANCE join-table operations and, if approved, AVAILABILITY_WINDOW records scoped to a stable user ID. Align keys and migration boundaries with Daven rather than having two agents edit schema files independently.
+**Data ownership:** Schedule is a **current-device list of stable Event IDs** in localStorage; free-time is a temporary search input. No database join table, account state or saved availability entity.
 
 **What you own:** the free-time matching flow and local “plan to attend” list. These share event IDs but are separate behaviors; separate tests and PRs are encouraged if scope grows.
 
@@ -368,12 +359,12 @@ This is a larger, more foundational workstream. It is reasonable because the M1 
 2. Reuse existing `fitsFully` and `findEvents` logic as a starting point. Preserve same-date checks, ordered results, valid window checks, and inclusive exact boundaries.
 3. Treat “partially fits” and travel time as **out of scope** for this P4 MVP unless the team explicitly changes requirements.
 4. Add search controls to Browse or a dedicated Find section, agreed with Cynthia; filtering needs to work against **catalog events**, not only the old browser-created-event list.
-5. **Path A:** implement `Schedule` as a local collection of stable event IDs, e.g. storage key `sidequest.planned-event-ids.v1` (proposed name). **Path B:** implement a user-scoped planned-attendance association through the agreed service. In both paths: add once, handle duplicate requests safely, remove only the plan link, never delete the public event.
+5. Implement `Schedule` as a local collection of stable event IDs, e.g. storage key `sidequest.planned-event-ids.v1` (proposed name). Add once, handle duplicates, remove only the plan ID, and never delete the public Event.
 6. Resolve IDs through the catalog to display current event information. Show an unavailable-state if an event no longer exists. Keep display order predictable (event start time/date).
 7. Test refresh persistence, duplicate add, remove, invalid/corrupt local storage, same event title with different IDs, missing catalog event, and exact time boundaries.
 8. Share actions/props with Cynthia and Devonny before their screen integrations; coordinate copy: **“Plan to attend”**, **“My plans”**, **“Remove from plans”**, not “Delete event”.
 
-**Done:** the correct public events match; one click adds a stable event ID to My Schedule; refreshing preserves the appropriate plan representation (on the same device in Path A, or safely scoped to an authorized user in Path B); removing a plan does not change the public catalog.
+**Done:** the correct public events match; one click adds the event ID to My Schedule; same-device refresh preserves it; removing a plan does not change the public catalog.
 
 ## 7. Everyone — work in small, reviewable slices
 
@@ -466,13 +457,13 @@ flowchart LR
 
 1. Start on your own feature branch with clean `git status` and an agreed issue/feature.
 2. Provide the M1 files, [P4 draw.io](https://drive.google.com/file/d/1xiZGXQeScuJx14yKNUcwj1XtWTfOb-l4/view), this playbook, and the **specific** contract. Request **Plan** first: list touched files, data shapes, risks, tests; forbid edits in this first response.
-3. Read the plan. Reject new accounts, saved windows, travel calculations, styling overhauls, or new libraries unless approved.
+3. Read the plan. Reject new accounts, saved windows, cost fields, travel calculations, styling overhauls, or new libraries unless the team deliberately revises the agreed architecture.
 4. Permit one small implementation; ask the agent to run `npm test` and `npm run build` and quote the actual results. Never give it unchecked write/deploy privileges or place API keys in prompts/code.
 5. Inspect the Git diff yourself, perform one manual use case, then request an independent reviewer. Two AIs agreeing is **not** proof that the feature works.
 
 **Ready-to-paste planning prompt:**
 
-> You are working in `haiiroWednesday/SideQuest-CSCI187`, React/TypeScript app under `app/`, default branch `master`. Read `README.md`, `REQUIREMENTS.md`, `SPECIFICATIONS.md`, `docs/MVP_TEAM_PLAYBOOK.md`, **`docs/MVP_ER_DIAGRAM.md`**, and the P4 class diagram before proposing code. My assigned feature is [FEATURE]. Follow Model–View–Controller boundaries, reuse tested M1 code, and respect our **approved P4-versus-P5 scope decision**: full fit only; Schedule means plan to attend; shared posted catalog; USER, PLANNED_ATTENDANCE and saved AVAILABILITY_WINDOW are **conditional on our documented data-model choice**. Before coding, state whether the feature uses Path A or Path B and why. **Do not edit yet.** Tell me your understanding, the smallest possible file-by-file plan, proposed interfaces, edge cases, and tests. Mark all inferred choices as questions. Do not modify unrelated files.
+> You are working in `haiiroWednesday/SideQuest-CSCI187`, React/TypeScript app under `app/`, default branch `master`. Read `README.md`, `REQUIREMENTS.md`, `SPECIFICATIONS.md`, `docs/MVP_TEAM_PLAYBOOK.md`, and **both pages of the original P4 class diagram**. The previous `docs/MVP_ER_DIAGRAM.md` proposal is superseded; it is not implementation scope before proposing code. My assigned feature is [FEATURE]. Follow Model–View–Controller boundaries, reuse tested M1 code, and respect our **confirmed P4-simple scope**: shared public EventCatalog, no user/login, no cost or saved-availability records, full-fit matching only, and one browser-local Schedule of planned Event IDs. The old P5 ER proposal is superseded for implementation. Do not propose account tables, planned-attendance junctions, saved availability tables or prices. **Do not edit yet.** Tell me your understanding, the smallest possible file-by-file plan, proposed interfaces, edge cases, and tests. Mark all inferred choices as questions. Do not modify unrelated files.
 
 **Ready-to-paste implementation prompt (after approval):**
 
@@ -593,11 +584,11 @@ gantt
 5. **60 seconds — plans:** Add the event to My Schedule, refresh, remove it, then prove the original event is still discoverable.
 6. **40 seconds — quality:** Show GitHub CI, tests, one mobile screenshot, and honestly describe what's postponed.
 
-**Before calling MVP complete:** confirm the current course deadline and P5 requirements; resolve the professor's composition feedback; **choose ER Path A or B and document USER/AVAILABILITY_WINDOW/PLANS TO ATTEND behavior**; decide the shared catalog approach; reconcile the P5 ER proposal with P4 scope; identify a human reviewer for every PR; keep all secrets private; and run the cross-browser scenario on `master`.
+**Before calling MVP complete:** confirm the current course deadline and P5 submission details; discuss the professor's catalog composition feedback; ensure the submitted ER drawing reflects the **already-chosen simple architecture**, not the old exploratory proposal; implement a genuinely shared event catalog plus a browser-local Schedule; assign human reviewers; keep secrets private; and run the cross-browser scenario on `master`.
 
 ### Documented source links and ownership
 
-**Team artifacts:** [P5 current assignment](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit) · [P3 requirements and instructor comments](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit) · [P4 draw.io architecture](https://drive.google.com/file/d/1xiZGXQeScuJx14yKNUcwj1XtWTfOb-l4/view) · [P4 professor feedback](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit) · [M1 walking skeleton specs](../SPECIFICATIONS.md) · [P5 proposed ER rationale](MVP_ER_DIAGRAM.md).
+**Team artifacts:** [P5 current assignment](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit) · [P3 requirements and instructor comments](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit) · [P4 draw.io architecture](https://drive.google.com/file/d/1xiZGXQeScuJx14yKNUcwj1XtWTfOb-l4/view) · [P4 professor feedback](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit) · [M1 walking skeleton specs](../SPECIFICATIONS.md) · [superseded exploratory P5 proposal](MVP_ER_DIAGRAM.md).
 
 **Course:** [MVP](https://docs.google.com/presentation/d/1G3QYEDONfO21IupTmfIlAm0b0nRTHTLRYXH2QmDKXz0/edit) · [System Architecture](https://docs.google.com/presentation/d/1S5NFSWBuB7DNCxgtnEIwg7Yq-osRQyr4eVQB9pk-UqI/edit) · [Implementation and AI guidance](https://docs.google.com/presentation/d/1YxzkSxyK5kZIJjCdwa69SmrmPgtytcaWBwcARaJGcm0/edit) · [Walking Skeleton](https://docs.google.com/presentation/d/1W_RSFcWNTL-NINOeRiGBVvvOtcZncaio5pE5-QtSRmw/edit).
 
