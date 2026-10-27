@@ -30,7 +30,7 @@
 - `app/src/controller/findEvents.ts` has `createEvent` and `findEvents`. `app/src/model/events.ts` has `CampusEvent`, `fitsFully`, date/time checks, and local-storage helpers.
 - Current `master` has **26 passing tests in 11 files** and a passing React build (verified 27 October). The test suite proves the M1 slice, **not** the future shared catalog or Personal Schedule.
 - The default branch is **`master`**, not `main`. App commands run inside `app/`.
-- `docs/MVP_ER_DIAGRAM.md` is an **earlier exploratory P5 proposal**, not the chosen MVP. Its former USER, AVAILABILITY_WINDOW, PLANNED_ATTENDANCE and cost/registration proposals have been replaced with MVP-aligned guidance.
+- `docs/MVP_ER_DIAGRAM.md` now documents the simple P5 conceptual model; its earlier USER, AVAILABILITY_WINDOW, PLANNED_ATTENDANCE and cost/registration proposals were replaced.
 
 ## 1. Start from the course materials, not assumptions
 
@@ -56,6 +56,8 @@ The [original P3 requirements](https://docs.google.com/document/d/11Yq8sW1aOphzn
 | Time and delivery | P5 assignment says **Wednesday, Oct. 28, end of day**; M2 exact time must be verified in the course portal. | Treat proposed team dates as internal targets. |
 
 **Two different meanings of “save” must not be conflated:** `EventCatalog` persists **publicly posted events** for everyone; `Schedule` persists **local references to events planned by this device**. `app/src/model/events.ts` currently stores **the events created locally in M1**, which is a third, transitional state. It must not become the public catalog or planned-events list by renaming the header.
+
+**Before coding, two implementation contracts still need team sign-off:** (1) the *single* Event date/time shape—P4 shows start/end dates and times while M1 uses a same-day date/start/end trio; (2) the concrete shared catalog backend and how two browsers will connect to it. These are practical decisions, **not** permission to reopen the agreed MVP feature scope. `hostName` is a required proposed addition for display, not a USER login or verified poster ID.
 
 ## Data-model alignment — P4 is the implementation source of truth
 
@@ -83,7 +85,7 @@ I checked both pages of the [original P4 draw.io file](https://drive.google.com/
 
 **No USER rows, author foreign keys, PLANNED_ATTENDANCE table, saved AVAILABILITY_WINDOW table, or cost fields.** Each Event has an unverified display `hostName`. An optional generated browser `posterId` would not authenticate the host. Each visitor can post and read the same public catalog. Because there is no identity system, the app cannot securely distinguish who posted an event or restrict who may modify another person's posts; omit public edit/delete operations and be explicit that the prototype is not production-secure. The shared service must still protect its credentials and apply basic validation/rate limits where feasible.
 
-This is a conceptual database view. An implementation might use **one `events` collection/table** behind EventCatalog with stable event IDs. `EventCatalog` and `Schedule` remain real *application classes/services* in the MVC design even if one is backed by a single events table and the other by browser localStorage. That distinction does **not** mean the P5 classroom ER diagram is automatically correct: [P5 instructions](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit) ask the group to show each model class as an entity, so the team should make the hand drawing and draw.io submission reflect its chosen simplification and confirm notation with the professor if needed. The older [revised P5 ER guidance](MVP_ER_DIAGRAM.md) describes this simplified design; the actual final P5 draw.io submission has not been verified here.
+This is a conceptual database view. An implementation might use **one `events` collection/table** behind EventCatalog with stable event IDs. `EventCatalog` and `Schedule` remain real *application classes/services* in the MVC design even if one is backed by a single events table and the other by browser localStorage. That distinction does **not** mean the P5 classroom ER diagram is automatically correct: [P5 instructions](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit) ask the group to show each model class as an entity, so the team should make the hand drawing and draw.io submission reflect its chosen simplification and confirm notation with the professor if needed. The current [P5 ER guidance](MVP_ER_DIAGRAM.md) describes this simplified design; the actual final P5 draw.io submission has not been verified here.
 
 ### Host identity without user accounts
 
@@ -342,7 +344,7 @@ Your professor permits coding with agents but warns that they can invent archite
 
 **Ready-to-paste planning prompt:**
 
-> You are working in `haiiroWednesday/SideQuest-CSCI187`, React/TypeScript app under `app/`, default branch `master`. Read `README.md`, `REQUIREMENTS.md`, `SPECIFICATIONS.md`, `docs/MVP_TEAM_PLAYBOOK.md`, and **both pages of the original P4 class diagram**. The previous `docs/MVP_ER_DIAGRAM.md` proposal is superseded; it is not implementation scope before proposing code. My assigned feature is [FEATURE]. Follow Model–View–Controller boundaries, reuse tested M1 code, and respect our **confirmed P4-simple scope**: shared public EventCatalog, no user/login, no cost or saved-availability records, full-fit matching only, and one browser-local Schedule of planned Event IDs. The old P5 ER proposal is superseded for implementation. Do not propose account tables, planned-attendance junctions, saved availability tables or prices. **Do not edit yet.** Tell me your understanding, the smallest possible file-by-file plan, proposed interfaces, edge cases, and tests. Mark all inferred choices as questions. Do not modify unrelated files.
+> You are working in `haiiroWednesday/SideQuest-CSCI187`, React/TypeScript app under `app/`, default branch `master`. Read `README.md`, `REQUIREMENTS.md`, `SPECIFICATIONS.md`, `docs/MVP_TEAM_PLAYBOOK.md`, and **both pages of the original P4 class diagram**. Read the *current* `docs/MVP_ER_DIAGRAM.md` as conceptual P5 guidance; do not implement its classroom entities as automatic database tables. My assigned feature is [FEATURE]. Follow Model–View–Controller boundaries, reuse tested M1 code, and respect our **confirmed P4-simple scope**: shared public EventCatalog, no user/login, no cost or saved-availability records, full-fit matching only, and one browser-local Schedule of planned Event IDs. Older P5 proposals with USER accounts, saved availability and PLANNED_ATTENDANCE tables are superseded. Do not propose account tables, planned-attendance junctions, saved availability tables or prices. **Do not edit yet.** Tell me your understanding, the smallest possible file-by-file plan, proposed interfaces, edge cases, and tests. Mark all inferred choices as questions. Do not modify unrelated files.
 
 **Ready-to-paste implementation prompt (after approval):**
 
