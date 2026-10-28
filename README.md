@@ -51,10 +51,12 @@ The repository also contains the original C++ course starter files, but they are
 
 ## Documentation — only three active guides
 
-1. **[Build the MVP](docs/MVP_TEAM_PLAYBOOK.md)** — agreed scope, Mermaid P4 class diagram, the faithfully transcribed P5 classroom ER and the historical proposal (Mermaid), with the original Google Doc links, shared Event type, Supabase proposal, responsibilities, implementation sequence, and testing examples.
-2. **[Set up the team and AI agents](TEAM_SETUP_GUIDE.md)** — install/run/test SideQuest, Git workflow, Cline/Claude credentials, optional multi-agent setup, and troubleshooting.
+1. **[Build the MVP](docs/MVP_TEAM_PLAYBOOK.md)** — the M2 implementation contract, ownership, testing, P4 architecture, plus the **current selected P5 coursework ER** as Mermaid with a direct editable draw.io link; the original classroom sketch and earlier draft are preserved separately.
+2. **[Set up the team and AI agents](TEAM_SETUP_GUIDE.md)** — install/run/test SideQuest, Git workflow, and a balanced comparison of OpenCode, Cursor, Claude Code, Codex, and Cline, plus multi-agent reviews and troubleshooting.
 3. **[Product research and future roadmap](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md)** — raw interview findings, competitors, HCI research, the full feature vision, ten Mermaid diagrams, final-project expansion, and the verified **five-point extra-credit rubric**.
 
 **Original M1 coursework:** [User requirements](REQUIREMENTS.md) · [Technical specifications](SPECIFICATIONS.md). These are retained as separate historical assignment deliverables, not competing new-MVP instructions.
 
-**For coding assistants:** [AGENTS.md](AGENTS.md) contains the compact project rules and points to the guides above. For the original P4 and P5 drawings, use the **Google Doc links directly under the Mermaid diagrams** in the MVP guide.
+**P5 direct links:** [Current selected ER diagram in the playbook (Mermaid)](docs/MVP_TEAM_PLAYBOOK.md#p5-coursework-er-diagram--current-drawio-and-mermaid) · [Current editable P5 draw.io in Google Drive](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view) · [Original classroom P5 Google Doc](https://docs.google.com/document/d/1zr55kTHGyVltD1AqU7SrdVOWPlf2ClkwWczfdOT4yO0/edit) · [P5 instructions](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit). The selected P5 coursework diagram is broader than the M2 coding contract. Its permission still needs an 'Anyone with the link → Commenter' check before Gradescope submission.
+
+**For coding assistants:** [AGENTS.md](AGENTS.md) contains the compact M2 project rules and points to the guides above. The **P5 coursework ER is not an instruction to add USER or AVAILABILITY_WINDOW tables to M2**.
