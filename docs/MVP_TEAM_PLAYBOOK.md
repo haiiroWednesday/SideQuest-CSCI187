@@ -528,7 +528,7 @@ This is a foundational workstream. M1 create/validate logic already exists. Buil
 
 **Implementation path:**
 
-1. Start from the selected same-day `EventRecord` type (`id`, `title`, `hostName`, `description`, `location`, `date`, `start`, `end`) and shared catalog interface in the [implementation contract](#implementation-contract--database-and-supabase-setup). No login, cost, USER table, or alternate timestamp type.
+1. Start from the selected same-day `CampusEvent` type (`id`, `title`, `hostName`, `description`, `location`, `date`, `start`, `end`) and shared catalog interface in the [implementation contract](#implementation-contract--database-and-supabase-setup). No login, cost, USER table, or alternate timestamp type.
 2. Keep existing `createEvent` validation behavior or reuse its rules behind the new posting controller. Don't overwrite tested logic without replacement tests.
 3. Build `listUpcoming`, `getById`, and `create` against a fake in-memory adapter **first**. Include unique IDs and persistent ordering.
 4. Configure Supabase Postgres and version the table schema/privileges/RLS policy in a SQL migration; integrate it with the `@supabase/supabase-js` adapter. The **publishable** key is intended for client-side use; NEVER put a secret/service-role key in React or GitHub. For classroom anonymous inserts, enforce data constraints and SELECT/INSERT-only role permissions, and document the spam risk. For wider public access, add a server-side rate-limited write endpoint.
@@ -726,7 +726,7 @@ flowchart LR
 | Browse view/interaction | Devonny | Cynthia co-designs |
 | Event creation + catalog storage adapter | Daven | Sembiyan reviews contract |
 | Matching / Schedule domain helpers | Sembiyan | Daven reviews invariants |
-| Shared `EventRecord` and port definitions | **Joint change** | Review required from Daven, Devonny, Sembiyan before merge |
+| Shared `CampusEvent` and port definitions | **Joint change** | Review required from Daven, Devonny, Sembiyan before merge |
 | `App.tsx` composition/navigation | Agree one integrator per PR | Avoid simultaneous broad edits |
 | Tests for each feature | Feature owner | Every teammate verifies integrated suite |
 
