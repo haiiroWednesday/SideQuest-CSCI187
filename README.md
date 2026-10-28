@@ -49,16 +49,12 @@ Events are created by the user and saved in the current browser's `localStorage`
 
 The repository also contains the original C++ course starter files, but they are **not needed** to run or test the React application.
 
-## Project documentation
+## Documentation — only three active guides
 
-- [User Requirements](REQUIREMENTS.md)
-- [Technical Specifications and MVC/CRC responsibilities](SPECIFICATIONS.md)
-- [Team setup and troubleshooting](TEAM_SETUP_GUIDE.md)
-- [AI coding agent setup and optional multi-agent teams](docs/AI_AGENT_SETUP_GUIDE.md) — Cline, Claude workspace, project rules, first task and safe reviews.
-- [MVP ER model and host information](docs/MVP_ER_DIAGRAM.md) — proposed simple P5 classroom ER design; no user-account table, with a host display name on events.
+1. **[Build the MVP](docs/MVP_TEAM_PLAYBOOK.md)** — agreed scope, Mermaid P4 class diagram, Mermaid P5 ER diagram with original Google Doc links, shared Event type, Supabase proposal, responsibilities, implementation sequence, and testing examples.
+2. **[Set up the team and AI agents](TEAM_SETUP_GUIDE.md)** — install/run/test SideQuest, Git workflow, Cline/Claude credentials, optional multi-agent setup, and troubleshooting.
+3. **[Product research and future roadmap](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md)** — raw interview findings, competitors, HCI research, the full feature vision, ten Mermaid diagrams, final-project expansion, and the verified **five-point extra-credit rubric**.
 
-- [Editable proposed P5 draw.io diagram](docs/SideQuest_P5_Simple_ER_Proposed.drawio) — working draft, not a submitted Gradescope artifact.
-- [MVP Team Playbook](docs/MVP_TEAM_PLAYBOOK.md) — proposed feature ownership, architecture and sequence diagrams, Git/CI workflow, AI-agent safeguards, integration steps, and sprint plan.
-- [Full Product Roadmap](docs/FULL_PRODUCT_ROADMAP.md) — P0/P1/P3 feature vision, competition, expansion boundaries and post-MVP architecture.
-- [Original interview findings and verified extra-credit rubric](docs/INTERVIEW_FINDINGS_AND_EXTRA_CREDIT.md) — field evidence, bonus categories, point limits, and eligibility.
-- [Deep SideQuest product research](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md) — grounded interviews, competitors, HCI evidence, future-proof architecture, bonus-credit plan, and usability experiments.
+**Original M1 coursework:** [User requirements](REQUIREMENTS.md) · [Technical specifications](SPECIFICATIONS.md). These are retained as separate historical assignment deliverables, not competing new-MVP instructions.
+
+**For coding assistants:** [AGENTS.md](AGENTS.md) contains the compact project rules and points to the guides above. For the original P4 and P5 drawings, use the **Google Doc links directly under the Mermaid diagrams** in the MVP guide.
