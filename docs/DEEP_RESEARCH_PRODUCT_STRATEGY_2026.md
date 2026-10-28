@@ -36,7 +36,23 @@ The agreed MVP (post a campus event → browse → find full fit → plan on thi
 | [SCU official events](https://events.scu.edu/campus-calendar/all) and [club directory](https://www.scu.edu/csi/getconnected/) | Listings, type filters, directories, subscription | Add time-and-person constraints as a **decision layer**, not a duplicate event directory |
 | Conventional Google calendars + group chat | Busy blocks and social discussion | Incomplete commitments and missing activity memory need additional representation |
 
-**Differentiation hypothesis needing evaluation:** “We help a group preserve what mattered about a plan when it no longer works.” Existing products can edit/reschedule events, so the test is whether a constraint-driven repair interaction is substantially better than those workflows.
+**Differentiation hypothesis needing evaluation:** “We help a group preserve what mattered about a plan when it no longer works, using trusted local opportunities and remembered goals.” Existing apps already support rescheduling, AI scheduling, and group memory, so we must demonstrate that our combined feasibility, provenance and low-friction decision workflow performs better on a representative task.
+
+### Stronger direct competition found in the second research pass
+
+The initial competitor set understated the market. Current self-descriptions show even **AI-based scheduling, structured response semantics, and memory/repair** are being offered elsewhere:
+
+| Product | Actual advertised behavior | SideQuest consequence |
+| --- | --- | --- |
+| [Cue Events](https://apps.apple.com/us/app/cue-events/id6760505921) | Participants state availability in **natural language**, AI weighs **hard vs soft** constraints and gives a scored explanation; supports rescheduling and live updates | **No novelty claim for LLM availability parsing or constraint-score explanations alone.** Limited independently visible ratings; vendor description is not independent usability verification. |
+| [Ask](https://getask.io/) | Plans structure natural text; responses **Going, Suggest, Busy, Pass**; organizer approves proposed changes | **No novelty claim for “Maybe means maybe” or human-confirmed rescheduling alone.** Study semantics and UI, avoid recreating a chat app. |
+| [Boba](https://boba.app/) | Works via **existing group chats** with shared memory, planning, research and group decisions; marketed rescheduling and remembering plans | **No novelty claim for group-chat AI memory/replanning alone**. Requires firsthand task testing to identify deficiencies. Read its privacy policy before proposing students route private group messages through an AI. |
+| [TimeLoop](https://trytimeloop.com/) | Natural-language time planning with deterministic scheduling and day replanning, including circles for families/friends | A deterministic scheduler behind AI extraction is a **sound pattern**, but not inherently original. |
+| [Timeleft](https://timeleft.com/how-it-works/) | Matches strangers into small-group social outings and handles the booking | Distinct social context: SideQuest interviewees mostly wanted to spend time with **existing friends**, rather than meet new people. |
+
+**Stricter differentiating question:** Can SideQuest connect an older specific intention, a particular group’s priorities, and *verified* current local feasible opportunities to produce a better **conditional decision** than Luma + a group chat + existing scheduling AI? This is a testable *hypothesis*, not proven uniqueness.
+
+**Market evidence limitation:** most product-feature claims here are first-party descriptions and app-store listings; we have not run side-by-side competitor task tests. Do not infer competitors cannot perform an action solely because their marketing pages omit it.
 
 ## The outside research that deepens the design
 
