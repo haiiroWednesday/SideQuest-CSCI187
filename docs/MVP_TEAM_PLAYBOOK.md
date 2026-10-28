@@ -6,7 +6,7 @@
 
 > **Read this first.** The target is a small experience that works end to end: someone posts an event; another student can browse it; a student can search for events that completely fit their free time; and they can add an event to a list of things they plan to attend. Do not spend the week implementing the full aspirational SideQuest product.
 
-**Diagrams:** The ten workflow diagrams below are **editable Mermaid code** rendered by GitHub. If a diagram fails to display in your browser, use its **SVG fallback** link immediately underneath. The separate P5 ER submission remains an editable **draw.io** file.
+**Diagrams:** The project architecture, workflow and ER drawings below use **editable Mermaid**, not embedded pictures or draft draw.io files. The original course **Google Docs** appear beneath the corresponding diagrams. These do not replace the required coursework submission.
 
 ## The one-page plan
 
@@ -29,7 +29,6 @@ flowchart LR
     E --> F["Revisit or remove plan"]
 ```
 
-[SVG fallback: journey diagram](assets/playbook/journey.svg)
 
 **Done means** this journey works with real application state, including validation, empty states, and a refresh. **Not done** means a pretty page with hard-coded events, a demo where a post never reaches another browser, or a Schedule that deletes the public event when you remove a plan.
 
@@ -39,7 +38,7 @@ flowchart LR
 - `app/src/controller/findEvents.ts` has `createEvent` and `findEvents`. `app/src/model/events.ts` has `CampusEvent`, `fitsFully`, date/time checks, and local-storage helpers.
 - Current `master` has **26 passing tests in 11 files** and a passing React build (verified 27 October). The test suite proves the M1 slice, **not** the future shared catalog or Personal Schedule.
 - The default branch is **`master`**, not `main`. App commands run inside `app/`.
-- `docs/MVP_ER_DIAGRAM.md` now documents the simple P5 conceptual model; its earlier USER, AVAILABILITY_WINDOW, PLANNED_ATTENDANCE and cost/registration proposals were replaced.
+- The P5 conceptual ER explanation is included in this guide below. There is no separate competing ER proposal.
 
 ## 1. Start from the course materials, not assumptions
 
@@ -66,22 +65,46 @@ The [original P3 requirements](https://docs.google.com/document/d/11Yq8sW1aOphzn
 
 **Two different meanings of “save” must not be conflated:** `EventCatalog` persists **publicly posted events** for everyone; `Schedule` persists **local references to events planned by this device**. `app/src/model/events.ts` currently stores **the events created locally in M1**, which is a third, transitional state. It must not become the public catalog or planned-events list by renaming the header.
 
-**Selected implementation proposal (27 Oct):** preserve M1's single `date` and `start`/`end` HH:mm fields (**same-day events only**, no overnight entries) and use **Supabase Postgres** for the one shared public EventCatalog. Full technical contract: [MVP Implementation Contract](MVP_IMPLEMENTATION_CONTRACT.md). This narrows P4's separate start/end-date model; make the simplification explicit in MVP specs and tests. `hostName` is a display value, not a login. Daven still needs to create/configure a Supabase project, and the team should review the contract before independently editing consuming files.
+**Selected implementation proposal (27 Oct):** preserve M1's single `date` and `start`/`end` HH:mm fields (**same-day events only**, no overnight entries) and use **Supabase Postgres** for the one shared public EventCatalog. Full technical contract: [implementation contract below](#implementation-contract--database-and-supabase-setup). This narrows P4's separate start/end-date model; make the simplification explicit in MVP specs and tests. `hostName` is a display value, not a login. Daven still needs to create/configure a Supabase project, and the team should review the contract before independently editing consuming files.
 
 ## Data-model alignment — P4 is the implementation source of truth
 
-I checked both pages of the [original P4 draw.io file](https://drive.google.com/file/d/1xiZGXQeScuJx14yKNUcwj1XtWTfOb-l4/view). They define precisely **three model classes**: EventCatalog, Event and Schedule. The diagram says: “Posts stay in the shared catalog. Planned Event identities stay on the current device. Accounts and cross-device schedules are Wants.” It also says “Save means plan to attend.”
+I checked both pages of the [original P4 Google Doc](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit). They define precisely **three model classes**: EventCatalog, Event and Schedule. The diagram says: “Posts stay in the shared catalog. Planned Event identities stay on the current device. Accounts and cross-device schedules are Wants.” It also says “Save means plan to attend.”
 
 ### The chosen three-class design
 
 ```mermaid
-flowchart LR
-    C["EventCatalog: shared events"] -->|"contains"| E["Event: ID, host, date, time"]
-    S["Schedule: local planned IDs"] -->|"looks up event ID"| C
-    S -->|"references"| E
+classDiagram
+    direction LR
+    class EventCatalog {
+        +create(draft)
+        +getById(id)
+        +listUpcoming()
+        +findFullFit(window)
+    }
+    class Event {
+        +id
+        +title
+        +hostName
+        +date
+        +start
+        +end
+        +fitsFully(window)
+    }
+    class Schedule {
+        +plannedEventIds
+        +add(id)
+        +remove(id)
+        +listPlannedIds()
+    }
+    EventCatalog "1" *-- "0..*" Event : owns posted events
+    Schedule "0..*" o-- "0..*" Event : references planned events
+    Schedule ..> EventCatalog : lookup
 ```
 
-[SVG fallback: classes diagram](assets/playbook/classes.svg)
+[Google Doc — P4 architecture and instructor feedback](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit)
+
+
 
 **Class responsibilities drawn directly from P4:**
 
@@ -103,46 +126,48 @@ flowchart LR
     C --> M[("Browser C: separate local planned IDs")]
 ```
 
-[SVG fallback: storage diagram](assets/playbook/storage.svg)
 
 **No USER rows, author foreign keys, PLANNED_ATTENDANCE table, saved AVAILABILITY_WINDOW table, or cost fields.** Each Event has an unverified display `hostName`. An optional generated browser `posterId` would not authenticate the host. Each visitor can post and read the same public catalog. Because there is no identity system, the app cannot securely distinguish who posted an event or restrict who may modify another person's posts; omit public edit/delete operations and be explicit that the prototype is not production-secure. The shared service must still protect its credentials and apply basic validation/rate limits where feasible.
 
-This is a conceptual database view. An implementation might use **one `events` collection/table** behind EventCatalog with stable event IDs. `EventCatalog` and `Schedule` remain real *application classes/services* in the MVC design even if one is backed by a single events table and the other by browser localStorage. That distinction does **not** mean the P5 classroom ER diagram is automatically correct: [P5 instructions](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit) ask the group to show each model class as an entity, so the team should make the hand drawing and draw.io submission reflect its chosen simplification and confirm notation with the professor if needed. The current [P5 ER guidance](MVP_ER_DIAGRAM.md) describes this simplified design; the actual final P5 draw.io submission has not been verified here.
+This is a conceptual database view. An implementation might use **one `events` collection/table** behind EventCatalog with stable event IDs. `EventCatalog` and `Schedule` remain real *application classes/services* in the MVC design even if one is backed by a single events table and the other by browser localStorage. That distinction does **not** mean the P5 classroom ER diagram is automatically correct: [P5 instructions](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit) ask the group to show each model class as an entity, so the team should make the hand drawing and draw.io submission reflect its chosen simplification and confirm notation with the professor if needed. The current [Mermaid P5 ER above](#p5-conceptual-er-diagram-without-extra-database-tables) describes this simplified design; the actual final P5 draw.io submission has not been verified here.
 
 ### Host identity without user accounts
 
 The original P4 Event lists ID, title, description, location and times but **does not include a host**. We propose a required `hostName` display field: e.g., “SCU Photography Club.” It is self-reported and unverified. `eventId`, not `hostName`, links Catalog and local Schedule records. No separate USER table or login is needed. An optional anonymous `posterId` generated per browser could group posts, but it is not a verified user ID and should not grant edit/delete permissions.
 
-### Proposed TypeScript contract — exact names to be reviewed by the team
-
-This is the **selected MVP contract**, not code already implemented. To reuse M1 validation and matching, the MVP deliberately permits **same-day events only**. The P4 diagram depicted separate start and end dates/times, so this restricted subset must be documented in the MVP specifications and tested. See [the frozen contract](MVP_IMPLEMENTATION_CONTRACT.md).
+### Shared Event data contract
 
 ```ts
-export type EventRecord = {
+export type CampusEvent = {
   id: string
   title: string
-  hostName: string // proposed addition: person, club, or organization running it
+  hostName: string
   description: string
   location: string
-  date: string  // YYYY-MM-DD, campus local date
-  start: string // HH:mm, same day
-  end: string   // HH:mm, same day, must be after start
+  date: string  // YYYY-MM-DD in America/Los_Angeles
+  start: string // HH:mm on date
+  end: string   // HH:mm on date, strictly after start
 }
+
+export type EventDraft = Omit<CampusEvent, 'id'>
 
 export interface EventCatalogPort {
-  create(draft: Omit<EventRecord, 'id'>): Promise<EventRecord>
-  listUpcoming(): Promise<EventRecord[]>
-  getById(eventId: string): Promise<EventRecord | null>
+  create(draft: EventDraft): Promise<CampusEvent>
+  listUpcoming(): Promise<CampusEvent[]>
+  getById(id: string): Promise<CampusEvent | null>
 }
 
-export interface SchedulePort { // stored only in this browser
+export interface SchedulePort {
   listPlannedIds(): string[]
-  add(eventId: string): { added: boolean }
-  remove(eventId: string): void
+  add(id: string): { added: boolean }
+  remove(id: string): void
 }
 ```
 
-The catalog service is the only authority for public Event IDs and data. The Schedule holds just local IDs and asks EventCatalog for current details. Never set `event.saved = true` in shared Event data; that would confuse a device's plan with a public property.
+**Existing code is not migrated yet.** M1 currently uses `CampusEvent` with `id,title,location,date,start,end`, a synchronous `createEvent` controller, and the browser-only `sidequest.created-events.v1` store. Add description and hostName carefully; update tests, form, and display consumers in coordinated PRs. Do not delete passing tests. Catalog calls are now asynchronous; adapt UI loading and errors. Catalog IDs come from the database, not from a random string chosen by a browser controller.
+
+**Timezone rule:** treat `date` and `HH:mm` as the wall-clock date and time for Santa Clara campus (`America/Los_Angeles`). Keep the database `date`/`time without time zone` fields as local calendar fields. Do not round-trip them through `Date.toISOString()`, which can shift the event date. Overnight/DST-spanning events are deferred. Validate the full-fit rule as before with inclusive outer boundaries.
+
 
 ### Contract tests that match the diagram
 
@@ -156,6 +181,36 @@ The catalog service is the only authority for public Event IDs and data. The Sch
 | Planned ID no longer in catalog | My Schedule shows a clear unavailable state instead of a crash | Sembiyan + Cynthia |
 | M1 → MVP model migration | Event descriptions, dates and full-fit behavior remain correct after adapting old fields | Daven + Sembiyan |
 
+### P5 conceptual ER diagram without extra database tables
+
+P5's instructions request that each P4 model class appear as an entity, but **classroom conceptual entities do not automatically imply physical database tables**. This Mermaid visualization is our working explanation, not a claim that the drawn/submitted P5 document uses identical notation.
+
+```mermaid
+erDiagram
+    EVENT_CATALOG ||--o{ EVENT : contains
+    SCHEDULE }o--o{ EVENT : plans
+    EVENT_CATALOG {
+        string catalogId "conceptual only"
+    }
+    EVENT {
+        string id PK
+        string hostName
+        string title
+        string description
+        string location
+        date date
+        string start
+        string end
+    }
+    SCHEDULE {
+        string scheduleId "current device only"
+    }
+```
+
+[Google Doc — P5 MVP ER diagram and class drawing](https://docs.google.com/document/d/1zr55kTHGyVltD1AqU7SrdVOWPlf2ClkwWczfdOT4yO0/edit)
+
+**Interpretation:** P4 EventCatalog logically owns Event records. Many device-local Schedules can reference the same public Events, but a Schedule stores only IDs in that browser, not a server attendance table. One shared `events` table suffices for the agreed implementation; a separate `USER`, `EVENT_CATALOG`, `PLANNED_ATTENDANCE`, or `AVAILABILITY_WINDOW` table is not required. The P4 UML composition feedback is about ownership notation, **not** an ER diamond. `hostName` is self-reported display text and is not identity authentication.
+
 ### P5 assignment checkpoint, separate from implementation
 
 The P5 assignment currently states **Wednesday, October 28, 2026, end of day**. It asks for **a photo of the in-class hand-drawn ER diagram** plus a **draw.io ER diagram** shared as “everyone with the link can comment,” submitted through **Gradescope**. One teammate submits and adds contributors. GitHub Markdown or this playbook does not replace either file. **Do not submit the old USER/AVAILABILITY_WINDOW proposal as though it were the agreed simple architecture.** Check the professor's “each model class is its own entity” instruction and ask about the correct representation if your actual database has only public Event records plus local planned IDs.
@@ -165,7 +220,61 @@ The P5 assignment currently states **Wednesday, October 28, 2026, end of day**. 
 - **Daven → Devonny:** public list and lookup results, event fields, stable IDs and loading/error responses. Devonny owns Browse, *not* the catalog datastore.
 - **Daven → Sembiyan:** public event lookup by ID and agreed temporal fields. Sembiyan implements full-fit and the **local** planned-ID Schedule; no user table or attendance join table.
 - **Cynthia ↔ Devonny:** shared card/details components with Event props and distinct “Plan to attend” action. No price blocks or account UI.
-- **Whole team:** agree field names and which class owns `fitsFully`; then agents implement independent slices. Changing EventRecord requires a coordinated PR and matching tests.
+- **Whole team:** agree field names and which class owns `fitsFully`; then agents implement independent slices. Changing CampusEvent requires a coordinated PR and matching tests.
+
+## Implementation contract — database and Supabase setup
+
+The selected backend is a **proposal that Daven must configure and validate**; it is not yet an implemented shared catalog. Client components depend on `EventCatalogPort` rather than database column names. The P5 conceptual picture above should never be used as a three-table schema.
+
+### Proposed Postgres storage and SQL
+
+Daven owns the actual SQL migration. The following is a **reviewable starting point**, not SQL already deployed.
+
+```sql
+create table public.events (
+  id uuid primary key default gen_random_uuid(),
+  title text not null check (length(btrim(title)) between 1 and 120),
+  host_name text not null check (length(btrim(host_name)) between 1 and 120),
+  description text not null check (length(btrim(description)) between 1 and 2000),
+  location text not null check (length(btrim(location)) between 1 and 200),
+  event_date date not null,
+  start_time time without time zone not null,
+  end_time time without time zone not null,
+  created_at timestamptz not null default now(),
+  constraint same_day_event_times check (start_time < end_time)
+);
+
+alter table public.events enable row level security;
+revoke all on table public.events from anon, authenticated;
+
+-- An unauthenticated visitor can only read or submit approved data fields.
+grant select on public.events to anon;
+grant insert (title, host_name, description, location, event_date, start_time, end_time)
+  on public.events to anon;
+
+create policy "Anyone may read posted events"
+  on public.events for select to anon using (true);
+
+create policy "Anyone may submit a valid event"
+  on public.events for insert to anon with check (true);
+```
+
+Review column permissions and policies with `supabase test db` as described in Supabase's [RLS documentation](https://supabase.com/docs/guides/database/postgres/row-level-security). The database generates `id` and `created_at`. No anonymous UPDATE/DELETE permission is granted. Database `date`/`time` map to the agreed TypeScript strings at the adapter boundary; don't let every feature write independent field translations.
+
+**Important course extra-credit conflict (verify with the professor before deployment):** the [final-project bonus document](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit?usp=sharing) states that **all API keys must stay on the server, never in front-end code or on GitHub**, and exposed keys forfeit extra credit. Supabase normally expects an intended-public publishable client key to be bundled in the frontend and protected by RLS. These two rules need explicit instructor clarification; do **not** assume the Supabase publishable-key exception satisfies her grading condition. If the requirement is literal, use a server-side adapter/proxy for public database operations instead. Never expose service-role, secret, third-party, or AI keys. This affects the choice of catalog adapter, not the Event/Console domain contract.
+
+**Security caveat:** because inserts are anonymous, someone who knows the public endpoint can post fake host names or flood the catalog. SQL constraints and RLS restrict operations and malformed field values, but do not prevent abuse. This is only acceptable for a **limited classroom prototype with monitored access**, not a broad public rollout. Before public deployment, require a separate protected and rate-limited write path (for example a small serverless/Edge Function with abuse checks). Never put a Supabase secret/service-role key into Vite code or a browser. A **publishable** key is intended to be public, subject to RLS.
+
+### Connecting React to the catalog
+
+1. Daven creates the team Supabase project and applies one reviewed SQL migration. The dashboard permissions are for team developers only; **students using SideQuest still do not log in**.
+2. In `app/`, install `@supabase/supabase-js`. Create `app/.env.local` with `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. Keep `.env.local` out of Git; document variable **names**, not project secrets, in `.env.example`.
+3. Implement **one** `EventCatalogPort` adapter that maps between camelCase (`hostName,date,start,end`) and SQL column names (`host_name,event_date,start_time,end_time`). For tests, provide a fake adapter implementing the identical interface; that fake is not public storage.
+4. Devonny uses only the catalog port for browsing and details. Cynthia builds visual components from the agreed `CampusEvent` type. Sembiyan reuses the current full-fit logic with catalog results and stores planned Event IDs in `localStorage`.
+5. Replace the M1 *created events* list deliberately rather than calling it My Schedule. Do not auto-upload old local test events into the public catalog.
+6. Test a new event across **two independent browsers**, then add/remove a plan in only one browser. The public event must persist, while the other browser's Schedule stays unchanged.
+7. Run `npm test`, `npm run build`, and PR CI; add policy tests asserting that anonymous SELECT/INSERT work while UPDATE/DELETE fail.
+
 
 ## 2. How the pieces should fit together
 
@@ -196,7 +305,6 @@ flowchart TB
     L --> R[("Current-device planned IDs")]
 ```
 
-[SVG fallback: mvc diagram](assets/playbook/mvc.svg)
 
 **Important:** this is an **implementation map we propose**, not a claim that these files/classes already exist. The actual M1 code has one React page and browser-local event storage. Keep the MVC direction: a view asks the controller to do something; the model doesn't import React.
 
@@ -221,11 +329,10 @@ sequenceDiagram
     Note over Plans,Store: Removing a plan never deletes the public event
 ```
 
-[SVG fallback: sequence diagram](assets/playbook/sequence.svg)
 
 ### One agreed contract, not two competing schemas
 
-Use the **EventRecord, EventCatalogPort and SchedulePort** proposal in [the Data-model alignment section above](#proposed-typescript-contract--exact-names-to-be-reviewed-by-the-team). It reflects the chosen P4-simple design. Finalize names with the team before merging code; there is no alternative user-scoped Path B in this MVP.
+Use the **CampusEvent, EventCatalogPort and SchedulePort** proposal in [shared Event data contract above](#shared-event-data-contract). It reflects the chosen P4-simple design. Finalize names with the team before merging code; there is no alternative user-scoped Path B in this MVP.
 
 - Keep Event IDs stable from publishing through Browse, Search and Schedule. Two events may have identical titles; IDs distinguish them.
 - Use the selected M1-compatible `date`/`start`/`end` contract (same-day only). Do not let any agent independently introduce `startDate`, `endDate`, or timestamp fields into shared TypeScript props.
@@ -251,7 +358,6 @@ flowchart TB
     F --> T["Cross-browser demo and tests"]
 ```
 
-[SVG fallback: dependencies diagram](assets/playbook/dependencies.svg)
 
 ## 3. Cynthia — design the experience, and build it
 
@@ -304,11 +410,11 @@ This is a foundational workstream. M1 create/validate logic already exists. Buil
 
 **Data ownership:** Daven owns the shared Event records, unique IDs, creation and retrieval API, and integration with the posting form. There is **no user foreign key or planned-attendance table** in the chosen implementation.
 
-**Selected backend: Supabase Postgres.** Create one shared `events` table, expose a typed catalog adapter through `@supabase/supabase-js`, and keep planned-event IDs in browser localStorage. For a restricted classroom prototype, anonymous readers may use SELECT and anonymous posters INSERT only, with RLS **and narrow SQL grants**; deny anonymous UPDATE and DELETE. Add database-side constraints, and acknowledge that no-login anonymous posting cannot reliably prevent spam or impersonation. Do not claim production-grade safety; add a server-side rate-limited write gate before broad public deployment. See [contract and security caveats](MVP_IMPLEMENTATION_CONTRACT.md).
+**Selected backend: Supabase Postgres.** Create one shared `events` table, expose a typed catalog adapter through `@supabase/supabase-js`, and keep planned-event IDs in browser localStorage. For a restricted classroom prototype, anonymous readers may use SELECT and anonymous posters INSERT only, with RLS **and narrow SQL grants**; deny anonymous UPDATE and DELETE. Add database-side constraints, and acknowledge that no-login anonymous posting cannot reliably prevent spam or impersonation. Do not claim production-grade safety; add a server-side rate-limited write gate before broad public deployment. See [contract and security caveats](#implementation-contract--database-and-supabase-setup).
 
 **Implementation path:**
 
-1. Start from the selected same-day `EventRecord` type (`id`, `title`, `hostName`, `description`, `location`, `date`, `start`, `end`) and shared catalog interface in the [implementation contract](MVP_IMPLEMENTATION_CONTRACT.md). No login, cost, USER table, or alternate timestamp type.
+1. Start from the selected same-day `EventRecord` type (`id`, `title`, `hostName`, `description`, `location`, `date`, `start`, `end`) and shared catalog interface in the [implementation contract](#implementation-contract--database-and-supabase-setup). No login, cost, USER table, or alternate timestamp type.
 2. Keep existing `createEvent` validation behavior or reuse its rules behind the new posting controller. Don't overwrite tested logic without replacement tests.
 3. Build `listUpcoming`, `getById`, and `create` against a fake in-memory adapter **first**. Include unique IDs and persistent ordering.
 4. Configure Supabase Postgres and version the table schema/privileges/RLS policy in a SQL migration; integrate it with the `@supabase/supabase-js` adapter. The **publishable** key is intended for client-side use; NEVER put a secret/service-role key in React or GitHub. For classroom anonymous inserts, enforce data constraints and SELECT/INSERT-only role permissions, and document the spam risk. For wider public access, add a server-side rate-limited write endpoint.
@@ -359,7 +465,6 @@ flowchart TB
     I --> J["Verify integrated feature"]
 ```
 
-[SVG fallback: gitflow diagram](assets/playbook/gitflow.svg)
 
 **Run these commands from the cloned repository root** (not inside `app/` for the branch commands):
 
@@ -422,7 +527,6 @@ flowchart LR
     R --> M["Human reviews PR and approves merge"]
 ```
 
-[SVG fallback: agentloop diagram](assets/playbook/agentloop.svg)
 
 **Claude Console workspace:** manage API keys, access and usage limits; it does **not** automatically clone the GitHub project or serve as a shared filesystem. **Playground:** compare prompt ideas, explore UI copy or architecture choices, and test model behavior; it does **not** itself change repository files. **Cline / coding agent in VS Code:** reads the *opened local repo* with the granted permissions and can propose edits and run commands. Each person's local agent is not a shared live chat that automatically knows their teammate's unpushed changes.
 
@@ -436,7 +540,7 @@ flowchart LR
 
 **Ready-to-paste planning prompt:**
 
-> You are working in `haiiroWednesday/SideQuest-CSCI187`, React/TypeScript app under `app/`, default branch `master`. Read `README.md`, `REQUIREMENTS.md`, `SPECIFICATIONS.md`, `docs/MVP_TEAM_PLAYBOOK.md`, and **both pages of the original P4 class diagram**. Read the *current* `docs/MVP_ER_DIAGRAM.md` as conceptual P5 guidance; do not implement its classroom entities as automatic database tables. My assigned feature is [FEATURE]. Follow Model–View–Controller boundaries, reuse tested M1 code, and respect our **confirmed P4-simple scope**: shared public EventCatalog, no user/login, no cost or saved-availability records, full-fit matching only, and one browser-local Schedule of planned Event IDs. Older P5 proposals with USER accounts, saved availability and PLANNED_ATTENDANCE tables are superseded. Do not propose account tables, planned-attendance junctions, saved availability tables or prices. **Do not edit yet.** Tell me your understanding, the smallest possible file-by-file plan, proposed interfaces, edge cases, and tests. Mark all inferred choices as questions. Do not modify unrelated files.
+> You are working in `haiiroWednesday/SideQuest-CSCI187`, React/TypeScript app under `app/`, default branch `master`. Read `README.md`, `REQUIREMENTS.md`, `SPECIFICATIONS.md`, `docs/MVP_TEAM_PLAYBOOK.md`, and **both pages of the original P4 class diagram**. Read the *current* `docs/#p5-conceptual-er-diagram-without-extra-database-tables` as conceptual P5 guidance; do not implement its classroom entities as automatic database tables. My assigned feature is [FEATURE]. Follow Model–View–Controller boundaries, reuse tested M1 code, and respect our **confirmed P4-simple scope**: shared public EventCatalog, no user/login, no cost or saved-availability records, full-fit matching only, and one browser-local Schedule of planned Event IDs. Older P5 proposals with USER accounts, saved availability and PLANNED_ATTENDANCE tables are superseded. Do not propose account tables, planned-attendance junctions, saved availability tables or prices. **Do not edit yet.** Tell me your understanding, the smallest possible file-by-file plan, proposed interfaces, edge cases, and tests. Mark all inferred choices as questions. Do not modify unrelated files.
 
 **Ready-to-paste implementation prompt (after approval):**
 
@@ -491,7 +595,6 @@ flowchart LR
     G --> H["Demo ready"]
 ```
 
-[SVG fallback: integration diagram](assets/playbook/integration.svg)
 
 **Gate 0 — contract (first):** One Event type, catalog read/write port, ID rule, persistence choice and UI file ownership. Document the decision in this guide or a short PR. Everyone signs off.
 
@@ -537,7 +640,6 @@ gantt
     Demo and fixes: 2026-11-03, 3d
 ```
 
-[SVG fallback: timeline diagram](assets/playbook/timeline.svg)
 
 **Suggested 10-minute daily check-in:** each person says (a) what worked since yesterday, (b) what will be merged next, (c) which teammate or contract is blocking them. Put links to PRs and screenshots in the message. Use one shared list of decisions and blockers, not four unrelated agent conversations.
 
@@ -558,10 +660,495 @@ gantt
 
 ### Documented source links and ownership
 
-**Team artifacts:** [P5 current assignment](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit) · [P3 requirements and instructor comments](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit) · [P4 draw.io architecture](https://drive.google.com/file/d/1xiZGXQeScuJx14yKNUcwj1XtWTfOb-l4/view) · [P4 professor feedback](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit) · [M1 walking skeleton specs](../SPECIFICATIONS.md) · [simplified ER guidance](MVP_ER_DIAGRAM.md).
+**Team artifacts:** [P5 current assignment](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit) · [P3 requirements and instructor comments](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit) · [P4 architecture Google Doc](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit) · [P4 professor feedback](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit) · [M1 walking skeleton specs](../SPECIFICATIONS.md) · [Mermaid P5 ER above](#p5-conceptual-er-diagram-without-extra-database-tables).
 
 **Course:** [MVP](https://docs.google.com/presentation/d/1G3QYEDONfO21IupTmfIlAm0b0nRTHTLRYXH2QmDKXz0/edit) · [System Architecture](https://docs.google.com/presentation/d/1S5NFSWBuB7DNCxgtnEIwg7Yq-osRQyr4eVQB9pk-UqI/edit) · [Implementation and AI guidance](https://docs.google.com/presentation/d/1YxzkSxyK5kZIJjCdwa69SmrmPgtytcaWBwcARaJGcm0/edit) · [Walking Skeleton](https://docs.google.com/presentation/d/1W_RSFcWNTL-NINOeRiGBVvvOtcZncaio5pE5-QtSRmw/edit).
 
-**External workflow references:** [GitHub PR workflow](https://docs.github.com/en/pull-requests/get-started/about-pull-requests) · [Branch protection](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches) · [GitHub image embedding](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#images) · [GitHub Actions for Node](https://docs.github.com/en/actions/tutorials/build-and-test-code/nodejs).
+**External workflow references:** [GitHub PR workflow](https://docs.github.com/en/pull-requests/get-started/about-pull-requests) · [Branch protection](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches) · [GitHub Mermaid diagram syntax](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-diagrams) · [GitHub Actions for Node](https://docs.github.com/en/actions/tutorials/build-and-test-code/nodejs).
 
 *This playbook is the team's proposed way to work. The P3/P4/P5 materials and class instructions remain the sources for what the assignments actually require. When a decision changes, record it and update the code, diagrams, and acceptance tests together.*
+
+## Appendix — detailed unit-testing examples
+
+These examples are brought here from the older testing guide. They are **illustrative M1 examples**, not authorization to override the current `CampusEvent` contract, Supabase API, or date rules.
+
+**Eight optional examples • Visual diagrams • Guidance for designing your own meaningful tests**
+
+Optional contributor reference for the SideQuest **TypeScript + React** walking skeleton. **Our team brainstormed these eight example topics; Professor Kandel did not assign numbered testing categories.** Students choose their own meaningful tests, and these examples are not required project files.
+
+> **These are suggestions, not an official checklist.** You can start from one of the examples below, adapt it to explore a different meaningful behavior, or devise a completely new test. Changing only an event name or filename does not make a test meaningfully distinct.
+
+**Jump to:** [How to design a test](#how-to-design-a-test-of-your-own) · [Optional example topics](#optional-test-ideas-and-example-code) · [Red X → green check](#demonstrate-a-red-x-then-a-green-check)
+
+**Before starting:** Check `git status`, preserve any uncommitted work, and update `master` with `git pull --ff-only origin master`. See the [team setup guide](../TEAM_SETUP_GUIDE.md) for help.
+
+**Useful links:** [Team setup guide](../TEAM_SETUP_GUIDE.md) · [Current starter tests](../app/tests/) · [Our React CI](../.github/workflows/react-ci.yml) · [GitHub Actions](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions)
+
+## Writing meaningful tests
+
+A contributor should choose a distinct, relevant behavior; add their name in a comment; run and understand the test; and check that the expected results match the specification. A separate practice branch can demonstrate that CI catches an intentional mistake (red X) and passes after the correction (green check).
+
+AI can help draft syntax, but the contributor still needs to choose and verify the assertions.
+
+## Unit test versus CI: the big picture
+
+- A **unit test** checks a **real function** in isolation: “For this input, does it return the expected output or reject invalid input?” (Lecture slides 3, 6–7, and 15.)
+- **CI** (Continuous Integration) is GitHub's automatic checking system. GitHub runs all the tests whenever your code is pushed or a pull request is opened/updated.
+- **Vitest** runs the test files under `app/tests/`.
+- The file `.github/workflows/react-ci.yml` tells GitHub to install the packages, run `npm test`, and run `npm run build`.
+- The separate `.github/workflows/ci.yml` belongs to the legacy C++ starter. For the React app, use **React CI**.
+
+```mermaid
+flowchart TD
+    A["You edit SideQuest in VS Code"] --> B["Push changes to GitHub"]
+    B --> C["GitHub Actions: React CI"]
+    C --> D["Install packages"]
+    D --> E["npm test"]
+    E --> F["npm run build"]
+    F --> G{"Everything passed?"}
+    G -->|Yes| H["✅ GREEN CHECK"]
+    G -->|No| I["❌ RED X"]
+```
+
+### What does a test actually look like?
+
+```ts
+// Test owner: [Your Name] — after choosing and verifying your test case.
+import { expect, it } from 'vitest'
+import { isValidDate } from '../src/model/events'
+
+it('rejects an impossible calendar date', () => {
+  expect(isValidDate('2026-04-31')).toBe(false)
+})
+```
+
+| Part | Meaning |
+| --- | --- |
+| `// Test owner: ...` | A **comment** identifying who selected, checked, and contributed this test; disclose AI assistance if your course requires it |
+| `it('...', ...)` | The **test name**, describing the checked behavior |
+| `isValidDate('2026-04-31')` | A call to a **real function** in SideQuest |
+| `.toBe(false)` | What you **expect** the correct result to be |
+
+**Using example events inside a test is allowed and normal.** The application uses user-created events; controlled example inputs in unit tests are still appropriate.
+
+## How to design a test of your own
+
+The phrase “Make it yours” is too vague. Use these concrete steps instead:
+
+```mermaid
+flowchart TD
+    A["1. Read the starter example"] --> B["2. Identify the rule it checks"]
+    B --> C["3. Think of a different mistake the program could make"]
+    C --> D["4. Choose your own input and expected answer"]
+    D --> E["5. Write or generate assertions, then inspect them"]
+    E --> F["6. Run the test and explain the result"]
+```
+
+| Genuine new test behavior | Only a cosmetic change |
+| --- | --- |
+| Accept an event ending **exactly** at 4:00, reject 4:01 | Rename “Art Workshop” to “Choir” |
+| Test the century leap-year exception (2000 vs. 1900) | Change a random date without changing the rule |
+| Verify that a removed event **stays removed after saving** | Change only the filename |
+| Search mixed eligible, invalid-date, and out-of-order events | Add your name to the unchanged starter code |
+| Handle a corrupted JSON value in saved events | Reformat spaces or comments |
+
+**The key is the behavior, not the number of edits or whether AI generated the syntax.** One thoughtful new case with a justified expected outcome beats many arbitrary changes.
+
+### Avoid tests that check the wrong thing
+
+A test can pass trivially while failing to check the rule it is supposed to exercise. For example, testing that a manually chosen start time comes before an end time does **not** prove SideQuest *rejects* an invalid event. Your test must call the real function and verify its response.
+
+**Weak (doesn't exercise SideQuest):**
+
+```ts
+expect(14 < 16).toBe(true) // Of course it passes, regardless of SideQuest!
+```
+
+**Meaningful (exercises the real Controller):**
+
+```ts
+import { createEvent } from '../src/controller/findEvents'
+
+const result = createEvent([], {
+  title: 'Study Group', location: 'Library',
+  date: '2026-10-23', start: '17:00', end: '16:00',
+}, 'bad-times')
+
+expect(result.error).not.toBeNull()
+expect(result.events).toEqual([])
+```
+
+**A real test may fail at first.** The lecture's examples show that a failure can reveal a rule that hasn't been implemented yet. Investigate and fix the implementation when appropriate; never weaken the expected result merely to force a green check. This is different from the separately required, *intentional* red-X/green-check CI demonstration.
+
+### Worked example: the one-minute boundary
+
+Suppose a student is free from **14:00 to 16:00**. Is an event that ends at 16:00 allowed? Yes. What if it ends at 16:01? No.
+
+```mermaid
+flowchart LR
+    W["Free time<br/>14:00–16:00"] --> A["Event A<br/>14:30–16:00"]
+    W --> B["Event B<br/>14:30–16:01"]
+    A --> YES["✅ Fits"]
+    B --> NO["❌ Too late"]
+```
+
+This code demonstrates how to *compare two outcomes*. It's another **learning example**, not your finished individual assignment.
+
+```ts
+import { expect, it } from 'vitest'
+import { fitsFully, type CampusEvent } from '../src/model/events'
+
+it('accepts the exact end boundary but not one minute later', () => {
+  const event: CampusEvent = {
+    id: 'art',
+    title: 'Art Club',
+    location: 'Studio',
+    date: '2026-10-23',
+    start: '14:30',
+    end: '16:00',
+  }
+
+  expect(fitsFully(event, '2026-10-23', '14:00', '16:00')).toBe(true)
+
+  const lateEvent = { ...event, end: '16:01' }
+  expect(fitsFully(lateEvent, '2026-10-23', '14:00', '16:00')).toBe(false)
+})
+```
+
+Try to complete this sentence for your own work: **“My test would catch a bug where SideQuest ______, because I expect ______.”**
+
+---
+
+## Optional test ideas and example code
+
+The team brainstormed the following topics as starting points. They are **not official categories or required assignments**. Every student should select and verify an appropriate behavior for the actual SideQuest implementation; the team can coordinate to avoid duplicating tests. The code below uses real project functions.
+
+| Example topic | A behavior worth exploring |
+| --- | --- |
+| Creating events | Does adding a second event preserve the first? |
+| Event IDs | Are empty IDs rejected while new IDs succeed? |
+| Calendar dates | Does leap-year logic work for century years? |
+| Clock times | Are malformed and out-of-range times rejected? |
+| Availability matching | What happens at the exact end-time boundary? |
+| Event sorting | Does sorting still work when some events don't match? |
+| Saving events | Do removed events stay removed after saving? |
+| Storage errors | Does malformed saved data fail safely? |
+
+### Event creation — successful creation
+
+Suggested file: `app/tests/student-create-event.test.ts`
+
+```ts
+// Practice template — Test owner: [Your Name] (after choosing/verifying your case).
+import { expect, it } from 'vitest'
+import { createEvent } from '../src/controller/findEvents'
+
+it('creates an event and trims accidental spaces', () => {
+  const result = createEvent([], {
+    title: '  Coding Workshop  ',
+    location: '  Library  ',
+    date: '2026-10-23',
+    start: '14:00',
+    end: '15:00',
+  }, 'coding-1')
+
+  expect(result.error).toBeNull()
+  expect(result.events).toHaveLength(1)
+  expect(result.events[0].title).toBe('Coding Workshop')
+  expect(result.events[0].location).toBe('Library')
+})
+```
+
+**Optional variation to try:** First create event A, then create event B with a *different* ID. Verify the result has **two events**, that A's title/date remain unchanged, and that B's time is correct. This checks **preserving existing data**, not merely creating the first event. Decide your own event values and write the final assertions.
+
+### Duplicate events — reject a reused ID
+
+Suggested file: `app/tests/student-duplicate-id.test.ts`
+
+```ts
+// Practice template — Test owner: [Your Name] (after choosing/verifying your case).
+import { expect, it } from 'vitest'
+import { createEvent } from '../src/controller/findEvents'
+
+it('does not create another event using an existing ID', () => {
+  const draft = {
+    title: 'Study Group',
+    location: 'Library',
+    date: '2026-10-23',
+    start: '16:00',
+    end: '17:00',
+  }
+  const first = createEvent([], draft, 'same-id')
+  const second = createEvent(first.events, { ...draft, title: 'Choir' }, 'same-id')
+
+  expect(second.error).not.toBeNull()
+  expect(second.events).toHaveLength(1)
+  expect(second.events[0].title).toBe('Study Group')
+})
+```
+
+**Optional variation to try:** Starting with an existing event, compare an attempt with an **empty ID** against one with a **new ID**. The empty-ID request should return an error and leave the list unchanged; the new ID should succeed. **Important:** duplicate *titles* and duplicate *IDs* are not the same thing.
+
+### Calendar dates — reject impossible dates
+
+Suggested file: `app/tests/student-date-validation.test.ts`
+
+```ts
+// Practice template — Test owner: [Your Name] (after choosing/verifying your case).
+import { expect, it } from 'vitest'
+import { isValidDate } from '../src/model/events'
+
+it('rejects a non-existent calendar date', () => {
+  expect(isValidDate('2026-04-31')).toBe(false)
+  expect(isValidDate('2026-04-30')).toBe(true)
+  expect(isValidDate('2027-02-29')).toBe(false)
+})
+```
+
+**Optional variation to try:** Compare **February 29, 2000** with **February 29, 1900**. Decide which is a legitimate leap day, then write assertions for both. Optionally check a malformed date format like `2026/10/23`. This tests a different calendar rule from the sample's April 31.
+
+### Clock-time input — handle midnight and the end of the day
+
+Suggested file: `app/tests/student-clock-times.test.ts`
+
+```ts
+// Practice template — Test owner: [Your Name] (after choosing/verifying your case).
+import { expect, it } from 'vitest'
+import { toMinutes } from '../src/model/events'
+
+it('converts valid boundary clock times and rejects 24:00', () => {
+  expect(toMinutes('00:00')).toBe(0)
+  expect(toMinutes('12:00')).toBe(720)
+  expect(toMinutes('23:59')).toBe(1439)
+  expect(toMinutes('24:00')).toBeNull()
+})
+```
+
+**Optional variation to try:** Compare `09:05`, `09:60`, `9:05`, and an empty string. Determine which strings satisfy SideQuest's **HH:MM** format and what `toMinutes` should return. Include both a valid case and invalid cases. A missing leading zero matters to the current function.
+
+### Availability matching — reject an event starting one minute too early
+
+Suggested file: `app/tests/student-start-boundary.test.ts`
+
+```ts
+// Practice template — Test owner: [Your Name] (after choosing/verifying your case).
+import { expect, it } from 'vitest'
+import { fitsFully, type CampusEvent } from '../src/model/events'
+
+it('rejects an event that starts one minute before free time', () => {
+  const event: CampusEvent = {
+    id: 'early',
+    title: 'Art Club',
+    location: 'Arts Building',
+    date: '2026-10-23',
+    start: '13:59',
+    end: '14:30',
+  }
+
+  expect(fitsFully(event, '2026-10-23', '14:00', '15:00')).toBe(false)
+  expect(fitsFully(event, '2026-10-23', '13:59', '15:00')).toBe(true)
+})
+```
+
+**Optional variation to try:** Choose an event ending **exactly when** free time ends, then create a second version ending **one minute late**. Which matches? Write the two expected answers, or test the same clock times on a *different date*. This checks a specific boundary rather than changing one arbitrary minute.
+
+### Search results — order matching events chronologically
+
+Suggested file: `app/tests/student-sorting.test.ts`
+
+```ts
+// Practice template — Test owner: [Your Name] (after choosing/verifying your case).
+import { expect, it } from 'vitest'
+import { findEvents } from '../src/controller/findEvents'
+import type { CampusEvent } from '../src/model/events'
+
+it('lists qualifying events from earliest to latest', () => {
+  const events: CampusEvent[] = [
+    { id: 'later', title: 'Choir', location: 'Hall', date: '2026-10-23',
+      start: '16:00', end: '16:30' },
+    { id: 'earlier', title: 'Art Club', location: 'Studio', date: '2026-10-23',
+      start: '14:00', end: '15:00' },
+  ]
+
+  const result = findEvents(events, '2026-10-23', '13:00', '17:00')
+
+  expect(result.error).toBeNull()
+  expect(result.matches.map(event => event.id)).toEqual(['earlier', 'later'])
+})
+```
+
+**Optional variation to try:** Build a list of **four events in scrambled order**: two qualifying events, one on the wrong day, and one ending too late. Check the returned **IDs in the correct start-time order**. To demonstrate sorting, don't place the two matching events in order in the input.
+
+### Browser storage — save and restore multiple events
+
+Suggested file: `app/tests/student-save-events.test.ts`
+
+```ts
+// Practice template — Test owner: [Your Name] (after choosing/verifying your case).
+import { expect, it } from 'vitest'
+import { readStoredEvents, saveStoredEvents, type CampusEvent } from '../src/model/events'
+
+it('restores both saved events in the original order', () => {
+  const memory = new Map<string, string>()
+  const storage = {
+    getItem: (key: string) => memory.get(key) ?? null,
+    setItem: (key: string, value: string) => { memory.set(key, value) },
+  }
+  const events: CampusEvent[] = [
+    { id: 'one', title: 'Art', location: 'Studio', date: '2026-10-23',
+      start: '14:00', end: '15:00' },
+    { id: 'two', title: 'Music', location: 'Hall', date: '2026-10-23',
+      start: '16:00', end: '17:00' },
+  ]
+
+  expect(saveStoredEvents(storage, events)).toBe(true)
+  expect(readStoredEvents(storage)).toEqual(events)
+})
+```
+
+**Optional variation to try:** Save two events using the in-memory storage object, then **save a shorter array** containing only one of them. Read storage again and check that the removed event does **not** return. This tests an updated saved state, not just the first save. It does not simulate clicking the UI Remove button.
+
+### Storage errors — handle blocked browser storage safely
+
+Suggested file: `app/tests/student-storage-errors.test.ts`
+
+```ts
+// Practice template — Test owner: [Your Name] (after choosing/verifying your case).
+import { expect, it } from 'vitest'
+import { readStoredEvents, saveStoredEvents } from '../src/model/events'
+
+it('does not crash when browser storage is blocked', () => {
+  const blocked = {
+    getItem: (_key: string): string | null => {
+      throw new Error('Storage blocked')
+    },
+    setItem: (_key: string, _value: string): void => {
+      throw new Error('Storage blocked')
+    },
+  }
+
+  expect(readStoredEvents(blocked)).toEqual([])
+  expect(saveStoredEvents(blocked, [])).toBe(false)
+})
+```
+
+**Optional variation to try:** Make a fake storage object's `getItem` return the corrupt string `{bad json`. Check that reading produces an **empty list without throwing**. Compare it with the valid JSON string `[]`. A blocked exception and corrupted JSON are different failure scenarios.
+
+---
+
+## Run your test locally
+
+**Step 1.** In VS Code, open the `SideQuest-CSCI187` folder and find the `app/tests/` folder.
+
+**Step 2.** Create a NEW file ending in `.test.ts` (for example, `yourname-calendar-dates.test.ts`). Paste a starter example or ask AI to draft the TypeScript for **your chosen testing scenario**. Inspect every assertion against the actual specification and verify it exercises the correct function. Add your name as the responsible student in a comment.
+
+**Step 3.** In the terminal, enter the `app/` folder. If `npm run dev` is occupying the terminal, press **Control+C** first. Then run:
+
+```bash
+npm test
+npm run build
+```
+
+**Step 4.** Confirm the new test appears in Vitest's results and passes. If it fails unexpectedly, inspect the **Expected** and **Received** values before changing anything. A passing test with the wrong expectation isn't helpful.
+
+## Demonstrate a red X then a green check
+
+To verify that CI detects an error, use a **separate experimental branch**, not the shared team branch.
+
+```mermaid
+flowchart TD
+    A["Your test passes"] --> B["Create separate CI proof branch"]
+    B --> C["Temporarily make one assertion wrong"]
+    C --> D["Commit and push"]
+    D --> E["❌ React CI red X"]
+    E --> F["Restore correct assertion"]
+    F --> G["Commit and push again"]
+    G --> H["✅ React CI green check"]
+    H --> I["Save both run links"]
+```
+
+### What does deliberately breaking a test mean?
+
+If `toMinutes('00:00')` correctly returns `0`, its assertion should be:
+
+```ts
+expect(toMinutes('00:00')).toBe(0) // Correct
+```
+
+For the **CI demonstration only**, temporarily **replace that line** with:
+
+```ts
+expect(toMinutes('00:00')).toBe(60) // Deliberately wrong
+```
+
+The test should fail because midnight is not 60 minutes after midnight. **Do not add both lines at once**. Correct the assertion after confirming GitHub catches it.
+
+### Beginner-friendly Git commands
+
+Run these from the **repository root** (`SideQuest-CSCI187/`). Start with `git status`. If you see uncommitted edits you don't understand, stop and ask a teammate rather than deleting them.
+
+**Create your own normal test branch:**
+
+```bash
+git switch master
+git pull --ff-only origin master
+git switch -c tests-yourname
+```
+
+Write your test file, run `npm test` and `npm run build`, then push your working test:
+
+```bash
+git add app/tests/yourname-calendar-dates.test.ts
+git commit -m "Add my calendar-date unit test"
+git push -u origin tests-yourname
+```
+
+Replace the example filename with your actual one.
+
+**Now make a separate proof branch from your working branch:**
+
+```bash
+git switch -c ci-proof-yourname
+```
+
+Temporarily make an assertion wrong, save the file, then:
+
+```bash
+git add app/tests/yourname-calendar-dates.test.ts
+git commit -m "Demonstrate an intentionally failing test"
+git push -u origin ci-proof-yourname
+```
+
+Open [GitHub Actions](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions), find **SideQuest React CI** for `ci-proof-yourname`, and verify the **red X** is due to the intentional test failure. Save that run's link.
+
+Now fix the assertion, save it, and run:
+
+```bash
+git add app/tests/yourname-calendar-dates.test.ts
+git commit -m "Fix assertion and restore passing CI"
+git push
+```
+
+Wait for the **green check** and save the second run link. Your team can review the **working** code for inclusion in the shared project. **Never merge intentionally broken code.**
+
+> **Terminal location matters for file paths:** These Git commands assume you're in the repository root. If you're still in `app/`, use paths like `git add tests/yourname-calendar-dates.test.ts` instead.
+
+### Team integration: pull requests and code review
+
+**Push** uploads your branch; a **pull request** asks teammates to review and merge it. After your working individual test passes, open a pull request targeting **`master`**; ask a teammate to verify the scenario, assertions, and CI. Merge only after approval and passing checks. Pull often, make small commits, and avoid committing generated `node_modules/` or build output.
+
+## Contributor test checklist
+
+- [ ] My behavior is meaningfully distinct from my teammates' tests.
+- [ ] I can finish: “My test catches a bug where SideQuest ______.”
+- [ ] I chose the testing scenario and independently verified the expected results, including any AI-generated code.
+- [ ] My test file is inside `app/tests/` and ends in `.test.ts`.
+- [ ] The test includes my name in a comment identifying my work.
+- [ ] `npm test` passes.
+- [ ] `npm run build` passes.
+- [ ] I used a separate branch for the intentional failing test.
+- [ ] I saved the **red X** and **green check** GitHub Actions run links.
+- [ ] The team reviewed the passing tests and confirmed they all work together.
+
+**A good test doesn't have to be long or hand-typed; it has to exercise the real function and assert the rule you decided to check.**
+
