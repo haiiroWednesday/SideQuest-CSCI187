@@ -8,6 +8,8 @@
 
 **P0 team proposal:** students waste time checking many sources for activities, places and events. The problem includes free-time feasibility and spontaneous coordination with friends. The proposal envisioned saving/rating past activities, weather considerations and transport differences, beyond the limited MVP.
 
+**P1 interview evidence:** The team's [original interview-notes document](https://docs.google.com/document/d/1NRX14JTG78lvDj_AUFRzaricBm-QR4vECJiLfvXGu1M/edit) provides concrete cases of forgotten places, failed ambitious plans, uncertain calendar commitments, and local low-effort fallback outings. These findings are analyzed separately in the [interview + bonus report](INTERVIEW_FINDINGS_AND_EXTRA_CREDIT.md). The following personas are *derived* from that research, not verbatim participant identities.
+
 **P1 research (two distinct situations):**
 - **Jordan, lightweight opportunity planner:** one bounded free-time window, small rotating friend group, rapid discovery and low-friction coordination. Often starts with the activity.
 - **Maya, relationship-centered coordinator:** uncertain/partly undocumented schedules, repeat friends, multiple practical constraints, remembering ideas that were postponed. Often starts with people and asks what the group can do.
@@ -44,7 +46,7 @@ References: [SCU calendar](https://events.scu.edu/campus-calendar/all) · [SCU o
 | **Later product** | Partial participation, travel/weather, informal group constraints, resurface wishes, group decision making, plan repair | P1/P3 future requirements; stage as capacity permits | Evaluators, preferences, invite links, plan status history |
 | **Exploratory long term** | Context-aware recommendations, calendar imports, private group AI participant, multi-source availability, sophisticated personalization | Research directions, not assignment requirements | Adapter-based data import, optional identities, conversational confirmation |
 
-**Do not confuse “later requirement in P3/P1” with official extra-credit grading.** The checked [Fall 2026 syllabus](https://docs.google.com/document/d/1QvOyric501Vr8A7nzD6WWwF3Dp8FdvAkp6l7SAkXee4/edit) explicitly offers an instructor-approved **extra-credit oral assessment within one week of a released grade**. No reviewed source establishes bonus course points for adding SideQuest features, so do not promise them. Meet graded requirements first: project milestones, correct diagrams, user evidence, tests/CI, documented team contributions, and working demo.
+**Verified extra credit:** The separate [Final Project Extra Credit Opportunities rubric](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit?usp=sharing) permits **up to five extra points**, conditional on class grade ≥76% at the beginning of Week 9, completed core requirements, good standing, team agreement, individual eligibility, demonstrated bonus features, and secret API keys staying server-side. The syllabus also separately mentions oral reassessment; it is **not** the project bonus rubric. See [interviews and rubric](INTERVIEW_FINDINGS_AND_EXTRA_CREDIT.md) for exact categories and points. Prior guidance claiming only oral reassessment or 10 project bonus points is superseded.
 
 ## 4. Future-proof MVP rules: small choices with large consequences
 
@@ -187,7 +189,7 @@ Choose scope by actual time and interview feedback; these are **recommendations*
 - [P3 requirements and professor comments](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit): broader MVP list, later list, and optional professor feedback about saving.
 - [P1 personas and scenarios](https://docs.google.com/document/d/13OOI6XF8nOiJcPj4t3Jdfxqid2EOuCfh78p7x7cYOGE/edit): Jordan, Maya, intention/plan/opportunity distinctions, uncertainty and adaptive replanning.
 - [M1 requirements](../REQUIREMENTS.md) and [specifications](../SPECIFICATIONS.md): current narrower walking skeleton.
-- **Extra credit:** the syllabus mentions a possible approved oral reassessment within one week of grade release. No checked source grants extra credit just for optional features.
+- **Extra credit:** [Verified final project bonus rubric](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit?usp=sharing): up to five points, contingent on eligibility, complete core work, approved team choices and actual functioning bonus features. [Raw interview and bonus analysis](INTERVIEW_FINDINGS_AND_EXTRA_CREDIT.md). The separate syllabus oral reassessment is another program.
 
 **Do not publish professor copyrighted slides outside authorized class access.** This page summarizes relevant course instructions and links to student-accessible documents; do not copy lecture decks wholesale.
 
