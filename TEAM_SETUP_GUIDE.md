@@ -75,3 +75,7 @@ Our [React GitHub Actions workflow](.github/workflows/react-ci.yml) runs equival
 - **Site looks outdated:** check the current branch, pull `master`, restart Vite, and refresh.
 - **Legacy C++ files appear:** they remain in the repository but are unrelated to the React build.
 - **Avoid committing:** `node_modules/`, `dist/`, passwords, or API keys.
+
+## Optional AI coding agent (Cline)
+
+If you'd like an AI assistant that can read/edit the SideQuest code and run tests inside VS Code, see the step-by-step **[AI Agent Setup Guide](docs/AI_AGENT_SETUP_GUIDE.md)**. It explains Cline, Claude Console workspace keys, Plan/Act, safe branch workflows, and optional multi-agent teams. **Not required:** contributors may use a different assistant or no agent at all. The cross-tool project rules are in [AGENTS.md](AGENTS.md).
