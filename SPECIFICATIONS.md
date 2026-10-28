@@ -76,7 +76,7 @@ These specifications describe the current TypeScript + React implementation. Eac
 - `npm run build` checks TypeScript and produces the React build.
 - `.github/workflows/react-ci.yml` runs the tests and build automatically for GitHub pushes and pull requests.
 
-The next MVP steps beyond M1 include live SCU events, a shared backend, travel-time checks, registration eligibility, and broader attendance rules.
+**Historical M1 scope note:** the next agreed M2 MVP focuses on a shared EventCatalog, event posting and browsing, full-fit availability search, and a browser-local personal Schedule. Live imports of SCU events, travel-time checks, registration eligibility, and broader attendance rules are possible **later-product** features, not requirements for the selected M2 MVP.
 
 ---
 
