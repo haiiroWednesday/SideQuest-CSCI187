@@ -183,35 +183,100 @@ export interface SchedulePort {
 | Planned ID no longer in catalog | My Schedule shows a clear unavailable state instead of a crash | Sembiyan + Cynthia |
 | M1 → MVP model migration | Event descriptions, dates and full-fit behavior remain correct after adapting old fields | Daven + Sembiyan |
 
-### P5 conceptual ER diagram without extra database tables
+### P5 ER diagrams — distinguish the actual classroom drawing from later proposals
 
-P5's instructions request that each P4 model class appear as an entity, but **classroom conceptual entities do not automatically imply physical database tables**. This Mermaid visualization is our working explanation, not a claim that the drawn/submitted P5 document uses identical notation.
+**Important correction (October 27):** This guide previously showed a synthesized `EVENT_CATALOG–EVENT–SCHEDULE` Mermaid ER and incorrectly implied it was the diagram the team drew. It was **not**. The [original P5 Google Doc](https://docs.google.com/document/d/1zr55kTHGyVltD1AqU7SrdVOWPlf2ClkwWczfdOT4yO0/edit) contains a photograph of the **actual October 26 classroom drawing**. The two diagrams below have *different provenances and purposes*. Do not substitute one for the other.
+
+#### A. Original in-class ER sketch — faithful Mermaid transcription
+
+This follows what is visibly present in the photograph: two entity rectangles **USERS** and **EVENTS**, a central **Schedule** relationship diamond, an attached `schedule-id` oval, three user attributes and the legible event attributes. **No EventCatalog rectangle is present in the photograph.** The photograph does not clearly establish relationship cardinalities, so none are invented here.
 
 ```mermaid
-erDiagram
-    EVENT_CATALOG ||--o{ EVENT : contains
-    SCHEDULE }o--o{ EVENT : plans
-    EVENT_CATALOG {
-        string catalogId "conceptual only"
-    }
-    EVENT {
-        string id PK
-        string hostName
-        string title
-        string description
-        string location
-        date date
-        string start
-        string end
-    }
-    SCHEDULE {
-        string scheduleId "current device only"
-    }
+flowchart LR
+    U["USERS"]
+    S{"Schedule"}
+    E["EVENTS"]
+
+    U --- S
+    S --- E
+
+    U --- UID(["user-id"])
+    U --- UN(["username"])
+    U --- AT(["available-time"])
+
+    S --- SID(["schedule-id"])
+
+    E --- EID(["event-id"])
+    E --- T(["title"])
+    E --- LOC(["location"])
+    E --- START(["start-time"])
+    E --- END(["end-time"])
+
+    classDef entity fill:#eff6ff,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
+    classDef relationship fill:#fff4dc,stroke:#b45309,stroke-width:2px,color:#78350f
+    classDef attribute fill:#f8fafc,stroke:#64748b,color:#334155
+
+    class U,E entity
+    class S relationship
+    class UID,UN,AT,SID,EID,T,LOC,START,END attribute
 ```
 
-[Google Doc — P5 MVP ER diagram and class drawing](https://docs.google.com/document/d/1zr55kTHGyVltD1AqU7SrdVOWPlf2ClkwWczfdOT4yO0/edit)
+[**Original P5 Google Doc — photograph of the group's actual October 26 classroom ER drawing**](https://docs.google.com/document/d/1zr55kTHGyVltD1AqU7SrdVOWPlf2ClkwWczfdOT4yO0/edit)
 
-**Interpretation:** P4 EventCatalog logically owns Event records. Many device-local Schedules can reference the same public Events, but a Schedule stores only IDs in that browser, not a server attendance table. One shared `events` table suffices for the agreed implementation; a separate `USER`, `EVENT_CATALOG`, `PLANNED_ATTENDANCE`, or `AVAILABILITY_WINDOW` table is not required. The P4 UML composition feedback is about ownership notation, **not** an ER diamond. `hostName` is self-reported display text and is not identity authentication.
+**Photo-reading limitations:** Some pencil labels are faint. The labels above are those legible in the provided photograph; verify any ambiguities against the original high-resolution image and teammates' recollections before treating this transcription as a finished submission. In particular, **do not infer cardinalities or invent extra keys** merely to make the sketch look complete.
+
+#### B. Earlier October 26 GitHub Mermaid proposal — historical, not the photograph
+
+The repo also once had a more elaborate P5 ER proposal, **before** the simplified three-class version was introduced. This is the *original code from that draft* (preserved here to stop losing earlier work):
+
+```mermaid
+flowchart LR
+    U["USER"]
+    E["EVENT"]
+    A["AVAILABILITY_WINDOW"]
+    P{"PLANS TO ATTEND"}
+
+    U ---|"posts"| E
+    U --- P
+    P --- E
+    U ---|"has"| A
+
+    U --- UID(["user_id (key)"])
+    U --- UN(["display_name"])
+
+    E --- EID(["event_id (key)"])
+    E --- TITLE(["title"])
+    E --- DESC(["description"])
+    E --- LOC(["location"])
+    E --- START(["start_at"])
+    E --- FINISH(["end_at"])
+    E --- SRC(["source_type"])
+    E --- COST(["cost_amount · optional"])
+    E --- REG(["registration_details · optional"])
+
+    A --- AID(["availability_id (key)"])
+    A --- FROM(["start_at"])
+    A --- UNTIL(["end_at"])
+
+    classDef entity fill:#f7e7eb,stroke:#87334a,stroke-width:2px,color:#30212a
+    classDef relationship fill:#fff0c8,stroke:#ac7b2c,stroke-width:2px,color:#4a3412
+    classDef attribute fill:#f6f6f6,stroke:#7c7c7c,color:#292929
+
+    class U,E,A entity
+    class P relationship
+    class UID,UN,EID,TITLE,DESC,LOC,START,FINISH,SRC,COST,REG,AID,FROM,UNTIL attribute
+```
+
+[**Historical October 26 Mermaid source in GitHub**](https://github.com/haiiroWednesday/SideQuest-CSCI187/blob/dda59d0e333b7f633b67d833e6c6887ff9aa44d3/docs/MVP_ER_DIAGRAM.md)
+
+This historical proposal introduced USER accounts, stored availability windows, cost/registration fields, and server-side planned attendance. **It was explicitly superseded as an implementation proposal**, because the team later selected anonymous event posting, a shared EventCatalog, full-event matching and browser-local planned IDs for M2. It is preserved as research/history rather than authorized requirements for coding agents.
+
+**Do not confuse any of these three things:**
+- **Photographed P5 classroom ER:** USERS — Schedule relationship — EVENTS (figure A).
+- **Earlier GitHub exploratory ER:** USER, EVENT, AVAILABILITY_WINDOW, PLANS TO ATTEND (figure B).
+- **Current M2 implementation architecture:** EventCatalog/Event/Schedule (the *P4 class design*, not the classroom ER sketch). Use the [current contract](#shared-event-data-contract) to write React/TypeScript/Supabase code.
+
+The P5 assignment separately asks for an editable draw.io diagram and says that each model class should be represented as an entity. **The photographed sketch is evidence of the classroom work, not automatic proof that it meets every final P5 instruction.** Resolve any disagreement with the instructor/team before declaring the editable drawing submission-ready.
 
 ### P5 assignment checkpoint, separate from implementation
 
