@@ -2,7 +2,7 @@
 
 **27 October 2026 · Research memo, not an MVP scope change.** Sources: the group's original P0, P1 [interviews](https://docs.google.com/document/d/1NRX14JTG78lvDj_AUFRzaricBm-QR4vECJiLfvXGu1M/edit), [P1 analysis](https://docs.google.com/document/d/13OOI6XF8nOiJcPj4t3Jdfxqid2EOuCfh78p7x7cYOGE/edit), [P3 requirements](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit), [P4 architecture](https://drive.google.com/file/d/1xiZGXQeScuJx14yKNUcwj1XtWTfOb-l4/view), [verified extra-credit rubric](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit?usp=sharing), current software competitors, and peer-reviewed HCI/recommender research. Each claim should remain distinguishable as observation, external research, or team hypothesis.
 
-> **This is the fully illustrated research document.** It consolidates the original interviews, competitor review, HCI literature, product hypotheses, the extra-credit rubric, implementation guardrails, and **editable Mermaid source diagrams**. The [MVP implementation contract](MVP_IMPLEMENTATION_CONTRACT.md) remains authoritative for what the four agents should code **now**; future flowcharts do not authorize M2 scope changes.
+> **This is the fully illustrated research document.** It consolidates the original interviews, competitor review, HCI literature, product hypotheses, the extra-credit rubric, implementation guardrails, and **editable Mermaid source diagrams**. The [MVP implementation contract](MVP_TEAM_PLAYBOOK.md#shared-event-data-contract) remains authoritative for what the four agents should code **now**; future flowcharts do not authorize M2 scope changes.
 
 **Jump to:** [research atlas](#visual-research-atlas-and-full-design-implications) · [raw interviews](#original-interview-evidence-two-people-not-representative-statistics) · [competition](#a-more-honest-competitor-landscape) · [HCI findings](#the-outside-research-that-deepens-the-design) · [prototype](#a-product-design-worth-prototyping-hypotheses-not-shipped-features) · [future-proof architecture](#architecture-extensions-without-trashing-m2) · [extra credit](#extra-credit-evidence-based-plan-actual-rubric-maximum-5) · [usability studies](#concrete-validation-experiments)
 
@@ -487,6 +487,160 @@ For baseline, have users perform tasks using their normal Google/Maps/Luma/messa
 
 
 
+## Original interview evidence — detailed field-note table
+
+The following is retained from the team's earlier interview analysis, with the direct source distinguished from product inference. The participants are **two people** and the interviews are **notes, not verbatim transcripts**.
+
+### Evidence-to-design observations
+
+These are **interviewers' notes**, not verbatim interview transcripts. Interview 1 has both primary and secondary notes; Interview 2 contains primary notes and a blank secondary-notes heading in the accessible document. Treat findings as exploratory evidence from **two participants**, not population-level research. The example personas Jordan/Maya were constructed later.
+
+| Observed interview finding | Where it appears | What it suggests | Status |
+| --- | --- | --- | --- |
+| Interview 1: he searches Google/AI and messages friends on Instagram, Discord, Snapchat or by phone; the group has a **long process deciding and agreeing** | Interview 1 primary notes | Discovery and decision-making are separated across tools; a short feasible shortlist + native share link might remove repeated work | Observed frustration → hypothesis |
+| Interview 1: only two or three people go together; friend groups change; friends' availability is a **biggest hindrance** | Interview 1 both note sets | Avoid forcing a permanent friend network just to make a short outing plan; support rotating, plan-scoped groups later | Observed |
+| Interview 1: he remembers places through conversation and **sometimes remembers them only after deciding on plans** | Interview 1 both note sets | “Save intention for later” and resurface it when the right moment arrives may be more valuable than a conventional bookmark | Observed → recommendation |
+| Interview 1: short outings are often **2–3 hours**, one destination; 30–60 minute travel limit for day trips; evenings are hard because places close | Interview 1 primary notes | Time matching alone is incomplete; account for trip effort, opening hours and transportation only when the later evaluator can validate them | Observed |
+| Interview 1: if a place is unavailable, find another place or reschedule | Interview 1 both note sets | Repair should distinguish **keep this time, swap place** from **keep this place, move time** | Observed |
+| Interview 2: going with friends matters more than any specific event; participant can feel an outing is pointless alone | Interview 2 primary notes | Group fit and social purpose need explicit representation, not only Event search rank | Observed |
+| Interview 2: a desired Corpus Christi outing failed even though participant was ready to do booking and driving; everyone had work and end-of-term commitments | Interview 2 primary notes | **The organizer may shoulder effort while actual availability collapses**; tentative commitments and low-effort substitutes matter | Observed |
+| Interview 2: shared availability is hardest to predict **1–2 weeks ahead** because some plans aren't recorded in calendars | Interview 2 primary notes | Calendar import cannot be the only scheduling source. Support manual, tentative, plan-specific availability | Observed |
+| Interview 2: registration can close, timing can conflict, transit can rule out options; for driving, acceptable travel may be 15–20 minutes | Interview 2 primary notes | Track freshness and reason codes; avoid a single universal 'distance threshold' for every user | Observed |
+| Interview 2: she considers nobody feeling left out important; the group often defaults to nearby Thai food when deciding fails | Interview 2 primary notes | Favor group fairness, close-to-campus fallback choices, and preserving the social occasion over optimizing for novelty | Observed |
+| Interview 2: people screenshot event information and send it, using Luma, Instagram, flyers, Maps, Yelp and messages | Interview 2 primary notes | Link/screenshot capture is a strong future idea; does not imply building another entire event-registration system | Observed |
+| Interview 2: plans often move a week or turn into something low-commitment like dinner within five minutes' walk of SCU | Interview 2 primary notes | Preserve deferred intentions; support **reduce commitment** as a specific repair operation | Observed |
+
+### Follow-up questions raised by the interviews
+
+1. **When someone says “I'm down,” is that a commitment or tentative enthusiasm?** Interview 2 says group agreement often appears that way, but it doesn't establish that every member can attend.
+2. **Is the real unit of success an event attendance or spending time with particular people?** Interview 2 explicitly emphasizes company; a fallback dinner may succeed even when the planned trip fails.
+3. **Which constraint is worth saving?** For Jordan it may be a 2–3 hour outing. For the second participant it may be keeping the group together, within transit limits and current workload.
+4. **What is the “least costly workable plan,” rather than simply the top-ranked activity?** Two interviewees describe swapping or downgrading outings after scheduling failures.
+5. **Where do forgotten ideas live before anyone sets a date?** Interview 1 remembers places late, and interview 2 mentions mentally retaining ideas brought up by friends. A future Intention object solves a different problem from an Event.
+6. **How should the system represent an unknown fact?** Registration status, timetable, transit, or uncertain availability should produce UNKNOWN and a suggested check, not a fabricated certainty.
+
+**Research caveat:** some interview notes are fragmented, inconsistent in pronouns or timing, or paraphrased by two different students. We should confirm interpretations with usability tests rather than treating every note as a definitive requirement.
+
+
+
+## Engineering expansion rules — preserved from the old roadmap
+
+The diagram in **Figure H** above visualizes these boundaries. The rules below specify how to preserve the working M2 architecture while later adding more capable domain objects.
+
+### Detailed extension points
+
+#### Identity and event source
+- Public events use **stable opaque `id`**, never title or hostName as key. Generate IDs in the shared store.
+- `hostName` is self-reported display text. It is **not** verified poster identity or permission to edit/delete.
+- Keep `EventCatalogPort` as an interface; implementation can change from fake adapter to Supabase to another provider without rewriting the views.
+- For future official SCU import, support **provenance and external IDs** at the adapter/data layer when needed: `sourceKind`, `sourceProvider`, `externalId`, `sourceUrl`, `lastCheckedAt`. Distinguish *official record* from *self-reported student post*, and prevent duplicated imported events by unique provider + external ID.
+- Do **not** import or claim official verification just because someone typed “SCU” into a host field. Do not scrape private campus systems without authorization.
+
+#### Time semantics: preserve today, isolate tomorrow
+- The selected M2 contract uses `date` (YYYY-MM-DD) and `start,end` (HH:mm) **on one day, America/Los_Angeles**. It is a narrower scope than the original P4 separate start/end dates.
+- **Do not scatter time parsing throughout React.** Put `toMinutes`, `fitsFully`, validation, duration, and any future timezone conversion in `model/time.ts` or a small dedicated utility; the actual filename is a suggestion.
+- Add a **pure conversion boundary** in the catalog adapter so a future `EventOccurrence {startAt,endAt,timeZone}` can be introduced without changing every screen. For M2 it returns the existing format.
+- Do **not** insert timezone-converted UTC strings into the current wall-clock format silently. Test exact boundaries, dates and negative duration.
+
+#### The crucial difference between Event, Intention and Plan
+- **Event:** a dated occurrence in the world, e.g. “Art Workshop Friday 2:30–3:30”. Other people can discover it.
+- **Place or Activity:** a location or general thing to do, e.g. “hike at Alum Rock”. It can have hours, price and conditions without being scheduled as an Event.
+- **Intention:** a wish to do an Event, visit a Place, or try an Activity, even with no time selected. May be active, deferred, done, or rejected.
+- **Plan:** a chosen activity/event with a selected time, participants, status, and constraints. Could be proposed, tentative, committed, completed, postponed, or canceled.
+- **M2 Schedule:** just a list of planned **Event IDs on this device**, with no fake group participation or extra entities. This is a *simple projection* of future personal plans, not the full final Plan model.
+- Later, migrate `sidequest.planned-event-ids.v1` into a versioned local `PlanRef` representation via a **one-time tested migration**. Do not retroactively pretend every saved Event was formally RSVP'd or attended.
+
+#### Evaluation, not brittle boolean decisions
+- Preserve the tested pure `fitsFully(event,window)` boolean in M2.
+- Future callers should use an *additive wrapper* such as:
+```ts
+type FitStatus = 'FULL' | 'PARTIAL' | 'NONE' | 'UNKNOWN'
+type FitEvaluation = {
+  status: FitStatus
+  reasons: string[]
+  usableMinutes?: number
+  constraintsChecked: string[]
+  constraintsUnknown: string[]
+}
+```
+- M2's evaluation wrapper can map boolean full-fit to FULL or NONE for **time only**. Never label an event “realistically feasible” if distance, registration, transport, or safety is unknown. Use “fits your selected time window”.
+- Later modules independently evaluate event timing, participation policy, transit, hours, registration, weather and budget; the orchestrator combines them. Do not bake travel or partial-attendance rules into `CampusEvent` or React UI.
+
+#### Extensible location / costs / participation
+- Keep the M2 `location` free-text field. Later add an optional normalized `Place`/geocoded location object and `ParticipationPolicy` rather than changing the meaning of `location`.
+- Do not create UI elements and SQL columns for cost, capacity, waitlist, registration, accessibility, or travel until a feature requires them. Plan their interface as optional **feature-specific** metadata.
+- An event time window, a location's opening hours, and registration eligibility are distinct kinds of availability; keep them separate in future models.
+
+#### Group and privacy constraints
+- For P1's rotating groups, invite-by-link or plan-scoped participation can come before full persistent social networks, **but real shared plans will eventually need identity/authorization or a carefully scoped invitation token**.
+- Never assume arbitrary `hostName`/anonymous `posterId` is safe authorization.
+- People may be tentative and only willing to participate in one particular plan. Availability is plan-scoped data, not a globally true “free/busy” record.
+- Support hard vs soft constraints and confirmation of inferences before building an AI planner. Keep private budgets or scheduling restrictions private even while using a yes/no feasibility answer.
+
+#### Extensibility and testability
+- Keep domain models/framework-independent and pure functions for evaluation.
+- Views call feature controllers; controllers depend on ports/interfaces; Supabase is one concrete adapter, not imported into every component.
+- Separate `EventCatalogPort`, `SchedulePort`, and future `PlaceSource`, `FeasibilityEvaluator`, `IntentionsStore`, `GroupPlanPort`. Don't implement empty abstractions yet; document extension points and add them when there is a real consumer.
+- Add repository contract tests and seeded fake adapters for all UI work, including empty/error/slow responses.
+- Version localStorage keys and database migrations. Write regression tests for every migration and previously valid schedule ID.
+
+
+
+## Original P1/P3 features ranked for the later product
+
+| Feature | Prior source | Priority for final product | Technical prerequisite |
+| --- | --- | --- | --- |
+| Full/partial/no-fit with explanations and usable attendance time | P3 broader MVP | **High** | FitEvaluation + ParticipationPolicy |
+| Transit/walking-time and location feasibility | P0/P3 | **High if reliable travel data can be sourced** | Normalized Place + travel estimator + explicit uncertainty |
+| Event source category / official vs student | P3 | **Medium** | Provenance, no falsely verified claims |
+| Stable event sharing | P3 | **Quick win** | Shareable URL for `eventId`; ordinary device share sheet |
+| Intention list: do later vs no longer interested | P1/P3 later | **Highest strategic priority** | Intention entity + status |
+| Resurface an intention when a feasible opportunity appears | P1 | **Highest differentiating value, later** | Intention + evaluator + event/place source |
+| Plan repair / substitution / postponement | P1/P3 later | **Highest differentiating value, later** | Plan status + constraints + compare alternatives |
+| Friend/rotating group availability, tentative statuses | P1/P3 later | **High** | GroupPlan + scoped participation + privacy |
+| Weather, budget, distance filters | P0/P1/P3 later | **Medium** | External data connectors, cached freshness, careful missing-data behavior |
+| Calendar integration and uncertain availability | P1/P3 later | **Medium** | Permissioned calendar adapter + manual override |
+| Previous experiences and personal/group ratings | P0/P1/P3 later | **Medium** | Experience memory; private by default |
+| Off-campus place/activity discovery | P0/P3 later | **Medium** | PlaceSource separated from EventCatalog |
+| Conversational group AI assistant | P1 exploratory idea | **Only after actual group planning works** | Confirmed structured constraints, no silent commitments |
+| Popularity/gamification and generic recommendations | P1 references, broad market | **Low differentiation** | Validated users; avoid building for novelty alone |
+
+
+
+## Final-project demonstration ladder
+
+**Demonstration A — graded MVP:** Poster A creates an event with hostName. Browser B sees it, searches a matching free-time window, adds it to local plans, refreshes, removes the plan, and confirms the public event remains. Show error/empty states, two browsers, meaningful tests, passing CI.
+
+**Demonstration B — strongest next feature:** “I want to try the makerspace workshop, but Saturday doesn't work.” Store an intention with status **deferred**, show why an available event doesn't currently fit, then show a later compatible opportunity. This adds genuine distinction without a huge new social backend.
+
+**Demonstration C — plan repair:** Student has a tentative group outing, but one constraint changes. Compare **keep time, change activity** vs **keep activity, move time**. Show reasons and uncertainties. For the final course project, one polished branch of this decision can be more convincing than half-working calendar, chat, travel and weather integrations.
+
+**Demonstration D — optional group layer:** Two or three participants submit availability for one plan. SideQuest identifies a common window, evaluates candidate activities, then creates a proposed plan. Avoid claiming verified identity if invitations aren't authenticated.
+
+Choose scope by actual time and interview feedback; these are **recommendations**, not bonus-feature requirements.
+
+## 8. A rigorous quality and course-evidence checklist
+
+### Engineering
+- Maintain Model–View–Controller separation; draw CRC/ER changes at the assignment milestone.
+- GitHub PRs and teammate reviews; run Vitest and production build on every change.
+- Test meaningful boundaries: date/time equality, corrupt local storage, duplicate plan IDs, second browser, missing event, hostName persistence.
+- Make accessible views: keyboard, focus, labels, validation feedback, mobile layouts, empty/loading/error states.
+- Track known limitations honestly: unverified host labels, no account permissions, anonymous spam risk, no live SCU import, same-day-only times, full-fit only.
+- Require explicit approval before public deployment; published events require validation, abuse protection, and an appropriate source/ownership policy.
+
+### Evidence for course requirements
+- [Fall 2026 syllabus](https://docs.google.com/document/d/1QvOyric501Vr8A7nzD6WWwF3Dp8FdvAkp6l7SAkXee4/edit): software lifecycle, interviews, UX testing, architecture documentation, teamwork, independent technical judgment, exams, AI policy and late policy.
+- [M2 Part 2 instructions](https://docs.google.com/document/d/1qIx_8k4ZOGWPrISXNYXf-sOifYsXk3SWoPVkoOBP3es/edit): after MVP, revise full CRC+ER in draw.io and submit individual reflection identifying changes, future key features, contributions and internal deadlines. **The retrieved assignment displays inconsistent date/day text (“Wednesday, Nov. 9th”); check the actual Camino/Gradescope due time rather than relying on that string.**
+- [P3 requirements and professor comments](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit): broader MVP list, later list, and optional professor feedback about saving.
+- [P1 personas and scenarios](https://docs.google.com/document/d/13OOI6XF8nOiJcPj4t3Jdfxqid2EOuCfh78p7x7cYOGE/edit): Jordan, Maya, intention/plan/opportunity distinctions, uncertainty and adaptive replanning.
+- [M1 requirements](../REQUIREMENTS.md) and [specifications](../SPECIFICATIONS.md): current narrower walking skeleton.
+- **Extra credit:** [Verified final project bonus rubric](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit?usp=sharing): up to five points, contingent on eligibility, complete core work, approved team choices and actual functioning bonus features. [Raw interview and bonus analysis](#original-interview-evidence--detailed-field-note-table). The separate syllabus oral reassessment is another program.
+
+**Do not publish professor copyrighted slides outside authorized class access.** This page summarizes relevant course instructions and links to student-accessible documents; do not copy lecture decks wholesale.
+
+
+
 ## Decisions for the four-person team
 
 **Cynthia:** research, accessible information hierarchy, two entry points, comparison/repair prototypes and usability protocol. **Devonny:** event results/details, provenance and link sharing. **Daven:** catalog service, source adapters, real-time publishing and safe endpoints. **Sembiyan:** time matching, pure feasibility evaluation and eventual plan constraints. Agree before anyone writes shared model changes; one teammate integrates App.tsx.
@@ -495,7 +649,7 @@ For baseline, have users perform tasks using their normal Google/Maps/Luma/messa
 
 ## Source bibliography
 
-**Interviews and course:** [raw notes](https://docs.google.com/document/d/1NRX14JTG78lvDj_AUFRzaricBm-QR4vECJiLfvXGu1M/edit), [derived P1 research](https://docs.google.com/document/d/13OOI6XF8nOiJcPj4t3Jdfxqid2EOuCfh78p7x7cYOGE/edit), [P3](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit), [course extra credit](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit?usp=sharing), [earlier interview+rubric synthesis](INTERVIEW_FINDINGS_AND_EXTRA_CREDIT.md).
+**Interviews and course:** [raw notes](https://docs.google.com/document/d/1NRX14JTG78lvDj_AUFRzaricBm-QR4vECJiLfvXGu1M/edit), [derived P1 research](https://docs.google.com/document/d/13OOI6XF8nOiJcPj4t3Jdfxqid2EOuCfh78p7x7cYOGE/edit), [P3](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit), [course extra credit](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit?usp=sharing), [earlier interview+rubric synthesis](#original-interview-evidence--detailed-field-note-table).
 
 **Competitors:** [Howbout groups](https://howbout.app/groups), [Howbout availability](https://howbout.app/get-help/find-availability/), [Partiful time poll](https://help.partiful.com/en-us/articles/15525422-can-i-poll-or-survey-my-guests), [Luma search](https://help.luma.com/p/searching-for-events), [SCU event calendar](https://events.scu.edu/campus-calendar/all).
 
