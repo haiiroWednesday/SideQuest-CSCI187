@@ -4,11 +4,12 @@
 
 ## Source of truth
 
-- **[MVP playbook (authoritative code contract and Mermaid diagrams (including the **classroom P5 sketch**, distinct from the M2 implementation model))](docs/MVP_TEAM_PLAYBOOK.md)** — agreed fields, catalog interface, backend, roles, unit tests, and P4/P5 Google Docs.
-- **[Team setup + coding agents](TEAM_SETUP_GUIDE.md)** — Git, VS Code, Cline/Claude, optional agent teams, safe PR reviews.
+- **[MVP playbook](docs/MVP_TEAM_PLAYBOOK.md)** — authoritative **M2 code contract**, architecture diagrams and tests, plus the separately identified [current P5 coursework ER](docs/MVP_TEAM_PLAYBOOK.md#p5-coursework-er-diagram--current-drawio-and-mermaid), classroom sketch and original Google Docs.
+- **[Team setup + coding agents](TEAM_SETUP_GUIDE.md)** — Git, VS Code, OpenCode/Cursor/Claude Code/Codex/Cline options, optional specialist agents, safe PR reviews.
 - **[Product research and roadmap](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md)** — raw interviews, comparison research, validated extra-credit rubric, **future-only** features. Do not expand M2 automatically.
 
 - [P4 architecture Google Doc](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit): Event, EventCatalog, Schedule, MVC responsibilities.
+- [Current editable P5 ER draw.io](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view): USER, EVENT, AVAILABILITY_WINDOW and PLANS TO ATTEND for **P5 coursework**. This is **not** the M2 implementation schema, even though it is the selected P5 drawing.
 - [README](README.md) and [TEAM_SETUP_GUIDE](TEAM_SETUP_GUIDE.md): how to run and test the actual app.
 
 ## Agreed MVP scope
