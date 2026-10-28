@@ -61,3 +61,4 @@ The repository also contains the original C++ course starter files, but they are
 - [MVP Team Playbook](docs/MVP_TEAM_PLAYBOOK.md) — proposed feature ownership, architecture and sequence diagrams, Git/CI workflow, AI-agent safeguards, integration steps, and sprint plan.
 - [Full Product Roadmap](docs/FULL_PRODUCT_ROADMAP.md) — P0/P1/P3 feature vision, competition, expansion boundaries and post-MVP architecture.
 - [Original interview findings and verified extra-credit rubric](docs/INTERVIEW_FINDINGS_AND_EXTRA_CREDIT.md) — field evidence, bonus categories, point limits, and eligibility.
+- [Deep SideQuest product research](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md) — grounded interviews, competitors, HCI evidence, future-proof architecture, bonus-credit plan, and usability experiments.
