@@ -1,14 +1,14 @@
 # SideQuest MVP — the team's build playbook
 
-**Updated 27 October 2026 · CSCI 187 · P4-simple MVP with event host names**  
+**Updated 28 October 2026 · CSCI 187 · M2 implementation guide + separately identified P5 coursework ER**  
 **Repository:** [`haiiroWednesday/SideQuest-CSCI187`](https://github.com/haiiroWednesday/SideQuest-CSCI187) · **Branch:** `master`  
 **Status:** Team-confirmed small MVP scope, checked against both pages of the original P4 draw.io diagram. Technical interfaces and the proposed daily schedule remain implementation suggestions, not additional course requirements.
 
 > **Read this first.** The target is a small experience that works end to end: someone posts an event; another student can browse it; a student can search for events that completely fit their free time; and they can add an event to a list of things they plan to attend. Do not spend the week implementing the full aspirational SideQuest product.
 
-**Diagrams:** The project architecture, workflow and ER drawings below use **editable Mermaid**, not embedded pictures or draft draw.io files. The original course **Google Docs** appear beneath the corresponding diagrams. These do not replace the required coursework submission.
+**Diagrams:** The architecture/workflow/ER illustrations here use editable Mermaid source. The **current P5 coursework diagram** also has an [editable draw.io file on Google Drive](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view), linked beside its Mermaid transcription. Original course Google Docs are linked below the relevant drawings. Markdown does not replace the required P5 submission.
 
-**Quick navigation:** [MVP scope and roles](#the-one-page-plan) · [P4 class diagram](#the-chosen-three-class-design) · [Shared TypeScript contract](#shared-event-data-contract) · [P5 Mermaid ER and Google Doc](#p5-er-diagrams--distinguish-the-actual-classroom-drawing-from-later-proposals) · [Supabase/SQL setup](#implementation-contract--database-and-supabase-setup) · [Feature work and integration](#2-how-the-pieces-should-fit-together) · [Agent workflow](#8-use-ai-tools-without-losing-control-of-the-project) · [Unit test appendix](#appendix--detailed-unit-testing-examples).
+**Quick navigation:** [MVP scope and roles](#the-one-page-plan) · [P4 class diagram](#the-chosen-three-class-design) · [Shared TypeScript contract](#shared-event-data-contract) · [Current P5 ER + editable draw.io](#p5-coursework-er-diagram--current-drawio-and-mermaid) · [Supabase/SQL setup](#implementation-contract--database-and-supabase-setup) · [Feature work and integration](#2-how-the-pieces-should-fit-together) · [Agent workflow](#8-use-ai-tools-without-losing-control-of-the-project) · [Unit test appendix](#appendix--detailed-unit-testing-examples).
 
 ## The one-page plan
 
@@ -40,7 +40,7 @@ flowchart LR
 - `app/src/controller/findEvents.ts` has `createEvent` and `findEvents`. `app/src/model/events.ts` has `CampusEvent`, `fitsFully`, date/time checks, and local-storage helpers.
 - Current `master` has **26 passing tests in 11 files** and a passing React build (verified 27 October). The test suite proves the M1 slice, **not** the future shared catalog or Personal Schedule.
 - The default branch is **`master`**, not `main`. App commands run inside `app/`.
-- The P5 conceptual ER explanation is included in this guide below. There is no separate competing ER proposal.
+- The **current selected P5 coursework ER** and its **editable Google Drive draw.io link** are preserved below, distinct from the small M2 implementation contract and the classroom photograph.
 
 ## 1. Start from the course materials, not assumptions
 
@@ -48,7 +48,7 @@ The professor's [MVP lecture](https://docs.google.com/presentation/d/1G3QYEDONfO
 
 Your team's [P4 architecture Google Doc](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit) defines **Event**, **EventCatalog**, and **Schedule**. It says **full-event** time matching, planned events on the **current device**, and a **shared** posted catalog. Partial attendance, travel estimates, accounts, cross-device personal schedules and calendar sync are postponed. “Save” in this diagram means **plan to attend**, not a second bookmark collection.
 
-The [original P3 requirements](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit) were broader, but the team chose the smaller P4 implementation. Professor Kandel suggested create → find → save/revisit as a useful end-to-end path and marked that suggestion optional. Our personal Schedule supplies that simple list of plans. Do not reintroduce discarded P3 features or the exploratory P5 schema simply because they appear in older documents.
+The [original P3 requirements](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit) were broader, but the team chose the smaller P4 implementation. Professor Kandel suggested create → find → save/revisit as a useful end-to-end path and marked that suggestion optional. Our personal Schedule supplies that simple list of plans. The current P5 coursework drawing contains USER and saved AVAILABILITY_WINDOW concepts, but those records are **not authorized as current M2 code features** unless the team explicitly expands scope.
 
 **One professor comment to resolve:** on the [P4 submission](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit), she said the EventCatalog–Event relationship should use **composition (filled diamond)** because posted Events live in the catalog. The current drawing depicts aggregation and says records outlive the catalog. Discuss the intended lifecycle and correct the diagram/documentation consistently. That is a diagram-and-ownership decision, not an invitation to delete events when somebody removes them from a personal Schedule.
 
@@ -131,7 +131,7 @@ flowchart LR
 
 **No USER rows, author foreign keys, PLANNED_ATTENDANCE table, saved AVAILABILITY_WINDOW table, or cost fields.** Each Event has an unverified display `hostName`. An optional generated browser `posterId` would not authenticate the host. Each visitor can post and read the same public catalog. Because there is no identity system, the app cannot securely distinguish who posted an event or restrict who may modify another person's posts; omit public edit/delete operations and be explicit that the prototype is not production-secure. The shared service must still protect its credentials and apply basic validation/rate limits where feasible.
 
-This is a conceptual database view. An implementation might use **one `events` collection/table** behind EventCatalog with stable event IDs. `EventCatalog` and `Schedule` remain real *application classes/services* in the MVC design even if one is backed by a single events table and the other by browser localStorage. That distinction does **not** mean the P5 classroom ER diagram is automatically correct: [P5 instructions](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit) ask the group to show each model class as an entity, so the team should make the hand drawing and draw.io submission reflect its chosen simplification and confirm notation with the professor if needed. The current [Mermaid P5 ER above](#p5-er-diagrams--distinguish-the-actual-classroom-drawing-from-later-proposals) describes this simplified design; the actual final P5 draw.io submission has not been verified here.
+This describes the **proposed M2 implementation storage**, potentially one shared `events` table behind EventCatalog with stable event IDs; `EventCatalog` and `Schedule` remain application classes/services even without dedicated SQL tables. The [current P5 coursework ER below](#p5-coursework-er-diagram--current-drawio-and-mermaid) intentionally depicts an expanded USER/EVENT/AVAILABILITY_WINDOW model. Do not treat that coursework drawing as authorization to build three M2 tables. The course's literal 'each model class' requirement still needs instructor/team review.
 
 ### Host identity without user accounts
 
@@ -183,11 +183,61 @@ export interface SchedulePort {
 | Planned ID no longer in catalog | My Schedule shows a clear unavailable state instead of a crash | Sembiyan + Cynthia |
 | M1 → MVP model migration | Event descriptions, dates and full-fit behavior remain correct after adapting old fields | Daven + Sembiyan |
 
-### P5 ER diagrams — distinguish the actual classroom drawing from later proposals
+### P5 coursework ER diagram — current draw.io and Mermaid
 
-**Important correction (October 27):** This guide previously showed a synthesized `EVENT_CATALOG–EVENT–SCHEDULE` Mermaid ER and incorrectly implied it was the diagram the team drew. It was **not**. The [original P5 Google Doc](https://docs.google.com/document/d/1zr55kTHGyVltD1AqU7SrdVOWPlf2ClkwWczfdOT4yO0/edit) contains a photograph of the **actual October 26 classroom drawing**. The two diagrams below have *different provenances and purposes*. Do not substitute one for the other.
+**Current P5 drawing (revised October 28): [SideQuest_P5_ER_Diagram.drawio — editable Google Drive file](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view)**.
 
-#### A. Original in-class ER sketch — faithful Mermaid transcription
+This is the **current selected P5 coursework ER drawing**, based on the October 26 expanded ER proposal and subsequently refined in draw.io. It is intentionally distinct from (1) the photographed classroom sketch and (2) the small M2 app-storage contract. The link above is the actual editable submission candidate, not an SVG or a deleted GitHub draft.
+
+**Latest checked draw.io structure:** three entities `USER`, `EVENT`, `AVAILABILITY_WINDOW`; direct labeled one-to-many lines `posts` (USER → EVENT) and `has` (USER → AVAILABILITY_WINDOW); a `PLANS TO ATTEND` diamond for the many-to-many relationship (USER ↔ EVENT); **no 1/M/N labels**, in keeping with the classroom discussion. The drawing's current `EVENT` attributes are `event_id (PK)`, `title`, `description`, `location`, `start_at`, `end_at`, `source_type`, and `cost_amount`. The latest Drive file **does not include** `registration_details`, although it was present in the older proposal. `USER` has `user_id (PK)` and `display_name`; `AVAILABILITY_WINDOW` has `availability_id (PK)`, `start_at`, and `end_at`.
+
+#### A. Selected P5 ER — matching Mermaid source
+
+```mermaid
+flowchart LR
+    U["USER"]
+    E["EVENT"]
+    A["AVAILABILITY_WINDOW"]
+    P{"PLANS TO ATTEND"}
+
+    U ---|"posts"| E
+    U ---|"has"| A
+    U --- P
+    P --- E
+
+    U --- UID(["user_id (PK)"])
+    U --- UN(["display_name"])
+
+    E --- EID(["event_id (PK)"])
+    E --- TITLE(["title"])
+    E --- DESC(["description"])
+    E --- LOC(["location"])
+    E --- START(["start_at"])
+    E --- FINISH(["end_at"])
+    E --- SRC(["source_type"])
+    E --- COST(["cost_amount"])
+
+    A --- AID(["availability_id (PK)"])
+    A --- FROM(["start_at"])
+    A --- UNTIL(["end_at"])
+
+    classDef entity fill:#eaf2fd,stroke:#2665af,stroke-width:2px,color:#173c6b
+    classDef relationship fill:#fff1db,stroke:#b67621,stroke-width:2px,color:#683d11
+    classDef attribute fill:#ffffff,stroke:#8094ae,color:#283647
+    class U,E,A entity
+    class P relationship
+    class UID,UN,EID,TITLE,DESC,LOC,START,FINISH,SRC,COST,AID,FROM,UNTIL attribute
+```
+
+[**Open the same P5 drawing for editing in draw.io / Google Drive**](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view) · [**P5 assignment requirements**](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit)
+
+**Important distinction for teammates and coding agents:** This P5 coursework ER illustrates a **broader data model**. It does **not** mean the team decided to implement user accounts, persistent availability records, costs or a central planned-attendance join table in the current **M2 MVP**. For code, follow the [small Event contract](#shared-event-data-contract), shared public EventCatalog and browser-local plans. A conceptual ER diagram and a shipped database schema can represent different scopes, but the team must clearly acknowledge that difference.
+
+**Remaining P5 review before submission:** Professor Kandel's instruction says "Each model class is its own entity," whereas this selected P5 diagram models USER/EVENT/AVAILABILITY_WINDOW, not each P4 class. This mismatch has **not** been confirmed acceptable by the instructor. Also, Google Drive sharing is currently **SCU-domain with link: Commenter**, not public **Anyone with the link: Commenter**. Finally, the current drawing marks primary keys using `(PK)`; verify whether the professor expects Chen-style underlining instead. Do not claim submitted or instructor-approved until those checks are complete.
+
+---
+
+#### B. Original October 26 classroom sketch — faithful Mermaid transcription
 
 This follows what is visibly present in the photograph: two entity rectangles **USERS** and **EVENTS**, a central **Schedule** relationship diamond, an attached `schedule-id` oval, three user attributes and the legible event attributes. **No EventCatalog rectangle is present in the photograph.** The photograph does not clearly establish relationship cardinalities, so none are invented here.
 
@@ -225,7 +275,8 @@ flowchart LR
 
 **Photo-reading limitations:** Some pencil labels are faint. The labels above are those legible in the provided photograph; verify any ambiguities against the original high-resolution image and teammates' recollections before treating this transcription as a finished submission. In particular, **do not infer cardinalities or invent extra keys** merely to make the sketch look complete.
 
-#### B. Earlier October 26 GitHub Mermaid proposal — historical, not the photograph
+
+#### C. October 26 proposal history — source of the expanded ER model
 
 The repo also once had a more elaborate P5 ER proposal, **before** the simplified three-class version was introduced. This is the *original code from that draft* (preserved here to stop losing earlier work):
 
@@ -269,18 +320,14 @@ flowchart LR
 
 [**Historical October 26 Mermaid source in GitHub**](https://github.com/haiiroWednesday/SideQuest-CSCI187/blob/dda59d0e333b7f633b67d833e6c6887ff9aa44d3/docs/MVP_ER_DIAGRAM.md)
 
-This historical proposal introduced USER accounts, stored availability windows, cost/registration fields, and server-side planned attendance. **It was explicitly superseded as an implementation proposal**, because the team later selected anonymous event posting, a shared EventCatalog, full-event matching and browser-local planned IDs for M2. It is preserved as research/history rather than authorized requirements for coding agents.
+This historical proposal introduced USER accounts, stored availability windows, cost/registration fields, and server-side planned attendance. **It is not the M2 implementation contract**, because the team later selected anonymous event posting, a shared EventCatalog, full-event matching and browser-local planned IDs for M2. It is preserved as research/history rather than authorized requirements for coding agents.
 
-**Do not confuse any of these three things:**
-- **Photographed P5 classroom ER:** USERS — Schedule relationship — EVENTS (figure A).
-- **Earlier GitHub exploratory ER:** USER, EVENT, AVAILABILITY_WINDOW, PLANS TO ATTEND (figure B).
-- **Current M2 implementation architecture:** EventCatalog/Event/Schedule (the *P4 class design*, not the classroom ER sketch). Use the [current contract](#shared-event-data-contract) to write React/TypeScript/Supabase code.
 
-The P5 assignment separately asks for an editable draw.io diagram and says that each model class should be represented as an entity. **The photographed sketch is evidence of the classroom work, not automatic proof that it meets every final P5 instruction.** Resolve any disagreement with the instructor/team before declaring the editable drawing submission-ready.
+**Which diagram is which:** The **current P5 file** is figure A above; the **photographed classroom sketch** is figure B; the **historical October 26 draft** is figure C. The **M2 implementation** is documented separately in the P4-derived class architecture and TypeScript contract. Do not silently replace the coursework drawing with the M2 model or vice versa.
 
 ### P5 assignment checkpoint, separate from implementation
 
-The P5 assignment currently states **Wednesday, October 28, 2026, end of day**. It asks for **a photo of the in-class hand-drawn ER diagram** plus a **draw.io ER diagram** shared as “everyone with the link can comment,” submitted through **Gradescope**. One teammate submits and adds contributors. GitHub Markdown or this playbook does not replace either file. **Do not submit the old USER/AVAILABILITY_WINDOW proposal as though it were the agreed simple architecture.** Check the professor's “each model class is its own entity” instruction and ask about the correct representation if your actual database has only public Event records plus local planned IDs.
+The P5 assignment states **Wednesday, October 28, 2026, end of day**. Submit **(1) a photo of the in-class hand-drawn ER** and **(2) the current [editable draw.io ER diagram](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view)** as a shared link through **Gradescope**. One teammate submits and includes all contributors. The requested permission is **Anyone with the link → Commenter**; the last verified setting is **SCU-domain with link → Commenter**, so the sharing must be checked before submitting. The selected P5 design remains conceptually broader than the agreed M2 data persistence and may conflict with the literal 'each model class is its own entity' direction: confirm this with the team/professor rather than asserting that the assignment is fully compliant or that the M2 contract has changed.
 
 ### Clear handoffs, no schema split
 
@@ -291,7 +338,7 @@ The P5 assignment currently states **Wednesday, October 28, 2026, end of day**. 
 
 ## Implementation contract — database and Supabase setup
 
-The selected backend is a **proposal that Daven must configure and validate**; it is not yet an implemented shared catalog. Client components depend on `EventCatalogPort` rather than database column names. The P5 conceptual picture above should never be used as a three-table schema.
+The selected backend is a **proposal that Daven must configure and validate**; it is not yet an implemented shared catalog. Client components depend on `EventCatalogPort` rather than database column names. The P5 coursework ER above does not authorize a USER/AVAILABILITY_WINDOW/PLANNED_ATTENDANCE implementation.
 
 ### Proposed Postgres storage and SQL
 
@@ -607,7 +654,7 @@ flowchart LR
 
 **Ready-to-paste planning prompt:**
 
-> You are working in `haiiroWednesday/SideQuest-CSCI187`, React/TypeScript app under `app/`, default branch `master`. Read `README.md`, `REQUIREMENTS.md`, `SPECIFICATIONS.md`, `docs/MVP_TEAM_PLAYBOOK.md`, and **both pages of the original P4 class diagram**. Read the **P5 ER diagrams** section of this playbook only to understand the **original classroom drawing and historical proposals**; neither is automatically the current implementation contract. My assigned feature is [FEATURE]. Follow Model–View–Controller boundaries, reuse tested M1 code, and respect our **confirmed P4-simple scope**: shared public EventCatalog, no user/login, no cost or saved-availability records, full-fit matching only, and one browser-local Schedule of planned Event IDs. Older P5 proposals with USER accounts, saved availability and PLANNED_ATTENDANCE tables are superseded. Do not propose account tables, planned-attendance junctions, saved availability tables or prices. **Do not edit yet.** Tell me your understanding, the smallest possible file-by-file plan, proposed interfaces, edge cases, and tests. Mark all inferred choices as questions. Do not modify unrelated files.
+> You are working in `haiiroWednesday/SideQuest-CSCI187`, React/TypeScript app under `app/`, default branch `master`. Read `README.md`, `REQUIREMENTS.md`, `SPECIFICATIONS.md`, `docs/MVP_TEAM_PLAYBOOK.md`, and **both pages of the original P4 class diagram**. Read the **current P5 coursework ER**, classroom drawing, and historical proposal sections for documentation context only; **none** overrides the current small M2 implementation contract. My assigned feature is [FEATURE]. Follow Model–View–Controller boundaries, reuse tested M1 code, and respect our **confirmed P4-simple scope**: shared public EventCatalog, no user/login, no cost or saved-availability records, full-fit matching only, and one browser-local Schedule of planned Event IDs. Older P5 proposals with USER accounts, saved availability and PLANNED_ATTENDANCE tables are superseded. Do not propose account tables, planned-attendance junctions, saved availability tables or prices. **Do not edit yet.** Tell me your understanding, the smallest possible file-by-file plan, proposed interfaces, edge cases, and tests. Mark all inferred choices as questions. Do not modify unrelated files.
 
 **Ready-to-paste implementation prompt (after approval):**
 
@@ -723,11 +770,11 @@ gantt
 5. **60 seconds — plans:** Add the event to My Schedule, refresh, remove it, then prove the original event is still discoverable.
 6. **40 seconds — quality:** Show GitHub CI, tests, one mobile screenshot, and honestly describe what's postponed.
 
-**Before calling MVP complete:** confirm the current course deadline and P5 submission details; discuss the professor's catalog composition feedback; ensure the submitted ER drawing reflects the **already-chosen simple architecture**, not the old exploratory proposal; implement a genuinely shared event catalog plus a browser-local Schedule; assign human reviewers; keep secrets private; and run the cross-browser scenario on `master`.
+**Before calling MVP complete:** confirm P5 submission and public-commenter sharing, resolve the professor's literal 'each model class' P5 instruction against the current course drawing, discuss catalog composition feedback, preserve the distinction between the broader P5 ER and the small M2 code contract, implement a shared event catalog and browser-local Schedule, assign reviewers, secure credentials, and test the cross-browser journey on `master`.
 
 ### Documented source links and ownership
 
-**Team artifacts:** [P5 current assignment](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit) · [P3 requirements and instructor comments](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit) · [P4 architecture Google Doc](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit) · [P4 professor feedback](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit) · [M1 walking skeleton specs](../SPECIFICATIONS.md) · [Mermaid P5 ER above](#p5-er-diagrams--distinguish-the-actual-classroom-drawing-from-later-proposals).
+**Team artifacts:** [P5 current assignment](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit) · [P3 requirements and instructor comments](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit) · [P4 architecture Google Doc](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit) · [P4 professor feedback](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit) · [M1 walking skeleton specs](../SPECIFICATIONS.md) · [current P5 Mermaid + draw.io](#p5-coursework-er-diagram--current-drawio-and-mermaid) · [editable P5 draw.io](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view).
 
 **Course:** [MVP](https://docs.google.com/presentation/d/1G3QYEDONfO21IupTmfIlAm0b0nRTHTLRYXH2QmDKXz0/edit) · [System Architecture](https://docs.google.com/presentation/d/1S5NFSWBuB7DNCxgtnEIwg7Yq-osRQyr4eVQB9pk-UqI/edit) · [Implementation and AI guidance](https://docs.google.com/presentation/d/1YxzkSxyK5kZIJjCdwa69SmrmPgtytcaWBwcARaJGcm0/edit) · [Walking Skeleton](https://docs.google.com/presentation/d/1W_RSFcWNTL-NINOeRiGBVvvOtcZncaio5pE5-QtSRmw/edit).
 
