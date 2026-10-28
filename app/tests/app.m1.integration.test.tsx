@@ -40,7 +40,7 @@ describe('M1 rendered user workflow', () => {
     expect(screen.getByRole('heading', { name: 'Art Workshop' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Remove Art Workshop' })).toBeTruthy()
     expect(screen.getByText('1 total')).toBeTruthy()
-    expect(screen.getByText('1 matching event')).toBeTruthy()
+    expect(screen.getByText('1 event')).toBeTruthy()
     expect(screen.getByText('✓ Fits')).toBeTruthy()
   })
 
