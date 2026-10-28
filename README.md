@@ -59,3 +59,4 @@ The repository also contains the original C++ course starter files, but they are
 
 - [Editable proposed P5 draw.io diagram](docs/SideQuest_P5_Simple_ER_Proposed.drawio) — working draft, not a submitted Gradescope artifact.
 - [MVP Team Playbook](docs/MVP_TEAM_PLAYBOOK.md) — proposed feature ownership, architecture and sequence diagrams, Git/CI workflow, AI-agent safeguards, integration steps, and sprint plan.
+- [Full Product Roadmap](docs/FULL_PRODUCT_ROADMAP.md) — P0/P1/P3 feature vision, competition, expansion boundaries and post-MVP architecture.
