@@ -51,7 +51,7 @@ The repository also contains the original C++ course starter files, but they are
 
 ## Documentation — only three active guides
 
-1. **[Build the MVP](docs/MVP_TEAM_PLAYBOOK.md)** — agreed scope, Mermaid P4 class diagram, Mermaid P5 ER diagram with original Google Doc links, shared Event type, Supabase proposal, responsibilities, implementation sequence, and testing examples.
+1. **[Build the MVP](docs/MVP_TEAM_PLAYBOOK.md)** — agreed scope, Mermaid P4 class diagram, the faithfully transcribed P5 classroom ER and the historical proposal (Mermaid), with the original Google Doc links, shared Event type, Supabase proposal, responsibilities, implementation sequence, and testing examples.
 2. **[Set up the team and AI agents](TEAM_SETUP_GUIDE.md)** — install/run/test SideQuest, Git workflow, Cline/Claude credentials, optional multi-agent setup, and troubleshooting.
 3. **[Product research and future roadmap](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md)** — raw interview findings, competitors, HCI research, the full feature vision, ten Mermaid diagrams, final-project expansion, and the verified **five-point extra-credit rubric**.
 
