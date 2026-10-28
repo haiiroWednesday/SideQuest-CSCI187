@@ -76,176 +76,131 @@ Our [React GitHub Actions workflow](.github/workflows/react-ci.yml) runs equival
 - **Legacy C++ files appear:** they remain in the repository but are unrelated to the React build.
 - **Avoid committing:** `node_modules/`, `dist/`, passwords, or API keys.
 
-## Optional AI coding agents — Cline and multi-agent workflows
+## Optional AI coding agents — choose by the work, not by what we installed first
 
-**Cline is optional**; Git, code review, and automated tests are required regardless of AI tool. Choose a supported provider and protect its keys. The root [AGENTS.md](AGENTS.md) defines project scope for any compatible assistant.
+**The team does not need Cline—or any paid agent—to complete M2.** Git, React/TypeScript, VS Code (or another editor), meaningful tests, continuous integration, and peer-reviewed PRs are the core development workflow. Agents help with implementation and reviews; humans must understand, test and approve their contributions. The [MVP Playbook](docs/MVP_TEAM_PLAYBOOK.md) is authoritative for the Event type, database strategy, roles and scope.
 
-### 1. Understand the vocabulary first
+### The vocabulary
 
-| Term | What it means | SideQuest example |
+| Thing | What it is | What it is **not** |
 | --- | --- | --- |
-| **Model** | AI that processes prompts (Claude, GPT, Gemini) | Claude helps write a React event card |
-| **Chat / Playground** | Interface for conversation and testing prompts; not automatically connected to files | Claude Console Playground explores validation rules |
-| **Coding agent** | Model + tools + context + permissions; can inspect/edit files and run commands | Cline opens `app/src`, runs tests, proposes patches |
-| **Agent role** | Instructions describing a specialist; not necessarily an independent running agent | “Test reviewer” may be a prompt used by the *same* Cline agent |
-| **Multi-agent team** | Several actual agent sessions with coordination/delegation | A Cline CLI coordinator delegates to separate analysis/review agents |
-| **Claude Console workspace** | API keys, members, billing, and rate/spend caps; no shared Git working tree | Team members use their own authorized keys |
-| **GitHub repository** | Shared code and review history; commits/PRs are how work reaches teammates | `haiiroWednesday/SideQuest-CSCI187` |
-| **VS Code workspace** | Local folder opened in the editor | One teammate's clone of the SideQuest repo |
+| **AI model (Claude, GPT, Gemini)** | An intelligence powering a session | A separate repository worker by itself |
+| **Chat / API Playground** | Interface for asking and testing prompts | Automatically authorized to edit your local files |
+| **Coding agent** | Model + repository/tool access + permissions + task context | Guaranteed correct code |
+| **Subagent** | Independently instantiated specialist session, often with fresh context and different permissions/model | Just changing the system prompt or switching models |
+| **Orchestrator** | Agent or workflow that delegates work and consolidates results | A GitHub branch or a model provider |
+| **Git worktree** | Isolated checkout so independent agents avoid overwriting each other | Automatic review or merge resolution |
+| **GitHub PR** | The reviewed change delivered to other teammates | A shared live conversation among agents |
 
-**Crucial:** choosing GPT instead of Claude in Cline changes the **model behind an agent**. It does not create a second agent that automatically checks the first. Cline's **Plan** and **Act** modes are also modes, not two independent coworkers.
+**One agent with Claude then GPT remains one agent/session unless you explicitly start a second session or delegate.** A model selector alone doesn't create an adversarial reviewer. Separate agents do not magically see each other's conversations; they see approved files, branch changes, PRs, and delegated reports.
 
-### 2. Our suggested team setup
+### Which tool should each person actually use?
 
-Every teammate **must** have GitHub access, Git, VS Code or another editor, Node.js, and a runnable SideQuest checkout. **Cline is recommended but optional.** One person's setup doesn't automatically install an extension or copy model credentials to the other three computers.
+| Option | Official product / documentation | Best use for SideQuest | Watch-outs |
+| --- | --- | --- | --- |
+| **OpenCode** | [Agents](https://docs.opencode.ai/docs/agents/) · [Providers](https://docs.opencode.ai/docs/providers/) | **Recommended for Cynthia's desired multi-provider team:** coordinator + per-agent model choice + specialized subagents | More configuration. Different providers may charge separately. |
+| **Cursor** | [Parallel agents & worktrees](https://prod.cursor.com/docs/configuration/worktrees) · [Agents Window](https://cursor.com/changelog/3-0) | **Recommended for visual UI work:** design review, browser feedback, multiple isolated agent tasks in a graphical IDE | Separate subscription/usage limits; multiple agents cost more. |
+| **Claude Code** | [Subagents](https://claude.com/resources/articles/subagents-in-claude-code) · [Getting started](https://docs.anthropic.com/en/docs/claude-code/getting-started) | Strong primary coding agent using Anthropic models and project-specific reviewer agents | Primarily Claude-focused; other providers need a separate integration. |
+| **OpenAI Codex** | [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents) · [Git worktrees](https://learn.chatgpt.com/docs/environments/git-worktrees) | Genuine independent GPT coding/review sessions; may be usable through eligible ChatGPT sign-in | Usage entitlements and quotas depend on account; sign-in isn't an OpenAI API key. |
+| **Cline** | [Install paths](https://github.com/cline/cline/blob/main/docs/getting-started/installing-cline.mdx) · [Agent Teams](https://github.com/cline/cline/blob/main/docs/cli/agent-teams.mdx) | A useful VS Code coding agent if you already like it. CLI/Kanban can coordinate teams | **Agent Teams are not the ordinary VS Code extension workflow.** Do not make everyone install it. |
 
-**Minimal (recommended for MVP):** one Cline coding session on a private feature branch, a separate read-only review, automated tests, then a real teammate PR review.
+**Recommended initial choice:** Cynthia tests **OpenCode** as the mixed-model coordinator, with a dedicated second-model reviewer. Cursor is an alternative if UI convenience is the priority. Teammates can use Claude Code, Codex, Cursor, Cline, or no agent; the *same code contracts, Git/CI workflow and human review* apply to everyone.
 
-**Advanced (optional for Cynthia):** Cline CLI Agent Teams or OpenCode subagents to delegate read-only exploration, review, and documentation. Avoid parallel *writers* on one branch or file. Don't let multi-agent setup consume the assignment week.
+### First use: one safe task before parallelism
 
-### Recommended specialist roles
-
-| Role | Typical task | Permissions |
-| --- | --- | --- |
-| Planner / Architect | Inspect P4, MVP contract and source; propose a small plan | Read-only |
-| Feature Builder | Implement one agreed change in a feature branch | Edit only approved project files; commands require approval |
-| Unit-Test Reviewer | Check that tests call real behavior and fail on meaningful bugs | Read-only + allowed test commands |
-| MVC / Integration Reviewer | Check boundaries and shared event contract | Read-only |
-| UI / Accessibility Critic | Review focus, responsive layout, cards, empty/error states | Read-only / screenshots |
-| Data / Security Reviewer | Inspect Supabase grants, RLS, public credentials and anonymous posting risks | Read-only |
-| Documentation Checker | Compare README and implementation to what exists | Docs-only changes with approval |
-| Coordinator | Collect specialist results, decide action order, and report decisions | No merge/deploy permission |
-
-These can be **prompt roles** in a single agent, or actual separate subagents when configured. Eight names does **not** automatically mean eight active API sessions.
-
-### 3. Optional: install Cline inside VS Code
-
-1. In VS Code, open **Extensions** (Cmd/Ctrl+Shift+X), search **Cline**, and install the Cline extension from the official marketplace. Open the **Cline** panel. [Official installation guide](https://github.com/cline/cline/blob/main/docs/getting-started/installing-cline.mdx).
-2. Click the **gear inside the Cline panel** (not the main VS Code preferences gear).
-3. Choose an AI **API Provider**. To use our existing **Anthropic/Claude API credits**, choose **Anthropic** (BYOK), not an unrelated Cline-billed provider. Enter **your own authorized Anthropic API key**, not a teammate's key. Choose a Claude model available to our workspace. [Cline provider setup](https://github.com/cline/cline/blob/main/docs/getting-started/authorizing-with-cline.mdx).
-4. Make a tiny read-only test request in **Plan** mode: “Read `app/src/model/events.ts` and explain the `fitsFully` rule. Don't edit or run commands.” Make sure Cline can access the correct folder and describe real code.
-5. Turn **automatic approval of edits/commands off** during onboarding. Review every proposed command; never approve deletion, force-pushes, credential access, database reset, or merge simply because a model asked.
-6. If the connection fails, check whether the key is valid, linked to the correct Anthropic workspace, and has API privileges. A workspace **User** with Playground-only access may be unable to issue keys; a workspace Limited Developer/Developer or administrator can manage them as allowed. [Claude API keys](https://platform.claude.com/docs/en/get-api-key).
-
-**Budget:** your project previously discussed a shared **$100 Claude API credit allocation**. That allocation is separate from ChatGPT subscriptions and from other model providers. Check the live Anthropic balance rather than assuming the credit is still unused. Set a low workspace spend cap/alerts and review usage in the [Claude Console workspace settings](https://platform.claude.com/docs/en/manage-claude/workspaces) before experimenting with several simultaneous agents. **Do not put API keys in a repo, screenshot, chat, PR, README, or `.env` that might be committed.**
-
-### 4. What Cline can do, step by step
-
-Cline has two main modes. **Plan** explores code and proposes an approach without editing files or executing commands. **Act** is allowed to modify files and run commands, subject to permission prompts. Switching modes preserves the task context, and Cline can optionally use different models for Plan versus Act. [Official Plan/Act guide](https://github.com/cline/cline/blob/main/docs/core-workflows/plan-and-act.mdx).
-
-### Before an agent writes
-
-From the repository root, create a branch **just for your own task**:
+1. Open the **SideQuest repository folder** (not a random file), follow the install/run steps above, and verify `npm test` and `npm run build` succeed within `app/`.
+2. Protect uncommitted work before branching. From the repo root:
 
 ```bash
+git status
 git switch master
 git pull --ff-only origin master
-git switch -c feature/your-part-yourname
+git switch -c feature/your-feature-yourname
 ```
 
-In Cline **Plan** mode, paste:
+3. Give the assistant this **read-only first task**:
 
-> Read `AGENTS.md`, `docs/MVP_TEAM_PLAYBOOK.md`, `docs/MVP_TEAM_PLAYBOOK.md`, and the existing code for [MY FEATURE]. Do **not** edit anything. Explain the feature's input/output contract, which files you would change, edge cases, and which tests would prove it works. Respect the chosen same-day Event type, shared EventCatalog, browser-local Schedule, and no account/cost/partial-matching scope.
+> Read AGENTS.md, docs/MVP_TEAM_PLAYBOOK.md, and the current code for my assigned feature. Do not edit anything. Explain the exact data contract, files you would touch, dependencies on teammates, tests to add, and potential compatibility risks.
 
-Check the proposed file list against your area of ownership, then switch to **Act** and paste:
+4. Once the plan matches your ownership and the agreed `CampusEvent` type, allow a **small feature patch**. Require approval for file edits and commands; forbid automatic merge, destructive Git operations, database reset, cloud deployment, and credential access.
+5. Run real verification from `app/` (`npm test`, `npm run build`), inspect `git diff`, and manually check the screen. Have a **different session** review the code read-only. A human teammate reviews the GitHub PR before merge.
 
-> Implement only the smallest agreed step of [MY FEATURE] on my current feature branch. Show me the proposed edits and commands for approval. Add meaningful tests that would fail if the behavior were wrong. Run `npm test` and `npm run build` inside `app/`; report actual results. **Do not commit, push, open/merge a PR, change database permissions, or deploy without explicit permission.**
+**A genuinely useful multi-agent flow:**
 
-After reviewing `git diff`, manually check the feature in the browser. Then have Cline or another tool **review**, not modify, the changes. Finally push and open a PR targeting **`master`** for a human teammate to review.
+```mermaid
+flowchart TB
+    Human["Human owner defines one task"]
+    Coordinator["Coordinator: plans and delegates"]
+    Architect["Architect: read-only model review"]
+    Builder["Builder: approved feature branch"]
+    Tester["Tester: meaningful test checks"]
+    Reviewer["Independent second-model reviewer"]
+    Checks["Real test suite + manual browser checks"]
+    PR["Human-owned PR and teammate review"]
+    Human --> Coordinator
+    Coordinator --> Architect
+    Coordinator --> Builder
+    Coordinator --> Tester
+    Builder --> Checks
+    Tester --> Checks
+    Checks --> Reviewer
+    Reviewer --> PR
+    PR --> Human
+```
 
-### 5. The four real development lanes
+**Use separate worktrees/branches for simultaneous writers.** Three read-only reviewers can work in parallel, but three agents writing `App.tsx` in the same checkout will collide. Coordinator reports and independent reviews are useful only if they report specific defects or confirm measured behavior.
 
-| Teammate | Primary task | Agent prompts to start with |
+### Setup A — OpenCode, if you want Claude and GPT under one roof
+
+1. Follow [OpenCode installation](https://opencode.ai/docs/) for the supported package manager/platform.
+2. Open a terminal in the SideQuest repo and launch `opencode`. Use `/connect` to add providers. Anthropic API-key authentication uses your authorized Claude Console key; OpenAI may offer **Sign in with ChatGPT** for eligible plans. These are **separate authentication/billing mechanisms**, not shared credits. See [OpenCode providers](https://docs.opencode.ai/docs/providers/).
+3. Use `/models` to select a currently available model rather than guessing a version. Start in the **Plan** agent before permitting code changes.
+4. Add a separate `reviewer` or `test-reviewer` subagent in the project's OpenCode config/agent directory. Give it **read-only permissions** and, if available, a **different provider/model** from the builder. Use the official [custom agent guide](https://docs.opencode.ai/docs/agents/) for current syntax.
+5. Ask the main agent to delegate a design audit, followed by a code review. Confirm the two subagents actually ran as separate sessions and inspect their outputs. Do not assume every @ mention launches parallel background work.
+
+### Setup B — Cursor, if visual UI work is the priority
+
+1. Install [Cursor](https://cursor.com/), open the existing SideQuest repository and verify app tests locally.
+2. Open the **Agents Window**, which supports parallel agents. Use [worktrees](https://prod.cursor.com/docs/configuration/worktrees) so exploratory fixes don't overwrite your current feature branch.
+3. For UI tasks, use Design Mode and point the agent at the actual rendered screen. Keep the interface contract in the prompt and require screenshots / browser checks.
+4. Compare the outputs of separate agents, then bring back **one reviewed change**. Check current [pricing/usage](https://prod.cursor.com/help/account-and-billing/pricing) before launching multiple expensive sessions.
+
+### Setup C — Claude Code, Codex, or Cline
+
+- **Claude Code:** install using [Anthropic's guide](https://docs.anthropic.com/en/docs/claude-code/getting-started); authenticate with your eligible Claude account or authorized Console billing; create project specialists in `.claude/agents/` following the [current subagent instructions](https://claude.com/resources/articles/subagents-in-claude-code). The helper-agent creation UI has changed over time, so don't depend on an old wizard.
+- **Codex:** use an eligible ChatGPT sign-in, its IDE/desktop tool, or [CLI](https://help.openai.com/en/articles/11369540-using-codex-with-your-chatgpt-plan); run review sessions in independent worktrees and confirm they read the current branch's changes. ChatGPT sign-in does not imply your OpenAI **API** account is billed.
+- **Cline:** keep using it if installed and comfortable; the **gear inside the Cline panel** controls provider credentials. It supports Plan/Act but switching mode/model is not a real team. For true coordinated teams see [Cline CLI/Kanban](https://github.com/cline/cline/blob/main/docs/cli/agent-teams.mdx).
+
+### Suggested SideQuest agent roles and ownership
+
+| Human teammate | Real feature responsibility | Useful agent review |
 | --- | --- | --- |
-| **Cynthia** | Visual design system, reusable React components, discovery UX | “Review UI information hierarchy and mobile/keyboard states, then plan a small EventCard component using current CampusEvent props.” |
-| **Devonny** | Browse/details consuming shared catalog interface | “Find the current event listing, map how it will use the EventCatalogPort, and design normal/empty/error states. Plan first.” |
-| **Daven** | Event form, Postgres catalog, Supabase adapter | “Read the migration proposal and P4 architecture. Audit anonymous SELECT/INSERT grants/RLS and map SQL fields to CampusEvent. Plan, no deployment.” |
-| **Sembiyan** | Full-fit date/time logic and local Schedule | “Read fitsFully and the M1 tests. Propose a small local planned-event-ID API with duplicate handling and persistence tests.” |
+| **Cynthia** | Shared React components, information hierarchy, accessibility and discovery UX | Responsive design, keyboard/focus, interface contract, CSS duplication |
+| **Devonny** | Catalog browsing and detail screens | Loading/empty/error states, event ID and source integrity |
+| **Daven** | Posting, shared catalog, Supabase migrations and read/write adapter | Database constraints, anonymous permissions, cross-browser consistency |
+| **Sembiyan** | Full-fit matching and device-local Schedule | Time boundary tests, duplicates, malformed storage, stable IDs |
+| **Everyone** | Integration, PRs, build/tests, deliverables | Independent code reviewer and meaningful E2E tests |
 
-**Boundaries:** everybody may build their own UI and tests, but Cynthia and Devonny coordinate shared components; Daven owns catalog internals, and Sembiyan owns Schedule logic. One person should integrate changes to `App.tsx` at a time.
+A useful first multi-agent team is **four specialists total**: planner (read-only), builder (writer), test specialist (read-only or approved test edits), independent reviewer (preferably second model). Adding eight or twenty agents before the contracts and tests are stable can increase cost and confusion without improving correctness.
 
-### 6. Your bigger multi-agent idea: what's real today?
+### Budget and security
 
-### A. Cline VS Code extension (start here)
+- The team previously discussed Claude Console API credits; **check the remaining live balance and workspace permissions**, never assume the initial amount remains. Anthropic API billing and ChatGPT/Cursor subscriptions are different systems.
+- Do not share API keys with teammates through chat or commit keys or `.env.local` files. Use individually authorized credentials and spending caps.
+- Read permission prompts; an agent should not push, deploy, alter Supabase security, delete work, or merge PRs unless a human explicitly authorizes that action.
+- The course's extra-credit [key rule](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit?usp=sharing) concerns the **deployed SideQuest application**; using an AI agent to write code does not itself count as AI API integration.
+- Watch token costs: independent subagents each consume context. Use fewer agents with distinct roles, rather than paying several agents to repeat identical reviews.
 
-One agent session can use different models and adopt several **review roles** in sequence. You can use one model for Plan and another for Act in Cline's settings. This is not automatic supervision by distinct agents.
+### Troubleshooting
 
-### B. Cline CLI Agent Teams (optional advanced)
-
-Official Cline documentation now supports **Agent Teams in CLI/SDK/Kanban, not in the VS Code extension**. A coordinator can spawn specialists and aggregate results. [Agent Teams documentation](https://github.com/cline/cline/blob/main/docs/cli/agent-teams.mdx).
-
-Only if you want to experiment **after your first Cline session works**:
-
-```bash
-npm install -g cline
-cline auth
-cd /path/to/your/SideQuest-CSCI187
-cline "/team Review the current feature branch for type mismatches and untested edge cases. Do not edit or push."
-```
-
-This can launch multiple real agent sessions and incur multiple API charges. Begin with **read-only review, max 2–3 specialists**. Don't authorize concurrent writes to `App.tsx` or `events.ts`. Use independent branches/worktrees and explicit human merges if you ever run simultaneous builders.
-
-### C. OpenCode specialized agents (optional alternative)
-
-[OpenCode agents](https://docs.opencode.ai/docs/agents/) supports named primary agents and subagents with model selection, prompts, and permissions. That can be useful if you want a configurable `@reviewer`, `@explore`, or `@security` helper, including different model providers. **It requires its own installation and provider setup.** You do not need both OpenCode and Cline for the course.
-
-### The recommended flow
-
-```text
-Human teammate: picks one small feature and owns the PR
-    |
-    v
-Planner (read-only): inspects repo + documents
-    |
-    v
-Builder (one writer per branch): changes focused files
-    |
-    v
-Tests + build + manual browser check
-    |
-    +--> Reviewer (read-only): checks code / MVC / regressions
-    +--> UI critic or data/security reviewer (only if relevant)
-    |
-    v
-Human teammate: reviews diff and opens PR
-    |
-    v
-Another student reviews; GitHub CI passes; merge into master
-```
-
-**More agents are useful when their reviews are genuinely independent and focused.** Repeating the same prompt to six models may produce six versions of the same mistake. Do not treat agreement among models as proof of correctness.
-
-### 7. GitHub coordination and safe defaults
-
-- **Separate model credentials from project code.** The Claude Console workspace shares billing/permissions, not local chats or VS Code files. Never send the API key to classmates over group chat.
-- **One branch per contributor/feature**, PR to `master`, and human review. Agents do not push/merge unless their operator explicitly approves.
-- **Project-root `AGENTS.md`** supplies common instructions to compatible coding assistants. Rules are context, not an automated team of workers.
-- Check **`git status`** before and after agent work. Never approve `git reset --hard`, force-push, raw `rm -rf`, or overwriting another teammate's local work without deliberate human review.
-- Use Supabase credentials appropriately: a browser publishable key can be public when the database grants/RLS are correctly configured, but server secrets/service-role keys must never go into client code or Cline prompts. Anonymous public posting requires abuse protection before public launch.
-- Teammates can use **Cline**, another coding assistant, or no coding assistant. The implementation contract, PR review, and CI rules are the same for everyone.
-
-### 8. Troubleshooting
-
-| Problem | Check |
+| Symptom | First check |
 | --- | --- |
-| Cline doesn't see files | Open **the SideQuest repo folder**, not a random file or `app/` from another copy |
-| “No API key” | Provider in the **Cline panel gear**; authorized key; matching Claude workspace access |
-| Playground works but Cline doesn't | Playground-only workspace membership may lack key privileges; these are separate interfaces |
-| Claude credits seem depleted quickly | Review usage/spend caps; try fewer parallel agents, shorter tasks, and affordable available models |
-| Agent claims tests passed but CI fails | Inspect actual `npm test`, `npm run build`, GitHub Actions logs, and branch/commit |
-| Changes don't appear for a teammate | Local edits are not shared until pushed and merged; ask for PR link, not a screenshot of the chat |
-| Two agents changed the same file | Stop; compare branches and reconcile changes manually, do not accept blind overwrites |
-| GPT selected but Claude credits aren't used | GPT/OpenAI has a **separate provider billing/auth path**; switching models does not share Anthropic credits |
+| Agent can't see repo | Open the correct local project folder and inspect its active branch |
+| Can chat but can't edit code | Chat/Playground is not a coding agent, or the agent lacks tool permissions |
+| Cline/Claude doesn't use expected credits | Verify actual provider, Console organization, and authentication method |
+| OpenCode reviewer only uses the builder's model | Configure an explicit reviewer model and confirm provider is connected |
+| Agents overwrite each other's files | Use separate worktrees/branches; don't run concurrent writers in one checkout |
+| Agent says “tests passed” without evidence | Run `npm test`, `npm run build`, check CI and manually test UI |
+| PR differs from the approved plan | Examine `git diff`, revert unintended edits; coordinate shared files |
 
-### Official references
-
-- [Cline install](https://github.com/cline/cline/blob/main/docs/getting-started/installing-cline.mdx)
-- [Cline provider setup](https://github.com/cline/cline/blob/main/docs/getting-started/authorizing-with-cline.mdx)
-- [Cline Plan and Act](https://github.com/cline/cline/blob/main/docs/core-workflows/plan-and-act.mdx)
-- [Cline Agent Teams](https://github.com/cline/cline/blob/main/docs/cli/agent-teams.mdx)
-- [Cline project rules](https://github.com/cline/cline/blob/main/docs/customization/cline-rules.mdx)
-- [Claude Console workspace & limits](https://platform.claude.com/docs/en/manage-claude/workspaces)
-- [OpenCode agent configuration](https://docs.opencode.ai/docs/agents/)
-
-**Bottom line:** first make one Cline agent useful for each person. Let agents review independently, but keep human ownership of code. After the SideQuest features have clean branches and reliable tests, the multi-agent CLI experiments become much safer.
-
+**Documentation:** [OpenCode agents](https://docs.opencode.ai/docs/agents/) · [Cursor worktrees](https://prod.cursor.com/docs/configuration/worktrees) · [Claude Code subagents](https://claude.com/resources/articles/subagents-in-claude-code) · [Codex subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents) · [Cline CLI Agent Teams](https://github.com/cline/cline/blob/main/docs/cli/agent-teams.mdx).
