@@ -2,11 +2,269 @@
 
 **27 October 2026 · Research memo, not an MVP scope change.** Sources: the group's original P0, P1 [interviews](https://docs.google.com/document/d/1NRX14JTG78lvDj_AUFRzaricBm-QR4vECJiLfvXGu1M/edit), [P1 analysis](https://docs.google.com/document/d/13OOI6XF8nOiJcPj4t3Jdfxqid2EOuCfh78p7x7cYOGE/edit), [P3 requirements](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit), [P4 architecture](https://drive.google.com/file/d/1xiZGXQeScuJx14yKNUcwj1XtWTfOb-l4/view), [verified extra-credit rubric](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit?usp=sharing), current software competitors, and peer-reviewed HCI/recommender research. Each claim should remain distinguishable as observation, external research, or team hypothesis.
 
+> **This is the fully illustrated research document.** It consolidates the original interviews, competitor review, HCI literature, product hypotheses, the extra-credit rubric, implementation guardrails, and **editable Mermaid source diagrams**. The [MVP implementation contract](MVP_IMPLEMENTATION_CONTRACT.md) remains authoritative for what the four agents should code **now**; future flowcharts do not authorize M2 scope changes.
+
+**Jump to:** [research atlas](#visual-research-atlas-and-full-design-implications) · [raw interviews](#original-interview-evidence-two-people-not-representative-statistics) · [competition](#a-more-honest-competitor-landscape) · [HCI findings](#the-outside-research-that-deepens-the-design) · [prototype](#a-product-design-worth-prototyping-hypotheses-not-shipped-features) · [future-proof architecture](#architecture-extensions-without-trashing-m2) · [extra credit](#extra-credit-evidence-based-plan-actual-rubric-maximum-5) · [usability studies](#concrete-validation-experiments)
+
+
+
 ## Executive finding
 
 The agreed MVP (post a campus event → browse → find full fit → plan on this device) is a legitimate first vertical slice, but the **actual interviews discuss informal outings and places much more than formal campus events**. The eventual product's main job should be *turning a real opportunity or unfinished desire into a workable outing with the right people, then repairing a plan when circumstances change*. Do not describe SideQuest as another Meetup/Luma/SCU calendar clone.
 
 **Research hypothesis:** SideQuest might add value in the *transition* between (a) free time or social desire, (b) feasible options, (c) tentative group commitment, and (d) adaptation. Group polls, synced calendars and event discovery alone are already served by other products.
+
+## Visual research atlas and full design implications
+
+The graphics here are **Mermaid diagrams stored as source code in this Markdown document**. They are not screenshots, nor changes to the P4 draw.io submission. All future-product features are **hypotheses or proposed interfaces**, not code currently running in M2.
+
+### Figure A — The four different objects we must not collapse into Event
+
+A scheduled university workshop is not the same sort of object as a recurring opportunity to go bowling, an unfulfilled desire to try bowling, or a confirmed weekend bowling plan. The raw interviews contain all four.
+
+```mermaid
+flowchart TB
+    Event["Event: scheduled occurrence"] 
+    Activity["Place or Activity: repeatable possibility"]
+    Intention["Intention: something someone wants to do"]
+    Plan["Plan: chosen time, option, and participants"]
+    Catalog["EventCatalog: public event records"]
+    Schedule["M2 Schedule: local event IDs"]
+    Catalog --> Event
+    Intention -->|"may refer to"| Event
+    Intention -->|"may refer to"| Activity
+    Plan -->|"may use"| Event
+    Plan -->|"may use"| Activity
+    Plan -->|"may fulfill"| Intention
+    Schedule -->|"M2 references"| Event
+```
+
+**Precise semantics:**
+
+| Concept | Example | Does it require a fixed event time? | What changes later? |
+| --- | --- | --- | --- |
+| `Event` | Photography workshop on Friday 2–4 p.m. | Yes | It may expire, cancel, sell out, or change its details |
+| `Place/Activity` | Museum, bowling, boba outing | Not inherently | Opening hours, travel modes, price, availability and duration |
+| `Intention` | “I'd like to try rock climbing” | No | Active, deferred, fulfilled, or rejected; remains useful beyond one event |
+| `Plan` | “Three friends, rock gym, Saturday 3 p.m.” | Yes, once proposed | Tentative, confirmed, completed, canceled, postponed, repaired |
+
+Do **not** force unscheduled outings into fake public Event rows with invented start times. That creates a brittle catalog and prevents the genuine intention-to-opportunity workflow.
+
+### Figure B — Interview evidence, not a persona-only abstraction
+
+```mermaid
+flowchart LR
+    I1["Interview 1: forgotten ideas"]
+    I2["Interview 1: long group decision"]
+    I3["Interview 2: unrecorded commitments"]
+    I4["Interview 2: big outing collapses"]
+    M["Proposed product mechanisms"]
+    Memory["Contextual intention memory"]
+    Shortlist["Small feasible shortlist"]
+    Uncertain["Tentative and unknown availability"]
+    Repair["Preserve people, time, or activity"]
+    I1 --> Memory
+    I2 --> Shortlist
+    I3 --> Uncertain
+    I4 --> Repair
+    Memory --> M
+    Shortlist --> M
+    Uncertain --> M
+    Repair --> M
+```
+
+This maps only what the participants or interviewers' notes substantiate. **It does not establish prevalence or prove that these mechanisms will solve the problem.** Interview 1 has primary and secondary notes; the retrieved Interview 2 secondary-notes heading has no content. Follow-up usability studies should test both interpretations.
+
+### Figure C — Two planning motivations, plus the unfinished-intention entry point
+
+```mermaid
+flowchart TB
+    W["We have a free window"]
+    G["We want to spend time together"]
+    I["We have wanted to do this activity"]
+    T["Set a real time window"]
+    P["Name participants and priorities"]
+    R["Retrieve or record the intention"]
+    F["Evaluate trustworthy current opportunities"]
+    O["Present 2–3 feasible or conditional choices"]
+    C["Ask humans to confirm commitments"]
+    W --> T --> F
+    G --> P --> F
+    I --> R --> F
+    F --> O --> C
+```
+
+The *free-time* path is closest to the current MVP. The *social-occasion* path is rooted in the second interview: an alternative dinner can fulfill the goal even if the original trip never happens. The *intention* path responds to the first interview's reported forgotten places.
+
+### Figure D — Four availability states, not a binary calendar
+
+```mermaid
+flowchart LR
+    Calendar["Calendar entry"]
+    Manual["Participant response"]
+    Unknown["No answer yet: UNKNOWN"]
+    Yes["Confirmed free: AVAILABLE"]
+    Maybe["Probably free: TENTATIVE"]
+    No["Cannot attend: UNAVAILABLE"]
+    Check["Resolve ambiguity before committing"]
+    Calendar --> Check
+    Manual --> Check
+    Unknown --> Check
+    Yes --> Check
+    Maybe --> Check
+    No --> Check
+    Check --> Decision["Feasibility uses only confirmed facts"]
+```
+
+**Availability truth table (future group feature):**
+
+| Statement | Stored interpretation | Safe behavior |
+| --- | --- | --- |
+| “Yes, I can make it” | AVAILABLE, participant-confirmed | Candidate participant; still check destination and cost |
+| “I can probably do after 3” | TENTATIVE; earliest time conditional | Keep conditional; ask for confirmation near decision |
+| “No, I work until 7” | UNAVAILABLE during the earlier window | Treat as hard exclusion for that time |
+| Silence, no shared calendar, or ambiguous message | UNKNOWN | Do **not** infer availability or agreement |
+| Calendar appears blank | Evidence insufficient | Ask rather than declaring someone free |
+
+A time poll that reduces `UNKNOWN` to `NO` hides missing information; one that reduces `TENTATIVE` to `YES` can create an unwanted social obligation. These are design inferences from the interviews and related scheduling research, not M2 requirements.
+
+### Figure E — Decision quality: hard constraints, negotiable preferences, and unknowns
+
+```mermaid
+flowchart TB
+    Candidate["Candidate event or activity"]
+    Hard{"Hard constraints satisfied?"}
+    Exclude["Not currently workable"]
+    Unknown{"Are critical facts unknown?"}
+    Conditional["Conditional: ask or verify first"]
+    Compare["Compare soft preferences fairly"]
+    Short["Offer a small feasible shortlist"]
+    Candidate --> Hard
+    Hard -->|"No"| Exclude
+    Hard -->|"Yes"| Unknown
+    Unknown -->|"Yes"| Conditional
+    Unknown -->|"No"| Compare
+    Compare --> Short
+    Conditional --> Verify["Check registration, hours, transport, and people"]
+    Verify --> Hard
+```
+
+**Research insight:** averaging group preferences can still exclude a travel-constrained participant. Start with constraints everyone must satisfy; compare preferences among viable options; show unknowns explicitly. Never present a numerical “92% feasible” score unless its definition and data provenance can be explained and tested. A group fairness study ([article](https://link.springer.com/article/10.1007/s11257-023-09363-0)) cautions against assuming one aggregation algorithm works for all group types.
+
+### Figure F — Plan repair: preserve the goal rather than erase the plan
+
+```mermaid
+flowchart TB
+    Failure["Original outing no longer works"]
+    Protect{"Which priority should be preserved?"}
+    People["Keep people and the existing time"]
+    Activity["Keep desired activity"]
+    Time["Keep time, reduce effort"]
+    Replace["Find alternative activity"]
+    Reschedule["Find later workable time"]
+    Lower["Find shorter or closer outing"]
+    Defer["Save original as deferred intention"]
+    Confirm["Ask affected people to confirm"]
+    Failure --> Protect
+    Protect -->|"People"| People --> Replace --> Confirm
+    Protect -->|"Activity"| Activity --> Reschedule --> Confirm
+    Protect -->|"Time"| Time --> Lower --> Confirm
+    Replace --> Defer
+    Lower --> Defer
+    Reschedule --> Defer
+```
+
+**Interactive screen translated into written behavior:**
+
+| User's choice | What the UI should preserve | What the system should change | What it should not assume |
+| --- | --- | --- | --- |
+| **Keep the people and time** | Intended attendees and shared window | Location or activity; perhaps choose nearby dinner | That the original trip is now permanently rejected |
+| **Keep the activity** | Desired place/activity | Date/time, potentially transportation | That rescheduling makes everyone automatically available |
+| **Keep the time, lower effort** | Current window | Duration, distance, cost, commitment | That low effort is identical to low preference or low enjoyment |
+
+The original *Corpus Christi* trip illustrates the potential value of preserving intent after a schedule conflict; the interview does **not** establish that the participant would prefer these exact options. Test choices with users rather than attributing them to the interviewee.
+
+### Figure G — Where AI belongs, and where it doesn't
+
+```mermaid
+flowchart TB
+    Text["Casual request: probably free after 3"]
+    AI["AI extracts provisional constraints"]
+    Confirm["Participant confirms or corrects"]
+    Rules["Deterministic feasibility evaluator"]
+    World["Event, map, transit, and opening-hour facts"]
+    Result["Workable / conditional / impossible / unknown"]
+    Explanation["Explanations grounded in the actual records"]
+    Text --> AI --> Confirm --> Rules
+    World --> Rules
+    Rules --> Result --> Explanation
+    Explanation --> Human["Human accepts or revises plan"]
+```
+
+**AI is not authoritative:** an AI API feature should work on *actual SideQuest records* and confirmed constraints; it should not fabricate route times, dates, tickets, people, or commitments. AI use during development via Cline/Claude does **not** count as in-app AI extra credit. Published research on AI plan preference versus success motivates testing objective task completion rather than just perceived cleverness.
+
+### Figure H — Preserve the M2 code boundaries and add new concepts later
+
+```mermaid
+flowchart TB
+    subgraph M2["M2 MVP: implemented / agreed scope only"]
+        View["React feature views"]
+        Controller["Feature controllers"]
+        CatalogPort["EventCatalogPort"]
+        Event["CampusEvent"]
+        Time["Pure time matching"]
+        Local["Local Schedule event IDs"]
+        DB["Shared public events table"]
+        View --> Controller
+        Controller --> CatalogPort
+        Controller --> Time
+        Controller --> Local
+        CatalogPort --> Event
+        CatalogPort --> DB
+        Time --> Event
+    end
+    subgraph Later["Later final product: add deliberately"]
+        Place["Place or Activity"]
+        Intent["Intention"]
+        Plan["Plan and plan status"]
+        Group["Scoped group availability"]
+        Fit["FitEvaluation and reason codes"]
+        Source["External sources with provenance"]
+        Repair["Opportunity matching and plan repair"]
+        Intent --> Place
+        Intent --> Event
+        Plan --> Intent
+        Plan --> Group
+        Repair --> Plan
+        Repair --> Fit
+        Source --> CatalogPort
+        Fit --> Place
+        Fit --> Event
+    end
+    Controller --> Repair
+```
+
+The arrow from `Controller` to `Repair` is **future extensibility**, not an M2 implementation task. Keep Supabase behind `EventCatalogPort`, local planned IDs separately, and time checks in pure functions. Do not add unused classes to claim future-proofing.
+
+### Figure I — Research, implementation, and extra-credit evidence loop
+
+```mermaid
+flowchart LR
+    Evidence["Interview problem"]
+    Requirement["Testable user requirement"]
+    MVP["Small implemented feature"]
+    Test["Automated tests + cross-browser demo"]
+    Study["Usability test against existing tools"]
+    Reflection["Document decision and limitations"]
+    Bonus["Extra-credit demonstration if eligible"]
+    Evidence --> Requirement --> MVP --> Test --> Study --> Reflection
+    Test --> Bonus
+    Reflection --> Bonus
+```
+
+This is the standard to apply to each optional feature. Extra-credit points cannot be claimed just because a named technology appears in `package.json` or because an agent generated an attractive demo. Every feature needs a reliable behavior, evidence, and a human explanation.
+
+
 
 ## Original interview evidence: two people, not representative statistics
 
@@ -54,6 +312,22 @@ The initial competitor set understated the market. Current self-descriptions sho
 
 **Market evidence limitation:** most product-feature claims here are first-party descriptions and app-store listings; we have not run side-by-side competitor task tests. Do not infer competitors cannot perform an action solely because their marketing pages omit it.
 
+### Feature-by-feature competitive audit: what cannot be our novelty claim
+
+| Feature | Competitor evidence | Honest opportunity for SideQuest |
+| --- | --- | --- |
+| Hosting, event browsing, registration and maps | Luma and SCU official listings | Add clear *personal feasibility* information to real events |
+| Shared group calendars and time polls | Howbout and Partiful | Reduce actual decision cost, not merely add another poll |
+| Tentative participation semantics | Partiful and Ask | Make uncertainty explicit and prompt only for genuinely unresolved information |
+| Natural-language availability and constraint explanation | Cue Events and other scheduling assistants | Treat AI interpretation as provisional and cross-check against facts |
+| Group-chat memory and help with reorganization | Boba | Evaluate whether remembered **specific intentions** resurface at truly appropriate opportunities |
+| Calendar and day replanning | TimeLoop and conventional calendars | Handle unscheduled activities and ephemeral groups rather than only scheduled tasks |
+| Matching strangers for planned social gatherings | Timeleft | Respect that the interviews mostly concern **existing friends**, an importantly different social goal |
+
+**Market-evidence caveat:** current product descriptions can establish that a feature is advertised; they do not establish how reliable, usable, or comprehensive it is. We have not yet run firsthand side-by-side tests, so do not label these products deficient without verification.
+
+
+
 ## The outside research that deepens the design
 
 1. [Togedule (CSCW 2025)](https://research.ibm.com/publications/togedule-scheduling-meetings-with-large-language-models-and-adaptive-representations-of-group-availability): adaptive choice presentation + LLMs; controlled experiments with total **N=66** found reduced attendee cognitive load and improved organizer speed/decision quality. **Use dynamic prompts that ask only for the unresolved constraints**; don't force a full survey.
@@ -66,6 +340,22 @@ The initial competitor set understated the market. Current self-descriptions sho
 8. [Satisficing literature](https://pubs.aeaweb.org/doi/10.1257/jel.20201396): under uncertainty, “good enough” choices can be rational. **Aim for a small shortlist meeting hard constraints**, rather than an endless feed ranked by speculative desirability.
 9. [Plan commitment / plan repair](https://www.sciencedirect.com/science/article/pii/S0952197623004591) (autonomous-planning paper, **not** a direct user study of leisure): distinguishes full replanning from retaining prior commitments. Apply this as a design analogy: preserve people, time, or activity when they are costly to change.
 10. [A Good Plan Is Hard to Find (EMNLP 2025)](https://aclanthology.org/2025.emnlp-main.585/): user preference for a plan is not a reliable proxy for objective success. **Test whether users actually reach a feasible plan, not only which AI explanation feels impressive.**
+
+### Connecting the literature to exact SideQuest interactions
+
+| Research mechanism | Concrete UI implication | What to test empirically |
+| --- | --- | --- |
+| Calendar incompleteness and missing scheduling parameters | “Are you actually free, or just have nothing recorded?” plus a duration field | Frequency of false-positive feasibility recommendations |
+| Temporal uncertainty and social meaning | Separate AVAILABLE / TENTATIVE / UNAVAILABLE / UNKNOWN states | Whether people feel pressured or prematurely committed |
+| Adaptive availability representations | Ask only the one unresolved question preventing a decision | Total questions and cognitive load versus a full planning form |
+| Fairness in group recommendation | Check each person's non-negotiable needs before comparing aggregated preference | Whether any participant is excluded or ignored |
+| Prospective memory / contextual reminders | Resurface a deferred place only when there is a suitable window | Useful rediscovery versus unwanted interruption |
+| Satisficing / bounded choice | Provide 2–3 decision-ready viable options rather than an infinite feed | Time to mutually accepted plan and choice overload |
+| AI planning preference vs actual success | Pair AI explanations with deterministic checks and source provenance | Grounded correctness, accepted plan, failed attendance or follow-up |
+
+**Transferability warning:** many cited studies investigate meeting scheduling or generic group recommenders, not student leisure. Their findings suggest design hypotheses; they do not prove these SideQuest interactions will work without the proposed usability tests.
+
+
 
 ## A product design worth prototyping (hypotheses, not shipped features)
 
@@ -138,6 +428,24 @@ Original: [Final Project Extra Credit Opportunities](https://docs.google.com/doc
 
 **Conditional maximum without security:** 4.5 points if every other category qualifies at its maximum. **All categories sum to 5.0**, but don't chase the maximum at the expense of working core behavior.
 
+### Extra-credit delivery sequence: build evidence, not a trophy shelf
+
+**Recommended order if the team agrees and all core requirements are met:**
+
+1. **Playwright end-to-end tests (+0.25–0.5):** one browser posts, another sees the new Event, matching respects exact boundary conditions, and adding/removing one local plan does not alter the other browser's Schedule. Run automatically in CI.
+2. **Accessibility (+0.25):** keyboard-only navigation, focus order, visible validation messages, screen-reader announcements, contrast and controls on mobile. Demonstrate actual testing.
+3. **Publishing (+0.25):** an accessible, stable deployed site with real shared persistence. If anonymous posting is internet-facing, address misuse before calling it safe.
+4. **Substantial advanced library use (+0.25):** show where React materially supports the architecture; merely installing it does not qualify.
+5. **WebSocket real-time (+1):** the second browser sees newly posted events without refresh, reconnection works, and duplicate messages don't create repeated cards. This is useful now and later for group-plan coordination.
+6. **External systems (+0.25–0.75):** travel modes and route times or a permissioned calendar connection. A provider lacking public transit would not address the second interviewee's principal transport concern.
+7. **AI API (+0.25–0.5):** an app feature interprets preferences and explains *real* SideQuest data, with confirmed human actions and server-side secret keys. Compare against a non-AI baseline.
+8. **Advanced architecture (+1):** only if an actual beyond-MVC refactor improves extension and testability; document and justify it in the M2 reflection and provide an architecture diagram.
+9. **Security (+0.25–0.5):** potentially valuable when real shared plans need private data and permissions, but adding account infrastructure merely to score points conflicts with the no-account MVP.
+
+**Eligibility and maximum:** The [rubric](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit?usp=sharing) caps extra credit at **5 points**. The class-grade threshold is at least 76% at the beginning of Week 9 after Quiz 2/M2 grades; all core work must be complete; team must agree; each student's eligibility is individual; there is a presentation obligation, and exposed API keys can forfeit extra credit. Without the security category the arithmetic maximum is 4.5 points, **not an expected award**.
+
+
+
 ### Important credential conflict to resolve *before* architecture lock
 
 The instructor's rubric says **all API keys server-side, never frontend**. Supabase's publishable key is intentionally public and normally used with browser RLS, but **do not assume the professor distinguishes publishable from secret keys**. Ask her whether client-side Supabase publishable keys satisfy the rubric; if not, use a server-side catalog endpoint. It also complicates direct client-side Supabase WebSocket subscriptions. Don't call SSE/polling a WebSocket implementation. Never bundle a service-role or AI-secret key into the React app.
@@ -156,6 +464,28 @@ The instructor's rubric says **all API keys server-side, never frontend**. Supab
 | Does AI help, or just sound convincing? | Compare deterministic explanation against AI answer for the **same real data** | Correctness of facts/reasons, user task success, unsupported claims |
 
 For baseline, have users perform tasks using their normal Google/Maps/Luma/messaging method (with consent), then test a SideQuest prototype. Avoid claiming statistically significant outcomes from two P1 interviews. Follow up with SCU students outside the original pair, including someone organizing an activity and someone who has been invited but not planning it.
+
+### Full research protocol: compare actual decisions, not screenshots
+
+**Recruitment:** Follow up beyond the two original interviews. Include a student who typically organizes and a student who is usually invited; include participants who use transit, students with unrecorded commitments, and a mix of existing friend groups. Get consent for observing planning activity; don't expose private chats or calendars to demos.
+
+**Baseline:** have participants complete tasks using the tools they actually use (for example group messages, search, maps, or Luma), then a SideQuest prototype with equivalent inputs and realistic, sourced event information. Counterbalance task order where feasible to limit practice effects.
+
+**Task 1 — bounded window:** two friends have Saturday 2–5 p.m. and no car. Record time to a *truly feasible* proposal, irrelevant options and verification steps. Distinguish travel unknown from feasible.
+
+**Task 2 — tentative participant:** a friend says “probably after 3” and has an unrecorded commitment. Record whether the system mistakenly marks attendance confirmed and whether participants can correct it without embarrassment.
+
+**Task 3 — failed group trip:** participants want to spend time together but the planned outing is impossible. Allow (a) keep time + people, switch activity; (b) preserve activity and reschedule; (c) lower effort. Record whether the substitute preserves the group's stated purpose and who has to agree.
+
+**Task 4 — forgotten interest:** a participant saved a place weeks ago. Test whether a later context-sensitive suggestion is useful and non-intrusive, and whether users can defer instead of delete.
+
+**Task 5 — three-person fairness:** one participant cannot use a car. Compare a top-average-interest recommendation with a shortlist filtered by hard constraints and fairness. Record whether anyone gets excluded.
+
+**Task 6 — AI versus verified rules:** provide the same catalog and confirmed inputs to a deterministic baseline and to AI explanation. Check hallucinated costs, times, registration, routes and people; measure completed decisions and appropriate uncertainty, not “sounds convincing”.
+
+**Evaluation:** track time to confirmed plan, number of steps/messages, number of infeasible or unverified suggestions, task completion, whether any participant was excluded, comprehension of why a result is shown, and trust calibration. Use interviews/think-aloud comments to explain observed outcomes. A small student usability study may be persuasive for a course presentation; do not present it as large-sample statistical proof.
+
+
 
 ## Decisions for the four-person team
 
