@@ -4,11 +4,11 @@
 
 ## Source of truth
 
-- [MVP Implementation Contract](docs/MVP_IMPLEMENTATION_CONTRACT.md): same-day Event type and Supabase catalog proposal.
-- [MVP Team Playbook](docs/MVP_TEAM_PLAYBOOK.md): roles, handoffs, tests, architecture and PR workflow.
-- [Full Product Roadmap](docs/FULL_PRODUCT_ROADMAP.md): long-term product goals and extension points only; **do not implement later-stage features for M2 without explicit approval**.
-- [AI Agent Setup Guide](docs/AI_AGENT_SETUP_GUIDE.md): onboarding and optional multi-agent workflows.
-- [P4 architecture](https://drive.google.com/file/d/1xiZGXQeScuJx14yKNUcwj1XtWTfOb-l4/view): Event, EventCatalog, Schedule, MVC responsibilities.
+- **[MVP playbook (authoritative code contract and Mermaid diagrams)](docs/MVP_TEAM_PLAYBOOK.md)** — agreed fields, catalog interface, backend, roles, unit tests, and P4/P5 Google Docs.
+- **[Team setup + coding agents](TEAM_SETUP_GUIDE.md)** — Git, VS Code, Cline/Claude, optional agent teams, safe PR reviews.
+- **[Product research and roadmap](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md)** — raw interviews, comparison research, validated extra-credit rubric, **future-only** features. Do not expand M2 automatically.
+
+- [P4 architecture Google Doc](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit): Event, EventCatalog, Schedule, MVC responsibilities.
 - [README](README.md) and [TEAM_SETUP_GUIDE](TEAM_SETUP_GUIDE.md): how to run and test the actual app.
 
 ## Agreed MVP scope
@@ -42,5 +42,3 @@
 7. Use the smallest working change; preserve M1 behavior and tests unless the team intentionally replaces them.
 
 **Default:** If a prompt conflicts with the agreed implementation contract or another teammate's file ownership, stop and explain the conflict. Do not invent features.
-- [Interview evidence and final-project extra-credit rubric](docs/INTERVIEW_FINDINGS_AND_EXTRA_CREDIT.md): source-grounded user frustrations and verified conditional bonus criteria; future features need team agreement and should not expand M2 automatically.
-- [Deep product research (future only)](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md): differentiated final-product ideas and verified bonus-credit options. **Do not expand the agreed M2 MVP solely on this research memo.**
