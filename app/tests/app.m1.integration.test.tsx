@@ -9,7 +9,7 @@ import { STORAGE_KEY } from '../src/model/events'
 type User = ReturnType<typeof userEvent.setup>
 
 async function createWorkshop(user: User, title = 'Art Workshop') {
-  const form = document.querySelector('.event-form')
+  const form = document.querySelector<HTMLFormElement>('.event-form')
   if (!form) throw new Error('Create-event form was not rendered')
   await user.type(within(form).getByLabelText('EVENT NAME'), title)
   await user.type(within(form).getByLabelText('LOCATION'), 'Arts Building')
@@ -79,7 +79,7 @@ describe('M1 rendered user workflow', () => {
   it('R4: rejects reversed event times and leaves the list unchanged', async () => {
     const user = userEvent.setup()
     render(<App />)
-    const form = document.querySelector('.event-form')
+    const form = document.querySelector<HTMLFormElement>('.event-form')
     if (!form) throw new Error('Create-event form was not rendered')
     await user.type(within(form).getByLabelText('EVENT NAME'), 'Late Workshop')
     await user.type(within(form).getByLabelText('LOCATION'), 'Library')
