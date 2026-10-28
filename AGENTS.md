@@ -43,3 +43,4 @@
 
 **Default:** If a prompt conflicts with the agreed implementation contract or another teammate's file ownership, stop and explain the conflict. Do not invent features.
 - [Interview evidence and final-project extra-credit rubric](docs/INTERVIEW_FINDINGS_AND_EXTRA_CREDIT.md): source-grounded user frustrations and verified conditional bonus criteria; future features need team agreement and should not expand M2 automatically.
+- [Deep product research (future only)](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md): differentiated final-product ideas and verified bonus-credit options. **Do not expand the agreed M2 MVP solely on this research memo.**
