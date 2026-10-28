@@ -54,6 +54,7 @@ The repository also contains the original C++ course starter files, but they are
 - [User Requirements](REQUIREMENTS.md)
 - [Technical Specifications and MVC/CRC responsibilities](SPECIFICATIONS.md)
 - [Team setup and troubleshooting](TEAM_SETUP_GUIDE.md)
+- [AI coding agent setup and optional multi-agent teams](docs/AI_AGENT_SETUP_GUIDE.md) — Cline, Claude workspace, project rules, first task and safe reviews.
 - [MVP ER model and host information](docs/MVP_ER_DIAGRAM.md) — proposed simple P5 classroom ER design; no user-account table, with a host display name on events.
 
 - [Editable proposed P5 draw.io diagram](docs/SideQuest_P5_Simple_ER_Proposed.drawio) — working draft, not a submitted Gradescope artifact.
