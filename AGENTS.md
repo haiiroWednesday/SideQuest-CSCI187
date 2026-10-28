@@ -6,6 +6,7 @@
 
 - [MVP Implementation Contract](docs/MVP_IMPLEMENTATION_CONTRACT.md): same-day Event type and Supabase catalog proposal.
 - [MVP Team Playbook](docs/MVP_TEAM_PLAYBOOK.md): roles, handoffs, tests, architecture and PR workflow.
+- [Full Product Roadmap](docs/FULL_PRODUCT_ROADMAP.md): long-term product goals and extension points only; **do not implement later-stage features for M2 without explicit approval**.
 - [AI Agent Setup Guide](docs/AI_AGENT_SETUP_GUIDE.md): onboarding and optional multi-agent workflows.
 - [P4 architecture](https://drive.google.com/file/d/1xiZGXQeScuJx14yKNUcwj1XtWTfOb-l4/view): Event, EventCatalog, Schedule, MVC responsibilities.
 - [README](README.md) and [TEAM_SETUP_GUIDE](TEAM_SETUP_GUIDE.md): how to run and test the actual app.
