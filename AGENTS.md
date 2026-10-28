@@ -42,3 +42,4 @@
 7. Use the smallest working change; preserve M1 behavior and tests unless the team intentionally replaces them.
 
 **Default:** If a prompt conflicts with the agreed implementation contract or another teammate's file ownership, stop and explain the conflict. Do not invent features.
+- [Interview evidence and final-project extra-credit rubric](docs/INTERVIEW_FINDINGS_AND_EXTRA_CREDIT.md): source-grounded user frustrations and verified conditional bonus criteria; future features need team agreement and should not expand M2 automatically.
