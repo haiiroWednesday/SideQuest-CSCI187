@@ -4,6 +4,8 @@
 
 > **This is the fully illustrated research document.** It consolidates the original interviews, competitor review, HCI literature, product hypotheses, the extra-credit rubric, implementation guardrails, and **editable Mermaid source diagrams**. The [MVP implementation contract](MVP_TEAM_PLAYBOOK.md#shared-event-data-contract) remains authoritative for what the four agents should code **now**; future flowcharts do not authorize M2 scope changes.
 
+**P5 coursework context (28 October):** the [selected P5 ER drawing](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view) contains USER, EVENT and AVAILABILITY_WINDOW and is explained [directly in the MVP Playbook](MVP_TEAM_PLAYBOOK.md#p5-coursework-er-diagram--current-drawio-and-mermaid). That **coursework diagram is separate from the smaller M2 implementation**; user accounts, saved availability and cost fields are not shipped merely because they appear in P5.
+
 **Jump to:** [research atlas](#visual-research-atlas-and-full-design-implications) · [raw interviews](#original-interview-evidence-two-people-not-representative-statistics) · [competition](#a-more-honest-competitor-landscape) · [HCI findings](#the-outside-research-that-deepens-the-design) · [prototype](#a-product-design-worth-prototyping-hypotheses-not-shipped-features) · [future-proof architecture](#architecture-extensions-without-trashing-m2) · [extra credit](#extra-credit-evidence-based-plan-actual-rubric-maximum-5) · [usability studies](#concrete-validation-experiments)
 
 
