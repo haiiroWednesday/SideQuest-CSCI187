@@ -8,6 +8,8 @@
 
 **Diagrams:** The project architecture, workflow and ER drawings below use **editable Mermaid**, not embedded pictures or draft draw.io files. The original course **Google Docs** appear beneath the corresponding diagrams. These do not replace the required coursework submission.
 
+**Quick navigation:** [MVP scope and roles](#the-one-page-plan) · [P4 class diagram](#the-chosen-three-class-design) · [Shared TypeScript contract](#shared-event-data-contract) · [P5 Mermaid ER and Google Doc](#p5-conceptual-er-diagram-without-extra-database-tables) · [Supabase/SQL setup](#implementation-contract--database-and-supabase-setup) · [Feature work and integration](#2-how-the-pieces-should-fit-together) · [Agent workflow](#8-use-ai-tools-without-losing-control-of-the-project) · [Unit test appendix](#appendix--detailed-unit-testing-examples).
+
 ## The one-page plan
 
 | Workstream | Lead | Teammates / boundary | A visible result |
@@ -44,7 +46,7 @@ flowchart LR
 
 The professor's [MVP lecture](https://docs.google.com/presentation/d/1G3QYEDONfO21IupTmfIlAm0b0nRTHTLRYXH2QmDKXz0/edit) describes the MVP as the smallest working subset that provides value. Her [implementation lecture](https://docs.google.com/presentation/d/1YxzkSxyK5kZIJjCdwa69SmrmPgtytcaWBwcARaJGcm0/edit) connects classes to Model, pages to View, and main actions to Controller. It also says to give agents requirements and diagrams, code in chunks, and check their work.
 
-Your team's [P4 draw.io diagram](https://drive.google.com/file/d/1xiZGXQeScuJx14yKNUcwj1XtWTfOb-l4/view) defines **Event**, **EventCatalog**, and **Schedule**. It says **full-event** time matching, planned events on the **current device**, and a **shared** posted catalog. Partial attendance, travel estimates, accounts, cross-device personal schedules and calendar sync are postponed. “Save” in this diagram means **plan to attend**, not a second bookmark collection.
+Your team's [P4 architecture Google Doc](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit) defines **Event**, **EventCatalog**, and **Schedule**. It says **full-event** time matching, planned events on the **current device**, and a **shared** posted catalog. Partial attendance, travel estimates, accounts, cross-device personal schedules and calendar sync are postponed. “Save” in this diagram means **plan to attend**, not a second bookmark collection.
 
 The [original P3 requirements](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit) were broader, but the team chose the smaller P4 implementation. Professor Kandel suggested create → find → save/revisit as a useful end-to-end path and marked that suggestion optional. Our personal Schedule supplies that simple list of plans. Do not reintroduce discarded P3 features or the exploratory P5 schema simply because they appear in older documents.
 
@@ -533,7 +535,7 @@ flowchart LR
 **Safe five-step agent session:**
 
 1. Start on your own feature branch with clean `git status` and an agreed issue/feature.
-2. Provide the M1 files, [P4 draw.io](https://drive.google.com/file/d/1xiZGXQeScuJx14yKNUcwj1XtWTfOb-l4/view), this playbook, and the **specific** contract. Request **Plan** first: list touched files, data shapes, risks, tests; forbid edits in this first response.
+2. Provide the M1 files, [P4 Google Doc](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit), this playbook, and the **specific** contract. Request **Plan** first: list touched files, data shapes, risks, tests; forbid edits in this first response.
 3. Read the plan. Reject new accounts, saved windows, cost fields, travel calculations, styling overhauls, or new libraries unless the team deliberately revises the agreed architecture.
 4. Permit one small implementation; ask the agent to run `npm test` and `npm run build` and quote the actual results. Never give it unchecked write/deploy privileges or place API keys in prompts/code.
 5. Inspect the Git diff yourself, perform one manual use case, then request an independent reviewer. Two AIs agreeing is **not** proof that the feature works.
