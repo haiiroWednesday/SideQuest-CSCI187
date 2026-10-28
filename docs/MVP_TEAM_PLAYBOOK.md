@@ -6,6 +6,8 @@
 
 > **Read this first.** The target is a small experience that works end to end: someone posts an event; another student can browse it; a student can search for events that completely fit their free time; and they can add an event to a list of things they plan to attend. Do not spend the week implementing the full aspirational SideQuest product.
 
+**Diagrams:** The ten workflow diagrams below are **editable Mermaid code** rendered by GitHub. If a diagram fails to display in your browser, use its **SVG fallback** link immediately underneath. The separate P5 ER submission remains an editable **draw.io** file.
+
 ## The one-page plan
 
 | Workstream | Lead | Teammates / boundary | A visible result |
@@ -18,9 +20,16 @@
 
 ### The actual MVP, in five steps
 
-![journey diagram](assets/playbook/journey.svg)
+```mermaid
+flowchart LR
+    A["Post event"] --> B["Publish to shared catalog"]
+    B --> C["Browse events"]
+    C --> D["Find full-time matches"]
+    D --> E["Plan to attend"]
+    E --> F["Revisit or remove plan"]
+```
 
-[View journey diagram](assets/playbook/journey.svg)
+[SVG fallback: journey diagram](assets/playbook/journey.svg)
 
 **Done means** this journey works with real application state, including validation, empty states, and a refresh. **Not done** means a pretty page with hard-coded events, a demo where a post never reaches another browser, or a Schedule that deletes the public event when you remove a plan.
 
@@ -65,9 +74,14 @@ I checked both pages of the [original P4 draw.io file](https://drive.google.com/
 
 ### The chosen three-class design
 
-![classes diagram](assets/playbook/classes.svg)
+```mermaid
+flowchart LR
+    C["EventCatalog: shared events"] -->|"contains"| E["Event: ID, host, date, time"]
+    S["Schedule: local planned IDs"] -->|"looks up event ID"| C
+    S -->|"references"| E
+```
 
-[View classes diagram](assets/playbook/classes.svg)
+[SVG fallback: classes diagram](assets/playbook/classes.svg)
 
 **Class responsibilities drawn directly from P4:**
 
@@ -79,9 +93,17 @@ I checked both pages of the [original P4 draw.io file](https://drive.google.com/
 
 ### Implementation storage: simple, not a new account system
 
-![storage diagram](assets/playbook/storage.svg)
+```mermaid
+flowchart LR
+    A["Browser A: post event"] --> API["Shared EventCatalog service"]
+    API <--> DB[("Public Event records")]
+    B["Browser B: browse events"] --> API
+    B --> L[("Browser B: local planned IDs")]
+    C["Browser C: browse events"] --> API
+    C --> M[("Browser C: separate local planned IDs")]
+```
 
-[View storage diagram](assets/playbook/storage.svg)
+[SVG fallback: storage diagram](assets/playbook/storage.svg)
 
 **No USER rows, author foreign keys, PLANNED_ATTENDANCE table, saved AVAILABILITY_WINDOW table, or cost fields.** Each Event has an unverified display `hostName`. An optional generated browser `posterId` would not authenticate the host. Each visitor can post and read the same public catalog. Because there is no identity system, the app cannot securely distinguish who posted an event or restrict who may modify another person's posts; omit public edit/delete operations and be explicit that the prototype is not production-secure. The shared service must still protect its credentials and apply basic validation/rate limits where feasible.
 
@@ -147,15 +169,59 @@ The P5 assignment currently states **Wednesday, October 28, 2026, end of day**. 
 
 ## 2. How the pieces should fit together
 
-![mvc diagram](assets/playbook/mvc.svg)
+```mermaid
+flowchart TB
+    subgraph Views["React views"]
+        P["Post"]
+        B["Browse and details"]
+        F["Find by free time"]
+        S["My Schedule"]
+    end
+    subgraph Controllers["Feature controllers"]
+        A["Post, list, match, and plan actions"]
+    end
+    subgraph Model["P4 model responsibilities"]
+        E["Event"]
+        C["EventCatalog"]
+        L["Schedule"]
+    end
+    P --> A
+    B --> A
+    F --> A
+    S --> A
+    A --> E
+    A --> C
+    A --> L
+    C --> D[("Shared Event data")]
+    L --> R[("Current-device planned IDs")]
+```
 
-[View mvc diagram](assets/playbook/mvc.svg)
+[SVG fallback: mvc diagram](assets/playbook/mvc.svg)
 
 **Important:** this is an **implementation map we propose**, not a claim that these files/classes already exist. The actual M1 code has one React page and browser-local event storage. Keep the MVC direction: a view asks the controller to do something; the model doesn't import React.
 
-![sequence diagram](assets/playbook/sequence.svg)
+```mermaid
+sequenceDiagram
+    participant Poster as Browser A
+    participant UI as React UI
+    participant Catalog as EventCatalog
+    participant Store as Shared store
+    participant Reader as Browser B
+    participant Plans as Local Schedule
+    Poster->>UI: Submit valid event
+    UI->>Catalog: create event
+    Catalog->>Store: Insert public event
+    Store-->>Catalog: Event with ID
+    Reader->>Catalog: List events
+    Catalog->>Store: Read public events
+    Store-->>Reader: Event list
+    Reader->>Plans: Add event ID
+    Plans-->>Reader: Planned locally
+    Reader->>Plans: Remove event ID
+    Note over Plans,Store: Removing a plan never deletes the public event
+```
 
-[View sequence diagram](assets/playbook/sequence.svg)
+[SVG fallback: sequence diagram](assets/playbook/sequence.svg)
 
 ### One agreed contract, not two competing schemas
 
@@ -170,9 +236,22 @@ Use the **EventRecord, EventCatalogPort and SchedulePort** proposal in [the Data
 
 ### Feature dependency map
 
-![dependencies diagram](assets/playbook/dependencies.svg)
+```mermaid
+flowchart TB
+    C["Agree Event type and catalog interface"]
+    C --> D["Daven: posting and shared catalog"]
+    C --> V["Devonny: browsing and details"]
+    C --> S["Sembiyan: matching and Schedule"]
+    C --> U["Cynthia: shared UI components"]
+    D --> I["Integrate live catalog and browsing"]
+    V --> I
+    U --> I
+    I --> F["Integrate matching and personal plans"]
+    S --> F
+    F --> T["Cross-browser demo and tests"]
+```
 
-[View dependencies diagram](assets/playbook/dependencies.svg)
+[SVG fallback: dependencies diagram](assets/playbook/dependencies.svg)
 
 ## 3. Cynthia — design the experience, and build it
 
@@ -265,9 +344,22 @@ This is a foundational workstream. M1 create/validate logic already exists. Buil
 
 ### The branch-to-merge path
 
-![gitflow diagram](assets/playbook/gitflow.svg)
+```mermaid
+flowchart TB
+    A["Pull current master"] --> B["Create feature branch"]
+    B --> C["Implement one small change"]
+    C --> D["Run tests and build"]
+    D --> E{"All checks pass?"}
+    E -->|No| C
+    E -->|Yes| F["Push and open PR"]
+    F --> G["CI and teammate review"]
+    G --> H{"Ready to merge?"}
+    H -->|No| C
+    H -->|Yes| I["Merge into master"]
+    I --> J["Verify integrated feature"]
+```
 
-[View gitflow diagram](assets/playbook/gitflow.svg)
+[SVG fallback: gitflow diagram](assets/playbook/gitflow.svg)
 
 **Run these commands from the cloned repository root** (not inside `app/` for the branch commands):
 
@@ -320,9 +412,17 @@ This matrix is **proposed coordination**, not an exclusive review permission sys
 
 Your professor permits coding with agents but warns that they can invent architecture, misunderstand UX, and silently make decisions outside the prompt. Treat an agent as a fast contributor, not as the product owner.
 
-![agentloop diagram](assets/playbook/agentloop.svg)
+```mermaid
+flowchart LR
+    H["Human chooses feature and scope"] --> P["Agent inspects repo and plans"]
+    P --> A["Human approves file changes"]
+    A --> B["Agent writes small patch"]
+    B --> T["Run tests and check UI"]
+    T --> R["Independent review"]
+    R --> M["Human reviews PR and approves merge"]
+```
 
-[View agentloop diagram](assets/playbook/agentloop.svg)
+[SVG fallback: agentloop diagram](assets/playbook/agentloop.svg)
 
 **Claude Console workspace:** manage API keys, access and usage limits; it does **not** automatically clone the GitHub project or serve as a shared filesystem. **Playground:** compare prompt ideas, explore UI copy or architecture choices, and test model behavior; it does **not** itself change repository files. **Cline / coding agent in VS Code:** reads the *opened local repo* with the granted permissions and can propose edits and run commands. Each person's local agent is not a shared live chat that automatically knows their teammate's unpushed changes.
 
@@ -380,9 +480,18 @@ The existing **26 tests / 11 files** are the M1 baseline. They do not certify a 
 
 ## 10. The integration plan — prevent four incompatible branches
 
-![integration diagram](assets/playbook/integration.svg)
+```mermaid
+flowchart LR
+    A["Contract agreed"] --> B["Fake catalog adapter ready"]
+    B --> C["Independent feature work"]
+    C --> D["Real shared catalog connected"]
+    D --> E["Browse and matching connected"]
+    E --> F["Local Schedule connected"]
+    F --> G["End-to-end test passes"]
+    G --> H["Demo ready"]
+```
 
-[View integration diagram](assets/playbook/integration.svg)
+[SVG fallback: integration diagram](assets/playbook/integration.svg)
 
 **Gate 0 — contract (first):** One Event type, catalog read/write port, ID rule, persistence choice and UI file ownership. Document the decision in this guide or a short PR. Everyone signs off.
 
@@ -410,9 +519,25 @@ The existing **26 tests / 11 files** are the M1 baseline. They do not certify a 
 
 **These are proposed internal dates, not the official M2 due time.** Class materials put the M2 MVP prototype milestone in the **week of Nov 2–6**. Use the current course submission page as the source of truth; if the deadline is earlier, move the integration gates forward.
 
-![timeline diagram](assets/playbook/timeline.svg)
+```mermaid
+gantt
+    title Proposed MVP sequence: confirm actual deadline
+    dateFormat YYYY-MM-DD
+    axisFormat %b %d
+    section Team
+    Agree contract: 2026-10-27, 2d
+    section UI and discovery
+    UI components and browsing: 2026-10-28, 3d
+    section Daven
+    Shared catalog and posting: 2026-10-28, 5d
+    section Sembiyan
+    Matching and personal plans: 2026-10-28, 4d
+    section Integration
+    Connect and test: 2026-10-31, 3d
+    Demo and fixes: 2026-11-03, 3d
+```
 
-[View timeline diagram](assets/playbook/timeline.svg)
+[SVG fallback: timeline diagram](assets/playbook/timeline.svg)
 
 **Suggested 10-minute daily check-in:** each person says (a) what worked since yesterday, (b) what will be merged next, (c) which teammate or contract is blocking them. Put links to PRs and screenshots in the message. Use one shared list of decisions and blockers, not four unrelated agent conversations.
 
