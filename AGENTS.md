@@ -4,7 +4,7 @@
 
 ## Source of truth
 
-- **[MVP playbook (authoritative code contract and Mermaid diagrams)](docs/MVP_TEAM_PLAYBOOK.md)** — agreed fields, catalog interface, backend, roles, unit tests, and P4/P5 Google Docs.
+- **[MVP playbook (authoritative code contract and Mermaid diagrams (including the **classroom P5 sketch**, distinct from the M2 implementation model))](docs/MVP_TEAM_PLAYBOOK.md)** — agreed fields, catalog interface, backend, roles, unit tests, and P4/P5 Google Docs.
 - **[Team setup + coding agents](TEAM_SETUP_GUIDE.md)** — Git, VS Code, Cline/Claude, optional agent teams, safe PR reviews.
 - **[Product research and roadmap](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md)** — raw interviews, comparison research, validated extra-credit rubric, **future-only** features. Do not expand M2 automatically.
 
