@@ -1,9 +1,10 @@
 // CONTROLLER: Validate requests and coordinate the View with the Model.
 import {
-  fitsFully, isValidDate, toMinutes, todayLocalISO, formatEventDate, formatEventTime,
+  fitsFully, isValidDate, toMinutes, todayLocalISO,
   readStoredEvents, readStoredEventsChecked, saveStoredEvents, type CampusEvent, type EventDraft,
   type StoredEventsState,
 } from '../model/events'
+import { formatEventDate, formatEventTime } from '../presentation/formatEvents'
 
 export type { CampusEvent, EventDraft } from '../model/events'
 

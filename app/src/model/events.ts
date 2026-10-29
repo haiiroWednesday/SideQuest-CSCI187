@@ -22,21 +22,6 @@ export function todayLocalISO(now: Date = new Date()): string {
   return `${year}-${month}-${day}`
 }
 
-// Store dates/times in predictable machine-readable formats; format only for display.
-export function formatEventDate(date: string): string {
-  if (!isValidDate(date)) return date
-  const [year, month, day] = date.split('-').map(Number)
-  return `${month}/${day}/${year}`
-}
-
-export function formatEventTime(time: string): string {
-  const minutes = toMinutes(time)
-  if (minutes === null) return time
-  const hour = Math.floor(minutes / 60)
-  const minute = String(minutes % 60).padStart(2, '0')
-  return `${hour % 12 || 12}:${minute}${hour < 12 ? 'am' : 'pm'}`
-}
-
 export function toMinutes(time: string): number | null {
   const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(time)
   if (!match) return null
