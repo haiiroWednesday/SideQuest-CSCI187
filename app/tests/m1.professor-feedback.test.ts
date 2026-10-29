@@ -9,7 +9,7 @@ import { STORAGE_KEY } from '../src/model/events'
 
 const draft: EventDraft = {
   title: ' Campus Choir ', description: '  Learn new arrangements with friends.  ',
-  location: ' Music Hall ', date: '2026-10-28', start: '14:30', end: '15:30',
+  location: ' Music Hall ', date: '2026-10-29', start: '14:30', end: '15:30',
 }
 const localNow = new Date(2026, 9, 28, 20, 58) // Oct 28, 8:58 pm in the runner's local timezone
 
@@ -22,14 +22,14 @@ describe('M1 professor feedback: no past event dates', () => {
   })
 
   it('rejects a same-day event that has already started', () => {
-    const result = createEvent([], { ...draft, start: '09:00', end: '10:00' }, 'today', localNow)
+    const result = createEvent([], { ...draft, date: '2026-10-28', start: '09:00', end: '10:00' }, 'today', localNow)
     expect(result.error).toMatch(/already started/i)
     expect(result.events).toEqual([])
   })
 
   it('accepts a same-day start at the current minute and one later in the day', () => {
-    expect(createEvent([], { ...draft, start: '20:58', end: '21:59' }, 'now', localNow).error).toBeNull()
-    expect(createEvent([], { ...draft, start: '21:00', end: '22:00' }, 'later', localNow).error).toBeNull()
+    expect(createEvent([], { ...draft, date: '2026-10-28', start: '20:58', end: '21:59' }, 'now', localNow).error).toBeNull()
+    expect(createEvent([], { ...draft, date: '2026-10-28', start: '21:00', end: '22:00' }, 'later', localNow).error).toBeNull()
   })
 
   it('accepts a future day and rejects an impossible date', () => {
@@ -52,7 +52,7 @@ describe('M1 professor feedback: descriptive event records', () => {
       {
         id: 'choir-1', title: 'Campus Choir',
         description: 'Learn new arrangements with friends.',
-        location: 'Music Hall', date: '2026-10-28',
+        location: 'Music Hall', date: '2026-10-29',
         start: '14:30', end: '15:30',
       },
     ])

@@ -113,13 +113,15 @@ describe('M1 rendered user workflow', () => {
     expect(screen.getByRole('alert').textContent).toContain('Please choose a valid date.')
   })
 
-  it('R2/R4: warns the user when the browser refuses to save events', async () => {
+  it('R2/R4: warns when a new event cannot be persisted', async () => {
+    const user = userEvent.setup()
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('Storage denied')
     })
     render(<App />)
+    await createWorkshop(user)
     await waitFor(() => {
-      expect(screen.getByRole('alert').textContent).toContain('Browser storage is unavailable')
+      expect(screen.getByRole('alert').textContent).toContain('Browser storage could not save')
     })
   })
 
