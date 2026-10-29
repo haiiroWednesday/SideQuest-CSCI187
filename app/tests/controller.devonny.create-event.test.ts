@@ -12,7 +12,7 @@ it('preserves the first event when a second event is created', () => {
         date: '2026-10-26',
         start: '10:00',
         end: '11:00',
-    }, 'study-1')
+    }, 'study-1', new Date(2026, 9, 1))
 
     const second = createEvent(first.events, {
         title: 'Art Workshop',
@@ -20,7 +20,7 @@ it('preserves the first event when a second event is created', () => {
         date: '2026-10-27',
         start: '14:00',
         end: '15:30',
-    }, 'art-2')
+    }, 'art-2', new Date(2026, 9, 1))
 
     expect(first.error).toBeNull()
     expect(second.error).toBeNull()

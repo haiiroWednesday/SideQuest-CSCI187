@@ -8,7 +8,7 @@ The React walking skeleton supports one complete workflow:
 
 **Create an event → save it in the browser → enter a date and free-time window → view matching events.**
 
-Users can create events with a title, location, date, and start/end times; view and remove saved events; and search for events that fit **entirely** within a selected free-time window. Results are sorted by start time. Invalid inputs and empty searches display feedback.
+Users can create events with a title, optional description, location, and start/end times on **today or a future date**; view and remove saved events; and search for events that fit **entirely** within a selected free-time window. Results display dates as M/D/YYYY and times as 12-hour am/pm, while storage keeps ISO dates and HH:mm. Results are sorted by start time. Invalid inputs and empty searches display feedback.
 
 The app uses **React, TypeScript, Vite, and Vitest**. The current implementation and merged tests are on the default **`master`** branch.
 
