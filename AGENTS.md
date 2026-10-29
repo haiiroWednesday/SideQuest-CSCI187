@@ -12,6 +12,11 @@
 - [Current editable P5 ER draw.io](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view): USER, EVENT, AVAILABILITY_WINDOW and PLANS TO ATTEND for **P5 coursework**. This is **not** the M2 implementation schema, even though it is the selected P5 drawing.
 - [README](README.md) and [TEAM_SETUP_GUIDE](TEAM_SETUP_GUIDE.md): how to run and test the actual app.
 
+## M1 feedback integration notice
+
+- The original M1 walking skeleton on `master` has two separate code PRs: [#10](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/10) (React/browser tests) and [#11](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/11) (instructor feedback fixes). **Do not merge both without a consolidated CI run**: #10 contains fixed-date test fixtures that conflict with #11's no-past-events validation.
+- See [M1 post-feedback QA](docs/M1_POST_FEEDBACK_QA.md). Reconcile controller/Model responsibilities, test dates, and docs, then verify all behavior. M1 changes do not expand agreed M2 feature scope.
+
 ## Agreed MVP scope
 
 - Anyone may post/browse events; **no account, login, or USER table**.
