@@ -49,7 +49,11 @@ Events are created by the user and saved in the current browser's `localStorage`
 
 The repository also contains the original C++ course starter files, but they are **not needed** to run or test the React application.
 
-## Documentation — only three active guides
+## M1 feedback and code integration status
+
+The original walking skeleton on `master` is preserved until code review. Feedback fixes (past-event prevention, descriptions, MVC mediation, clearer date/time display) and UI/browser tests are in **open PRs**, not shipped on `master`. See [M1 post-feedback QA and integration checklist](docs/M1_POST_FEEDBACK_QA.md). Follow the consolidated implementation PR and its CI results before announcing completion. The original M1 requirements and technical specifications now contain clearly labeled post-feedback addenda.
+
+## Documentation — three active guides plus M1 QA
 
 1. **[Build the MVP](docs/MVP_TEAM_PLAYBOOK.md)** — the M2 implementation contract, ownership, testing, P4 architecture, plus the **current selected P5 coursework ER** as Mermaid with a direct editable draw.io link; the original classroom sketch and earlier draft are preserved separately.
 2. **[Set up the team and AI agents](TEAM_SETUP_GUIDE.md)** — install/run/test SideQuest, Git workflow, and a balanced comparison of OpenCode, Cursor, Claude Code, Codex, and Cline, plus multi-agent reviews and troubleshooting.
