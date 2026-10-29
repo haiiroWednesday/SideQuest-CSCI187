@@ -2,13 +2,16 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import {
   createEvent, findEvents, todayLocal, displayDate, displayTime,
-  loadEvents, persistEvents, removeEvent as removeEventById, type CampusEvent, type EventDraft,
+  loadEventsChecked, persistEvents, removeEventWithReceipt, restoreRemovedEvent, isPastEvent,
+  type CampusEvent, type EventDraft, type RemovedEvent,
 } from './controller/findEvents'
 
 export default function App() {
-  const [events, setEvents] = useState<CampusEvent[]>(() => {
-    try { return loadEvents(window.localStorage) } catch { return [] }
-  })
+  // Hydrate without writing: a malformed stored value must never be erased on mount.
+  const [initial] = useState(() => loadEventsChecked(window.localStorage))
+  const [events, setEvents] = useState<CampusEvent[]>(initial.events)
+  const [storageBlocked, setStorageBlocked] = useState(initial.blocked)
+  const [lastRemoved, setLastRemoved] = useState<RemovedEvent | null>(null)
   const [draft, setDraft] = useState<EventDraft>(() => ({
     title: '', description: '', location: '', date: todayLocal(), start: '14:30', end: '15:30',
   }))
@@ -19,11 +22,35 @@ export default function App() {
   const [freeStart, setFreeStart] = useState('14:00')
   const [freeEnd, setFreeEnd] = useState('16:00')
 
+  // Sync updates from other browser tabs without writing the same list back.
   useEffect(() => {
-    let saved = false
-    try { saved = persistEvents(window.localStorage, events) } catch { /* storage denied */ }
+    const onStorage = (event: StorageEvent) => {
+      if (event.storageArea !== window.localStorage || (event.key !== null && event.key !== 'sidequest.created-events.v1')) return
+      const current = loadEventsChecked(window.localStorage)
+      setEvents(current.events)
+      setStorageBlocked(current.blocked)
+      setStorageWarning(false)
+      setLastRemoved(null)
+      setNotice('Your event list was updated in another tab.')
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
+  function store(next: CampusEvent[]): boolean {
+    const saved = !storageBlocked && persistEvents(window.localStorage, next)
+    setEvents(next)
     setStorageWarning(!saved)
-  }, [events])
+    return saved
+  }
+
+  function recoverSavedEvents() {
+    if (!window.confirm('Replace unreadable saved data with the valid events currently shown? Any corrupt entries will be discarded.')) return
+    const saved = persistEvents(window.localStorage, events)
+    setStorageBlocked(!saved)
+    setStorageWarning(!saved)
+    setNotice(saved ? 'Saved event data recovered.' : null)
+  }
 
   const { matches, error: searchError } = findEvents(events, freeDate, freeStart, freeEnd)
   const updateDraft = (field: keyof EventDraft, value: string) =>
@@ -31,23 +58,44 @@ export default function App() {
 
   function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (storageBlocked) {
+      setCreateError('Saved data needs recovery before changes can be made.')
+      return
+    }
     const result = createEvent(events, draft, crypto.randomUUID())
     if (result.error) {
       setCreateError(result.error)
       setNotice(null)
       return
     }
-    setEvents(result.events)
+    const saved = store(result.events)
+    setLastRemoved(null)
     setCreateError(null)
-    setNotice(`Created “${draft.title.trim()}”! It now appears in your event list.`)
+    setNotice(saved
+      ? `Created “${draft.title.trim()}”! It now appears in your event list.`
+      : 'Event added temporarily, but your browser could not save it. It may disappear after reloading.')
     setFreeDate(draft.date)
     setDraft((current) => ({ ...current, title: '', description: '', location: '' }))
   }
 
   function removeEvent(id: string) {
-    setEvents((current) => removeEventById(current, id))
+    if (storageBlocked) {
+      setCreateError('Recover saved data before removing an event.')
+      return
+    }
+    const result = removeEventWithReceipt(events, id)
+    if (!result.removed) return
+    store(result.events)
+    setLastRemoved(result.removed)
     setCreateError(null)
     setNotice('Event removed.')
+  }
+
+  function undoRemove() {
+    if (!lastRemoved || storageBlocked) return
+    store(restoreRemovedEvent(events, lastRemoved))
+    setLastRemoved(null)
+    setNotice('Event restored.')
   }
 
   return (
@@ -103,8 +151,16 @@ export default function App() {
             <button className="primary-button" type="submit">+ Create event</button>
           </form>
           {createError && <p className="error" role="alert">{createError}</p>}
-          {notice && <p className="success" role="status">{notice}</p>}
-          {storageWarning && <p className="error" role="alert">Browser storage is unavailable. Your events may disappear when you reload.</p>}
+          {notice && <div className="success" role="status">{notice}
+            {lastRemoved && <button type="button" className="undo-button" onClick={undoRemove}>Undo removal</button>}
+          </div>}
+          {storageBlocked && <div className="storage-alert" role="alert">
+            Some saved browser data could not be read. It has not been overwritten.
+            <button type="button" className="recovery-button" onClick={recoverSavedEvents}>
+              Recover valid events
+            </button>
+          </div>}
+          {!storageBlocked && storageWarning && <p className="error" role="alert">Browser storage could not save your changes. They may disappear after reload.</p>}
         </section>
 
         <section className="panel" aria-labelledby="search-heading">
@@ -174,6 +230,7 @@ export default function App() {
                 <li key={event.id}>
                   <div>
                     <strong>{event.title}</strong>
+                    {isPastEvent(event) && <small className="past-tag">Past event</small>}
                     <span>{displayDate(event.date)} · {displayTime(event.start)}–{displayTime(event.end)} · {event.location}</span>
                     {event.description && <span className="event-description">{event.description}</span>}
                   </div>
