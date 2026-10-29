@@ -11,23 +11,23 @@ const draft: EventDraft = {
 describe('Controller: event creation → search', () => {
   it('starts with no events; creates one; then finds the newly created event', () => {
     expect(findEvents([], '2026-10-19', '14:00', '16:00').matches).toEqual([])
-    const created = createEvent([], draft, 'art-1')
+    const created = createEvent([], draft, 'art-1', new Date(2026, 9, 1))
     expect(created.error).toBeNull()
     expect(created.events[0].title).toBe('Art Workshop')
     expect(findEvents(created.events, '2026-10-19', '14:00', '16:00').matches.map((event) => event.id))
       .toEqual(['art-1'])
   })
   it('rejects an event with reversed times without adding it', () => {
-    const created = createEvent([], { ...draft, start: '17:00', end: '16:00' }, 'broken')
+    const created = createEvent([], { ...draft, start: '17:00', end: '16:00' }, 'broken', new Date(2026, 9, 1))
     expect(created.error).not.toBeNull()
     expect(created.events).toEqual([])
   })
   it('rejects a missing event title or location', () => {
-    expect(createEvent([], { ...draft, title: '  ' }, 'invalid').error).not.toBeNull()
-    expect(createEvent([], { ...draft, location: '' }, 'invalid').error).not.toBeNull()
+    expect(createEvent([], { ...draft, title: '  ' }, 'invalid', new Date(2026, 9, 1)).error).not.toBeNull()
+    expect(createEvent([], { ...draft, location: '' }, 'invalid', new Date(2026, 9, 1)).error).not.toBeNull()
   })
   it('does not show events on a different date', () => {
-    const created = createEvent([], draft, 'art-1')
+    const created = createEvent([], draft, 'art-1', new Date(2026, 9, 1))
     expect(findEvents(created.events, '2026-10-20', '14:00', '16:00').matches).toEqual([])
   })
   it('rejects an invalid search interval', () => {
