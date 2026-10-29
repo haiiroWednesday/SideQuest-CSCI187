@@ -78,15 +78,32 @@ export function isCampusEvent(value: unknown): value is CampusEvent {
 }
 
 // localStorage is a browser-only prototype store; other computers do NOT share its events.
-export function readStoredEvents(storage: Pick<Storage, 'getItem'>): CampusEvent[] {
+export type StoredEventsState = { events: CampusEvent[]; blocked: boolean }
+
+// Never silently replace unreadable or partially invalid stored data with [].
+// Callers must obtain explicit recovery consent before overwriting damaged data.
+export function readStoredEventsChecked(storage: Pick<Storage, 'getItem'>): StoredEventsState {
   try {
     const saved = storage.getItem(STORAGE_KEY)
-    if (!saved) return []
+    if (saved === null) return { events: [], blocked: false }
     const parsed: unknown = JSON.parse(saved)
-    return Array.isArray(parsed) ? parsed.filter(isCampusEvent) : []
+    if (!Array.isArray(parsed)) return { events: [], blocked: true }
+    const ids = new Set<string>()
+    const events: CampusEvent[] = []
+    for (const value of parsed) {
+      if (!isCampusEvent(value) || ids.has(value.id)) continue
+      ids.add(value.id)
+      events.push(value)
+    }
+    return { events, blocked: events.length !== parsed.length }
   } catch {
-    return [] // e.g., blocked storage or corrupt JSON
+    return { events: [], blocked: true }
   }
+}
+
+// Legacy API is preserved for previously submitted M1 tests.
+export function readStoredEvents(storage: Pick<Storage, 'getItem'>): CampusEvent[] {
+  return readStoredEventsChecked(storage).events
 }
 
 export function saveStoredEvents(storage: Pick<Storage, 'setItem'>, events: CampusEvent[]): boolean {
