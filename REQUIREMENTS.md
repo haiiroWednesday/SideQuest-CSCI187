@@ -43,3 +43,15 @@ Users should be informed when required event details are missing, dates or times
 - “Realistically participate” remains the wider MVP goal. M1 tests the narrower, measurable question of whether the event’s entire scheduled time fits the user’s free-time window.
 
 **Related document:** [SideQuest Technical Specifications](SPECIFICATIONS.md) · [Google Docs version](https://docs.google.com/document/d/1CUcQPC5-_3Lziyf88H2oCPYRIR1wrgaSF1K15VK5_Gs/edit)
+
+## Post-feedback acceptance addendum (October 28, 2026)
+
+This section records the professor's M1 feedback and further QA improvements; the original R1–R4 above remain the historical assignment baseline. These changes are **not yet on master** until the relevant code PR is merged.
+
+- **R1:** For new event postings, reject dates before the user's local today. As an additional real-world safeguard, reject a same-day start time that has already elapsed; ensure tests handle the local calendar and midnight boundary. Include an optional short description that appears beside each event and persists in browser storage.
+- **R2:** Continue to load legacy events without descriptions. Preserve unrelated events when removing one, and provide recovery from an accidental removal. Make storage-write failure visible; do not silently overwrite data after a read failure.
+- **R3:** Keep entire-event, same-date matching (inclusive edges). User-facing event cards and saved lists use US calendar and 12-hour time presentation, while storage keeps machine-readable ISO date and 24-hour time.
+- **R4:** Invalid form/search inputs must produce clear feedback. Check keyboard navigation, contrast and small-screen presentation.
+- **Architecture:** React View communicates with the Controller; Model handles event data, validation and persistence. Update CRC and tests when implementing the change.
+
+These are not new M2 requirements. See [Post-feedback QA checklist](docs/M1_POST_FEEDBACK_QA.md) and the code PR before reporting them as implemented.
