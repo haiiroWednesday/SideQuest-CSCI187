@@ -1,6 +1,6 @@
 # M1 feedback follow-up and regression checklist
 
-> Status (October 28, 2026): **Documentation is published on `master`**. The implementation fixes and expanded tests remain **unmerged code pull requests**. The consolidated implementation is [code PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12) and remains unmerged until reviewed. A passing CI check on an individual PR is not evidence that the combined changes work. Do not describe features as shipped until the consolidated PR is merged.
+> Status (October 28, 2026): **Documentation is published on `master`**. The implementation fixes and expanded tests remain **unmerged code pull requests**. The consolidated implementation is [code PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12), **CI verified and ready for human review**, but it remains unmerged. A passing CI check on an individual PR is not evidence that the combined changes work. Do not describe features as shipped until the consolidated PR is merged.
 
 ## Feedback, acceptance criteria, and evidence
 
@@ -27,7 +27,7 @@
 
 ## PR integration instructions
 
-1. [PR #10 — React/browser regression tests](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/10) and [PR #11 — instructor feedback fixes](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/11) were created independently. **Do not merge both blindly.**
+1. Historical [PR #10](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/10) and [PR #11](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/11) were closed unmerged, superseded by [consolidated PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12). **Review/merge only #12** after teammate approval.
 2. Consolidate the actual behavior and tests on one feature branch, updating `app/README.md` as needed. The key interaction is that PR #10 uses fixed Oct 28 dates and PR #11 rejects past dates. Inject the test clock or generate future dates in every browser test.
 3. Run the complete suite, typecheck/build and browser smoke **on the consolidated PR #12 head**. Evaluate tests for descriptions, rejected old date/time, formatted dates, invalid input, persistence, empty states and removals.
 4. Reviewer checks UI, MVC and remaining constraints; only then merge the code. Keep this documentation in sync after merging.
@@ -45,3 +45,10 @@
 From `app/`: `npm ci`, `npm test`, `npm run build`, `npx playwright install chromium`, `npm run test:e2e`.
 
 **Never confuse “documented,” “in an unmerged PR,” and “verified on master.”** Record exact commit and successful CI run in final submission notes.
+
+## Verified code-PR CI (October 28, 2026)
+
+- [PR #12 — consolidated M1 corrections](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12), head `cd9da859e86a524a6b5545b4daaa20ffe061d15b`.
+- [Successful SideQuest React CI](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions/runs/40822672529): 13/13 Vitest files, **52/52 tests**, TypeScript checking and Vite build, and **1/1 Chromium Playwright test**.
+- Dependency lockfile and `npm ci` included in the proposed code PR. New tests cover a stale-tab-write prevention, local date and time boundaries, descriptions, Undo and corrupted storage recovery.
+- **Not yet merged to `master`.** These are branch results, not a claim that the deployed/current `master` app already has the changes.
