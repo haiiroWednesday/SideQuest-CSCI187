@@ -8,7 +8,10 @@ import {
 
 export default function App() {
   // Hydrate without writing: a malformed stored value must never be erased on mount.
-  const [initial] = useState(() => loadEventsChecked(window.localStorage))
+  const [initial] = useState(() => {
+    try { return loadEventsChecked(window.localStorage) }
+    catch { return { events: [] as CampusEvent[], blocked: true } }
+  })
   const [events, setEvents] = useState<CampusEvent[]>(initial.events)
   const [storageBlocked, setStorageBlocked] = useState(initial.blocked)
   const [lastRemoved, setLastRemoved] = useState<RemovedEvent | null>(null)
@@ -26,7 +29,9 @@ export default function App() {
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
       if (event.storageArea !== window.localStorage || (event.key !== null && event.key !== 'sidequest.created-events.v1')) return
-      const current = loadEventsChecked(window.localStorage)
+      let current: { events: CampusEvent[]; blocked: boolean }
+      try { current = loadEventsChecked(window.localStorage) }
+      catch { current = { events: [], blocked: true } }
       setEvents(current.events)
       setStorageBlocked(current.blocked)
       setStorageWarning(false)
@@ -38,7 +43,9 @@ export default function App() {
   }, [])
 
   function store(next: CampusEvent[]): boolean {
-    const saved = !storageBlocked && persistEvents(window.localStorage, next)
+    let saved = false
+    try { if (!storageBlocked) saved = persistEvents(window.localStorage, next) }
+    catch { /* browser storage may be disabled */ }
     setEvents(next)
     setStorageWarning(!saved)
     return saved
@@ -46,7 +53,9 @@ export default function App() {
 
   function recoverSavedEvents() {
     if (!window.confirm('Replace unreadable saved data with the valid events currently shown? Any corrupt entries will be discarded.')) return
-    const saved = persistEvents(window.localStorage, events)
+    let saved = false
+    try { saved = persistEvents(window.localStorage, events) }
+    catch { /* browser storage may be disabled */ }
     setStorageBlocked(!saved)
     setStorageWarning(!saved)
     setNotice(saved ? 'Saved event data recovered.' : null)
