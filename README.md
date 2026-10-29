@@ -51,7 +51,7 @@ The repository also contains the original C++ course starter files, but they are
 
 ## M1 feedback and code integration status
 
-The original walking skeleton on `master` is preserved until code review. Feedback fixes (past-event prevention, descriptions, MVC mediation, clearer date/time display) and UI/browser tests are in **open PRs**, not shipped on `master`. See [M1 post-feedback QA and integration checklist](docs/M1_POST_FEEDBACK_QA.md). Follow the consolidated implementation PR and its CI results before announcing completion. The original M1 requirements and technical specifications now contain clearly labeled post-feedback addenda.
+The original walking skeleton on `master` is preserved until code review. Feedback fixes (past-event prevention, descriptions, MVC mediation, clearer date/time display) and UI/browser tests are in **open PRs**, not shipped on `master`. See [M1 post-feedback QA and integration checklist](docs/M1_POST_FEEDBACK_QA.md). Follow [consolidated implementation PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12) and its CI results before announcing completion. The original M1 requirements and technical specifications now contain clearly labeled post-feedback addenda.
 
 ## Documentation — three active guides plus M1 QA
 
