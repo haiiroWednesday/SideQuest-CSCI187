@@ -107,4 +107,4 @@ These specifications describe the current TypeScript + React implementation. Eac
 ### S4a — Verification
 
 - Verify controller/model edge cases, rendered React UI, real-browser create → match → reload → remove flow, descriptions, date guards, errors, persistence and accessibility.
-- The original 26 M1 logic tests are not sufficient proof of UI coverage. [PR #10](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/10) adds UI/browser tests, and [PR #11](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/11) implements feedback fixes; a consolidated code PR must verify them **together**.
+- The original 26 M1 logic tests are not sufficient proof of UI coverage. [Consolidated code PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12) implements both the feedback fixes and UI/browser tests together; 52 Vitest cases and one Chromium smoke check passed on its head. The two previous code PRs (#10 and #11) were closed without merging.
