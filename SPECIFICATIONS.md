@@ -81,3 +81,30 @@ These specifications describe the current TypeScript + React implementation. Eac
 ---
 
 **Related document:** [SideQuest User Requirements](REQUIREMENTS.md) · [Google Docs version](https://docs.google.com/document/d/1yTrAU-RBO4YYBJLUYtjB1kb0U94_vN3iIjDeQBZ-gk0/edit)
+
+## Post-feedback specification addendum (October 28, 2026)
+
+**Status:** This original M1 document is preserved as the submitted baseline. The revisions below describe the intended post-feedback behavior being implemented and reviewed in code, **not behavior already merged into `master`**. See [M1 QA checklist](docs/M1_POST_FEEDBACK_QA.md) and the consolidated code PR before claiming completion.
+
+### S1a — Event date and description
+
+- Reject creating new events with a date earlier than the user's local calendar date. Product follow-up: also reject an event **starting** before the current local time on today's date; yesterday/today/tomorrow and same-day clock boundaries need regression tests.
+- A description field (up to 500 characters) differentiates events with similar titles. Descriptions are optional for compatibility with old browser records and appear in both results and created-event listings.
+- The Controller, not the HTML `min` attribute alone, must validate dates, time intervals, title/location lengths, and descriptions.
+
+### S2a — MVC collaboration and persistence
+
+- **View** collects/render inputs and UI state and invokes Controller functions. It must not import Model helpers directly.
+- **Controller** mediates create/search/remove operations; loads and persists event state via the Model; supplies presentation-friendly date/time values.
+- **Model** owns the `CampusEvent` schema, local date/time primitives, fitting predicate, storage integrity checks and serialization. Existing saved events without a description are valid.
+- Browser storage remains per device; write failures must surface prominently. Avoid overwriting good saved data after malformed storage reads. Browser tabs can conflict when saving whole arrays; reconcile external writes or document single-tab limitation.
+
+### S3a — Date and time display
+
+- Keep machine-readable date/time data as YYYY-MM-DD and HH:mm. Present dates in M/D/YYYY and times in a 12-hour `h:mmam/pm` display in both results and created-event lists (e.g. 2026-10-27 → 10/27/2026; 14:30 → 2:30pm).
+- Date/time inputs use browser-native controls, whose visible locale styling may vary by browser/OS. Automated and manual browser checks should verify the intended display on event cards.
+
+### S4a — Verification
+
+- Verify controller/model edge cases, rendered React UI, real-browser create → match → reload → remove flow, descriptions, date guards, errors, persistence and accessibility.
+- The original 26 M1 logic tests are not sufficient proof of UI coverage. [PR #10](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/10) adds UI/browser tests, and [PR #11](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/11) implements feedback fixes; a consolidated code PR must verify them **together**.
