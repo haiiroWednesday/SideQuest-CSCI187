@@ -167,6 +167,18 @@ describe('M1 rendered user workflow', () => {
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe('[]')
   })
 
+  it('R2: refuses to overwrite an unseen change from another browser tab', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const remote = [{ id: 'tab-b', title: 'Other Tab', location: 'Library', date: futureDate(), start: '09:00', end: '10:00' }]
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(remote))
+    // Do not deliver a storage event yet: the View still has stale [] state.
+    await createWorkshop(user)
+    expect(screen.getByRole('alert').textContent).toContain('another tab')
+    expect(screen.getByRole('button', { name: 'Remove Other Tab' })).toBeTruthy()
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '[]')).toEqual(remote)
+  })
+
   it('R2: reflects changes from another browser tab without clobbering the write', () => {
     render(<App />)
     const remote = [{ id: 'remote', title: 'Remote', location: 'SCU', date: futureDate(), start: '14:30', end: '15:30' }]

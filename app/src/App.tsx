@@ -42,13 +42,28 @@ export default function App() {
     return () => window.removeEventListener('storage', onStorage)
   }, [])
 
-  function store(next: CampusEvent[]): boolean {
+  function store(next: CampusEvent[]): 'saved' | 'unsaved' | 'conflict' {
     let saved = false
-    try { if (!storageBlocked) saved = persistEvents(window.localStorage, next) }
-    catch { /* browser storage may be disabled */ }
+    try {
+      if (!storageBlocked) {
+        const latest = loadEventsChecked(window.localStorage)
+        // A second tab may change the list before the storage event arrives.
+        // Refuse stale writes rather than overwrite the other tab's events.
+        if (latest.blocked || JSON.stringify(latest.events) !== JSON.stringify(events)) {
+          setEvents(latest.events)
+          setStorageBlocked(latest.blocked)
+          setStorageWarning(false)
+          setLastRemoved(null)
+          setCreateError('Your events changed in another tab. Please review the updated list and try again.')
+          setNotice(null)
+          return 'conflict'
+        }
+        saved = persistEvents(window.localStorage, next)
+      }
+    } catch { /* browser storage may be disabled */ }
     setEvents(next)
     setStorageWarning(!saved)
-    return saved
+    return saved ? 'saved' : 'unsaved'
   }
 
   function recoverSavedEvents() {
@@ -77,10 +92,11 @@ export default function App() {
       setNotice(null)
       return
     }
-    const saved = store(result.events)
+    const outcome = store(result.events)
+    if (outcome === 'conflict') return
     setLastRemoved(null)
     setCreateError(null)
-    setNotice(saved
+    setNotice(outcome === 'saved'
       ? `Created “${draft.title.trim()}”! It now appears in your event list.`
       : 'Event added temporarily, but your browser could not save it. It may disappear after reloading.')
     setFreeDate(draft.date)
@@ -94,7 +110,7 @@ export default function App() {
     }
     const result = removeEventWithReceipt(events, id)
     if (!result.removed) return
-    store(result.events)
+    if (store(result.events) === 'conflict') return
     setLastRemoved(result.removed)
     setCreateError(null)
     setNotice('Event removed.')
@@ -102,7 +118,7 @@ export default function App() {
 
   function undoRemove() {
     if (!lastRemoved || storageBlocked) return
-    store(restoreRemovedEvent(events, lastRemoved))
+    if (store(restoreRemovedEvent(events, lastRemoved)) === 'conflict') return
     setLastRemoved(null)
     setNotice('Event restored.')
   }
