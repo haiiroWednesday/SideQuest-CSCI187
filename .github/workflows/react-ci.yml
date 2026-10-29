@@ -19,18 +19,8 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
-      - name: Install packages
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install --no-audit --no-fund
-          fi
-      - name: Export lockfile for review
-        run: |
-          echo 'SIDEQUEST_LOCKFILE_START'
-          base64 -w 1024 package-lock.json
-          echo 'SIDEQUEST_LOCKFILE_END'
+      - name: Install locked packages
+        run: npm ci --no-audit --no-fund
       - name: Run unit tests
         run: npm test
       - name: Type-check and build
