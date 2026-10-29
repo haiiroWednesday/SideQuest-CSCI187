@@ -15,7 +15,7 @@
 ## M1 feedback integration notice
 
 - The original M1 walking skeleton on `master` has two separate code PRs: [#10](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/10) (React/browser tests) and [#11](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/11) (instructor feedback fixes). **Do not merge both without a consolidated CI run**: #10 contains fixed-date test fixtures that conflict with #11's no-past-events validation.
-- See [M1 post-feedback QA](docs/M1_POST_FEEDBACK_QA.md). Reconcile controller/Model responsibilities, test dates, and docs, then verify all behavior. M1 changes do not expand agreed M2 feature scope.
+- The consolidated implementation is [PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12) (pending review). See [M1 post-feedback QA](docs/M1_POST_FEEDBACK_QA.md). Reconcile controller/Model responsibilities, test dates, and docs, then verify all behavior. M1 changes do not expand agreed M2 feature scope.
 
 ## Agreed MVP scope
 
