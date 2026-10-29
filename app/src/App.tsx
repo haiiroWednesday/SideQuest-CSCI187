@@ -1,7 +1,7 @@
 // VIEW: Create events and search your available time. Rules and persistence are mediated through the Controller.
 import { useEffect, useState, type FormEvent } from 'react'
 import {
-  createEvent, findEvents, todayLocal, displayDate, displayTime,
+  createEvent, findEvents, todayLocal, initialEventWindow, displayDate, displayTime,
   loadEventsChecked, persistEvents, removeEventWithReceipt, restoreRemovedEvent, isPastEvent,
   type CampusEvent, type EventDraft, type RemovedEvent,
 } from './controller/findEvents'
@@ -16,7 +16,7 @@ export default function App() {
   const [storageBlocked, setStorageBlocked] = useState(initial.blocked)
   const [lastRemoved, setLastRemoved] = useState<RemovedEvent | null>(null)
   const [draft, setDraft] = useState<EventDraft>(() => ({
-    title: '', description: '', location: '', date: todayLocal(), start: '14:30', end: '15:30',
+    title: '', description: '', location: '', ...initialEventWindow(),
   }))
   const [createError, setCreateError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -125,7 +125,7 @@ export default function App() {
             <h2 id="create-heading">Create an event</h2>
             <span>Step 1</span>
           </div>
-          <p className="panel-description">Add a campus event yourself.</p>
+          <p className="panel-description">Add a campus event yourself. Events today must start at or after the current time.</p>
           <form className="event-form" onSubmit={handleCreate}>
             <label>
               <span>EVENT NAME</span>

@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   createEvent, displayDate, displayTime, loadEvents, persistEvents,
-  removeEvent, removeEventWithReceipt, restoreRemovedEvent, loadEventsChecked, todayLocal,
+  removeEvent, removeEventWithReceipt, restoreRemovedEvent, loadEventsChecked, todayLocal, initialEventWindow,
 } from '../src/controller/findEvents'
 import type { CampusEvent, EventDraft } from '../src/model/events'
 import { STORAGE_KEY } from '../src/model/events'
@@ -94,6 +94,17 @@ describe('M1 professor feedback: consistent visible dates and times', () => {
     expect(displayTime('00:00')).toBe('12:00am')
     expect(displayTime('12:00')).toBe('12:00pm')
     expect(displayTime('23:59')).toBe('11:59pm')
+  })
+})
+
+describe('Default event form time window', () => {
+  it('chooses a future start time in daytime and tomorrow if too close to midnight', () => {
+    expect(initialEventWindow(new Date(2026, 9, 28, 11, 10))).toEqual({
+      date: '2026-10-28', start: '11:45', end: '12:45',
+    })
+    expect(initialEventWindow(new Date(2026, 9, 28, 23, 40))).toEqual({
+      date: '2026-10-29', start: '14:30', end: '15:30',
+    })
   })
 })
 
