@@ -30,3 +30,7 @@ jobs:
         run: npm test
       - name: Type-check and build
         run: npm run build
+      - name: Install Chromium for browser smoke test
+        run: npx playwright install --with-deps chromium
+      - name: Run browser smoke test
+        run: npm run test:e2e

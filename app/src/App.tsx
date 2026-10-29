@@ -1,22 +1,16 @@
-// VIEW: Create events and search your available time. Rules live in controller/model.
+// VIEW: Create events and search your available time. Rules and persistence are mediated through the Controller.
 import { useEffect, useState, type FormEvent } from 'react'
-import { createEvent, findEvents } from './controller/findEvents'
-import { readStoredEvents, saveStoredEvents, type CampusEvent, type EventDraft } from './model/events'
-
-function todayLocal(): string {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
+import {
+  createEvent, findEvents, todayLocal, displayDate, displayTime,
+  loadEvents, persistEvents, removeEvent as removeEventById, type CampusEvent, type EventDraft,
+} from './controller/findEvents'
 
 export default function App() {
   const [events, setEvents] = useState<CampusEvent[]>(() => {
-    try { return readStoredEvents(window.localStorage) } catch { return [] }
+    try { return loadEvents(window.localStorage) } catch { return [] }
   })
   const [draft, setDraft] = useState<EventDraft>(() => ({
-    title: '', location: '', date: todayLocal(), start: '14:30', end: '15:30',
+    title: '', description: '', location: '', date: todayLocal(), start: '14:30', end: '15:30',
   }))
   const [createError, setCreateError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -27,7 +21,7 @@ export default function App() {
 
   useEffect(() => {
     let saved = false
-    try { saved = saveStoredEvents(window.localStorage, events) } catch { /* storage denied */ }
+    try { saved = persistEvents(window.localStorage, events) } catch { /* storage denied */ }
     setStorageWarning(!saved)
   }, [events])
 
@@ -47,11 +41,11 @@ export default function App() {
     setCreateError(null)
     setNotice(`Created “${draft.title.trim()}”! It now appears in your event list.`)
     setFreeDate(draft.date)
-    setDraft((current) => ({ ...current, title: '', location: '' }))
+    setDraft((current) => ({ ...current, title: '', description: '', location: '' }))
   }
 
   function removeEvent(id: string) {
-    setEvents((current) => current.filter((event) => event.id !== id))
+    setEvents((current) => removeEventById(current, id))
     setCreateError(null)
     setNotice('Event removed.')
   }
@@ -82,13 +76,19 @@ export default function App() {
                 placeholder="e.g. Art Workshop" onChange={(e) => updateDraft('title', e.target.value)} />
             </label>
             <label>
+              <span>DESCRIPTION (OPTIONAL)</span>
+              <textarea value={draft.description ?? ''} maxLength={500} rows={3}
+                placeholder="What makes this event special?"
+                onChange={(e) => updateDraft('description', e.target.value)} />
+            </label>
+            <label>
               <span>LOCATION</span>
               <input type="text" value={draft.location} required maxLength={100}
                 placeholder="e.g. Student Center" onChange={(e) => updateDraft('location', e.target.value)} />
             </label>
             <label>
               <span>DATE</span>
-              <input type="date" value={draft.date} required onChange={(e) => updateDraft('date', e.target.value)} />
+              <input type="date" value={draft.date} min={todayLocal()} required onChange={(e) => updateDraft('date', e.target.value)} />
             </label>
             <div className="time-row">
               <label>
@@ -152,11 +152,12 @@ export default function App() {
                 <div className="event-left">
                   <span className="category">Your event</span>
                   <h3>{event.title}</h3><p>{event.location}</p>
+                  {event.description && <p className="event-description">{event.description}</p>}
                 </div>
                 <div className="event-right">
                   <span className="fit">✓ Fits</span>
-                  <strong>{event.date}</strong>
-                  <strong>{event.start} – {event.end}</strong>
+                  <strong>{displayDate(event.date)}</strong>
+                  <strong>{displayTime(event.start)} – {displayTime(event.end)}</strong>
                 </div>
               </article>
             ))}
@@ -173,7 +174,8 @@ export default function App() {
                 <li key={event.id}>
                   <div>
                     <strong>{event.title}</strong>
-                    <span>{event.date} · {event.start}–{event.end} · {event.location}</span>
+                    <span>{displayDate(event.date)} · {displayTime(event.start)}–{displayTime(event.end)} · {event.location}</span>
+                    {event.description && <span className="event-description">{event.description}</span>}
                   </div>
                   <button type="button" className="remove-button" onClick={() => removeEvent(event.id)}
                     aria-label={`Remove ${event.title}`}>Remove</button>
