@@ -7,7 +7,13 @@ test('post, find, validate, reload, and remove an event', async ({ page }) => {
 
   await page.getByPlaceholder('e.g. Art Workshop').fill('Art Workshop')
   await page.getByPlaceholder('e.g. Student Center').fill('Arts Building')
-  await page.locator('.event-form input[type="date"]').fill('2026-10-28')
+  const eventDate = await page.evaluate(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 7)
+    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
+  })
+  await page.locator('.event-form input[type="date"]').fill(eventDate)
+  await page.getByPlaceholder('What makes this event special?').fill('Paint with friends')
   await page.locator('.event-form input[type="time"]').nth(0).fill('14:30')
   await page.locator('.event-form input[type="time"]').nth(1).fill('15:30')
   await page.getByRole('button', { name: '+ Create event' }).click()
@@ -15,6 +21,8 @@ test('post, find, validate, reload, and remove an event', async ({ page }) => {
   await expect(page.getByRole('status')).toContainText('Created “Art Workshop”')
   await expect(page.getByRole('heading', { name: 'Art Workshop' })).toBeVisible()
   await expect(page.getByText('1 total')).toBeVisible()
+  await expect(page.getByText('Paint with friends').first()).toBeVisible()
+  await expect(page.getByText('2:30pm – 3:30pm')).toBeVisible()
 
   // A valid window includes the event; an invalid interval shows feedback.
   await expect(page.getByText('✓ Fits')).toBeVisible()

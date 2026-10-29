@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   createEvent, displayDate, displayTime, loadEvents, persistEvents,
-  removeEvent, todayLocal,
+  removeEvent, removeEventWithReceipt, restoreRemovedEvent, loadEventsChecked, todayLocal,
 } from '../src/controller/findEvents'
 import type { CampusEvent, EventDraft } from '../src/model/events'
 import { STORAGE_KEY } from '../src/model/events'
@@ -21,10 +21,15 @@ describe('M1 professor feedback: no past event dates', () => {
     expect(result.events).toBe(existing)
   })
 
-  it('accepts today even when the chosen event time has already passed', () => {
+  it('rejects a same-day event that has already started', () => {
     const result = createEvent([], { ...draft, start: '09:00', end: '10:00' }, 'today', localNow)
-    expect(result.error).toBeNull()
-    expect(result.events[0].date).toBe('2026-10-28')
+    expect(result.error).toMatch(/already started/i)
+    expect(result.events).toEqual([])
+  })
+
+  it('accepts a same-day start at the current minute and one later in the day', () => {
+    expect(createEvent([], { ...draft, start: '20:58', end: '21:59' }, 'now', localNow).error).toBeNull()
+    expect(createEvent([], { ...draft, start: '21:00', end: '22:00' }, 'later', localNow).error).toBeNull()
   })
 
   it('accepts a future day and rejects an impossible date', () => {
@@ -89,5 +94,41 @@ describe('M1 professor feedback: consistent visible dates and times', () => {
     expect(displayTime('00:00')).toBe('12:00am')
     expect(displayTime('12:00')).toBe('12:00pm')
     expect(displayTime('23:59')).toBe('11:59pm')
+  })
+})
+
+describe('M1 persistence robustness and input limits', () => {
+  it('does not overwrite a corrupted stored value on read', () => {
+    let raw = '{bad json'
+    const storage = { getItem: () => raw, setItem: (_key: string, value: string) => { raw = value } }
+    const status = loadEventsChecked(storage)
+    expect(status.blocked).toBe(true)
+    expect(status.events).toEqual([])
+    expect(raw).toBe('{bad json')
+  })
+
+  it('recovers valid records but flags duplicate IDs for explicit user approval', () => {
+    const existing = createEvent([], { ...draft, date: '2026-11-02' }, 'one', localNow).events[0]
+    const storage = { getItem: () => JSON.stringify([existing, existing, null]) }
+    const status = loadEventsChecked(storage)
+    expect(status.blocked).toBe(true)
+    expect(status.events).toEqual([existing])
+  })
+
+  it('enforces length limits in the controller, not only in HTML', () => {
+    expect(createEvent([], { ...draft, title: 'a'.repeat(101) }, 'long-title', localNow).error).toMatch(/100/)
+    expect(createEvent([], { ...draft, location: 'x'.repeat(101) }, 'long-location', localNow).error).toMatch(/100/)
+  })
+
+  it('removal can be restored at the original list position', () => {
+    const list = [
+      createEvent([], { ...draft, date: '2026-11-02' }, 'a', localNow).events[0],
+      createEvent([], { ...draft, date: '2026-11-02' }, 'b', localNow).events[0],
+    ]
+    const receipt = removeEventWithReceipt(list, 'a')
+    expect(receipt.events.map(e => e.id)).toEqual(['b'])
+    expect(receipt.removed).not.toBeNull()
+    expect(restoreRemovedEvent(receipt.events, receipt.removed!).map(e => e.id)).toEqual(['a', 'b'])
+    expect(restoreRemovedEvent(list, receipt.removed!)).toEqual(list)
   })
 })

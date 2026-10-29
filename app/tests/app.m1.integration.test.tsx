@@ -7,13 +7,18 @@ import App from '../src/App'
 import { STORAGE_KEY } from '../src/model/events'
 
 type User = ReturnType<typeof userEvent.setup>
+function futureDate(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + 7)
+  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
+}
 
 async function createWorkshop(user: User, title = 'Art Workshop') {
   const form = document.querySelector<HTMLFormElement>('.event-form')
   if (!form) throw new Error('Create-event form was not rendered')
   await user.type(within(form).getByLabelText('EVENT NAME'), title)
   await user.type(within(form).getByLabelText('LOCATION'), 'Arts Building')
-  fireEvent.change(within(form).getByLabelText('DATE'), { target: { value: '2026-10-28' } })
+  fireEvent.change(within(form).getByLabelText('DATE'), { target: { value: futureDate() } })
   fireEvent.change(within(form).getByLabelText('START'), { target: { value: '14:30' } })
   fireEvent.change(within(form).getByLabelText('END'), { target: { value: '15:30' } })
   await user.click(within(form).getByRole('button', { name: /create event/i }))
@@ -116,6 +121,57 @@ describe('M1 rendered user workflow', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert').textContent).toContain('Browser storage is unavailable')
     })
+  })
+
+  it('R1/R3: shows submitted descriptions and human-readable dates and times', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const form = document.querySelector<HTMLFormElement>('.event-form')!
+    await user.type(within(form).getByLabelText('EVENT NAME'), 'Two Choirs')
+    await user.type(within(form).getByLabelText('DESCRIPTION (OPTIONAL)'), 'A cappella rehearsals')
+    await user.type(within(form).getByLabelText('LOCATION'), 'Music Hall')
+    const date = futureDate()
+    fireEvent.change(within(form).getByLabelText('DATE'), { target: { value: date } })
+    fireEvent.change(within(form).getByLabelText('START'), { target: { value: '14:30' } })
+    fireEvent.change(within(form).getByLabelText('END'), { target: { value: '15:30' } })
+    await user.click(within(form).getByRole('button', { name: /create event/i }))
+    expect(screen.getAllByText('A cappella rehearsals')).toHaveLength(2)
+    const formatted = date.split('-')
+    const usDate = Number(formatted[1]) + '/' + Number(formatted[2]) + '/' + formatted[0]
+    expect(screen.getAllByText(usDate)).toHaveLength(1)
+    expect(screen.getByText('2:30pm – 3:30pm')).toBeTruthy()
+    expect(window.localStorage.getItem(STORAGE_KEY)).toContain('A cappella rehearsals')
+  })
+
+  it('R2: offers an Undo button after removing a saved event', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await createWorkshop(user)
+    await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
+    await user.click(screen.getByRole('button', { name: 'Undo removal' }))
+    expect(screen.getByRole('button', { name: 'Remove Art Workshop' })).toBeTruthy()
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '[]')).toHaveLength(1)
+  })
+
+  it('R2/R4: keeps malformed storage intact until recovery is confirmed', async () => {
+    window.localStorage.setItem(STORAGE_KEY, '{corrupt json')
+    const user = userEvent.setup()
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    render(<App />)
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('{corrupt json')
+    expect(screen.getByText(/Some saved browser data could not be read/)).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Recover valid events' }))
+    expect(confirm).toHaveBeenCalled()
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('[]')
+  })
+
+  it('R2: reflects changes from another browser tab without clobbering the write', () => {
+    render(<App />)
+    const remote = [{ id: 'remote', title: 'Remote', location: 'SCU', date: futureDate(), start: '14:30', end: '15:30' }]
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(remote))
+    fireEvent(window, new StorageEvent('storage', { key: STORAGE_KEY, storageArea: window.localStorage }))
+    expect(screen.getByRole('button', { name: 'Remove Remote' })).toBeTruthy()
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '[]')).toEqual(remote)
   })
 
   it('R2/R4: recovers from malformed saved JSON without crashing the UI', () => {
