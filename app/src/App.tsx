@@ -1,8 +1,8 @@
-// VIEW: Create events and search your available time. Rules live in controller/model.
+// VIEW: Create events and search your available time. Rules and persistence are mediated through the Controller.
 import { useEffect, useState, type FormEvent } from 'react'
 import {
   createEvent, findEvents, todayLocal, displayDate, displayTime,
-  loadEvents, persistEvents, removeEvent, type CampusEvent, type EventDraft,
+  loadEvents, persistEvents, removeEvent as removeEventById, type CampusEvent, type EventDraft,
 } from './controller/findEvents'
 
 export default function App() {
@@ -45,7 +45,7 @@ export default function App() {
   }
 
   function removeEvent(id: string) {
-    setEvents((current) => removeEvent(current, id))
+    setEvents((current) => removeEventById(current, id))
     setCreateError(null)
     setNotice('Event removed.')
   }
