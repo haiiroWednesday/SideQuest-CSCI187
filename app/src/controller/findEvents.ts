@@ -1,7 +1,35 @@
 // CONTROLLER: Validate requests and coordinate the View with the Model.
 import {
-  fitsFully, isValidDate, toMinutes, type CampusEvent, type EventDraft,
+  fitsFully, isValidDate, toMinutes, todayLocalISO, formatEventDate, formatEventTime,
+  readStoredEvents, saveStoredEvents, type CampusEvent, type EventDraft,
 } from '../model/events'
+
+export type { CampusEvent, EventDraft } from '../model/events'
+
+// All View-to-Model operations pass through the Controller.
+export function todayLocal(now: Date = new Date()): string {
+  return todayLocalISO(now)
+}
+
+export function displayDate(date: string): string {
+  return formatEventDate(date)
+}
+
+export function displayTime(time: string): string {
+  return formatEventTime(time)
+}
+
+export function loadEvents(storage: Pick<Storage, 'getItem'>): CampusEvent[] {
+  return readStoredEvents(storage)
+}
+
+export function persistEvents(storage: Pick<Storage, 'setItem'>, events: CampusEvent[]): boolean {
+  return saveStoredEvents(storage, events)
+}
+
+export function removeEvent(events: CampusEvent[], id: string): CampusEvent[] {
+  return events.filter((event) => event.id !== id)
+}
 
 export type SearchResult = { matches: CampusEvent[]; error: string | null }
 export type CreateResult = { events: CampusEvent[]; error: string | null }
@@ -25,14 +53,21 @@ export function findEvents(
   }
 }
 
-export function createEvent(events: CampusEvent[], draft: EventDraft, id: string): CreateResult {
+export function createEvent(events: CampusEvent[], draft: EventDraft, id: string, now: Date = new Date()): CreateResult {
   const title = draft.title.trim()
   const location = draft.location.trim()
+  const description = draft.description?.trim() ?? ''
   if (!title || !location) {
     return { events, error: 'Please enter an event title and location.' }
   }
   if (!isValidDate(draft.date)) {
     return { events, error: 'Please choose a valid event date.' }
+  }
+  if (draft.date < todayLocalISO(now)) {
+    return { events, error: 'Events cannot be created in the past. Choose today or a future date.' }
+  }
+  if (description.length > 500) {
+    return { events, error: 'Keep the event description under 500 characters.' }
   }
   const start = toMinutes(draft.start)
   const end = toMinutes(draft.end)
@@ -44,6 +79,6 @@ export function createEvent(events: CampusEvent[], draft: EventDraft, id: string
   }
   return {
     error: null,
-    events: [...events, { id, title, location, date: draft.date, start: draft.start, end: draft.end }],
+    events: [...events, { id, title, ...(description ? { description } : {}), location, date: draft.date, start: draft.start, end: draft.end }],
   }
 }
