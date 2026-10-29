@@ -1,6 +1,6 @@
 # M1 feedback follow-up and regression checklist
 
-> Status (October 28, 2026): **Documentation is published on `master`**. The implementation fixes and expanded tests remain **unmerged code pull requests**. A passing CI check on an individual PR is not evidence that the combined changes work. Do not describe features as shipped until the consolidated PR is merged.
+> Status (October 28, 2026): **Documentation is published on `master`**. The implementation fixes and expanded tests remain **unmerged code pull requests**. The consolidated implementation is [code PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12) and remains unmerged until reviewed. A passing CI check on an individual PR is not evidence that the combined changes work. Do not describe features as shipped until the consolidated PR is merged.
 
 ## Feedback, acceptance criteria, and evidence
 
@@ -29,7 +29,7 @@
 
 1. [PR #10 — React/browser regression tests](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/10) and [PR #11 — instructor feedback fixes](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/11) were created independently. **Do not merge both blindly.**
 2. Consolidate the actual behavior and tests on one feature branch, updating `app/README.md` as needed. The key interaction is that PR #10 uses fixed Oct 28 dates and PR #11 rejects past dates. Inject the test clock or generate future dates in every browser test.
-3. Run the complete suite, typecheck/build and browser smoke **on the consolidated head**. Evaluate tests for descriptions, rejected old date/time, formatted dates, invalid input, persistence, empty states and removals.
+3. Run the complete suite, typecheck/build and browser smoke **on the consolidated PR #12 head**. Evaluate tests for descriptions, rejected old date/time, formatted dates, invalid input, persistence, empty states and removals.
 4. Reviewer checks UI, MVC and remaining constraints; only then merge the code. Keep this documentation in sync after merging.
 
 ## Known improvement backlog (not automatically M1 point deductions)
