@@ -5,12 +5,16 @@ import {
   restoreEventInList, isPastEventDate, type CampusEvent, type EventDraft,
 } from '../src/model/events'
 
+// Use a fixed clock so past/future checks work consistently next month.
+// The JavaScript Date constructor starts month numbering at zero.
 const now = new Date(2026, 9, 29, 13, 30)
 const draft: EventDraft = {
   title: ' Art Workshop ', description: '  Paint with friends  ',
   location: ' Arts Building ', date: '2026-10-30', start: '14:30', end: '15:30',
 }
 
+// Create valid test data through the real Model function. If the setup
+// itself is invalid, fail rather than accidentally testing a bad fixture.
 function created(id: string, values: EventDraft = draft): CampusEvent {
   const result = validateEventDraft(values, id, [], now)
   if (!result.event) throw new Error(result.error ?? 'Unexpected invalid fixture')
