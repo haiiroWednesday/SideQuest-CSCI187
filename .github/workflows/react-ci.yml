@@ -1,5 +1,7 @@
 name: SideQuest React CI
 
+# 🔁 GitHub automatically runs this workflow on pushes and pull requests.
+# A green run means the commands below succeeded for that exact commit.
 on:
   push:
   pull_request:
@@ -19,6 +21,7 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
+      # 📦 npm ci uses the checked-in package-lock.json for repeatable installs.
       - name: Install locked packages
         run: npm ci --no-audit --no-fund
       - name: Run unit tests
@@ -27,5 +30,6 @@ jobs:
         run: npm run build
       - name: Install Chromium for browser smoke test
         run: npx playwright install --with-deps chromium
+      # 🌐 The final check drives Chromium through a real user workflow.
       - name: Run browser smoke test
         run: npm run test:e2e
