@@ -72,7 +72,7 @@ describe('Model search and list rules', () => {
   })
 
   it('distinguishes already-ended saved events from future events', () => {
-    expect(isPastEventDate(created('past', { ...draft, date: '2026-10-29', start: '09:00', end: '12:00' }), now)).toBe(true)
+    expect(isPastEventDate({ ...created('past'), date: '2026-10-29', start: '09:00', end: '12:00' }, now)).toBe(true)
     expect(isPastEventDate(created('future'), now)).toBe(false)
   })
 })
