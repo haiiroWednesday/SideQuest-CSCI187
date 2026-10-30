@@ -53,6 +53,10 @@ The repository also contains the original C++ course starter files, but they are
 
 **M1 corrections are merged into `master`** via [PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12) (merge commit `6e461fd`). They address past-event validation, descriptions, MVC mediation with business logic in the Model, consistent dates/times, storage recovery, Undo, accessibility, and a React/Chromium test suite. The earlier PRs #10 and #11 were closed unmerged as superseded. See [M1 QA and lecture-slide checklist](docs/M1_POST_FEEDBACK_QA.md). **This is still the M1 walking skeleton, not the fully implemented M2 shared EventCatalog/Schedule.**
 
+## New to TypeScript, React, or this codebase?
+
+Start with the **[beginner-friendly Code Walkthrough](CODE_WALKTHROUGH.md)**. It explains the current M1 code using actual SideQuest examples, including the View → Controller → Model flow, React state, browser storage, and tests. It supplements the separate M2 implementation playbook below.
+
 ## Documentation — three active guides plus M1 QA
 
 1. **[Build the MVP](docs/MVP_TEAM_PLAYBOOK.md)** — the M2 implementation contract, ownership, testing, P4 architecture, plus the **current selected P5 coursework ER** as Mermaid with a direct editable draw.io link; the original classroom sketch and earlier draft are preserved separately.
