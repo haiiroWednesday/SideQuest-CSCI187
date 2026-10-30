@@ -51,7 +51,7 @@ The repository also contains the original C++ course starter files, but they are
 
 ## M1 feedback and code integration status
 
-The original walking skeleton on `master` is preserved until code review. Feedback fixes (past-event prevention, descriptions, MVC mediation, clearer date/time display, storage safety, undo and accessibility) and UI/browser tests are in **review-ready PR #12**, not shipped on `master`. Earlier PRs #10 and #11 were superseded and closed without merging. See [M1 post-feedback QA and integration checklist](docs/M1_POST_FEEDBACK_QA.md). Follow [consolidated implementation PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12) and its CI results before announcing completion. The original M1 requirements and technical specifications now contain clearly labeled post-feedback addenda.
+**M1 corrections are merged into `master`** via [PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12) (merge commit `6e461fd`). They address past-event validation, descriptions, MVC mediation with business logic in the Model, consistent dates/times, storage recovery, Undo, accessibility, and a React/Chromium test suite. The earlier PRs #10 and #11 were closed unmerged as superseded. See [M1 QA and lecture-slide checklist](docs/M1_POST_FEEDBACK_QA.md). **This is still the M1 walking skeleton, not the fully implemented M2 shared EventCatalog/Schedule.**
 
 ## Documentation — three active guides plus M1 QA
 
