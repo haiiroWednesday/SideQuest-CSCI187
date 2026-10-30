@@ -104,6 +104,8 @@ export default function App() {
       setCreateError('Saved data needs recovery before changes can be made.')
       return
     }
+    // 🔑 IDs distinguish two events even if their titles are identical.
+    // The Controller checks that the generated ID is not already used.
     const result = createEvent(events, draft, crypto.randomUUID())
     if (result.error) {
       setCreateError(result.error)
@@ -118,6 +120,8 @@ export default function App() {
       ? `Created “${draft.title.trim()}”! It now appears in your event list.`
       : 'Event added temporarily, but your browser could not save it. It may disappear after reloading.')
     setFreeDate(draft.date)
+    // Clear the typed description/title/location after posting, but keep
+    // the chosen date and times to make posting another event easier.
     setDraft((current) => ({ ...current, title: '', description: '', location: '' }))
   }
 
