@@ -5,6 +5,8 @@
 import { expect, it } from 'vitest'
 import { toMinutes } from '../src/model/events'
 
+// ⏰ This tests the real parser: 09:05 becomes 9 * 60 + 5 = 545.
+// A minute value of 60 is invalid; 23:59 is the last minute of a day.
 it('validates clock-time formatting', () => {
     expect(toMinutes('09:05')).toBe(545)
     expect(toMinutes('09:60')).toBeNull()
