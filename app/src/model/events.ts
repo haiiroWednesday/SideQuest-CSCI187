@@ -1,4 +1,6 @@
 // MODEL: Event data, time rules, and storage. No built-in fictional events.
+// The event's TypeScript type lists the fields we expect. The optional
+// description lets older saved events without that field continue to work.
 export type CampusEvent = {
   id: string
   title: string
@@ -9,6 +11,8 @@ export type CampusEvent = {
   end: string
 }
 
+// A draft is an event before the app assigns its unique ID.
+// Omit removes the ID field from the draft's TypeScript type.
 export type EventDraft = Omit<CampusEvent, 'id'>
 
 export const STORAGE_KEY = 'sidequest.created-events.v1'
@@ -25,12 +29,15 @@ export function todayLocalISO(now: Date = new Date()): string {
   return `${year}-${month}-${day}`
 }
 
+// Turn a strict HH:MM time into minutes after midnight; null means invalid.
 export function toMinutes(time: string): number | null {
   const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(time)
   if (!match) return null
   return Number(match[1]) * 60 + Number(match[2])
 }
 
+// Check the date format and the real calendar day. JavaScript may roll
+// impossible dates into the next month, so compare the parsed parts back.
 export function isValidDate(date: string): boolean {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date)
   if (!match) return false
@@ -47,6 +54,8 @@ export function isValidDate(date: string): boolean {
 export type EventSearchWindow = { date: string; start: string; end: string }
 export type EventDraftValidation = { event: CampusEvent | null; error: string | null }
 
+// Model rules also apply when there's no React form. This function returns
+// a cleaned event on success or a specific error when input is invalid.
 export function validateEventDraft(
   draft: EventDraft, id: string, existingEvents: CampusEvent[], now: Date = new Date(),
 ): EventDraftValidation {
@@ -96,6 +105,8 @@ export function validateSearchWindow(window: EventSearchWindow): string | null {
   return null
 }
 
+// Filter to events entirely inside the chosen free time, then sort matches.
+// The original events array is left in its existing order.
 export function matchingEvents(events: CampusEvent[], window: EventSearchWindow): CampusEvent[] {
   return events.filter(event => fitsFully(event, window.date, window.start, window.end))
     .sort((a, b) => a.start.localeCompare(b.start))
@@ -149,6 +160,8 @@ export type StoredEventsState = { events: CampusEvent[]; blocked: boolean }
 
 // Never silently replace unreadable or partially invalid stored data with [].
 // Callers must obtain explicit recovery consent before overwriting damaged data.
+// If even one saved record is bad, report blocked=true so the UI can ask
+// permission before replacing the original damaged browser data.
 export function readStoredEventsChecked(storage: Pick<Storage, 'getItem'>): StoredEventsState {
   try {
     const saved = storage.getItem(STORAGE_KEY)
