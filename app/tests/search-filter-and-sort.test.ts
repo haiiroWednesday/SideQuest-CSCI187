@@ -4,6 +4,9 @@ import { expect, it } from 'vitest'
 import { findEvents } from '../src/controller/findEvents'
 import type { CampusEvent } from '../src/model/events'
 
+// 🔎 The list intentionally starts out unsorted and includes events on
+// the wrong date and outside the time window. Correct search must FILTER
+// the wrong ones out and SORT the remaining matches by start time.
 it('filters a shuffled event list and returns matching events in chronological order', () => {
   const events: CampusEvent[] = [
     {
