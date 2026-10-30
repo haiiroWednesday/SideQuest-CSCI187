@@ -9,17 +9,23 @@ import { formatEventDate, formatEventTime } from '../presentation/formatEvents'
 
 export type { CampusEvent, EventDraft } from '../model/events'
 
+// These values set a convenient initial suggestion in the form. They are
+// separate from the Model's rules about whether an event is allowed.
 const EVENT_DEFAULT_LEAD_MINUTES = 30
 const EVENT_DEFAULT_SLOT_MINUTES = 15
 const EVENT_DEFAULT_DURATION_MINUTES = 60
 const END_OF_DAY_MINUTES = 24 * 60 - 1
 
 // All View-to-Model operations pass through the Controller.
+// These small wrappers let App.tsx ask the Controller for Model data
+// without importing Model functions directly.
 export function todayLocal(now: Date = new Date()): string {
   return todayLocalISO(now)
 }
 
 // Defaults should never suggest an event time that already passed today.
+// Suggest a future one-hour slot, rounded to a 15-minute boundary.
+// Near midnight use tomorrow so the initial form is not already invalid.
 export function initialEventWindow(now: Date = new Date()): Pick<EventDraft, 'date' | 'start' | 'end'> {
   const start = Math.ceil((now.getHours() * 60 + now.getMinutes() + EVENT_DEFAULT_LEAD_MINUTES) / EVENT_DEFAULT_SLOT_MINUTES) * EVENT_DEFAULT_SLOT_MINUTES
   if (start + EVENT_DEFAULT_DURATION_MINUTES > END_OF_DAY_MINUTES) {
@@ -31,6 +37,8 @@ export function initialEventWindow(now: Date = new Date()): Pick<EventDraft, 'da
   return { date: todayLocalISO(now), start: hhmm(start), end: hhmm(start + EVENT_DEFAULT_DURATION_MINUTES) }
 }
 
+// Formatting changes what the user sees but not the date/time values
+// the Model stores or uses for comparisons.
 export function displayDate(date: string): string {
   return formatEventDate(date)
 }
@@ -39,6 +47,8 @@ export function displayTime(time: string): string {
   return formatEventTime(time)
 }
 
+// Pick<Storage, 'getItem'> only requires an object with a getItem method.
+// This allows both real browser storage and small test fakes.
 export function loadEventsChecked(storage: Pick<Storage, 'getItem'>): StoredEventsState {
   return readStoredEventsChecked(storage)
 }
@@ -51,6 +61,8 @@ export function persistEvents(storage: Pick<Storage, 'setItem'>, events: CampusE
   return saveStoredEvents(storage, events)
 }
 
+// Re-export these Model operations through the Controller for the View.
+// The removal receipt remembers the event and where it appeared in the list.
 export type { RemovedEvent } from '../model/events'
 export function removeEventWithReceipt(events: CampusEvent[], id: string) {
   return removeEventFromList(events, id)
@@ -68,6 +80,8 @@ export function isPastEvent(event: CampusEvent, now: Date = new Date()): boolean
 export type SearchResult = { matches: CampusEvent[]; error: string | null }
 export type CreateResult = { events: CampusEvent[]; error: string | null }
 
+// First validate the user's free-time window, then ask the Model to
+// return only fully fitting events sorted by start time.
 export function findEvents(
   events: CampusEvent[], freeDate: string, freeStart: string, freeEnd: string,
 ): SearchResult {
@@ -77,6 +91,8 @@ export function findEvents(
 }
 
 // Controllers coordinate requests; the Model owns all reusable domain validation.
+// Return a new event array on success, or the original array with an error.
+// A new array helps React notice state changes without mutating old data.
 export function createEvent(events: CampusEvent[], draft: EventDraft, id: string, now: Date = new Date()): CreateResult {
   const { event, error } = validateEventDraft(draft, id, events, now)
   return event ? { events: [...events, event], error: null } : { events, error }
