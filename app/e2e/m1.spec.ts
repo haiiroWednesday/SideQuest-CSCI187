@@ -1,12 +1,16 @@
 import { expect, test } from '@playwright/test'
 
 // A real Chromium smoke test of all four M1 requirements.
+// Playwright drives real Chromium rather than a simulated DOM. This
+// confirms the complete create, search, refresh and delete workflow.
 test('post, find, validate, reload, and remove an event', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByText('No events yet. Create your first event above!')).toBeVisible()
 
   await page.getByPlaceholder('e.g. Art Workshop').fill('Art Workshop')
   await page.getByPlaceholder('e.g. Student Center').fill('Arts Building')
+  // This function runs inside the browser and chooses a future date.
+  // A fixed event date would eventually become the past and fail CI.
   const eventDate = await page.evaluate(() => {
     const d = new Date()
     d.setDate(d.getDate() + 7)
