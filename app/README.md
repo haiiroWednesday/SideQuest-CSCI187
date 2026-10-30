@@ -7,7 +7,7 @@ This directory contains the working SideQuest M1 prototype. See the [main README
 Requires Node.js 22.12+ (Node 24 recommended). From this `app/` directory:
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -18,12 +18,14 @@ Open the local URL shown by Vite (usually `http://localhost:5173/`). Events are 
 ```bash
 npm test
 npm run build
+npx playwright install chromium
+npm run test:e2e
 ```
 
-`src/App.tsx` renders the View, `src/controller/findEvents.ts` handles creation and search, and `src/model/events.ts` validates and stores events. Unit tests live in `tests/`.
+`src/App.tsx` renders the View; `src/controller/findEvents.ts` mediates user actions; `src/model/events.ts` owns reusable business rules, event data, and storage; `src/presentation/formatEvents.ts` formats user-facing dates/times. Model, Controller, and React UI tests live in `tests/`; the Chromium smoke test lives in `e2e/`.
 
 The active application is on the repository's default `master` branch. The old root-level C++ starter does not need to be built to run this app.
 
 ## M1 feedback follow-up (documentation status)
 
-The shipped application on `master` remains the historical M1 walking skeleton until code review and merge. [Consolidated code PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12) contains the proposed corrections, React integration tests and Playwright browser smoke; **do not assume these have shipped**. The [M1 feedback QA checklist](../docs/M1_POST_FEEDBACK_QA.md) records the intended acceptance criteria and merging requirements. When the code merges, update this section with the exact tested commit.
+The post-feedback M1 code is now **merged into `master`** via [PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12), merge commit `6e461fd`, with a validated Model/Controller/View split, event descriptions, same-day time checks, readable dates/times, safer storage, and Undo. The [M1 QA checklist](../docs/M1_POST_FEEDBACK_QA.md) records final CI and remaining non-code checks. This is not the full M2 product.
