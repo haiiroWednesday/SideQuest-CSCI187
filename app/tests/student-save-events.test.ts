@@ -4,6 +4,8 @@ import { expect, it } from 'vitest'
 import { readStoredEvents, saveStoredEvents, STORAGE_KEY, type CampusEvent } from '../src/model/events'
 
 it('keeps removed events removed after each save, down to an empty list', () => {
+  // 💾 This Map acts like a tiny fake localStorage. We can test saving
+  // and reading without launching a browser or touching real user data.
   const memory = new Map<string, string>()
   const storage = {
     getItem: (key: string) => memory.get(key) ?? null,
@@ -18,6 +20,8 @@ it('keeps removed events removed after each save, down to an empty list', () => 
 
   expect(saveStoredEvents(storage, [art, yoga, choir])).toBe(true)
 
+  // Array.filter creates a NEW list; it does not change the original.
+  // Saving the shorter list makes the removal persist across reads.
   // Remove the middle event, the same way App.tsx's removeEvent filters by id.
   expect(saveStoredEvents(storage, [art, yoga, choir].filter(event => event.id !== 'yoga'))).toBe(true)
   expect(readStoredEvents(storage)).toEqual([art, choir])
