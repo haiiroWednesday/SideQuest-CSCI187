@@ -84,19 +84,19 @@ These specifications describe the current TypeScript + React implementation. Eac
 
 ## Post-feedback specification addendum (October 28, 2026)
 
-**Status:** This original M1 document is preserved as the submitted baseline. The revisions below describe the intended post-feedback behavior being implemented and reviewed in code, **not behavior already merged into `master`**. See [M1 QA checklist](docs/M1_POST_FEEDBACK_QA.md) and the consolidated code PR before claiming completion.
+**Status:** The original M1 text above is preserved as the historical submission baseline. The post-feedback behavior below is now **implemented on `master` via merged PR #12**. See [M1 QA checklist](docs/M1_POST_FEEDBACK_QA.md).
 
 ### S1a — Event date and description
 
 - Reject creating new events with a date earlier than the user's local calendar date. Product follow-up: also reject an event **starting** before the current local time on today's date; yesterday/today/tomorrow and same-day clock boundaries need regression tests.
 - A description field (up to 500 characters) differentiates events with similar titles. Descriptions are optional for compatibility with old browser records and appear in both results and created-event listings.
-- The Controller, not the HTML `min` attribute alone, must validate dates, time intervals, title/location lengths, and descriptions.
+- The **Model**, invoked through the Controller (not merely the HTML `min` attribute), validates dates, time intervals, title/location lengths, descriptions, and IDs.
 
 ### S2a — MVC collaboration and persistence
 
 - **View** collects/render inputs and UI state and invokes Controller functions. It must not import Model helpers directly.
-- **Controller** mediates create/search/remove operations; loads and persists event state via the Model; supplies presentation-friendly date/time values.
-- **Model** owns the `CampusEvent` schema, local date/time primitives, fitting predicate, storage integrity checks and serialization. Existing saved events without a description are valid.
+- **Controller** mediates create/search/remove operations, delegates reusable business rules to the Model, loads/persists event state through the Model, and exposes presentation-friendly date/time values.
+- **Model** owns the `CampusEvent` schema, local date/time primitives, validation/business rules, matching/filtering, removal/restoration, storage integrity checks and serialization. Existing saved events without descriptions remain valid. Date/time display formatting lives in the separate presentation helper, not in the Model.
 - Browser storage remains per device; write failures must surface prominently. Avoid overwriting good saved data after malformed storage reads. Browser tabs can conflict when saving whole arrays; reconcile external writes or document single-tab limitation.
 
 ### S3a — Date and time display
@@ -107,4 +107,4 @@ These specifications describe the current TypeScript + React implementation. Eac
 ### S4a — Verification
 
 - Verify controller/model edge cases, rendered React UI, real-browser create → match → reload → remove flow, descriptions, date guards, errors, persistence and accessibility.
-- The original 26 M1 logic tests are not sufficient proof of UI coverage. [Consolidated code PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12) implements both the feedback fixes and UI/browser tests together; 52 Vitest cases and one Chromium smoke check passed on its head. The two previous code PRs (#10 and #11) were closed without merging.
+- The original 26 M1 logic tests were not sufficient proof of UI coverage. [Merged PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12) implements the feedback fixes and UI/browser tests together; **59 Vitest cases in 14 files** and a Chromium smoke test passed on its final head. Old PRs #10 and #11 were closed without merging.
