@@ -1,6 +1,6 @@
 # M1 feedback follow-up and regression checklist
 
-> Status (October 28, 2026): **Documentation is published on `master`**. The implementation fixes and expanded tests remain **unmerged code pull requests**. The consolidated implementation is [code PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12), **CI verified and ready for human review**, but it remains unmerged. A passing CI check on an individual PR is not evidence that the combined changes work. Do not describe features as shipped until the consolidated PR is merged.
+> **Status (October 29, 2026):** Code PR #12 is **merged into `master`**, merge commit `6e461fd15421f70591799d599d12075b553262d9`. Final PR-head checks: **59/59 Vitest cases in 14 files**, TypeScript/Vite build, and **1/1 Playwright Chromium smoke**. The original baseline M1 documents remain preserved, with post-feedback addenda.
 
 ## Feedback, acceptance criteria, and evidence
 
@@ -25,30 +25,38 @@
 - **Model (`app/src/model/events.ts`)**: event shape, date/time primitives, validation, search predicate, local storage serialization and integrity checks. Display formatting should remain separate from core domain validation, accessed by the View only through a presentation adapter/Controller.
 - **M1 limitations**: events in browser-local storage are private to that device. **M2 is different**: shared public EventCatalog with locally stored personal Schedule IDs; never treat deleting a personal plan as deleting a public event.
 
-## PR integration instructions
+## Completed code integration
 
-1. Historical [PR #10](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/10) and [PR #11](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/11) were closed unmerged, superseded by [consolidated PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12). **Review/merge only #12** after teammate approval.
-2. Consolidate the actual behavior and tests on one feature branch, updating `app/README.md` as needed. The key interaction is that PR #10 uses fixed Oct 28 dates and PR #11 rejects past dates. Inject the test clock or generate future dates in every browser test.
-3. Run the complete suite, typecheck/build and browser smoke **on the consolidated PR #12 head**. Evaluate tests for descriptions, rejected old date/time, formatted dates, invalid input, persistence, empty states and removals.
-4. Reviewer checks UI, MVC and remaining constraints; only then merge the code. Keep this documentation in sync after merging.
+- [Merged PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12) combines the feedback fixes and React/browser tests; earlier PRs #10 and #11 were closed without merging.
+- Both original requirements and professor-specific M1 fixes are now in `master`; the View accesses the Model through Controller mediators, and reusable business rules live in `app/src/model/events.ts`.
+- Final PR-head CI: [SideQuest React CI run](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions/runs/40988470385), head `58f8b29b01044b864d16a9b81b27444fa919e0cf`: 59 passing Vitest tests, production build, one passing Chromium browser smoke test.
+- Merge commit: [`6e461fd`](https://github.com/haiiroWednesday/SideQuest-CSCI187/commit/6e461fd15421f70591799d599d12075b553262d9).
+- **Team process caveat:** No teammate GitHub review had been submitted before the user explicitly authorized the merge. A successful build does not substitute for peer review or course reflection evidence.
+- **Professor access caveat:** The GitHub repository is private, and the check for GitHub user `jade-kandel` returned no confirmed collaborator permission. Verify her accepted repository access in GitHub repository Settings; an unaccepted invitation may not be reflected in this check.
+
+## Alignment with Professor Kandel's CSCI 187 lecture slides
+
+| Source | Lecture expectation | Verified code/remaining process |
+|---|---|---|
+| [11 — Walking Skeleton](https://docs.google.com/presentation/d/1W_RSFcWNTL-NINOeRiGBVvvOtcZncaio5pE5-QtSRmw/edit) | Minimal working end-to-end feature with a functioning front end; README, user requirements and specifications | Create → save locally → enter free window → find matching event → remove. React browser smoke covers this. README, R1–R4, specs exist |
+| [08 — System Architecture Activity](https://docs.google.com/presentation/d/18jfC9C54_BebvVjWROKLt96iW1s0e33h7IHxKSawpGA/edit) | Reusable validation and business rules belong to the **Model**, not the View; trace collaborations | Model owns `validateEventDraft`, `validateSearchWindow`, `matchingEvents`, `fitsFully` and removal rules. Controller mediates View requests. Direct Model tests added |
+| [12 — Git, Unit Testing & CI](https://docs.google.com/presentation/d/1zfGGMFETie0Z4uOHu3T1N6hNOPRdU6MfhWKSiWX0C3I/edit) | Real function assertions, normal/boundary/invalid cases, CI on pushes/PRs; review changes before merge | Vitest 59/59, real Chromium 1/1, locked `npm ci`, PR #12 merged with passing checks. **Human peer-review evidence not recorded** |
+| [13 — Clean Code & Documentation](https://docs.google.com/presentation/d/1PHrPPbAgmuRK1Nx4yscSPgbZCXcMPePesPGj-Oa2IZ8/edit) | Meaningful names, focused responsibilities, named constants, concise setup docs | Named event limits/default-time constants, separate Model/Controller/View/presentation helpers, reproducible `npm ci` documented |
+| [10 — Peer Review & Implementation](https://docs.google.com/presentation/d/1YxzkSxyK5kZIJjCdwa69SmrmPgtytcaWBwcARaJGcm0/edit) | M1 is the walking skeleton; M2 Part 1 is the **MVP prototype**, a separate milestone | **Do not represent the merged M1 fixes as completing M2**. Its public EventCatalog and personal Schedule are separate unfinished work |
+
+**Outside source control:** teammate reflections, individually documented red-X→green CI exercises, assignment submission in Camino/Gradescope, professor access to the private repository, and human review are not proved by these code checks.
 
 ## Known improvement backlog (not automatically M1 point deductions)
 
 - Make low-contrast gray/green text darker (small normal text should aim for WCAG AA 4.5:1).
 - Add better feedback for storage quota/write failures and avoid overwriting an existing list with empty data after a failed read.
-- Handle duplicated IDs, simultaneous browser tabs and stale saved events deliberately.
-- Keep a dependency lockfile in `app/` and use reproducible `npm ci` in CI.
+- Continue testing cross-tab conflicts and stale saved events; the M1 version now rejects a detected stale write and labels expired saved entries.
+- Preserve and update the committed `app/package-lock.json`; CI already uses `npm ci`.
 - Keep shared EventCatalog and browser-local personal Schedule strictly separate when implementing M2.
 
-## Verification commands (after code PR merge)
+## Verification commands (on merged code)
 
 From `app/`: `npm ci`, `npm test`, `npm run build`, `npx playwright install chromium`, `npm run test:e2e`.
 
-**Never confuse “documented,” “in an unmerged PR,” and “verified on master.”** Record exact commit and successful CI run in final submission notes.
+**Be precise:** PR #12 is merged; M1 post-feedback code is on `master`. The broader M2 prototype and process/submission evidence still require separate completion.
 
-## Verified code-PR CI (October 28, 2026)
-
-- [PR #12 — consolidated M1 corrections](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12), head `cd9da859e86a524a6b5545b4daaa20ffe061d15b`.
-- [Successful SideQuest React CI](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions/runs/40822672529): 13/13 Vitest files, **52/52 tests**, TypeScript checking and Vite build, and **1/1 Chromium Playwright test**.
-- Dependency lockfile and `npm ci` included in the proposed code PR. New tests cover a stale-tab-write prevention, local date and time boundaries, descriptions, Undo and corrupted storage recovery.
-- **Not yet merged to `master`.** These are branch results, not a claim that the deployed/current `master` app already has the changes.
