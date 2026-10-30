@@ -6,6 +6,9 @@ import { expect, it } from 'vitest'
 import { createEvent } from '../src/controller/findEvents'
 import type { EventDraft } from '../src/model/events'
 
+// ⚠️ Review note: this event date is now in the past. The first two
+// rejection tests should supply a fixed clock and assert an ID-specific
+// error, or they can pass because of an unrelated past-date error.
 const draft: EventDraft = {
   title: 'Speaker Event',
   location: 'Library',
@@ -30,6 +33,8 @@ it('rejects an empty event ID', () => {
   ])
 })
 
+// 🔑 IDs, unlike event titles, must be unique. A specific ID error matters
+// here: checking for any error could hide another validation problem.
 it('rejects an ID that another event already uses', () => {
   const events = [{ ...draft, id: 'event-1' }]
 
