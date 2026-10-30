@@ -14,8 +14,8 @@
 
 ## M1 feedback integration notice
 
-- Previous M1 code PRs #10 and #11 are **closed, unmerged**, superseded by [consolidated PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12), which passed 52 Vitest checks, Chromium smoke and build. **Only PR #12 should be reviewed for M1 fixes.**
-- Read [M1 post-feedback QA](docs/M1_POST_FEEDBACK_QA.md) for the exact verified branch/CI. `master` still has the historical M1 behavior until PR #12 is approved and merged. Do not expand agreed M2 scope automatically.
+- Earlier M1 code PRs #10 and #11 were closed unmerged and superseded by [PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12), **merged into `master`** as commit `6e461fd`. Final PR-head CI passed **59 Vitest tests**, a Chromium smoke test, and the TypeScript/Vite build.
+- Read [M1 post-feedback QA](docs/M1_POST_FEEDBACK_QA.md) for the verified branch/CI and lecture-alignment checklist. M1 post-feedback changes are now on `master`. Do not expand the agreed M2 scope automatically.
 
 ## Agreed MVP scope
 
