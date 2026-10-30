@@ -8,13 +8,19 @@ import {
 
 export default function App() {
   // Hydrate without writing: a malformed stored value must never be erased on mount.
+  // Read the initial event list when React sets up this component. A failed
+  // read must never automatically overwrite damaged browser storage.
   const [initial] = useState(() => {
     try { return loadEventsChecked(window.localStorage) }
     catch { return { events: [] as CampusEvent[], blocked: true } }
   })
+  // In React, events holds the current list; setEvents asks React to
+  // update the list on screen. Other state variables track the form and alerts.
   const [events, setEvents] = useState<CampusEvent[]>(initial.events)
   const [storageBlocked, setStorageBlocked] = useState(initial.blocked)
   const [lastRemoved, setLastRemoved] = useState<RemovedEvent | null>(null)
+  // draft is what the user is still typing. It becomes an event only
+  // after Controller and Model validation and the assignment of an ID.
   const [draft, setDraft] = useState<EventDraft>(() => ({
     title: '', description: '', location: '', ...initialEventWindow(),
   }))
@@ -27,6 +33,8 @@ export default function App() {
 
   // Sync updates from other browser tabs without writing the same list back.
   useEffect(() => {
+    // The browser notifies other tabs when storage changes. We read the
+    // latest data here without writing it back and causing another update.
     const onStorage = (event: StorageEvent) => {
       if (event.storageArea !== window.localStorage || (event.key !== null && event.key !== 'sidequest.created-events.v1')) return
       let current: { events: CampusEvent[]; blocked: boolean }
@@ -42,6 +50,8 @@ export default function App() {
     return () => window.removeEventListener('storage', onStorage)
   }, [])
 
+  // Save can succeed, fail to persist, or be blocked because another tab
+  // changed the list. Compare saved data before writing to avoid stale edits.
   function store(next: CampusEvent[]): 'saved' | 'unsaved' | 'conflict' {
     let saved = false
     try {
@@ -66,6 +76,8 @@ export default function App() {
     return saved ? 'saved' : 'unsaved'
   }
 
+  // Recovery can discard invalid entries. The confirmation protects
+  // the user's original saved data from being overwritten silently.
   function recoverSavedEvents() {
     if (!window.confirm('Replace unreadable saved data with the valid events currently shown? Any corrupt entries will be discarded.')) return
     let saved = false
@@ -76,10 +88,16 @@ export default function App() {
     setNotice(saved ? 'Saved event data recovered.' : null)
   }
 
+  // The matching list is calculated from current inputs on every render;
+  // changing the search date or times updates results automatically.
   const { matches, error: searchError } = findEvents(events, freeDate, freeStart, freeEnd)
+  // keyof limits field names to properties of EventDraft, and the object
+  // spread keeps other form values while updating only one field.
   const updateDraft = (field: keyof EventDraft, value: string) =>
     setDraft((current) => ({ ...current, [field]: value }))
 
+  // On form submit, ask the Controller to create a valid event. Only then
+  // attempt storage and show the user the appropriate result.
   function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (storageBlocked) {
@@ -103,6 +121,8 @@ export default function App() {
     setDraft((current) => ({ ...current, title: '', description: '', location: '' }))
   }
 
+  // The returned removal receipt allows Undo to restore the event later.
+  // A failed save during deletion still needs clearer confirmation messaging.
   function removeEvent(id: string) {
     if (storageBlocked) {
       setCreateError('Recover saved data before removing an event.')
@@ -123,6 +143,8 @@ export default function App() {
     setNotice('Event restored.')
   }
 
+  // JSX below describes the visible page. React updates it when state
+  // changes, and every event ID serves as a stable key for its event card.
   return (
     <main className="shell">
       <header className="topbar">
