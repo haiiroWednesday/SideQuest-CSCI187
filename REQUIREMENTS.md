@@ -46,7 +46,7 @@ Users should be informed when required event details are missing, dates or times
 
 ## Post-feedback acceptance addendum (October 28, 2026)
 
-This section records the professor's M1 feedback and further QA improvements; the original R1–R4 above remain the historical assignment baseline. These changes are **not yet on master** until the relevant code PR is merged.
+This section records the professor's M1 feedback and further QA improvements; the original R1–R4 above remain the historical assignment baseline. The M1 post-feedback code fixes are **merged into `master` via PR #12**. The original R1–R4 above remain the historical submitted baseline.
 
 - **R1:** For new event postings, reject dates before the user's local today. As an additional real-world safeguard, reject a same-day start time that has already elapsed; ensure tests handle the local calendar and midnight boundary. Include an optional short description that appears beside each event and persists in browser storage.
 - **R2:** Continue to load legacy events without descriptions. Preserve unrelated events when removing one, and provide recovery from an accidental removal. Make storage-write failure visible; do not silently overwrite data after a read failure.
@@ -54,4 +54,4 @@ This section records the professor's M1 feedback and further QA improvements; th
 - **R4:** Invalid form/search inputs must produce clear feedback. Check keyboard navigation, contrast and small-screen presentation.
 - **Architecture:** React View communicates with the Controller; Model handles event data, validation and persistence. Update CRC and tests when implementing the change.
 
-These are not new M2 requirements. See [Post-feedback QA checklist](docs/M1_POST_FEEDBACK_QA.md) and the code PR before reporting them as implemented.
+These are not new M2 requirements. See [Post-feedback QA checklist](docs/M1_POST_FEEDBACK_QA.md) and [merged PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12) for implementation and test evidence.
