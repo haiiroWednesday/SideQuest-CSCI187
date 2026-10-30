@@ -113,6 +113,8 @@ export function matchingEvents(events: CampusEvent[], window: EventSearchWindow)
 }
 
 export type RemovedEvent = { event: CampusEvent; index: number }
+// 🗑️ Return a new list and a receipt for Undo. Keeping the original
+// list untouched avoids surprising changes elsewhere in the app.
 export function removeEventFromList(events: CampusEvent[], id: string): { events: CampusEvent[]; removed: RemovedEvent | null } {
   const index = events.findIndex(event => event.id === id)
   if (index === -1) return { events, removed: null }
@@ -126,6 +128,8 @@ export function restoreEventInList(events: CampusEvent[], removed: RemovedEvent)
   return restored
 }
 
+// 🕰️ A saved event can be in the past even if it was valid when created.
+// The created-event list labels it instead of automatically deleting it.
 export function isPastEventDate(event: CampusEvent, now: Date = new Date()): boolean {
   const date = todayLocalISO(now)
   const minute = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0')
@@ -168,6 +172,8 @@ export function readStoredEventsChecked(storage: Pick<Storage, 'getItem'>): Stor
     if (saved === null) return { events: [], blocked: false }
     const parsed: unknown = JSON.parse(saved)
     if (!Array.isArray(parsed)) return { events: [], blocked: true }
+    // 🔑 A Set remembers IDs we already saw, so repeated saved records
+    // do not create duplicate events during recovery.
     const ids = new Set<string>()
     const events: CampusEvent[] = []
     for (const value of parsed) {
