@@ -11,6 +11,8 @@ export type { CampusEvent, EventDraft } from '../model/events'
 
 // These values set a convenient initial suggestion in the form. They are
 // separate from the Model's rules about whether an event is allowed.
+// These constants choose convenient default form times. The Model still
+// checks whether the time the user finally chooses is valid.
 const EVENT_DEFAULT_LEAD_MINUTES = 30
 const EVENT_DEFAULT_SLOT_MINUTES = 15
 const EVENT_DEFAULT_DURATION_MINUTES = 60
@@ -26,6 +28,8 @@ export function todayLocal(now: Date = new Date()): string {
 // Defaults should never suggest an event time that already passed today.
 // Suggest a future one-hour slot, rounded to a 15-minute boundary.
 // Near midnight use tomorrow so the initial form is not already invalid.
+// Suggest a future, hour-long event rounded to a 15-minute slot.
+// If there's no room left today, suggest tomorrow instead.
 export function initialEventWindow(now: Date = new Date()): Pick<EventDraft, 'date' | 'start' | 'end'> {
   const start = Math.ceil((now.getHours() * 60 + now.getMinutes() + EVENT_DEFAULT_LEAD_MINUTES) / EVENT_DEFAULT_SLOT_MINUTES) * EVENT_DEFAULT_SLOT_MINUTES
   if (start + EVENT_DEFAULT_DURATION_MINUTES > END_OF_DAY_MINUTES) {
@@ -49,6 +53,8 @@ export function displayTime(time: string): string {
 
 // Pick<Storage, 'getItem'> only requires an object with a getItem method.
 // This allows both real browser storage and small test fakes.
+// Pick means callers only need to supply a getItem method. Tests can
+// use a tiny fake storage object instead of opening a real browser.
 export function loadEventsChecked(storage: Pick<Storage, 'getItem'>): StoredEventsState {
   return readStoredEventsChecked(storage)
 }
@@ -82,6 +88,8 @@ export type CreateResult = { events: CampusEvent[]; error: string | null }
 
 // First validate the user's free-time window, then ask the Model to
 // return only fully fitting events sorted by start time.
+// Check the free-time inputs first. If they're valid, ask the Model to
+// return only events that fit fully within that time window.
 export function findEvents(
   events: CampusEvent[], freeDate: string, freeStart: string, freeEnd: string,
 ): SearchResult {
@@ -93,6 +101,8 @@ export function findEvents(
 // Controllers coordinate requests; the Model owns all reusable domain validation.
 // Return a new event array on success, or the original array with an error.
 // A new array helps React notice state changes without mutating old data.
+// Let the Model validate the draft. Return either a new list plus the
+// created event or the original list and an error for the View to show.
 export function createEvent(events: CampusEvent[], draft: EventDraft, id: string, now: Date = new Date()): CreateResult {
   const { event, error } = validateEventDraft(draft, id, events, now)
   return event ? { events: [...events, event], error: null } : { events, error }
