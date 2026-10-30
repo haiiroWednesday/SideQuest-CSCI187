@@ -12,6 +12,9 @@ export type CampusEvent = {
 export type EventDraft = Omit<CampusEvent, 'id'>
 
 export const STORAGE_KEY = 'sidequest.created-events.v1'
+export const MAX_EVENT_TITLE_LENGTH = 100
+export const MAX_EVENT_LOCATION_LENGTH = 100
+export const MAX_EVENT_DESCRIPTION_LENGTH = 500
 
 // Event dates are calendar dates, so compare them in the user's local timezone,
 // never against toISOString() (which uses UTC and can shift the date).
@@ -50,7 +53,7 @@ export function validateEventDraft(
   const title = draft.title.trim()
   const location = draft.location.trim()
   const description = draft.description?.trim() ?? ''
-  if (title.length > 100 || location.length > 100) {
+  if (title.length > MAX_EVENT_TITLE_LENGTH || location.length > MAX_EVENT_LOCATION_LENGTH) {
     return { event: null, error: 'Event titles and locations must be 100 characters or fewer.' }
   }
   if (!title || !location) {
@@ -62,7 +65,7 @@ export function validateEventDraft(
   if (draft.date < todayLocalISO(now)) {
     return { event: null, error: 'Events cannot be created in the past. Choose today or a future date.' }
   }
-  if (description.length > 500) {
+  if (description.length > MAX_EVENT_DESCRIPTION_LENGTH) {
     return { event: null, error: 'Keep the event description under 500 characters.' }
   }
   const start = toMinutes(draft.start)
@@ -133,7 +136,7 @@ export function isCampusEvent(value: unknown): value is CampusEvent {
   const item = value as Partial<CampusEvent>
   return typeof item.id === 'string' && item.id.length > 0 &&
     typeof item.title === 'string' && item.title.trim().length > 0 &&
-    (item.description === undefined || (typeof item.description === 'string' && item.description.length <= 500)) &&
+    (item.description === undefined || (typeof item.description === 'string' && item.description.length <= MAX_EVENT_DESCRIPTION_LENGTH)) &&
     typeof item.location === 'string' && item.location.trim().length > 0 &&
     typeof item.date === 'string' && isValidDate(item.date) &&
     typeof item.start === 'string' && typeof item.end === 'string' &&
