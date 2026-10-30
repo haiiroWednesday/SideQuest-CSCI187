@@ -270,6 +270,10 @@ A passing run is good evidence, but a test can still pass for the wrong reason. 
 
 ## 11. Commenting conventions for our team
 
+### Visual cues in comments
+
+We use a few topic-specific emojis to make unfamiliar code easier to scan: 🔑 for unique IDs, 📅 for dates, ⏰ for time checks, 💾 for browser storage, 🧯 for corrupted data, 🧩 for keeping existing state intact, 🔎 for searches, and 🌐 for actual browser tests. These are signposts for a useful explanation, not decorations for every line.
+
 A good comment answers one of these questions:
 
 - **Why** is this rule or safeguard necessary?
