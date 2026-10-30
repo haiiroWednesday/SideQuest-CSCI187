@@ -7,12 +7,16 @@ import App from '../src/App'
 import { STORAGE_KEY } from '../src/model/events'
 
 type User = ReturnType<typeof userEvent.setup>
+// Dynamically choose a future date so these UI tests don't expire as
+// calendar time passes. Model tests can instead inject a fixed clock.
 function futureDate(): string {
   const d = new Date()
   d.setDate(d.getDate() + 7)
   return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
 }
 
+// This helper fills the real rendered form and clicks Create, just as
+// a user would. Tests below check the resulting UI and saved data.
 async function createWorkshop(user: User, title = 'Art Workshop') {
   const form = document.querySelector<HTMLFormElement>('.event-form')
   if (!form) throw new Error('Create-event form was not rendered')
@@ -24,6 +28,8 @@ async function createWorkshop(user: User, title = 'Art Workshop') {
   await user.click(within(form).getByRole('button', { name: /create event/i }))
 }
 
+// Start with empty browser storage and a predictable generated ID.
+// This keeps one test from accidentally depending on another test's data.
 beforeEach(() => {
   window.localStorage.clear()
   vi.stubGlobal('crypto', { randomUUID: () => 'm1-workshop-1' })
