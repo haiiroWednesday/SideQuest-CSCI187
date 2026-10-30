@@ -1,22 +1,22 @@
-// VIEW: Create events and search your available time. Rules live in controller/model.
+// VIEW: Create events and search your available time. Rules and persistence are mediated through the Controller.
 import { useEffect, useState, type FormEvent } from 'react'
-import { createEvent, findEvents } from './controller/findEvents'
-import { readStoredEvents, saveStoredEvents, type CampusEvent, type EventDraft } from './model/events'
-
-function todayLocal(): string {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
+import {
+  createEvent, findEvents, todayLocal, initialEventWindow, displayDate, displayTime,
+  loadEventsChecked, persistEvents, removeEventWithReceipt, restoreRemovedEvent, isPastEvent,
+  type CampusEvent, type EventDraft, type RemovedEvent,
+} from './controller/findEvents'
 
 export default function App() {
-  const [events, setEvents] = useState<CampusEvent[]>(() => {
-    try { return readStoredEvents(window.localStorage) } catch { return [] }
+  // Hydrate without writing: a malformed stored value must never be erased on mount.
+  const [initial] = useState(() => {
+    try { return loadEventsChecked(window.localStorage) }
+    catch { return { events: [] as CampusEvent[], blocked: true } }
   })
+  const [events, setEvents] = useState<CampusEvent[]>(initial.events)
+  const [storageBlocked, setStorageBlocked] = useState(initial.blocked)
+  const [lastRemoved, setLastRemoved] = useState<RemovedEvent | null>(null)
   const [draft, setDraft] = useState<EventDraft>(() => ({
-    title: '', location: '', date: todayLocal(), start: '14:30', end: '15:30',
+    title: '', description: '', location: '', ...initialEventWindow(),
   }))
   const [createError, setCreateError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -25,11 +25,56 @@ export default function App() {
   const [freeStart, setFreeStart] = useState('14:00')
   const [freeEnd, setFreeEnd] = useState('16:00')
 
+  // Sync updates from other browser tabs without writing the same list back.
   useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.storageArea !== window.localStorage || (event.key !== null && event.key !== 'sidequest.created-events.v1')) return
+      let current: { events: CampusEvent[]; blocked: boolean }
+      try { current = loadEventsChecked(window.localStorage) }
+      catch { current = { events: [], blocked: true } }
+      setEvents(current.events)
+      setStorageBlocked(current.blocked)
+      setStorageWarning(false)
+      setLastRemoved(null)
+      setNotice('Your event list was updated in another tab.')
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
+  function store(next: CampusEvent[]): 'saved' | 'unsaved' | 'conflict' {
     let saved = false
-    try { saved = saveStoredEvents(window.localStorage, events) } catch { /* storage denied */ }
+    try {
+      if (!storageBlocked) {
+        const latest = loadEventsChecked(window.localStorage)
+        // A second tab may change the list before the storage event arrives.
+        // Refuse stale writes rather than overwrite the other tab's events.
+        if (latest.blocked || JSON.stringify(latest.events) !== JSON.stringify(events)) {
+          setEvents(latest.events)
+          setStorageBlocked(latest.blocked)
+          setStorageWarning(false)
+          setLastRemoved(null)
+          setCreateError('Your events changed in another tab. Please review the updated list and try again.')
+          setNotice(null)
+          return 'conflict'
+        }
+        saved = persistEvents(window.localStorage, next)
+      }
+    } catch { /* browser storage may be disabled */ }
+    setEvents(next)
     setStorageWarning(!saved)
-  }, [events])
+    return saved ? 'saved' : 'unsaved'
+  }
+
+  function recoverSavedEvents() {
+    if (!window.confirm('Replace unreadable saved data with the valid events currently shown? Any corrupt entries will be discarded.')) return
+    let saved = false
+    try { saved = persistEvents(window.localStorage, events) }
+    catch { /* browser storage may be disabled */ }
+    setStorageBlocked(!saved)
+    setStorageWarning(!saved)
+    setNotice(saved ? 'Saved event data recovered.' : null)
+  }
 
   const { matches, error: searchError } = findEvents(events, freeDate, freeStart, freeEnd)
   const updateDraft = (field: keyof EventDraft, value: string) =>
@@ -37,23 +82,45 @@ export default function App() {
 
   function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (storageBlocked) {
+      setCreateError('Saved data needs recovery before changes can be made.')
+      return
+    }
     const result = createEvent(events, draft, crypto.randomUUID())
     if (result.error) {
       setCreateError(result.error)
       setNotice(null)
       return
     }
-    setEvents(result.events)
+    const outcome = store(result.events)
+    if (outcome === 'conflict') return
+    setLastRemoved(null)
     setCreateError(null)
-    setNotice(`Created “${draft.title.trim()}”! It now appears in your event list.`)
+    setNotice(outcome === 'saved'
+      ? `Created “${draft.title.trim()}”! It now appears in your event list.`
+      : 'Event added temporarily, but your browser could not save it. It may disappear after reloading.')
     setFreeDate(draft.date)
-    setDraft((current) => ({ ...current, title: '', location: '' }))
+    setDraft((current) => ({ ...current, title: '', description: '', location: '' }))
   }
 
   function removeEvent(id: string) {
-    setEvents((current) => current.filter((event) => event.id !== id))
+    if (storageBlocked) {
+      setCreateError('Recover saved data before removing an event.')
+      return
+    }
+    const result = removeEventWithReceipt(events, id)
+    if (!result.removed) return
+    if (store(result.events) === 'conflict') return
+    setLastRemoved(result.removed)
     setCreateError(null)
     setNotice('Event removed.')
+  }
+
+  function undoRemove() {
+    if (!lastRemoved || storageBlocked) return
+    if (store(restoreRemovedEvent(events, lastRemoved)) === 'conflict') return
+    setLastRemoved(null)
+    setNotice('Event restored.')
   }
 
   return (
@@ -74,12 +141,18 @@ export default function App() {
             <h2 id="create-heading">Create an event</h2>
             <span>Step 1</span>
           </div>
-          <p className="panel-description">Add a campus event yourself.</p>
+          <p className="panel-description">Add a campus event yourself. Events today must start at or after the current time.</p>
           <form className="event-form" onSubmit={handleCreate}>
             <label>
               <span>EVENT NAME</span>
               <input type="text" value={draft.title} required maxLength={100}
                 placeholder="e.g. Art Workshop" onChange={(e) => updateDraft('title', e.target.value)} />
+            </label>
+            <label>
+              <span>DESCRIPTION (OPTIONAL)</span>
+              <textarea value={draft.description ?? ''} maxLength={500} rows={3}
+                placeholder="What makes this event special?"
+                onChange={(e) => updateDraft('description', e.target.value)} />
             </label>
             <label>
               <span>LOCATION</span>
@@ -88,7 +161,7 @@ export default function App() {
             </label>
             <label>
               <span>DATE</span>
-              <input type="date" value={draft.date} required onChange={(e) => updateDraft('date', e.target.value)} />
+              <input type="date" value={draft.date} min={todayLocal()} required onChange={(e) => updateDraft('date', e.target.value)} />
             </label>
             <div className="time-row">
               <label>
@@ -103,8 +176,16 @@ export default function App() {
             <button className="primary-button" type="submit">+ Create event</button>
           </form>
           {createError && <p className="error" role="alert">{createError}</p>}
-          {notice && <p className="success" role="status">{notice}</p>}
-          {storageWarning && <p className="error" role="alert">Browser storage is unavailable. Your events may disappear when you reload.</p>}
+          {notice && <div className="success" role="status">{notice}
+            {lastRemoved && <button type="button" className="undo-button" onClick={undoRemove}>Undo removal</button>}
+          </div>}
+          {storageBlocked && <div className="storage-alert" role="alert">
+            Some saved browser data could not be read. It has not been overwritten.
+            <button type="button" className="recovery-button" onClick={recoverSavedEvents}>
+              Recover valid events
+            </button>
+          </div>}
+          {!storageBlocked && storageWarning && <p className="error" role="alert">Browser storage could not save your changes. They may disappear after reload.</p>}
         </section>
 
         <section className="panel" aria-labelledby="search-heading">
@@ -152,11 +233,12 @@ export default function App() {
                 <div className="event-left">
                   <span className="category">Your event</span>
                   <h3>{event.title}</h3><p>{event.location}</p>
+                  {event.description && <p className="event-description">{event.description}</p>}
                 </div>
                 <div className="event-right">
                   <span className="fit">✓ Fits</span>
-                  <strong>{event.date}</strong>
-                  <strong>{event.start} – {event.end}</strong>
+                  <strong>{displayDate(event.date)}</strong>
+                  <strong>{displayTime(event.start)} – {displayTime(event.end)}</strong>
                 </div>
               </article>
             ))}
@@ -173,7 +255,9 @@ export default function App() {
                 <li key={event.id}>
                   <div>
                     <strong>{event.title}</strong>
-                    <span>{event.date} · {event.start}–{event.end} · {event.location}</span>
+                    {isPastEvent(event) && <small className="past-tag">Past event</small>}
+                    <span>{displayDate(event.date)} · {displayTime(event.start)}–{displayTime(event.end)} · {event.location}</span>
+                    {event.description && <span className="event-description">{event.description}</span>}
                   </div>
                   <button type="button" className="remove-button" onClick={() => removeEvent(event.id)}
                     aria-label={`Remove ${event.title}`}>Remove</button>

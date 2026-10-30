@@ -54,7 +54,7 @@ it('rejects an ID that another event already uses', () => {
 it('allows the same title when the event IDs are different', () => {
   const events = [{ ...draft, id: 'event-1' }]
 
-  const result = createEvent(events, draft, 'event-2')
+  const result = createEvent(events, draft, 'event-2', new Date(2026, 9, 1))
 
   expect(result.error).toBeNull()
 

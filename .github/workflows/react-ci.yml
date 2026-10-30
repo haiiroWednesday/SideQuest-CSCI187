@@ -19,14 +19,13 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
-      - name: Install packages
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install --no-audit --no-fund
-          fi
+      - name: Install locked packages
+        run: npm ci --no-audit --no-fund
       - name: Run unit tests
         run: npm test
       - name: Type-check and build
         run: npm run build
+      - name: Install Chromium for browser smoke test
+        run: npx playwright install --with-deps chromium
+      - name: Run browser smoke test
+        run: npm run test:e2e
