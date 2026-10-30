@@ -4,6 +4,8 @@ import { isValidDate, toMinutes } from '../model/events'
 // Store dates/times in predictable machine-readable formats; format only for display.
 // Display M/D/YYYY for people, while leaving the original YYYY-MM-DD
 // string unchanged for saving and date comparisons.
+// Show a friendly M/D/YYYY label, but keep the Model's YYYY-MM-DD value
+// unchanged for saving and comparing dates.
 export function formatEventDate(date: string): string {
   if (!isValidDate(date)) return date
   const [year, month, day] = date.split('-').map(Number)
@@ -12,6 +14,8 @@ export function formatEventDate(date: string): string {
 
 // % 12 converts a 24-hour value to a 12-hour clock. The || 12 case
 // displays hour 0 (midnight) and hour 12 (noon) as hour 12.
+// % 12 converts 24-hour times to a 12-hour clock. || 12 displays both
+// midnight (hour 0) and noon (hour 12) as hour 12.
 export function formatEventTime(time: string): string {
   const minutes = toMinutes(time)
   if (minutes === null) return time
