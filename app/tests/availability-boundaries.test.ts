@@ -3,6 +3,8 @@
 import { expect, it } from 'vitest'
 import { fitsFully, type CampusEvent } from '../src/model/events'
 
+// 🕒 Boundary tests check the exact edges of a rule. Ending right at 5pm
+// fits a 2–5pm window, while finishing just one minute later does not.
 it('accepts an exact end boundary but rejects an event one minute outside free time', () => {
   const event: CampusEvent = {
     id: 'workshop',
