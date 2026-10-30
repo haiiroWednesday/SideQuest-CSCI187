@@ -36,6 +36,8 @@ export default function App() {
     // The browser notifies other tabs when storage changes. We read the
     // latest data here without writing it back and causing another update.
     const onStorage = (event: StorageEvent) => {
+      // 🪟 Ignore changes from other storage areas/keys. A null key can
+      // mean the other tab cleared storage, which also needs a refresh.
       if (event.storageArea !== window.localStorage || (event.key !== null && event.key !== 'sidequest.created-events.v1')) return
       let current: { events: CampusEvent[]; blocked: boolean }
       try { current = loadEventsChecked(window.localStorage) }
@@ -47,6 +49,8 @@ export default function App() {
       setNotice('Your event list was updated in another tab.')
     }
     window.addEventListener('storage', onStorage)
+    // 🧹 React runs this cleanup when the component unmounts, preventing
+    // duplicate listeners from accumulating as the page changes.
     return () => window.removeEventListener('storage', onStorage)
   }, [])
 
@@ -59,6 +63,9 @@ export default function App() {
         const latest = loadEventsChecked(window.localStorage)
         // A second tab may change the list before the storage event arrives.
         // Refuse stale writes rather than overwrite the other tab's events.
+        // 🔐 JSON.stringify compares the list's CONTENT rather than array
+        // identity (two different arrays can hold the same event data).
+        // This is a best-effort check, not an atomic database transaction.
         if (latest.blocked || JSON.stringify(latest.events) !== JSON.stringify(events)) {
           setEvents(latest.events)
           setStorageBlocked(latest.blocked)
@@ -73,6 +80,8 @@ export default function App() {
     } catch { /* browser storage may be disabled */ }
     setEvents(next)
     setStorageWarning(!saved)
+    // The ternary (? :) is a short if/else. Unsaved changes may appear
+    // on screen but disappear after the next page reload.
     return saved ? 'saved' : 'unsaved'
   }
 
@@ -90,15 +99,21 @@ export default function App() {
 
   // The matching list is calculated from current inputs on every render;
   // changing the search date or times updates results automatically.
+  // Object destructuring pulls out matches and renames error to searchError
+  // so it is easy to distinguish search errors from event-creation errors.
   const { matches, error: searchError } = findEvents(events, freeDate, freeStart, freeEnd)
   // keyof limits field names to properties of EventDraft, and the object
   // spread keeps other form values while updating only one field.
   const updateDraft = (field: keyof EventDraft, value: string) =>
+    // [field] means "use the field-name VARIABLE as this object's key".
+    // For example, updateDraft('title', 'Choir') changes draft.title only.
     setDraft((current) => ({ ...current, [field]: value }))
 
   // On form submit, ask the Controller to create a valid event. Only then
   // attempt storage and show the user the appropriate result.
   function handleCreate(event: FormEvent<HTMLFormElement>) {
+    // Submitting an HTML form normally reloads/navigates the browser.
+    // React handles this form locally, so we prevent that default action.
     event.preventDefault()
     if (storageBlocked) {
       setCreateError('Saved data needs recovery before changes can be made.')
@@ -168,6 +183,8 @@ export default function App() {
             <span>Step 1</span>
           </div>
           <p className="panel-description">Add a campus event yourself. Events today must start at or after the current time.</p>
+          {/* 📝 Controlled inputs: React state supplies the value; onChange
+              records what the user types. See draft/title below. */}
           <form className="event-form" onSubmit={handleCreate}>
             <label>
               <span>EVENT NAME</span>
@@ -241,11 +258,15 @@ export default function App() {
         </section>
       </section>
 
+      {/* 📢 aria-live="polite" lets screen readers announce search updates
+          without interrupting what the person is already doing. */}
       <section className="results" aria-live="polite">
         <div className="section-title">
           <h2>Made for your window</h2>
           <span className="counter">{matches.length} {matches.length === 1 ? 'event' : 'events'}</span>
         </div>
+        {/* 🔎 Three display cases: invalid search, zero matches, or a list
+            of event cards. The ? : operator chooses between them. */}
         {searchError ? (
           <div className="empty">Correct your available date or time to see matching events.</div>
         ) : matches.length === 0 ? (
@@ -254,6 +275,8 @@ export default function App() {
             : 'No created events fit this date and time. Try a different window.'}</div>
         ) : (
           <div className="events">
+            {/* .map makes one card for every match; key={event.id} helps
+                React keep the correct card when the list changes. */}
             {matches.map((event) => (
               <article className="event-card" key={event.id}>
                 <div className="event-left">
@@ -272,6 +295,8 @@ export default function App() {
         )}
       </section>
 
+      {/* 📚 This library shows ALL created events, even when the search
+          above shows only the events that fit the current time window. */}
       <section className="library" aria-labelledby="saved-heading">
         <div className="section-title"><h2 id="saved-heading">Your created events</h2><span className="counter">{events.length} total</span></div>
         {events.length === 0
