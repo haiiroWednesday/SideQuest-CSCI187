@@ -55,7 +55,7 @@ The repository also contains the original C++ course starter files, but they are
 
 ## Repository-wide bug audit (November 1, 2026)
 
-The [file-by-file review and remaining decisions](docs/MASTER_REPOSITORY_AUDIT_2026-11-01.md) records what was checked, which M1 fixes are proposed in a teammate-reviewed PR, and what remains M2 work. Those code fixes are **not part of `master` until that PR merges**.
+The [file-by-file review and remaining decisions](docs/MASTER_REPOSITORY_AUDIT_2026-11-01.md) records what was checked, which M1 fixes are proposed in a teammate-reviewed PR, and what remains M2 work. The [complete 01–16 course-slide compliance audit](docs/COURSE_LECTURES_01_TO_16_COMPLIANCE_AUDIT.md) also flags the P3 versus P4 MVP scope conflict and the instructor's P4 composition correction. Those code fixes are **not part of `master` until that PR merges**.
 
 ## New to TypeScript, React, or this codebase?
 
