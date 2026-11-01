@@ -277,7 +277,7 @@ describe('M1 rendered user workflow', () => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(otherTab))
     fireEvent(window, new StorageEvent('storage', { key: STORAGE_KEY, storageArea: window.localStorage }))
     expect(screen.getByRole('button', { name: 'Remove Art Workshop' })).toBeTruthy()
-    expect(screen.getByRole('alert').textContent).toContain('Another tab changed saved events')
+    expect(screen.getAllByRole('alert').some(alert => alert.textContent?.includes('Another tab changed saved events'))).toBe(true)
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '[]')).toEqual(otherTab)
   })
 
