@@ -38,7 +38,7 @@ flowchart LR
 
 - `app/src/App.tsx` currently handles a create form, free-time search, matching cards, and a list of the **events created in the current browser**.
 - `app/src/controller/findEvents.ts` has `createEvent` and `findEvents`. `app/src/model/events.ts` has `CampusEvent`, `fitsFully`, date/time checks, and local-storage helpers.
-- Current `master` has **26 passing tests in 11 files** and a passing React build (verified 27 October). The test suite proves the M1 slice, **not** the future shared catalog or Personal Schedule.
+- **M1 status (November 1):** `master` has **59 passing Vitest tests in 14 files** plus **one Playwright Chromium test**, with green CI. A subsequent audit branch adds more M1 regressions. These tests do **not** prove the future shared catalog or personal Schedule.
 - The default branch is **`master`**, not `main`. App commands run inside `app/`.
 - The **current selected P5 coursework ER** and its **editable Google Drive draw.io link** are preserved below, distinct from the small M2 implementation contract and the classroom photograph.
 
@@ -166,7 +166,7 @@ export interface SchedulePort {
 }
 ```
 
-**Existing code is not migrated yet.** M1 currently uses `CampusEvent` with `id,title,location,date,start,end`, a synchronous `createEvent` controller, and the browser-only `sidequest.created-events.v1` store. Add description and hostName carefully; update tests, form, and display consumers in coordinated PRs. Do not delete passing tests. Catalog calls are now asynchronous; adapt UI loading and errors. Catalog IDs come from the database, not from a random string chosen by a browser controller.
+**Existing code is not migrated yet.** M1 currently uses `CampusEvent` with `id,title,location,date,start,end`, a synchronous `createEvent` controller, and the browser-only `sidequest.created-events.v1` store. The optional description field is already implemented in M1. Add `hostName` and adapt consumers only in coordinated, reviewed M2 PRs. Do not delete passing tests. Catalog calls are now asynchronous; adapt UI loading and errors. Catalog IDs come from the database, not from a random string chosen by a browser controller.
 
 **Timezone rule:** treat `date` and `HH:mm` as the wall-clock date and time for Santa Clara campus (`America/Los_Angeles`). Keep the database `date`/`time without time zone` fields as local calendar fields. Do not round-trip them through `Date.toISOString()`, which can shift the event date. Overnight/DST-spanning events are deferred. Validate the full-fit rule as before with inclusive outer boundaries.
 
@@ -342,7 +342,7 @@ The selected backend is a **proposal that Daven must configure and validate**; i
 
 ### Proposed Postgres storage and SQL
 
-Daven owns the actual SQL migration. The following is a **reviewable starting point**, not SQL already deployed.
+Daven owns the actual SQL migration. The following is a **reviewable starting point**, not SQL already deployed. **Resolve this contract mismatch first:** M1 currently limits title/location/description to 100/100/500 characters, but the SQL proposal below permits 120/200/2000. Align UI, Model, SQL, and tests on agreed limits before migration.
 
 ```sql
 create table public.events (
