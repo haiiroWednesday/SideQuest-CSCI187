@@ -1,9 +1,9 @@
 // VIEW: Create events and search your available time. Rules and persistence are mediated through the Controller.
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import {
   createEvent, findEvents, todayLocal, initialEventWindow, displayDate, displayTime,
   loadEventsChecked, persistEvents, removeEventWithReceipt, restoreRemovedEvent, isPastEvent,
-  type CampusEvent, type EventDraft, type RemovedEvent,
+  STORAGE_KEY, type CampusEvent, type EventDraft, type RemovedEvent,
 } from './controller/findEvents'
 
 export default function App() {
@@ -17,6 +17,10 @@ export default function App() {
   // In React, events holds the current list; setEvents asks React to
   // update the list on screen. Other state variables track the form and alerts.
   const [events, setEvents] = useState<CampusEvent[]>(initial.events)
+  // Keep the last successfully read/written list separate from temporary changes.
+  const savedEventsRef = useRef<CampusEvent[]>(initial.events)
+  const hasUnsavedRef = useRef(false)
+  const [, refreshPastLabels] = useState(0)
   const [storageBlocked, setStorageBlocked] = useState(initial.blocked)
   const [lastRemoved, setLastRemoved] = useState<RemovedEvent | null>(null)
   // draft is what the user is still typing. It becomes an event only
@@ -31,6 +35,12 @@ export default function App() {
   const [freeStart, setFreeStart] = useState('14:00')
   const [freeEnd, setFreeEnd] = useState('16:00')
 
+  // Event labels change as time passes, even when nobody interacts with the page.
+  useEffect(() => {
+    const timer = window.setInterval(() => refreshPastLabels(value => value + 1), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
+
   // Sync updates from other browser tabs without writing the same list back.
   useEffect(() => {
     // The browser notifies other tabs when storage changes. We read the
@@ -38,10 +48,18 @@ export default function App() {
     const onStorage = (event: StorageEvent) => {
       // 🪟 Ignore changes from other storage areas/keys. A null key can
       // mean the other tab cleared storage, which also needs a refresh.
-      if (event.storageArea !== window.localStorage || (event.key !== null && event.key !== 'sidequest.created-events.v1')) return
+      if (event.storageArea !== window.localStorage || (event.key !== null && event.key !== STORAGE_KEY)) return
       let current: { events: CampusEvent[]; blocked: boolean }
       try { current = loadEventsChecked(window.localStorage) }
       catch { current = { events: [], blocked: true } }
+      // 🪟 Don't silently discard unsaved local events when another tab writes.
+      // A later attempted save will detect the conflict against our last saved list.
+      if (hasUnsavedRef.current) {
+        setCreateError('Another tab changed saved events while this tab has unsaved changes. Review or reload before making more changes.')
+        setNotice(null)
+        return
+      }
+      savedEventsRef.current = current.events
       setEvents(current.events)
       setStorageBlocked(current.blocked)
       setStorageWarning(false)
@@ -66,7 +84,9 @@ export default function App() {
         // 🔐 JSON.stringify compares the list's CONTENT rather than array
         // identity (two different arrays can hold the same event data).
         // This is a best-effort check, not an atomic database transaction.
-        if (latest.blocked || JSON.stringify(latest.events) !== JSON.stringify(events)) {
+        if (latest.blocked || JSON.stringify(latest.events) !== JSON.stringify(savedEventsRef.current)) {
+          savedEventsRef.current = latest.events
+          hasUnsavedRef.current = false
           setEvents(latest.events)
           setStorageBlocked(latest.blocked)
           setStorageWarning(false)
@@ -78,6 +98,8 @@ export default function App() {
         saved = persistEvents(window.localStorage, next)
       }
     } catch { /* browser storage may be disabled */ }
+    if (saved) savedEventsRef.current = next
+    hasUnsavedRef.current = !saved
     setEvents(next)
     setStorageWarning(!saved)
     // The ternary (? :) is a short if/else. Unsaved changes may appear
@@ -92,6 +114,8 @@ export default function App() {
     let saved = false
     try { saved = persistEvents(window.localStorage, events) }
     catch { /* browser storage may be disabled */ }
+    if (saved) savedEventsRef.current = events
+    hasUnsavedRef.current = !saved
     setStorageBlocked(!saved)
     setStorageWarning(!saved)
     setNotice(saved ? 'Saved event data recovered.' : null)
@@ -149,17 +173,19 @@ export default function App() {
     }
     const result = removeEventWithReceipt(events, id)
     if (!result.removed) return
-    if (store(result.events) === 'conflict') return
+    const outcome = store(result.events)
+    if (outcome === 'conflict') return
     setLastRemoved(result.removed)
     setCreateError(null)
-    setNotice('Event removed.')
+    setNotice(outcome === 'saved' ? 'Event removed.' : 'Event removed temporarily, but your browser could not save the deletion. It may return after reloading.')
   }
 
   function undoRemove() {
     if (!lastRemoved || storageBlocked) return
-    if (store(restoreRemovedEvent(events, lastRemoved)) === 'conflict') return
+    const outcome = store(restoreRemovedEvent(events, lastRemoved))
+    if (outcome === 'conflict') return
     setLastRemoved(null)
-    setNotice('Event restored.')
+    setNotice(outcome === 'saved' ? 'Event restored.' : 'Event restored temporarily, but your browser could not save it. It may disappear after reloading.')
   }
 
   // JSX below describes the visible page. React updates it when state
@@ -219,9 +245,9 @@ export default function App() {
             <button className="primary-button" type="submit">+ Create event</button>
           </form>
           {createError && <p className="error" role="alert">{createError}</p>}
-          {notice && <div className="success" role="status">{notice}
-            {lastRemoved && <button type="button" className="undo-button" onClick={undoRemove}>Undo removal</button>}
-          </div>}
+          {notice && <div className="success" role="status">{notice}</div>}
+          {/* Keep Undo available even when a later invalid form submission clears the success message. */}
+          {lastRemoved && <div className="undo-control"><button type="button" className="undo-button" onClick={undoRemove}>Undo removal</button></div>}
           {storageBlocked && <div className="storage-alert" role="alert">
             Some saved browser data could not be read. It has not been overwritten.
             <button type="button" className="recovery-button" onClick={recoverSavedEvents}>
