@@ -201,7 +201,7 @@ This is **best-effort protection**, not a guaranteed atomic database operation.
 
 The Model's `removeEventFromList()` returns an updated list plus a “receipt” containing the removed event and its old position. `restoreEventInList()` uses that receipt for the one-step Undo action.
 
-**Known follow-up:** the existing UI can still say “Event removed” when the browser fails to persist a deletion, although a warning is also displayed. That issue is documented in the merged PR's review comments and is **not fixed by these explanation-only changes**.
+**November 1 audit follow-up:** a review branch now gives accurate temporary deletion/Undo messages and adds regression tests. These fixes require CI and a teammate's review before merging to `master`.
 
 ## 9. How to read and write meaningful tests
 
@@ -289,4 +289,4 @@ Read [`docs/MVP_TEAM_PLAYBOOK.md`](docs/MVP_TEAM_PLAYBOOK.md) for the **agreed M
 
 ---
 
-**Changes represented by this guide:** documentation and explanatory source comments only. They do not alter event rules, UI behavior, persistence, tests, or dependency versions.
+**Guide history:** introduced with comments and documentation only. A subsequent November 1 audit branch proposes behavior and test fixes. Check the audit PR before assuming those fixes are available on `master`.
