@@ -2,7 +2,9 @@
 
 ## Purpose and relationship to requirements
 
-These specifications describe the current TypeScript + React implementation. Each one supports the corresponding user requirement (R1–R4) in the User Requirements document. Scope: create an event → store it locally → enter free time → display matching events.
+**Reading note:** S1–S4 and the initial CRC preserve the original M1 submission. The post-feedback addendum at the end documents the current Controller-to-Model design. Where the original sections differ, the addendum supersedes their architecture wording.
+
+These specifications describe the original TypeScript + React implementation. Each one supports the corresponding user requirement (R1–R4) in the User Requirements document. Scope: create an event → store it locally → enter free time → display matching events.
 
 ## S1 — Event creation (supports R1)
 
