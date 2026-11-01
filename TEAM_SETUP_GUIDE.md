@@ -23,13 +23,13 @@ If any command is missing, install that tool and restart VS Code.
 ```bash
 git clone https://github.com/haiiroWednesday/SideQuest-CSCI187.git
 cd SideQuest-CSCI187/app
-npm install
+npm ci
 npm run dev
 ```
 
 Open the **Local** URL printed by Vite (often `http://localhost:5173/`).
 
-If cloning a private repository fails, confirm that your GitHub account has accepted the collaborator invitation. If `npm install` encounters an `edgesOut` dependency error, try `npm install --legacy-peer-deps`.
+If cloning a private repository fails, confirm that your GitHub account has accepted the collaborator invitation. If `npm ci` reports dependency errors, check that Node matches the version in `app/.nvmrc` and that `package-lock.json` is current. Avoid bypassing dependency checks with `--legacy-peer-deps` without team review.
 
 ## Update an existing clone
 
@@ -66,6 +66,7 @@ From `app/`:
 ```bash
 npm test
 npm run build
+npm run test:e2e
 ```
 
 Our [React GitHub Actions workflow](.github/workflows/react-ci.yml) runs equivalent checks online. Student test examples and CI experiments are documented in [test appendix in the MVP playbook](docs/MVP_TEAM_PLAYBOOK.md#appendix--detailed-unit-testing-examples).
