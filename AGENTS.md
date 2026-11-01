@@ -12,6 +12,10 @@
 - [Current editable P5 ER draw.io](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view): USER, EVENT, AVAILABILITY_WINDOW and PLANS TO ATTEND for **P5 coursework**. This is **not** the M2 implementation schema, even though it is the selected P5 drawing.
 - [README](README.md) and [TEAM_SETUP_GUIDE](TEAM_SETUP_GUIDE.md): how to run and test the actual app.
 
+## Current audit and code-review queue
+
+See [November 1 master audit](docs/MASTER_REPOSITORY_AUDIT_2026-11-01.md) for confirmed bugs, a review-branch patch, focused regression tests, and intentionally deferred M2 decisions. Do not treat an unmerged branch as a change already shipped on `master`.
+
 ## M1 feedback integration notice
 
 - Earlier M1 code PRs #10 and #11 were closed unmerged and superseded by [PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12), **merged into `master`** as commit `6e461fd`. Final PR-head CI passed **59 Vitest tests**, a Chromium smoke test, and the TypeScript/Vite build.
