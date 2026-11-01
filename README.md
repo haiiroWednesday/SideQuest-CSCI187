@@ -19,7 +19,7 @@ Install [Node.js](https://nodejs.org/) 24 (Node 22.12+ supported) and Git, then:
 ```bash
 git clone https://github.com/haiiroWednesday/SideQuest-CSCI187.git
 cd SideQuest-CSCI187/app
-npm install
+npm ci
 npm run dev
 ```
 
@@ -34,7 +34,7 @@ npm test
 npm run build
 ```
 
-GitHub Actions also runs these checks on pushes and pull requests: [SideQuest React CI](.github/workflows/react-ci.yml). Unit tests are in [`app/tests/`](app/tests/).
+GitHub Actions also runs these checks on pushes and pull requests: [SideQuest React CI](.github/workflows/react-ci.yml). Unit tests are in [`app/tests/`](app/tests/). Real-browser tests live in [`app/e2e/`](app/e2e/).
 
 ## Project structure
 
