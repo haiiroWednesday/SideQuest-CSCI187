@@ -165,7 +165,7 @@ export default function App() {
   }
 
   // The returned removal receipt allows Undo to restore the event later.
-  // A failed save during deletion still needs clearer confirmation messaging.
+  // Deletion and Undo now distinguish saved changes from temporary ones.
   function removeEvent(id: string) {
     if (storageBlocked) {
       setCreateError('Recover saved data before removing an event.')
