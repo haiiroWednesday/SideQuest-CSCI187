@@ -44,3 +44,38 @@ test('post, find, validate, reload, and remove an event', async ({ page }) => {
   await expect(page.getByText('Events you create will show up here.')).toBeVisible()
   await expect(page.getByText('0 total')).toBeVisible()
 })
+
+
+test('two real tabs synchronize events without losing an existing post', async ({ context }) => {
+  const tabA = await context.newPage()
+  const tabB = await context.newPage()
+  await tabA.goto('/')
+  await tabB.goto('/')
+
+  const eventDate = await tabB.evaluate(() => {
+    const date = new Date()
+    date.setDate(date.getDate() + 7)
+    return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
+  })
+
+  async function post(page: typeof tabA, title: string) {
+    await page.getByPlaceholder('e.g. Art Workshop').fill(title)
+    await page.getByPlaceholder('e.g. Student Center').fill('Student Center')
+    await page.locator('.event-form input[type="date"]').fill(eventDate)
+    await page.locator('.event-form input[type="time"]').nth(0).fill('14:30')
+    await page.locator('.event-form input[type="time"]').nth(1).fill('15:30')
+    await page.getByRole('button', { name: '+ Create event' }).click()
+    await expect(page.getByRole('status')).toContainText('Created')
+  }
+
+  // 🪟 A second tab should see the post without needing a manual refresh.
+  await post(tabB, 'Choir Practice')
+  await expect(tabA.getByRole('button', { name: 'Remove Choir Practice' })).toBeVisible()
+
+  // After receiving the update, Tab A can add a second event without
+  // overwriting Tab B's saved event.
+  await post(tabA, 'Art Workshop')
+  await expect(tabB.getByRole('button', { name: 'Remove Art Workshop' })).toBeVisible()
+  await expect(tabA.getByText('2 total')).toBeVisible()
+  await expect(tabB.getByText('2 total')).toBeVisible()
+})
