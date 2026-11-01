@@ -1,5 +1,7 @@
 # SideQuest master-branch code audit and repair plan
 
+**Related full-course review:** [Lecture-by-lecture compliance matrix for all accessible 01–16 decks](COURSE_LECTURES_01_TO_16_COMPLIANCE_AUDIT.md). **Important:** the original P3 MVP includes partial attendance, travel time, and other capabilities omitted from the later P4-sized M2 plan. Resolve the narrowed scope explicitly with the team/instructor before calling M2 requirements complete.
+
 **Audit date:** November 1, 2026  
 **Baseline:** `master` at `7de3ef9e94fa0e240c042e499c56db6c86118ac3`  
 **Proposed fixes:** `fix/m1-full-audit-2026-11-01` (review branch; do not describe as merged until a teammate reviews and merges)  
