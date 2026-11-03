@@ -49,7 +49,13 @@ function CampusLineArt() {
   )
 }
 
-export function SideQuestHeader({ routes = {} }: { routes?: SideQuestRoutes }) {
+export function SideQuestHeader({
+  routes = {},
+  active = 'discover',
+}: {
+  routes?: SideQuestRoutes
+  active?: 'discover' | 'find' | 'schedule' | 'post'
+}) {
   return (
     <header className="sq-masthead">
       <div className="sq-masthead-inner">
@@ -59,10 +65,10 @@ export function SideQuestHeader({ routes = {} }: { routes?: SideQuestRoutes }) {
         <span className="sq-brand-divider" aria-hidden="true" />
         <span className="sq-brand-context">CAMPUS EVENTS · SANTA CLARA</span>
         <nav aria-label="SideQuest primary" className="sq-nav">
-          <a aria-current="page" className="sq-nav-active" href={routes.discover ?? '/discover-preview.html'}>Discover</a>
-          {routes.find && <a href={routes.find}>Find a time</a>}
-          {routes.schedule && <a href={routes.schedule}>My Schedule</a>}
-          {routes.post && <a className="sq-nav-post" href={routes.post}>Post an event <span aria-hidden="true">↗</span></a>}
+          <a aria-current={active === 'discover' ? 'page' : undefined} className={active === 'discover' ? 'sq-nav-active' : undefined} href={routes.discover ?? '/discover-preview.html'}>Discover</a>
+          {routes.find && <a aria-current={active === 'find' ? 'page' : undefined} className={active === 'find' ? 'sq-nav-active' : undefined} href={routes.find}>Find a time</a>}
+          {routes.schedule && <a aria-current={active === 'schedule' ? 'page' : undefined} className={active === 'schedule' ? 'sq-nav-active' : undefined} href={routes.schedule}>My Schedule</a>}
+          {routes.post && <a aria-current={active === 'post' ? 'page' : undefined} className={active === 'post' ? 'sq-nav-post sq-nav-active' : 'sq-nav-post'} href={routes.post}>Post an event <span aria-hidden="true">↗</span></a>}
         </nav>
       </div>
     </header>
