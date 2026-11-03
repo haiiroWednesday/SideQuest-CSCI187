@@ -189,7 +189,7 @@ export function DiscoverView({
                 {onPlan && <p className="sq-detail-fine">Plans are saved on this device.</p>}
               </>
             ) : (
-              <div className="sq-detail-placeholder" role="status">
+              <div className="sq-detail-placeholder">
                 <span className="sq-detail-eyebrow">EVENT DETAILS</span>
                 <h2 id="sq-detail-title">Your next discovery.</h2>
                 <p>Select an event to see its host, time, location and description.</p>
