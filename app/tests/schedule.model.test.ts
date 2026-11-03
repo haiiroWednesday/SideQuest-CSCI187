@@ -53,7 +53,7 @@ describe('personal Schedule Model', () => {
     expect(savePlannedIds({ setItem: (key, value) => { writes.push([key, value]) } }, ['a', 'b'])).toBe(true)
     expect(writes).toEqual([[PLANNED_IDS_KEY, '["a","b"]']])
   })
-  it('enforces the team-agreed 100-event limit', () => {
+  it('enforces the provisional 100-event limit', () => {
     expect(MAX_PLANNED_EVENTS).toBe(100)
     expect(canAddPlanCount(MAX_PLANNED_EVENTS - 1)).toBe(true)
     for (const count of [MAX_PLANNED_EVENTS, MAX_PLANNED_EVENTS + 1, -1, 1.5, Infinity, NaN]) {

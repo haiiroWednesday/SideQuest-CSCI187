@@ -25,9 +25,9 @@ export default function App() {
   // In React, events holds the current list; setEvents asks React to
   // update the list on screen. Other state variables track the form and alerts.
   const [events, setEvents] = useState<CampusEvent[]>(initial.events)
-  const plans = usePersonalSchedule(events)
   const [storageBlocked, setStorageBlocked] = useState(initial.blocked)
   const [lastRemoved, setLastRemoved] = useState<RemovedEvent | null>(null)
+  const plans = usePersonalSchedule(events)
   // draft is what the user is still typing. It becomes an event only
   // after Controller and Model validation and the assignment of an ID.
   const [draft, setDraft] = useState<EventDraft>(() => ({

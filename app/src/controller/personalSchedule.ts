@@ -21,8 +21,10 @@ export type ScheduleResult = {
   warning: string | null
 }
 
-// This read-only catalog input is the current event source. It can come from
-// the shared catalog when that adapter is integrated; plans store no copies.
+// This is a local-only catalog snapshot; plans store no event copies.
+// Future shared integration must resolve every saved ID with async getById(),
+// distinguish loading/errors from null, and include older events. See the
+// EventCatalogPort handoff in docs/SEMBIYAN_SEARCH_SCHEDULE.md.
 export function createScheduleController(
   catalog: readonly CampusEvent[],
   getStorage: () => PlanStorage = () => window.localStorage,

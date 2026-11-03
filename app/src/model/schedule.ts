@@ -3,7 +3,7 @@
 import { isCampusEvent, toMinutes, type CampusEvent } from './events'
 
 export const PLANNED_IDS_KEY = 'sidequest.planned-event-ids.v1'
-// Team-agreed MVP limit. Keep it in one place for validation and messages.
+// Provisional MVP limit pending whole-team confirmation. Keep validation and messages consistent.
 export const MAX_PLANNED_EVENTS = 100
 export const SCHEDULE_LIMIT_MESSAGE = `Your schedule has reached the ${MAX_PLANNED_EVENTS}-event limit. Remove a plan before adding another.`
 export type PlannedIdsState = { ids: string[]; blocked: boolean }

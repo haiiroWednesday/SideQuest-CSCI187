@@ -54,7 +54,7 @@ export function SchedulePage({ plans }: { plans: PersonalSchedule }) {
     <div className="section-title"><h1 id="schedule-heading">My Schedule</h1><span className="counter">{plans.schedule.ids.length} planned</span></div>
     <p className="lead">Your plans, in date and start-time order. Saved on this device.</p>
     <ScheduleFeedback plans={plans} showWarning={false} />
-    {hasOverlap && <p className="schedule-overlap" role="alert">One or more planned events have overlapping times, if this wasn't intentional please review the overlapping events below</p>}
+    {hasOverlap && <p className="schedule-overlap" role="alert">Some planned events overlap. Review their times if this wasn't intentional.</p>}
     {plans.schedule.ids.length === 0 && !plans.schedule.blocked && <div className="empty">
       <h2>No events planned yet</h2><p>Find an event that fits your availability and choose Plan to attend.</p>
       <a href="#discover">Find events</a>
