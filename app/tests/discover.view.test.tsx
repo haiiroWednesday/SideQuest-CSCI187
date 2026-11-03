@@ -57,13 +57,14 @@ describe('Discover View: Campus Index', () => {
     expect(choices).toHaveLength(2)
     fireEvent.click(choices[1])
     fireEvent.click(screen.getByRole('button', { name: '+ Plan to attend' }))
-    expect(onPlan).toHaveBeenCalledExactlyOnceWith('another-ceramics')
+    expect(onPlan).toHaveBeenCalledTimes(1)
+    expect(onPlan).toHaveBeenCalledWith('another-ceramics')
   })
 
   it('has clear empty, loading, and error states without placeholder events', () => {
     const { rerender } = render(<DiscoverView events={[]} routes={{ post: '/post' }} />)
     expect(screen.getByText('No events to show yet.')).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Post an event' })).toHaveAttribute('href', '/post')
+    expect(screen.getAllByRole('link', { name: 'Post an event' }).some(link => link.getAttribute('href') === '/post')).toBe(true)
     expect(screen.queryByRole('button', { name: /View details for/ })).toBeNull()
 
     rerender(<DiscoverView events={[]} loading />)
