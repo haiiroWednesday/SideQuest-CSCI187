@@ -1,10 +1,10 @@
 // CONTROLLER: the View requests every plan read/change here, never in the Model.
-import { isCampusEvent, type CampusEvent } from '../model/events'
+import type { CampusEvent } from '../model/events'
 import type { EventCatalogPort } from '../model/eventCatalog'
 import {
   addPlannedId, readPlannedIds, removePlannedId, resolvePlannedEvents,
   savePlannedIds, scheduleConflicts, PLANNED_IDS_KEY,
-  MAX_PLANNED_EVENTS, SCHEDULE_LIMIT_MESSAGE,
+  MAX_PLANNED_EVENTS, SCHEDULE_LIMIT_MESSAGE, isScheduleEvent,
   type PlannedIdsState, type PlanStorage,
 } from '../model/schedule'
 
@@ -28,7 +28,7 @@ export async function loadPlannedEvents(catalog: EventCatalogPort, ids: readonly
   const lookups = await Promise.all(ids.map(async id => {
     try {
       const event = await catalog.getById(id)
-      if (event !== null && (!isCampusEvent(event) || event.id !== id)) {
+      if (event !== null && (!isScheduleEvent(event) || event.id !== id)) {
         return { id, event: null, failed: true }
       }
       return { id, event, failed: false }
@@ -81,7 +81,7 @@ export function createScheduleController(
       // localStorage read/modify/write is best effort, not a transaction.
       const { state, storage } = current()
       if (state.blocked || !storage) return result(state, readError)
-      const event = catalog.find(item => item.id === id && isCampusEvent(item))
+      const event = catalog.find(item => item.id === id && isScheduleEvent(item))
       if (!event) return result(state, 'This event is unavailable. Refresh the event list before adding it.')
       const next = addPlannedId(state.ids, id)
       if (next.error) return result(state, next.error)
