@@ -75,7 +75,7 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 
 ## Current implementation diagrams and Node API
 
-[Editable current M2 CRC/storage diagrams](docs/diagrams/M2_IMPLEMENTATION.drawio) and [their explanation](docs/M2_IMPLEMENTATION_DIAGRAMS.md) map Event, EventCatalog and Schedule responsibilities to the actual modules. The SQL ER contains only `public.events`; browser-local plan IDs are explicitly outside SQL. There is no USER or saved availability table. P4 is approved and unchanged.
+**Updated professor-format M2 diagrams:** [CRC (.drawio)](docs/diagrams/M2_CRC.drawio), [ER (.drawio)](docs/diagrams/M2_STORAGE_ER.drawio), and [combined editable file](docs/diagrams/M2_IMPLEMENTATION.drawio). [Code-to-diagram evidence](docs/M2_IMPLEMENTATION_DIAGRAMS.md). These use the earlier P4/P5 visual conventions while representing the actual M2 Model: one `public.events` SQL table, with browser-local planned IDs outside SQL. The original P4 and P5 files remain untouched.
 
 The production Node server serves the built UI and API. GET `/api/catalog` returns only the shared-storage flag; GET `/api/events` lists upcoming records or looks up `?id=...`; POST `/api/events` accepts only the seven EventDraft fields. Public PUT/PATCH/DELETE are rejected. Read deadlines are 10 seconds. The server's upstream fetch aborts at 15 seconds. An uncertain insert is not automatically retried; users are told to check Discover before another submission.
 
