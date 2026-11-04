@@ -153,6 +153,21 @@ describe('Discover View: draws the Controller screen', () => {
     expect(screen.getByRole('button', { name: 'View details for Poetry Reading' }).className).not.toContain('sq-stub-dim')
   })
 
+  it('explains partial filters accessibly and restores the catalog after no matches', () => {
+    const onChange = vi.fn()
+    const { rerender } = render(draw(events, { freeWindow: { date: '2030-11-07', start: '', end: '' } }, { onFreeWindowChange: onChange }))
+    const hint = screen.getByText('Showing all upcoming events. Complete the date and both times to filter.')
+    expect(screen.getByLabelText('Free on').getAttribute('aria-describedby')).toBe(hint.id)
+    expect(screen.getByRole('button', { name: 'View details for Poetry Reading' })).toBeTruthy()
+    rerender(draw(events, { freeWindow: { date: '2030-11-07', start: '01:00', end: '02:00' } }, { onFreeWindowChange: onChange }))
+    expect(screen.getByText('No events fit this window.')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'View details for Poetry Reading' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Show all events' }))
+    expect(onChange).toHaveBeenLastCalledWith({ date: '', start: '', end: '' })
+    rerender(draw(events, { freeWindow: onChange.mock.calls.at(-1)![0] }, { onFreeWindowChange: onChange }))
+    expect(screen.getByRole('button', { name: 'View details for Poetry Reading' })).toBeTruthy()
+  })
+
   it('opens the details sheet when a stub is picked and closes it again', () => {
     render(draw(events))
     const sheet = screen.getByRole('complementary')

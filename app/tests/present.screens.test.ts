@@ -102,6 +102,20 @@ describe('presentDiscover: the clock decides the labels', () => {
     expect(none.days).toEqual([])
   })
 
+  it('explains every incomplete filter without claiming the results are filtered', () => {
+    const now = at('2026-11-04', '09:00')
+    const values = { date: '2026-11-04', start: '14:00', end: '16:00' }
+    for (let mask = 1; mask < 7; mask++) {
+      const freeWindow = { date: mask & 1 ? values.date : '', start: mask & 2 ? values.start : '', end: mask & 4 ? values.end : '' }
+      const result = presentDiscover({ events, now, freeWindow })
+      expect(result.freeWindow).toMatchObject({ active: false, error: null,
+        hint: 'Showing all upcoming events. Complete the date and both times to filter.' })
+      expect(result.count).toBe(6)
+    }
+    expect(presentDiscover({ events, now, freeWindow: { date: '', start: '', end: '' } }).freeWindow?.hint).toBeNull()
+    expect(presentDiscover({ events, now, freeWindow: values }).freeWindow?.hint).toBeNull()
+  })
+
   it('keeps every event exactly once, in time order, under the right day, for 300 random catalogs', () => {
     let seed = 7
     const rand = (k: number) => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % k }

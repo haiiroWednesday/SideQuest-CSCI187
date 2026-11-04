@@ -32,13 +32,15 @@ getById(id: string): Promise<CampusEvent | null>
 `app/src/view/useEventCatalog.ts` loads the current catalog snapshot, ignores obsolete responses and exposes refresh. `controller/presentScreens.ts` prepares Discover/Schedule text and flags from Model rules. The supplied Discover and Schedule views are integrated into the production app. Do not label test fixtures or browser fallback as a live campus-wide feed.
 
 ## S3 — Full-fit availability search (R3)
-`App.tsx` asks `findEvents` in `controller/findEvents.ts` to search upcoming catalog events. The reusable full-fit rule in `model/events.ts` accepts exactly:
+`App.tsx` obtains its screen from `controller/presentScreens.ts`, which calls `findEvents` in `controller/findEvents.ts` to search upcoming catalog events. The reusable full-fit rule in `model/events.ts` accepts exactly:
 - `event.date === available.date`
 - `available.start <= event.start`
 - `event.end <= available.end`
 - both event and free-time intervals valid, with `start < end`.
 
 Only full scheduled events match. Search rejects invalid dates and reversed/zero-length windows. The presentation helper `presentation/formatEvents.ts` displays `M/D/YYYY` and `h:mmam/pm` without changing stored data.
+
+Blank inputs mean unfiltered browsing. A partial window keeps the upcoming catalog visible and explains that the date and both times are needed before filtering. A complete window with no matches offers Show all events, clearing the filter without changing catalog data or plans.
 
 ## S4 — Personal Schedule (R4)
 - `model/schedule.ts`: `sidequest.planned-event-ids.v1` stores **only IDs** in the current browser. Model checks IDs, sorts resolved event details, calculates overlaps and enforces the provisional 100-plan limit.
@@ -58,8 +60,8 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 
 | Component or class | Responsibilities | Collaborators |
 | --- | --- | --- |
-| **View:** App, PostEventForm, PersonalSchedule, useCatalogEvents | Render forms/cards, collect input, present Controller feedback, manage temporary display state | **Controllers only** for domain data/actions |
-| **Controller:** postEvent, findEvents, personalSchedule | Coordinate commands and reads, map Model errors to user feedback, keep View insulated from persistence | View and Model |
+| **View:** App, PostEventForm, DiscoverView, ScheduleTrailView, useEventCatalog, useSharedSchedule | Render forms/cards, collect input, present Controller feedback, manage temporary display state | **Controllers only** for domain data/actions |
+| **Controller:** postEvent, findEvents, personalSchedule, sharedSchedule, presentScreens | Coordinate commands and reads, prepare screen text, map Model errors to user feedback, keep View insulated from persistence | View and Model |
 | **Model:** EventCatalog, Event, Schedule, table adapters | Domain validation, full-fit calculation, data and ID ownership, persistence, ordering and overlap rules | Controllers and repository adapters |
 
 **Current conceptual design:** [P4 class/CRC](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit). The team reports that Professor Kandel subsequently confirmed the existing P4 diagram is acceptable. Do not silently change its aggregation/composition symbols based on older speculative review notes.
