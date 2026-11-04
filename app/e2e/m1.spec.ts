@@ -1,43 +1,70 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
-// A real Chromium smoke test of all four M1 requirements.
-// Playwright drives real Chromium rather than a simulated DOM. This
-// confirms the complete create, search, refresh and delete workflow.
-test('post, find, validate, reload, and remove an event', async ({ page }) => {
+// Real Chromium smoke tests. Playwright drives a real browser rather than a
+// simulated DOM. CI has no Supabase settings, so posting uses the labeled
+// browser-only fallback catalog.
+
+// This function runs inside the browser and chooses a future date.
+// A fixed event date would eventually become the past and fail CI.
+const futureDate = (page: Page) => page.evaluate(() => {
+  const d = new Date()
+  d.setDate(d.getDate() + 7)
+  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
+})
+
+test('post an event through the catalog; it is readable again after a reload', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByText('No events yet. Create your first event above!')).toBeVisible()
+  await expect(page.getByTestId('catalog-not-shared')).toBeVisible()
+  const posted = page.getByRole('region', { name: /posted events/i })
+  await expect(posted.getByText('No upcoming events posted yet.')).toBeVisible()
 
-  await page.getByPlaceholder('e.g. Art Workshop').fill('Art Workshop')
-  await page.getByPlaceholder('e.g. Student Center').fill('Arts Building')
-  // This function runs inside the browser and chooses a future date.
-  // A fixed event date would eventually become the past and fail CI.
-  const eventDate = await page.evaluate(() => {
-    const d = new Date()
-    d.setDate(d.getDate() + 7)
-    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
-  })
-  await page.locator('.event-form input[type="date"]').fill(eventDate)
-  await page.getByPlaceholder('What makes this event special?').fill('Paint with friends')
-  await page.locator('.event-form input[type="time"]').nth(0).fill('14:30')
-  await page.locator('.event-form input[type="time"]').nth(1).fill('15:30')
-  await page.getByRole('button', { name: '+ Create event' }).click()
+  const form = page.locator('.event-form')
+  // An invalid post shows a field-level error and stores nothing.
+  await form.getByLabel('EVENT NAME').fill('Art Workshop')
+  await form.getByRole('button', { name: '+ Post event' }).click()
+  await expect(page.getByText('Please enter the host name.')).toBeVisible()
 
-  await expect(page.getByRole('status')).toContainText('Created “Art Workshop”')
-  await expect(page.getByRole('heading', { name: 'Art Workshop' })).toBeVisible()
-  await expect(page.getByText('1 total')).toBeVisible()
-  await expect(page.getByText('Paint with friends').first()).toBeVisible()
+  await form.getByLabel('HOST NAME').fill('SCU Art Club')
+  await form.getByLabel('DESCRIPTION').fill('Paint with friends')
+  await form.getByLabel('LOCATION').fill('Arts Building')
+  await form.getByLabel('DATE').fill(await futureDate(page))
+  await form.getByLabel('START').fill('14:30')
+  await form.getByLabel('END').fill('15:30')
+  await form.getByRole('button', { name: '+ Post event' }).click()
+
+  await expect(page.getByRole('status')).toContainText('Posted “Art Workshop”')
+  await expect(page.getByRole('status')).toContainText('Event ID:')
+  await expect(posted.getByText('Art Workshop')).toBeVisible()
+
+  // A real reload: the event must come back from catalog storage.
+  await page.reload()
+  await expect(posted.getByText('Art Workshop')).toBeVisible()
+  await expect(posted.getByText('Hosted by SCU Art Club')).toBeVisible()
+})
+
+test('M1 list: find a stored event by free time, reload, and remove it', async ({ page }) => {
+  await page.goto('/')
+  const date = await futureDate(page)
+  // Seed the legacy M1 list the way the M1 form used to save it.
+  await page.evaluate((eventDate) => {
+    localStorage.setItem('sidequest.created-events.v1', JSON.stringify([{
+      id: 'm1-art', title: 'Art Workshop', description: 'Paint with friends', location: 'Arts Building',
+      date: eventDate, start: '14:30', end: '15:30',
+    }]))
+  }, date)
+  await page.reload()
+
+  await page.getByLabel('Free on date').fill(date)
+  await expect(page.getByText('✓ Fits')).toBeVisible()
   await expect(page.getByText('2:30pm – 3:30pm')).toBeVisible()
+  await expect(page.getByText('1 total')).toBeVisible()
 
   // A valid window includes the event; an invalid interval shows feedback.
-  await expect(page.getByText('✓ Fits')).toBeVisible()
   await page.getByLabel('Free until').fill('14:00')
   await expect(page.getByRole('alert')).toContainText('Please choose an end time later')
   await page.getByLabel('Free until').fill('16:00')
   await expect(page.getByRole('heading', { name: 'Art Workshop' })).toBeVisible()
 
-  // A real reload exercises the browser persistence path, not just the model.
-  await page.reload()
-  await expect(page.getByRole('button', { name: 'Remove Art Workshop' })).toBeVisible()
   await page.getByRole('button', { name: 'Remove Art Workshop' }).click()
   await expect(page.getByRole('status')).toContainText('Event removed.')
   await page.reload()
