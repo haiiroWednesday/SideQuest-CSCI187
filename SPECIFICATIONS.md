@@ -6,7 +6,7 @@
 - React + TypeScript + Vite UI, Node.js **22.12+** (24 recommended).
 - Vitest tests, React Testing Library, and Playwright Chromium browser tests.
 - GitHub Actions runs locked package installation (`npm ci`), unit tests, TypeScript/Vite build and Chromium tests.
-- Start in `app/` with `npm ci && npm run dev`; verify with `npm test`, `npm run build` and `npm run test:e2e`.
+- Start in `app/` with `npm ci && npm run dev`; verify with `npm test`, `npm run build` and `npm run test:e2e` **after stopping any existing development server**. Playwright never reuses a potentially live-connected server.
 
 ## S1 — Shared event data and posting (R1)
 **Current public M2 event contract**: `CampusEvent` with `id`, `title`, `hostName`, `description`, `location`, `date`, `start`, `end`. IDs are store-generated UUIDs; date is `YYYY-MM-DD` and start/end `HH:mm` Santa Clara wall time. The event must begin before it ends on the same day.
@@ -32,13 +32,13 @@ getById(id: string): Promise<CampusEvent | null>
 `app/src/view/useEventCatalog.ts` loads the current catalog snapshot, ignores obsolete responses and exposes refresh. `controller/presentScreens.ts` prepares Discover/Schedule text and flags from Model rules. The supplied Discover and Schedule views are integrated into the production app. Do not label test fixtures or browser fallback as a live campus-wide feed.
 
 ## S3 — Full-fit availability search (R3)
-`App.tsx` asks `findEvents` in `controller/findEvents.ts` to search upcoming catalog events. The reusable full-fit rule in `model/events.ts` accepts exactly:
+`App.tsx` obtains its Discover screen from `controller/presentScreens.ts`, which calls `findEvents` in `controller/findEvents.ts` to search upcoming catalog events. The reusable full-fit rule in `model/events.ts` accepts exactly:
 - `event.date === available.date`
 - `available.start <= event.start`
 - `event.end <= available.end`
 - both event and free-time intervals valid, with `start < end`.
 
-Only full scheduled events match. Search rejects invalid dates and reversed/zero-length windows. The presentation helper `presentation/formatEvents.ts` displays `M/D/YYYY` and `h:mmam/pm` without changing stored data.
+Only full scheduled events match. Search rejects invalid dates and reversed/zero-length windows. Blank inputs browse all upcoming events; incomplete inputs explain that no filter is active. A complete no-match window offers **Show all events**, which clears the filter without changing plans or catalog data. The presentation helper `presentation/formatEvents.ts` displays `M/D/YYYY` and `h:mmam/pm` without changing stored data.
 
 ## S4 — Personal Schedule (R4)
 - `model/schedule.ts`: `sidequest.planned-event-ids.v1` stores **only IDs** in the current browser. Model checks IDs, sorts resolved event details, calculates overlaps and enforces the provisional 100-plan limit.
@@ -58,8 +58,8 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 
 | Component or class | Responsibilities | Collaborators |
 | --- | --- | --- |
-| **View:** App, PostEventForm, PersonalSchedule, useCatalogEvents | Render forms/cards, collect input, present Controller feedback, manage temporary display state | **Controllers only** for domain data/actions |
-| **Controller:** postEvent, findEvents, personalSchedule | Coordinate commands and reads, map Model errors to user feedback, keep View insulated from persistence | View and Model |
+| **View:** App, PostEventForm, DiscoverView, ScheduleTrailView, useEventCatalog, useSharedSchedule | Render forms/cards, collect input, present Controller feedback, manage temporary display state | **Controllers only** for domain data/actions |
+| **Controller:** postEvent, findEvents, personalSchedule, sharedSchedule, presentScreens | Coordinate commands and reads, prepare screen text, map Model errors to user feedback, keep View insulated from persistence | View and Model |
 | **Model:** EventCatalog, Event, Schedule, table adapters | Domain validation, full-fit calculation, data and ID ownership, persistence, ordering and overlap rules | Controllers and repository adapters |
 
 **Current conceptual design:** [P4 class/CRC](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit). The team reports that Professor Kandel subsequently confirmed the existing P4 diagram is acceptable. Do not silently change its aggregation/composition symbols based on older speculative review notes.

@@ -60,4 +60,4 @@
 
 **Default:** If a prompt conflicts with the agreed implementation contract or another teammate's file ownership, stop and explain the conflict. Do not invent features.
 
-**P4 is professor-approved and resolved.** Keep the accepted diagram unchanged. Current M2 implementation diagrams are in `docs/diagrams/M2_IMPLEMENTATION.drawio`; they supplement the accepted P4 without changing it.
+**P4 is professor-approved and resolved.** Keep the accepted diagram unchanged. Current M2 source diagrams are [CRC](docs/diagrams/M2_CRC.drawio) and [ER](docs/diagrams/M2_STORAGE_ER.drawio), with a [combined file](docs/diagrams/M2_IMPLEMENTATION.drawio). Use the current [README](README.md), [specifications](SPECIFICATIONS.md) and [M2 verification](docs/M2_INTEGRATION_VERIFICATION.md), not historical M1 walkthroughs. Do not reuse a local server when running Playwright: browser tests POST events and a developer server may have real Supabase credentials.
