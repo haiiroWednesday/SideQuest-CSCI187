@@ -82,6 +82,78 @@ Our [React GitHub Actions workflow](.github/workflows/react-ci.yml) runs equival
 
 **The team does not need Cline—or any paid agent—to complete M2.** Git, React/TypeScript, VS Code (or another editor), meaningful tests, continuous integration, and peer-reviewed PRs are the core development workflow. Agents help with implementation and reviews; humans must understand, test and approve their contributions. The [MVP Playbook](docs/MVP_TEAM_PLAYBOOK.md) is authoritative for the Event type, database strategy, roles and scope.
 
+### Use the team's Claude Console / Playground API credits in Cline or OpenCode (step by step)
+
+**Who this is for:** SideQuest teammates who have explicit permission to spend the project owner's Claude Console **API** credits. This is a two-stage setup: the owner grants access in **Claude Console** and sets a cost limit; every teammate independently configures their coding agent. **The Playground is a web interface; the credits live on the Console organization's API billing balance.** Merely using a personal Claude account, Cline billing, Cursor subscription or ChatGPT account does not draw from that balance.
+
+**Important credit distinction:** If these are **monthly promotional API credits bundled with Claude Max/Ultra/Team**, they cover Claude API requests (including Anthropic BYOK requests through Cline/OpenCode) and Console Playground, but **do not cover interactive Claude Code** in its terminal, IDE, desktop or web interfaces. Purchased prepaid API credits follow different rules. Confirm exactly which credit balance is available under [Console Billing](https://platform.claude.com/settings/billing) **before** enabling teammates. Included monthly credits expire at the billing-cycle boundary, do not roll over, and are shared across the linked organization.
+
+#### A. Owner / Console administrator: grant the project access
+
+1. **Confirm the correct organization and balance.** Sign in at [Claude Console](https://platform.claude.com/). Open [Billing](https://platform.claude.com/settings/billing) and record the available promotional/prepaid balance and expiry. If the intended monthly API credits have not been claimed yet, the eligible plan subscriber or Team owner can use their **claude.ai billing settings → API credits → Link organization** to select the intended Console organization. Avoid linking the wrong organization: changing it may require Anthropic support. If the Console account is an **individual account**, organization collaboration may need to be set up first.
+2. **Check that further spending is controlled.** On Billing, inspect any prepaid balance, payment method and auto-reload/auto-purchase settings. Included credits are spent first, then purchased credits can be used; auto-reload can purchase more. If this is meant to be credit-only access, disable unwanted automatic purchases where your account permits, check whether an invoice arrangement applies, and set a conservative workspace spend limit. Do not assume the initial credit amount is still available.
+3. **Create a separate SideQuest workspace.** Open [Workspaces](https://platform.claude.com/settings/workspaces) → **Create workspace**, name it `SideQuest-CSCI187`, and save. A dedicated workspace makes the project's API keys and usage easier to distinguish from personal experiments.
+4. **Set an actual spending cap, plus alerts.** On Workspaces, select the new workspace → **Spend limits**. Set a monthly limit the owner is comfortable covering and configure the available spending alerts. The workspace limit is subject to the organization's broader limit; it cannot be larger. If necessary, use **Rate limits** to limit requests/tokens per minute. A shared workspace cap applies across all teammates using its API keys; it is **not a separate personal allowance for every student**.
+5. **Invite teammates into the Console organization first.** Open [Members](https://platform.claude.com/settings/members) → **+ Invite**. Enter their individual email addresses, choose the least-privileged organization role that permits API-key creation (normally **Limited Developer**, if available), and send invitations. Teammates must accept their emailed invitations. Do **not** make them organization Admins or Billing admins just to use the API. If the Invite option is absent, the account may lack organization Admin permission or organization support.
+6. **Add accepted members to the SideQuest workspace.** On Members, choose **Add to workspace** → select `SideQuest-CSCI187` → select the teammate → assign **Workspace Limited Developer** (or the lowest available role with API-key permissions) → confirm. A Workspace User can use the Playground but **cannot create API keys**. An organization invite alone may not grant access to a separate workspace.
+7. **Confirm scope before sending teammates to the next section.** Verify the correct names appear in the workspace member list and that the workspace spend limit is configured. Send teammates the **link to this guide**, not a screenshot or copy of anyone's secret key. Only the owner/admin should adjust membership, billing or limits.
+
+Official procedures: [Console invitations](https://support.claude.com/en/articles/13443764-invite-members-to-the-claude-console), [Workspaces, roles and limits](https://platform.claude.com/docs/en/manage-claude/workspaces), [Workspace key management](https://support.claude.com/en/articles/9796807-create-and-manage-workspaces-in-the-claude-console), [Monthly API-credit coverage](https://platform.claude.com/docs/en/about-claude/api-credits-for-subscribers).
+
+#### B. Every teammate: create a *personal* workspace API key
+
+1. Accept the Console invitation email and sign in to [Claude Console](https://platform.claude.com/). Select the organization's Console account if the account switcher lists multiple organizations. Confirm the `SideQuest-CSCI187` workspace appears.
+2. Open [API Keys](https://platform.claude.com/settings/keys). Use the **Workspace** dropdown to select `SideQuest-CSCI187` **before** creating the key; keys cannot be moved between workspaces afterward.
+3. Click **Create key**. Give it an identifiable, non-secret name, e.g. `sidequest-cline-<first-name>` or `sidequest-opencode-<first-name>`; select the available expiry/linked-account options appropriately. Confirm creation and copy the full API key **once**. Store it in a password manager or the coding agent's credential field, not in your repository.
+4. **Never share the key**, even with the owner, over Discord, email, group chat, PR comments, screenshots or a committed `.env`. Do not put this key in React client code, Supabase configuration, GitHub Actions or a public GitHub repository. Everyone should have a distinct key so a leaked key can be disabled without disrupting the others.
+5. If **Create key** is disabled, stop. Ask the owner to verify both your **organization role and workspace membership**. A Playground-only Workspace User role is insufficient for Cline/OpenCode API access.
+
+Official reference: [Create an API key](https://platform.claude.com/docs/en/get-api-key).
+
+#### C. Cline in VS Code: connect to the shared API-credit balance
+
+1. Install and open [VS Code](https://code.visualstudio.com/) and open the existing `SideQuest-CSCI187` repository folder. If you have no clone, follow **Clone and run** earlier in this guide. Keep uncommitted work safe.
+2. In VS Code press **Cmd+Shift+X** on Mac or **Ctrl+Shift+X** on Windows/Linux to open Extensions. Search for **Cline** and install the official Cline extension; open its sidebar panel.
+3. In the Cline panel click **Settings** (gear). Under **API Provider**, select **Anthropic** for **Bring Your Own Key (BYOK)**. Do **not** leave the provider as **Cline**, **ClinePass**, **OpenRouter**, or another account if you want the SideQuest Anthropic organization to pay for API requests.
+4. Paste **your own SideQuest workspace Anthropic API key** into the provider's **API Key** field. Pick a Claude model currently available to the organization's API account. You may use a lower-cost model for routine edits and reserve expensive models for demanding work. Save the settings.
+5. Start with a low-cost **read-only** request in Cline: `Read AGENTS.md and docs/MVP_TEAM_PLAYBOOK.md. Summarize only my assigned files and the relevant API contracts. Do not change files, execute commands, or create commits.` Confirm that Cline responds and that it is actually using the **Anthropic** API provider.
+6. Ask the owner to check usage for the **SideQuest workspace** under Claude Console Usage. Allow for reporting delay; one successful request does not prove the correct billing organization until the workspace usage is visible.
+7. Before granting edit/terminal actions, follow the feature-branch, test, review and explicit-permission workflow below. Keep manual approval for edits/commands; never enable broad unattended tool execution to save clicks.
+
+Current Cline documentation: [Install Cline](https://github.com/cline/cline/blob/main/docs/getting-started/installing-cline.mdx), [Authorize / choose BYOK provider](https://github.com/cline/cline/blob/main/docs/getting-started/authorizing-with-cline.mdx).
+
+#### D. OpenCode alternative: same workspace credits, different agent
+
+1. Install [OpenCode](https://opencode.ai/docs/) using the official instructions for your operating system. Open the SideQuest repository in a terminal and run `opencode`.
+2. In OpenCode run `/connect`; select **Anthropic** (API-key connection) and paste **your own SideQuest workspace Anthropic API key**, created in section B. Avoid authenticating with a different provider or billing service if the goal is to use the team's Claude Console credits.
+3. Run `/models` and select a Claude model offered by the **Anthropic** provider. Start in a read-only / planning workflow with the same initial prompt in section C.
+4. Ask the owner to verify that the SideQuest **workspace** shows API usage, then continue with your individual Git branch. OpenCode stores provider credentials in a user-local credential store; keep that file private and out of Git.
+
+Official reference: [OpenCode provider setup](https://opencode.ai/docs/providers/).
+
+#### E. Verify costs, permissions and branch safety **before** real implementation
+
+- **Owner confirms:** the credit balance is in the intended Console organization; the SideQuest workspace has a spend limit/alerts; every teammate is a member with a separate scoped key; automatic purchases have been checked; the Usage view attributes the test request to the right workspace.
+- **Teammate confirms:** the Cline/OpenCode provider is **Anthropic BYOK** using their own `SideQuest-CSCI187` workspace key; the model and read-only prompt worked; they are on their **own feature branch**; `git status` shows no accidentally committed secrets.
+- **Team agrees:** Claude Console API credits are organization-wide, not magically unlimited or individually allotted. Models, repeated full-repo scans and independent agents can spend credits quickly. Keep initial requests small.
+- **Never ask an agent to manage billing, memberships or keys.** Those changes belong to the owner/admin. The agent may inspect project source code only with appropriate local permissions, and writes/commits/PRs/merges require the explicit human permissions in `AGENTS.md`.
+- **When done:** the owner may remove a teammate from the workspace and disable their named API key under API Keys. Remember that workspace keys are independent of the human who created them: **disable/revoke the key explicitly** when access must end.
+
+#### F. Troubleshooting checklist
+
+| Symptom | Likely cause | Check / repair |
+| --- | --- | --- |
+| Teammate can open Playground but not create an API key | Workspace User, not Limited Developer; or missing workspace membership | Owner checks organization role and Members → Add to workspace; choose key-capable workspace role. |
+| Cline prompts for payment or uses the wrong credits | Cline/ClinePass or third-party provider selected instead of Anthropic BYOK | Cline Settings → API Provider **Anthropic**, then the correct SideQuest API key. |
+| Key returns 401 or authentication error | Wrong organization/key, revoked/expired key, accidental whitespace | Select correct Console organization/workspace, make a new scoped key if necessary, and update Cline locally. Never paste the key in a bug report. |
+| Key returns 403 / cannot access model | Workspace permission or model entitlement restriction | Check organization/workspace roles and select a model shown as available; ask owner/admin. |
+| Request fails due to quota/rate limit | Workspace cap, organizational limit, model rate limit or depleted API credits | Check workspace Spend limits, Rate limits and Console Billing; do **not** bypass the limit using a personal paid account without consent. |
+| Successful response but no usage visible immediately | Reporting delay, wrong account/workspace or provider | Recheck Cline's provider, key workspace and Usage filters; wait for reporting before concluding the spend is elsewhere. |
+| Claude Code subscription seems unaffected | Interactive Claude Code is a separate credit system for promotional API credits | Use **Cline with Anthropic BYOK** or **OpenCode with Anthropic API key** for the shared Console-credit workflow. |
+| Someone accidentally included a key in a commit or chat | Secret disclosure | Stop using that key; disable/revoke it in Console immediately, create a replacement, and coordinate repository/history cleanup with a human maintainer. |
+
+**Documentation scope:** this procedure describes account and billing access; it does not grant teammate access automatically, reveal credits or authorize spending. The owner must complete section A, every teammate completes B and C or D, and the owner verifies section E before substantial use.
+
 ### The vocabulary
 
 | Thing | What it is | What it is **not** |
@@ -169,9 +241,9 @@ flowchart TB
 
 ### Setup C — Claude Code, Codex, or Cline
 
-- **Claude Code:** install using [Anthropic's guide](https://docs.anthropic.com/en/docs/claude-code/getting-started); authenticate with your eligible Claude account or authorized Console billing; create project specialists in `.claude/agents/` following the [current subagent instructions](https://claude.com/resources/articles/subagents-in-claude-code). The helper-agent creation UI has changed over time, so don't depend on an old wizard.
+- **Claude Code:** install using [Anthropic's guide](https://docs.anthropic.com/en/docs/claude-code/getting-started); authenticate with your eligible Claude account or authorized Console billing; create project specialists in `.claude/agents/` following the [current subagent instructions](https://claude.com/resources/articles/subagents-in-claude-code). **Important:** interactive Claude Code sessions are excluded from monthly promotional Claude Platform API credits; for those credits, use Cline/OpenCode with a workspace-scoped Anthropic API key as documented above. Purchased credits have different conditions.
 - **Codex:** use an eligible ChatGPT sign-in, its IDE/desktop tool, or [CLI](https://help.openai.com/en/articles/11369540-using-codex-with-your-chatgpt-plan); run review sessions in independent worktrees and confirm they read the current branch's changes. ChatGPT sign-in does not imply your OpenAI **API** account is billed.
-- **Cline:** keep using it if installed and comfortable; the **gear inside the Cline panel** controls provider credentials. It supports Plan/Act but switching mode/model is not a real team. For true coordinated teams see [Cline CLI/Kanban](https://github.com/cline/cline/blob/main/docs/cli/agent-teams.mdx).
+- **Cline:** keep using it if installed and comfortable. For the **team's Claude API credits**, follow sections A–C above; the **gear inside the Cline panel → API Provider → Anthropic** selects Anthropic BYOK, which is separate from Cline/ClinePass billing. Changing modes/models alone does not create a coordinated team. For true coordinated teams see [Cline CLI/Kanban](https://github.com/cline/cline/blob/main/docs/cli/agent-teams.mdx).
 
 ### Suggested SideQuest agent roles and ownership
 
