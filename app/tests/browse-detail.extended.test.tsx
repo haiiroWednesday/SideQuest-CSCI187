@@ -149,7 +149,8 @@ describe('useBrowseDetail: asynchronous selection lifecycle', () => {
 
   it('ignores a response that resolves after the selecting component unmounts', async () => {
     const pending = deferred<CampusEvent | null>()
-    const { result, unmount } = renderHook(() => useBrowseDetail(port(() => pending.promise)))
+    const stableCatalog = port(() => pending.promise)
+    const { result, unmount } = renderHook(() => useBrowseDetail(stableCatalog))
     act(() => { result.current.open(FIRST) })
     unmount()
     await act(async () => { pending.resolve(sample) })
