@@ -1,5 +1,6 @@
 // CONTROLLER: the View requests every plan read/change here, never in the Model.
 import { isCampusEvent, type CampusEvent } from '../model/events'
+import type { EventCatalogPort } from '../model/eventCatalog'
 import {
   addPlannedId, readPlannedIds, removePlannedId, resolvePlannedEvents,
   savePlannedIds, scheduleConflicts, PLANNED_IDS_KEY,
@@ -21,10 +22,28 @@ export type ScheduleResult = {
   warning: string | null
 }
 
-// This is a local-only catalog snapshot; plans store no event copies.
-// Future shared integration must resolve every saved ID with async getById(),
-// distinguish loading/errors from null, and include older events. See the
-// EventCatalogPort handoff in docs/SEMBIYAN_SEARCH_SCHEDULE.md.
+// Look up saved IDs even when events no longer appear in the upcoming list.
+// A failed request is not evidence that the event was removed.
+export async function loadPlannedEvents(catalog: EventCatalogPort, ids: readonly string[]) {
+  const lookups = await Promise.all(ids.map(async id => {
+    try {
+      const event = await catalog.getById(id)
+      if (event !== null && (!isCampusEvent(event) || event.id !== id)) {
+        return { id, event: null, failed: true }
+      }
+      return { id, event, failed: false }
+    }
+    catch { return { id, event: null, failed: true } }
+  }))
+  return {
+    events: lookups.flatMap(({ event }) => event ? [event] : []),
+    missingIds: lookups.filter(({ event, failed }) => !event && !failed).map(({ id }) => id),
+    failedIds: lookups.filter(({ failed }) => failed).map(({ id }) => id),
+  }
+}
+
+// Plan writes stay synchronous and local. This snapshot is only used to
+// present details and check overlaps; no event objects are persisted in plans.
 export function createScheduleController(
   catalog: readonly CampusEvent[],
   getStorage: () => PlanStorage = () => window.localStorage,
@@ -52,6 +71,7 @@ export function createScheduleController(
   const readError = 'Some saved plans could not be read. They have not been overwritten.'
   const writeError = 'Your browser could not save this schedule change. Your saved plans have not changed. Free browser storage or allow storage, then try again.'
   return {
+    present,
     read(): ScheduleResult {
       const { state } = current()
       return result(state, state.blocked ? readError : null)

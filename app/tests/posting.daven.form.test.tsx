@@ -3,11 +3,11 @@
 // The form talks only to an EventCatalogPort. Here that is the in-memory test
 // fixture or the browser-only fallback. Supabase is never contacted.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../src/App'
 import { PostEventForm } from '../src/view/PostEventForm'
-import { createEventCatalog, EventCatalogError, type EventCatalogPort, type EventRow } from '../src/model/eventCatalog'
+import { createEventCatalog, EventCatalogError, type CampusEvent, type EventCatalogPort, type EventRow } from '../src/model/eventCatalog'
 import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 import { LOCAL_CATALOG_KEY } from '../src/model/browserEventTable'
 import { STORAGE_KEY as M1_STORAGE_KEY } from '../src/model/events'
@@ -45,6 +45,23 @@ beforeEach(() => window.localStorage.clear())
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 describe('PostEventForm', () => {
+  it('keeps a newly posted match when the initial catalog read finishes late', async () => {
+    const user = userEvent.setup()
+    const catalog = createEventCatalog(createInMemoryEventTable())
+    let finishInitialRead: (events: CampusEvent[]) => void = () => {}
+    const initialRead = new Promise<CampusEvent[]>(resolve => { finishInitialRead = resolve })
+    vi.spyOn(catalog, 'listUpcoming').mockImplementationOnce(() => initialRead)
+    render(<App catalog={{ catalog, shared: true }} />)
+    fireEvent.change(screen.getByLabelText('Free on date'), { target: { value: futureDate() } })
+
+    await fillAndPost(user)
+    await screen.findByRole('heading', { name: 'Photo Walk' })
+    await act(async () => { finishInitialRead([]) })
+
+    expect(screen.getByRole('heading', { name: 'Photo Walk' })).toBeTruthy()
+    expect(postedList().getByText('Photo Walk')).toBeTruthy()
+  })
+
   it('posts to the catalog, shows the new ID, and lists the event with its host', async () => {
     const user = userEvent.setup()
     const rows = new Map<string, EventRow>()

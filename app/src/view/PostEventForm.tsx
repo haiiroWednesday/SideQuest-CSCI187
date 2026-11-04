@@ -2,17 +2,23 @@
 // Rules live in controller/postEvent.ts, and storage lives behind the
 // EventCatalogPort. This component only holds what the user is typing and
 // what came back.
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import {
-  loadPostedEvents, postEvent,
+  postEvent,
   type CampusEvent, type CatalogFieldErrors, type ConnectedCatalog, type EventDraft,
 } from '../controller/postEvent'
 import { displayDate, displayTime, initialEventWindow, todayLocal } from '../controller/findEvents'
 import { CATALOG_LIMITS } from '../model/eventCatalog'
+import { useCatalogEvents, type CatalogEvents } from './useCatalogEvents'
 
-type Props = { connection: ConnectedCatalog; now?: () => Date }
+type Props = {
+  connection: ConnectedCatalog
+  now?: () => Date
+  catalogEvents?: CatalogEvents
+  renderEventActions?: (event: CampusEvent) => ReactNode
+}
 
-export function PostEventForm({ connection, now = () => new Date() }: Props) {
+export function PostEventForm({ connection, now = () => new Date(), catalogEvents, renderEventActions }: Props) {
   const { catalog, shared } = connection
   const [draft, setDraft] = useState<EventDraft>(() => ({
     title: '', hostName: '', description: '', location: '', ...initialEventWindow(now()),
@@ -21,23 +27,8 @@ export function PostEventForm({ connection, now = () => new Date() }: Props) {
   const [formError, setFormError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [posted, setPosted] = useState<{ events: CampusEvent[]; error: string | null; loading: boolean }>(
-    { events: [], error: null, loading: true },
-  )
-
-  const refresh = useCallback(async () => {
-    setPosted(current => ({ ...current, loading: true }))
-    const result = await loadPostedEvents(catalog)
-    setPosted({ ...result, loading: false })
-  }, [catalog])
-
-  // Read the catalog when the page opens. This is what makes a posted event
-  // visible again after a refresh.
-  useEffect(() => {
-    let active = true
-    loadPostedEvents(catalog).then(result => { if (active) setPosted({ ...result, loading: false }) })
-    return () => { active = false }
-  }, [catalog])
+  const standalone = useCatalogEvents(catalog, catalogEvents === undefined)
+  const posted = catalogEvents ?? standalone
 
   const update = (field: keyof EventDraft, value: string) => {
     setDraft(current => ({ ...current, [field]: value }))
@@ -67,7 +58,7 @@ export function PostEventForm({ connection, now = () => new Date() }: Props) {
     setNotice(result.message)
     // Keep host name, date and times to make posting a similar event quicker.
     setDraft(current => ({ ...current, title: '', description: '', location: '' }))
-    await refresh()
+    await posted.refresh()
   }
 
   // Connect an input to its error message for screen readers.
@@ -136,9 +127,11 @@ export function PostEventForm({ connection, now = () => new Date() }: Props) {
 
       <section className="posted-events" aria-labelledby="posted-heading">
         <h3 id="posted-heading">Posted events <small>{shared ? 'shared catalog' : 'this browser only'}</small></h3>
+        {!posted.error && <button type="button" className="undo-button" disabled={posted.loading}
+          onClick={posted.refresh}>Refresh events</button>}
         {posted.loading && posted.events.length === 0 ? <p className="library-empty">Loading posted events…</p>
           : posted.error ? <p className="error" role="alert">{posted.error}
-              <button type="button" className="undo-button" onClick={refresh}>Try again</button></p>
+              <button type="button" className="undo-button" onClick={posted.refresh}>Try again</button></p>
           : posted.events.length === 0 ? <p className="library-empty">No upcoming events posted yet.</p>
           : <ul className="saved-list">
               {posted.events.map(item => (
@@ -148,6 +141,7 @@ export function PostEventForm({ connection, now = () => new Date() }: Props) {
                     <span>Hosted by {item.hostName}</span>
                     <span>{displayDate(item.date)} · {displayTime(item.start)}–{displayTime(item.end)} · {item.location}</span>
                   </div>
+                  {renderEventActions?.(item)}
                 </li>
               ))}
             </ul>}

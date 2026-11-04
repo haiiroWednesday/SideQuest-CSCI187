@@ -31,7 +31,7 @@ contract.
 After starting the app, create a future event, enter a free-time window that
 contains its entire duration, choose **Plan to attend**, and open **My Schedule**.
 Refresh to check the saved plan, then choose **Remove from plans**. The event
-remains in **Your created events**, which contains events you posted locally;
+remains in **Posted events**, which shows upcoming catalog events;
 **My Schedule** contains only events you chose to attend. Confirm that distinction
 in a short student walkthrough before calling the UI integrated.
 

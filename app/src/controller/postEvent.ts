@@ -15,6 +15,12 @@ export type { CampusEvent, CatalogFieldErrors, EventCatalogPort, EventDraft } fr
 // fallback, and the UI must say so on screen.
 export type ConnectedCatalog = { catalog: EventCatalogPort; shared: boolean }
 
+// Defer accessing localStorage until the adapter can catch a blocked read/write.
+export const browserCatalogStorage: CatalogStorage = {
+  getItem: key => window.localStorage.getItem(key),
+  setItem: (key, value) => window.localStorage.setItem(key, value),
+}
+
 export function localEventCatalog(storage: CatalogStorage): ConnectedCatalog {
   return { catalog: createEventCatalog(createBrowserEventTable(storage)), shared: false }
 }
