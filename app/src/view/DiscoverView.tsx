@@ -116,16 +116,28 @@ export function DayBubble({ dow, dayNumber, monthTag }: { dow: string; dayNumber
   )
 }
 
+export type SelectedDetailState =
+  | { id: string; status: 'loading' }
+  | { id: string; status: 'missing' }
+  | { id: string; status: 'error'; message: string }
+  | { id: string; status: 'ready'; stub: StubModel }
+
 export type DiscoverViewProps = {
   screen: DiscoverScreen
   onRetry?: () => void
+  detail?: SelectedDetailState | null
+  onSelectEvent?: (id: string) => void
+  onRetryDetail?: () => void
   onPlan?: (eventId: string) => void
   onFreeWindowChange?: (window: FreeWindow) => void
   routes?: SideQuestRoutes
   sourceNote?: string
 }
 
-export function DiscoverView({ screen, onRetry, onPlan, onFreeWindowChange, routes, sourceNote }: DiscoverViewProps) {
+export function DiscoverView({
+  screen, onRetry, onPlan, onFreeWindowChange, routes, sourceNote,
+  detail, onSelectEvent, onRetryDetail,
+}: DiscoverViewProps) {
   const [requestedId, setRequestedId] = useState<string | null>(null)
   // Phones show the ticket as a sheet; it opens when a stub is picked.
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -165,7 +177,11 @@ export function DiscoverView({ screen, onRetry, onPlan, onFreeWindowChange, rout
   const modal = phone && sheetOpen
   const stubs = screen.days.flatMap(day => day.events)
   // Keep the student's pick while it is still listed; otherwise fall back to the first event.
-  const selected = stubs.find(stub => stub.id === requestedId) ?? stubs[0] ?? null
+  const listedSelection = stubs.find(stub => stub.id === requestedId) ?? stubs[0] ?? null
+  // The ID must match the current selection: a late result for a previous
+  // ticket can never replace this ticket's details.
+  const verified = detail?.id === listedSelection?.id ? detail : null
+  const selected = verified?.status === 'ready' ? verified.stub : listedSelection
   useEffect(() => {
     if (screen.status !== 'ready' || screen.count === 0) setSheetOpen(false)
   }, [screen.status, screen.count])
@@ -248,7 +264,12 @@ export function DiscoverView({ screen, onRetry, onPlan, onFreeWindowChange, rout
                             stub={stub}
                             selected={selected?.id === stub.id}
                             dim={stub.fit === 'outside'}
-                            onSelect={() => { trigger.current = document.activeElement as HTMLElement; setRequestedId(stub.id); setSheetOpen(true) }}
+                            onSelect={() => {
+                              trigger.current = document.activeElement as HTMLElement
+                              setRequestedId(stub.id)
+                              setSheetOpen(true)
+                              onSelectEvent?.(stub.id)
+                            }}
                           >
                             {stub.fit === 'fits' && <span className="sq-pill sq-pill-fit">Fits your window</span>}
                             {stub.planned && <span className="sq-pill">In My Schedule</span>}
@@ -268,6 +289,24 @@ export function DiscoverView({ screen, onRetry, onPlan, onFreeWindowChange, rout
             {selected ? (
               <div className="sq-sticker-card" key={selected.id}>
                 <button type="button" className="sq-sheet-close" aria-label="Close details" onClick={closeSheet}>×</button>
+                {verified?.status === 'loading' ? (
+                  <div className="sq-detail-verification" role="status">
+                    <h2 id="sq-detail-title">{selected.title}</h2>
+                    <p>Checking the latest event details…</p>
+                  </div>
+                ) : verified?.status === 'missing' ? (
+                  <div className="sq-detail-verification" role="status">
+                    <h2 id="sq-detail-title">{selected.title}</h2>
+                    <p>This event is no longer available in the public catalog.</p>
+                  </div>
+                ) : verified?.status === 'error' ? (
+                  <div className="sq-detail-verification" role="alert">
+                    <h2 id="sq-detail-title">{selected.title}</h2>
+                    <p>{verified.message}</p>
+                    {onRetryDetail && <button type="button" className="sq-text-button" onClick={onRetryDetail}>Retry event details</button>}
+                  </div>
+                ) : (
+                <>
                 {selected.live && <span className={`sq-nx sq-live-${selected.live.kind}`}>{selected.live.text}</span>}
                 <div className="sq-sticker-top">
                   <div className="sq-sticker-time">
@@ -292,6 +331,8 @@ export function DiscoverView({ screen, onRetry, onPlan, onFreeWindowChange, rout
                   <button className="sq-plan-button" type="button" disabled={selected.planned || screen.planningBlocked} onClick={() => onPlan(selected.id)}>
                     {selected.planned ? 'In My Schedule' : '+ Plan to attend'}
                   </button>
+                )}
+                </>
                 )}
               </div>
             ) : (
