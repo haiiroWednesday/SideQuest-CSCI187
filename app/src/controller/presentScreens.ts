@@ -57,6 +57,7 @@ export type FreeWindowModel = {
   active: boolean
   fitCount: number | null
   fitText: string | null
+  hint: string | null
   error: string | null
   canClear: boolean
 }
@@ -194,6 +195,8 @@ export function presentDiscover(input: {
       active: fitting !== null,
       fitCount,
       fitText: fitCount === null ? null : fitCount === 0 ? 'Nothing fits' : `${fitCount} fit`,
+      hint: !complete && Boolean(values.date || values.start || values.end)
+        ? 'Showing all upcoming events. Complete the date and both times to filter.' : null,
       error: search?.error ?? null,
       canClear: Boolean(values.date || values.start || values.end),
     }
