@@ -5,8 +5,9 @@ import { DiscoverView, SideQuestHeader, useDiscoverScreen } from './view/Discove
 import { ScheduleTrailView, useScheduleScreen } from './view/ScheduleTrailView'
 import { PostEventForm } from './view/PostEventForm'
 import { useEventCatalog } from './view/useEventCatalog'
+import { useBrowseDetail } from './view/useBrowseDetail'
 import { useSharedSchedule } from './view/useSharedSchedule'
-import type { FreeWindow } from './controller/presentScreens'
+import { presentBrowseDetail, type FreeWindow } from './controller/presentScreens'
 
 const routes = { discover: '#discover', schedule: '#schedule', post: '#post' }
 const pageFromHash = () => {
@@ -20,12 +21,19 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
   const [freeWindow, setFreeWindow] = useState<FreeWindow>({ date: '', start: '', end: '' })
   const events = useEventCatalog(connection.catalog)
   const plans = useSharedSchedule(connection.catalog)
+  const details = useBrowseDetail(connection.catalog)
   const discover = useDiscoverScreen({
     events: events.events, loading: events.loading, error: events.error,
     plannedIds: plans.schedule.ids, freeWindow,
     planningBlocked: plans.schedule.blocked || plans.loading,
     ...(now ? { now: now() } : {}),
   })
+  // Revalidate details when a student selects a ticket. The presenter
+  // converts confirmed catalog records into the same view model as the trail.
+  const selectedDetail = details.state?.status === 'ready'
+    ? { id: details.state.id, status: 'ready' as const,
+        stub: presentBrowseDetail(details.state.event, plans.schedule.ids, now?.()) }
+    : details.state
   const schedule = useScheduleScreen({
     ...plans.schedule, loading: plans.loading, unresolvedIds: plans.unresolvedIds,
   }, now?.())
@@ -68,6 +76,7 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
             {plans.schedule.capacityMessage && <p role="status">{plans.schedule.capacityMessage}</p>}
           </div>
           <DiscoverView screen={discover} routes={routes} sourceNote={sourceNote}
+            detail={selectedDetail} onSelectEvent={details.open} onRetryDetail={details.retry}
             onRetry={() => { void events.refresh() }}
             onPlan={id => { void plans.add(id) }} onFreeWindowChange={setFreeWindow} />
         </>
