@@ -1,0 +1,220 @@
+// MODEL: the shared public EventCatalog (M2 contract, owner: Daven).
+//
+// The types and the EventCatalogPort below copy the "Shared Event data
+// contract" in docs/MVP_TEAM_PLAYBOOK.md word for word. Browse, Schedule and
+// posting code should depend ONLY on EventCatalogPort, never on database
+// column names or on a specific adapter.
+//
+// ⚠️ Not the same as the M1 CampusEvent in ./events.ts. That older type has
+// no hostName, keeps description optional, and backs the browser-only
+// `sidequest.created-events.v1` list. The posting PR migrates the form and
+// tests to this contract; until then both types exist side by side.
+import { isValidDate, toMinutes } from './events'
+
+export type CampusEvent = {
+  id: string
+  title: string
+  hostName: string
+  description: string
+  location: string
+  date: string  // YYYY-MM-DD in America/Los_Angeles
+  start: string // HH:mm on date
+  end: string   // HH:mm on date, strictly after start
+}
+
+export type EventDraft = Omit<CampusEvent, 'id'>
+
+export interface EventCatalogPort {
+  create(draft: EventDraft): Promise<CampusEvent>
+  listUpcoming(): Promise<CampusEvent[]>
+  getById(id: string): Promise<CampusEvent | null>
+}
+
+// ---------------------------------------------------------------------------
+// Errors. Every port method returns a Promise, so a failure is a REJECTED
+// promise holding an EventCatalogError. `kind` lets the UI decide what to show:
+//   'invalid'     → the draft broke a rule; show `message` next to the form.
+//   'unavailable' → storage could not be reached; show a retry message.
+export type EventCatalogErrorKind = 'invalid' | 'unavailable'
+
+export class EventCatalogError extends Error {
+  readonly kind: EventCatalogErrorKind
+  constructor(kind: EventCatalogErrorKind, message: string, options?: { cause?: unknown }) {
+    super(message, options)
+    this.name = 'EventCatalogError'
+    this.kind = kind
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Field limits mirror the CHECK constraints in
+// supabase/migrations/20261103000000_create_events.sql, so the app rejects
+// the same drafts the database would, with a readable message.
+export const CATALOG_LIMITS = {
+  title: 120,
+  hostName: 120,
+  description: 2000,
+  location: 200,
+} as const
+
+const FIELD_LABELS: Record<keyof typeof CATALOG_LIMITS, string> = {
+  title: 'event title',
+  hostName: 'host name',
+  description: 'description',
+  location: 'location',
+}
+
+// Check a draft against the shared contract and return a trimmed copy.
+// These are storage rules that hold for every caller. Posting-form rules,
+// such as "not in the past", stay in the posting controller.
+export function validateCatalogDraft(draft: EventDraft): { draft: EventDraft; error: null } | { draft: null; error: string } {
+  const trimmed: EventDraft = {
+    title: String(draft.title ?? '').trim(),
+    hostName: String(draft.hostName ?? '').trim(),
+    description: String(draft.description ?? '').trim(),
+    location: String(draft.location ?? '').trim(),
+    date: draft.date,
+    start: draft.start,
+    end: draft.end,
+  }
+  for (const field of Object.keys(CATALOG_LIMITS) as (keyof typeof CATALOG_LIMITS)[]) {
+    if (!trimmed[field]) return { draft: null, error: `Please enter a ${FIELD_LABELS[field]}.` }
+    if (trimmed[field].length > CATALOG_LIMITS[field]) {
+      return { draft: null, error: `The ${FIELD_LABELS[field]} must be ${CATALOG_LIMITS[field]} characters or fewer.` }
+    }
+  }
+  if (!isValidDate(trimmed.date)) return { draft: null, error: 'Please choose a valid event date.' }
+  const start = toMinutes(trimmed.start)
+  const end = toMinutes(trimmed.end)
+  if (start === null || end === null || start >= end) {
+    return { draft: null, error: 'The event must end later than it starts, on the same day.' }
+  }
+  return { draft: trimmed, error: null }
+}
+
+// ---------------------------------------------------------------------------
+// Campus clock. The contract says dates/times are Santa Clara wall-clock
+// values, so "upcoming" is judged in America/Los_Angeles, not in UTC and not
+// in whatever timezone the visitor's laptop happens to use.
+export const CAMPUS_TIME_ZONE = 'America/Los_Angeles'
+
+export function campusNow(now: Date = new Date()): { date: string; time: string } {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: CAMPUS_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(now)
+  const get = (type: string) => parts.find(part => part.type === type)?.value ?? ''
+  return { date: `${get('year')}-${get('month')}-${get('day')}`, time: `${get('hour')}:${get('minute')}` }
+}
+
+// An event is upcoming until it ends. One that is still running counts too.
+export function isUpcoming(event: Pick<CampusEvent, 'date' | 'end'>, now: Date = new Date()): boolean {
+  const campus = campusNow(now)
+  return event.date > campus.date || (event.date === campus.date && event.end > campus.time)
+}
+
+// Predictable order: date, then start time, then ID. Ties still sort the same
+// way after a reload. YYYY-MM-DD and HH:mm strings sort correctly as text.
+export function compareEvents(a: CampusEvent, b: CampusEvent): number {
+  return a.date.localeCompare(b.date) || a.start.localeCompare(b.start) || a.id.localeCompare(b.id)
+}
+
+// ---------------------------------------------------------------------------
+// Storage boundary. An EventTable is the minimum a backing store must do.
+// It speaks database column names (snake_case) and the database assigns IDs,
+// as Postgres does with `default gen_random_uuid()`.
+//
+// Adapters:
+//   - supabaseEventTable.ts → the real shared catalog (Supabase Postgres)
+//   - inMemoryEventTable.ts → TEST FIXTURE ONLY, not shared persistence
+export type EventRow = {
+  id: string
+  title: string
+  host_name: string
+  description: string
+  location: string
+  event_date: string // YYYY-MM-DD
+  start_time: string // Postgres returns HH:mm:ss for `time` columns
+  end_time: string
+}
+
+export type NewEventRow = Omit<EventRow, 'id'>
+
+export interface EventTable {
+  insert(row: NewEventRow): Promise<EventRow>
+  // Rows whose event_date is on or after `date`. The catalog sorts them and
+  // drops events that already ended earlier today.
+  selectFromDate(date: string): Promise<EventRow[]>
+  selectById(id: string): Promise<EventRow | null>
+}
+
+// All camelCase ↔ snake_case translation happens in these two functions
+// and nowhere else. See playbook "Connecting React to the catalog", step 3.
+export function toEventRow(draft: EventDraft): NewEventRow {
+  return {
+    title: draft.title,
+    host_name: draft.hostName,
+    description: draft.description,
+    location: draft.location,
+    event_date: draft.date,
+    start_time: draft.start,
+    end_time: draft.end,
+  }
+}
+
+export function fromEventRow(row: EventRow): CampusEvent {
+  return {
+    id: String(row.id),
+    title: row.title,
+    hostName: row.host_name,
+    description: row.description,
+    location: row.location,
+    date: row.event_date,
+    // slice(0, 5) turns Postgres "14:00:00" into the contract's "14:00".
+    start: row.start_time.slice(0, 5),
+    end: row.end_time.slice(0, 5),
+  }
+}
+
+// Postgres stores IDs in a `uuid` column. A malformed ID (for example, a stale
+// value in someone's local Schedule) is simply "not found". It never reaches
+// the database, which would answer with a type error instead.
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+export function isCatalogId(id: string): boolean {
+  return UUID_PATTERN.test(id)
+}
+
+// ---------------------------------------------------------------------------
+// The one EventCatalog implementation. Every adapter shares the same
+// validation, mapping, ordering and error behavior.
+export function createEventCatalog(table: EventTable, clock: () => Date = () => new Date()): EventCatalogPort {
+  const unavailable = (action: string, cause: unknown) =>
+    new EventCatalogError('unavailable', `Could not ${action} right now. Please check your connection and try again.`, { cause })
+
+  return {
+    async create(draft) {
+      const result = validateCatalogDraft(draft)
+      if (result.error !== null) throw new EventCatalogError('invalid', result.error)
+      let row: EventRow
+      try { row = await table.insert(toEventRow(result.draft)) }
+      catch (cause) { throw unavailable('post this event', cause) }
+      return fromEventRow(row)
+    },
+
+    async listUpcoming() {
+      const now = clock()
+      let rows: EventRow[]
+      try { rows = await table.selectFromDate(campusNow(now).date) }
+      catch (cause) { throw unavailable('load events', cause) }
+      return rows.map(fromEventRow).filter(event => isUpcoming(event, now)).sort(compareEvents)
+    },
+
+    async getById(id) {
+      if (!isCatalogId(id)) return null
+      let row: EventRow | null
+      try { row = await table.selectById(id) }
+      catch (cause) { throw unavailable('load this event', cause) }
+      return row ? fromEventRow(row) : null
+    },
+  }
+}
