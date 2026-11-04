@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   findEvents, todayLocal, displayDate, displayTime,
   loadEventsChecked, persistEvents, removeEventWithReceipt, restoreRemovedEvent, isPastEvent,
-  type CampusEvent, type RemovedEvent,
+  STORAGE_KEY, type CampusEvent, type RemovedEvent,
 } from './controller/findEvents'
 import { browserCatalogStorage, localEventCatalog, type ConnectedCatalog } from './controller/postEvent'
 import { PostEventForm } from './view/PostEventForm'
@@ -59,7 +59,7 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
     const onStorage = (event: StorageEvent) => {
       // 🪟 Ignore changes from other storage areas/keys. A null key can
       // mean the other tab cleared storage, which also needs a refresh.
-      if (event.storageArea !== window.localStorage || (event.key !== null && event.key !== 'sidequest.created-events.v1')) return
+      if (event.storageArea !== window.localStorage || (event.key !== null && event.key !== STORAGE_KEY)) return
       let current: { events: CampusEvent[]; blocked: boolean }
       try { current = loadEventsChecked(window.localStorage) }
       catch { current = { events: [], blocked: true } }
