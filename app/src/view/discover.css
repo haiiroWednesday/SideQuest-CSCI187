@@ -561,6 +561,7 @@
 }
 @media (max-width: 1024px) and (min-width: 761px) {
   .sq-hero h1 { font-size: 64px; }
+  .sq-free-label { flex-basis: 100%; }
   .sq-campus-drawing { height: 176px; right: 2%; }
   .sq-board { grid-template-columns: minmax(0, 1fr) 330px; gap: 24px; }
   .sq-board-schedule { grid-template-columns: minmax(0, 1fr) 330px; }
