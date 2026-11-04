@@ -5,8 +5,26 @@ import {
   loadEventsChecked, persistEvents, removeEventWithReceipt, restoreRemovedEvent, isPastEvent,
   type CampusEvent, type EventDraft, type RemovedEvent,
 } from './controller/findEvents'
+import EventBrowser from './presentation/EventBrowser'
+import type { EventCatalogPort } from './controller/browseEvents'
 
-export default function App() {
+export default function App({ catalog }: { catalog?: EventCatalogPort } = {}) {
+  const browsePreviewRequested = import.meta.env.DEV &&
+    new URLSearchParams(window.location.search).get('browsePreview') === '1'
+  const [previewCatalog, setPreviewCatalog] = useState<EventCatalogPort>()
+  const [previewLoadError, setPreviewLoadError] = useState(false)
+
+  useEffect(() => {
+    if (catalog || !browsePreviewRequested) return
+    let active = true
+    import('./dev/browsePreviewCatalog').then(({ browsePreviewCatalog }) => {
+      if (active) setPreviewCatalog(browsePreviewCatalog)
+    }).catch(() => {
+      if (active) setPreviewLoadError(true)
+    })
+    return () => { active = false }
+  }, [browsePreviewRequested, catalog])
+
   // Hydrate without writing: a malformed stored value must never be erased on mount.
   // Read the initial event list when React sets up this component. A failed
   // read must never automatically overwrite damaged browser storage.
@@ -175,6 +193,13 @@ export default function App() {
         <h1>There's more to campus <em>than class.</em></h1>
         <p className="lead">Create an event, then discover what fits your free time.</p>
       </section>
+
+      {browsePreviewRequested && !catalog && (
+        <p className="library-empty" role={previewLoadError ? 'alert' : 'status'}>
+          {previewLoadError ? 'Could not load the development browse preview.' : 'Development preview: mock catalog data.'}
+        </p>
+      )}
+      <EventBrowser catalog={catalog ?? previewCatalog} />
 
       <section className="workspace" aria-label="Create and find events">
         <section className="panel" aria-labelledby="create-heading">
