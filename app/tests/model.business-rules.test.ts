@@ -2,7 +2,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   validateEventDraft, validateSearchWindow, matchingEvents, removeEventFromList,
-  restoreEventInList, isPastEventDate, type CampusEvent, type EventDraft,
+  restoreEventInList, isPastEventDate, isCampusEvent, readStoredEventsChecked,
+  type CampusEvent, type EventDraft,
 } from '../src/model/events'
 
 // Use a fixed clock so past/future checks work consistently next month.
@@ -46,6 +47,7 @@ describe('Model event creation business rules', () => {
     expect(validateEventDraft({ ...draft, start: '16:00', end: '15:00' }, 'wrong', [], now).error).toMatch(/later/i)
     expect(validateEventDraft({ ...draft, description: 'x'.repeat(501) }, 'long', [], now).error).toMatch(/500/i)
     expect(validateEventDraft(draft, 'art-1', [created('art-1')], now).error).toMatch(/unique/i)
+    expect(validateEventDraft(draft, '   ', [], now).error).toMatch(/unique/i)
   })
 })
 
@@ -78,5 +80,21 @@ describe('Model search and list rules', () => {
   it('distinguishes already-ended saved events from future events', () => {
     expect(isPastEventDate({ ...created('past'), date: '2026-10-29', start: '09:00', end: '12:00' }, now)).toBe(true)
     expect(isPastEventDate(created('future'), now)).toBe(false)
+    expect(isPastEventDate({ ...created('ending-now'), date: '2026-10-29', end: '13:30' }, now)).toBe(true)
+  })
+})
+
+describe('Saved-event boundary validation', () => {
+  it('rejects long titles/locations and whitespace-only IDs in restored JSON', () => {
+    const valid = created('good')
+    const invalidTitle = { ...valid, id: 'long-title', title: 'x'.repeat(101) }
+    const invalidLocation = { ...valid, id: 'long-place', location: 'y'.repeat(101) }
+    const invalidId = { ...valid, id: '   ' }
+    expect(isCampusEvent(invalidTitle)).toBe(false)
+    expect(isCampusEvent(invalidLocation)).toBe(false)
+    expect(isCampusEvent(invalidId)).toBe(false)
+
+    const storage = { getItem: () => JSON.stringify([valid, invalidTitle, invalidLocation, invalidId]) }
+    expect(readStoredEventsChecked(storage)).toEqual({ events: [valid], blocked: true })
   })
 })

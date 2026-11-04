@@ -150,7 +150,7 @@ describe('browser-only fallback catalog', () => {
 
   it('is used when Supabase env vars are missing, and is labeled not shared', () => {
     expect(connectEventCatalog({}, fakeStorage()).shared).toBe(false)
-    expect(connectEventCatalog({ VITE_SUPABASE_URL: 'https://x.supabase.co', VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_x' }, fakeStorage()).shared).toBe(true)
+    expect(connectEventCatalog({ shared: true }, fakeStorage()).shared).toBe(true)
   })
 
   it('survives a "refresh" (new catalog, same storage) and never touches the M1 key', async () => {

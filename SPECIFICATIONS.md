@@ -1,112 +1,82 @@
-# SideQuest — M1 Walking Skeleton: User Specifications
+# SideQuest — Current M2 MVP Technical Specifications
 
-> **Historical M1 deliverable.** The text below preserves the original milestone and feedback history. The proposed M2 production integration follows `docs/MVP_TEAM_PLAYBOOK.md` and the current `README.md`: shared catalog posting and discovery, required host/description (up to 2000 description characters), California time, full-fit filtering, and device-local planned IDs. Removing a plan keeps the public event. Anonymous public deletion, the legacy 500-character cap and direct View-to-Model persistence are not current M2 behavior. See `docs/M2_INTEGRATION_VERIFICATION.md` for checks and limits. P4 is professor-approved and resolved.
+**Updated November 4, 2026.** Implements [REQUIREMENTS.md](REQUIREMENTS.md). Historic walking-skeleton specifications are retained at [docs/M1_HISTORICAL_SPECIFICATIONS.md](docs/M1_HISTORICAL_SPECIFICATIONS.md).
 
-## Purpose and relationship to requirements
+## Technology and runtime
+- React + TypeScript + Vite UI, Node.js **22.12+** (24 recommended).
+- Vitest tests, React Testing Library, and Playwright Chromium browser tests.
+- GitHub Actions runs locked package installation (`npm ci`), unit tests, TypeScript/Vite build and Chromium tests.
+- Start in `app/` with `npm ci && npm run dev`; verify with `npm test`, `npm run build` and `npm run test:e2e`.
 
-These specifications describe the current TypeScript + React implementation. Each one supports the corresponding user requirement (R1–R4) in the User Requirements document. Scope: create an event → store it locally → enter free time → display matching events.
+## S1 — Shared event data and posting (R1)
+**Current public M2 event contract**: `CampusEvent` with `id`, `title`, `hostName`, `description`, `location`, `date`, `start`, `end`. IDs are store-generated UUIDs; date is `YYYY-MM-DD` and start/end `HH:mm` Santa Clara wall time. The event must begin before it ends on the same day.
 
-## S1 — Event creation (supports R1)
+- `app/src/view/PostEventForm.tsx`: form and visible field-level errors; it calls the Controller. Field length limits are supplied through the Controller.
+- `app/src/controller/postEvent.ts`: mediates posting, handles results, errors, and the choice between configured shared catalog and explicitly labeled local fallback.
+- `app/src/model/eventCatalog.ts`: canonical event contract, field checks, campus-time posting restriction, conversions, sorting, lookup and `EventCatalogPort`. **Model-level validation must reject historical new posts even when called without the form.**
+- `app/src/model/supabaseEventTable.ts`: remote storage adapter, never imported by Views; `app/src/model/browserEventTable.ts`: browser-only fallback. `app/src/model/inMemoryEventTable.ts` is a test fixture.
+- `app/src/main.tsx`: obtains only the connection flag from `/api/catalog`. `server/api.ts` mediates same-origin catalog requests; only the Node server loads `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`.
 
-- The View provides inputs for title, location, date, start time, and end time, plus a “Create event” button.
+**Validation boundaries:** title <=120; hostName <=120; required description <=2000; location <=200; nonempty trimmed fields, valid date, strictly increasing times. The local legacy M1 event list has a separate historical contract and limits.
 
-- The Controller’s createEvent(events, draft, id) trims title/location, requires nonempty values and a valid date, requires same-day start < end, and rejects a duplicate or empty ID.
+## S2 — Public catalog and discovery (R2)
+The current `EventCatalogPort` supplies:
+```ts
+create(draft: EventDraft): Promise<CampusEvent>
+listUpcoming(): Promise<CampusEvent[]>
+getById(id: string): Promise<CampusEvent | null>
+```
 
-- If valid, the Controller returns a new event array; the View updates its state and displays confirmation. Invalid submissions return an error and do not add an event.
+`listUpcoming` returns non-ended events ordered by date/start/id. `getById` supports older stored events outside upcoming search, so local plans remain meaningful. Rejected promises represent network/storage failures; a successful `null` lookup means missing record. This distinction must be preserved by every consumer.
 
-## S2 — Event list, removal, and persistence (supports R2)
+`app/src/view/useEventCatalog.ts` loads the current catalog snapshot, ignores obsolete responses and exposes refresh. `controller/presentScreens.ts` prepares Discover/Schedule text and flags from Model rules. The supplied Discover and Schedule views are integrated into the production app. Do not label test fixtures or browser fallback as a live campus-wide feed.
 
-- The View renders “Your created events,” showing each event’s title, location, date, start, and end. Clicking “Remove” excludes that event from View state.
+## S3 — Full-fit availability search (R3)
+`App.tsx` asks `findEvents` in `controller/findEvents.ts` to search upcoming catalog events. The reusable full-fit rule in `model/events.ts` accepts exactly:
+- `event.date === available.date`
+- `available.start <= event.start`
+- `event.end <= available.end`
+- both event and free-time intervals valid, with `start < end`.
 
-- The Model provides readStoredEvents and saveStoredEvents helpers. The View loads events from localStorage on startup and saves the current list when it changes.
+Only full scheduled events match. Search rejects invalid dates and reversed/zero-length windows. The presentation helper `presentation/formatEvents.ts` displays `M/D/YYYY` and `h:mmam/pm` without changing stored data.
 
-- Local storage is per browser, not a shared database. When writing to storage fails, the View warns that events may not survive a refresh.
+## S4 — Personal Schedule (R4)
+- `model/schedule.ts`: `sidequest.planned-event-ids.v1` stores **only IDs** in the current browser. Model checks IDs, sorts resolved event details, calculates overlaps and enforces the provisional 100-plan limit.
+- `controller/personalSchedule.ts` preserves synchronous local plan writes. `controller/sharedSchedule.ts` coordinates `getById()` reads, distinguishes missing/failed/timed-out details, and rejects obsolete results without changing saved IDs.
+- `view/ScheduleTrailView.tsx` renders controller-prepared plans, conflicts, error/loading/retry states and remove controls. Removal edits only locally stored planned IDs, never the catalog.
+- Public M2 event details must pass the M2 field limits (including a 2,000-character description) even though older M1 records used a 500-character limit. Legacy records remain readable where applicable.
+- Consecutive events with end == next start do not overlap; real overlaps warn without blocking the user.
 
-## S3 — Availability search (supports R3)
+## S5 — Persistence, permissions, and failures (R1–R5)
+- Proposed SQL migration: `supabase/migrations/20261103000000_create_events.sql` creates one `public.events` table with `id` UUID PK, `title`, `host_name`, `description`, `location`, `event_date`, `start_time`, `end_time`, `created_at`. It enables row-level security and grants anonymous SELECT and bounded INSERT, **not UPDATE/DELETE**.
+- All Supabase keys, including the publishable key, remain server-side. `model/httpEventCatalog.ts` uses same-origin requests with no database credentials. `server/api.ts` calls the Model adapter; the browser bundle is scanned for credential markers during build. No real keys belong in Git.
+- The existence of a migration file is not proof of deployment. Verify real permissions and two-browser reads/writes in a configured Supabase project before claiming the public catalog works in production.
+- Local storage failures show honest feedback; no success claim after a failed write. Corrupt saved data is not silently replaced. A previously saved plan ID survives a remote lookup error.
+- Real public deployment needs a review of anonymous-write abuse and the instructor's applicable key handling/extra-credit criteria.
 
-- The View collects a free date, start time, and end time, and calls findEvents(events, date, start, end).
+## MVC / CRC responsibility summary
 
-- The Controller rejects a missing/invalid date and invalid or reversed free-time intervals. Otherwise it filters the current event array through the Model’s fitsFully rule, sorts matches by start time, and returns the results.
+| Component or class | Responsibilities | Collaborators |
+| --- | --- | --- |
+| **View:** App, PostEventForm, PersonalSchedule, useCatalogEvents | Render forms/cards, collect input, present Controller feedback, manage temporary display state | **Controllers only** for domain data/actions |
+| **Controller:** postEvent, findEvents, personalSchedule | Coordinate commands and reads, map Model errors to user feedback, keep View insulated from persistence | View and Model |
+| **Model:** EventCatalog, Event, Schedule, table adapters | Domain validation, full-fit calculation, data and ID ownership, persistence, ordering and overlap rules | Controllers and repository adapters |
 
-- fitsFully accepts only an event with the same valid date, an event start at or after the free-time start, and an event end at or before the free-time end. Both windows must have start < end.
+**Current conceptual design:** [P4 class/CRC](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit). The team reports that Professor Kandel subsequently confirmed the existing P4 diagram is acceptable. Do not silently change its aggregation/composition symbols based on older speculative review notes.
 
-- The View shows each matching event’s details and the number of results. No prewritten sample event list is required.
+**Coursework ER reference:** [Selected P5 draw.io](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view). It models a broader conceptual design. **The implemented M2 SQL has one Event table, with planned IDs in the browser;** the P5 diagram's USER/AVAILABILITY_WINDOW entities are not current M2 database tables. The M2 updated ER submission must explain that distinction and match the implemented storage.
 
-## S4 — Feedback and edge cases (supports R4)
+## Acceptance and audit procedure
+1. Normal user path: post → refresh → browse → free-time search → plan → reload → revisit → remove a plan.
+2. Second browser, same Supabase project: event posted in A appears in B; plans remain device-local and removing a plan doesn't delete public data.
+3. Boundary/negative cases: already-past posts, valid long descriptions 500/501/2000/2001, invalid times and dates, duplicate plans, 100/101 plan limit, overlapping and back-to-back events, unknown plan IDs, network timeouts and denied/corrupted storage.
+4. Architecture review: Views import only Controller APIs for domain operations; Models never import React or Views; database operations stay in Models.
+5. Verify code, current CRC/ER, README and tests against [Professor Kandel's M2 Part 1 instructions](https://docs.google.com/document/d/1_LlAb9mtASfutgVjKdjjt7Esh7g0ab6J4FmCzREJDEU/edit), not just a green test count. See [lecture 01–16 audit](docs/COURSE_LECTURES_01_TO_16_COMPLIANCE_AUDIT.md).
 
-- HTML date/time and required-field controls help users provide expected input types, but validation is also enforced by Controller and Model functions.
+## Current implementation diagrams and Node API
 
-- The View displays error messages from createEvent and findEvents, a successful creation message, and a clear empty state when no created events match.
+[Editable current M2 CRC/storage diagrams](docs/diagrams/M2_IMPLEMENTATION.drawio) and [their explanation](docs/M2_IMPLEMENTATION_DIAGRAMS.md) map Event, EventCatalog and Schedule responsibilities to the actual modules. The SQL ER contains only `public.events`; browser-local plan IDs are explicitly outside SQL. There is no USER or saved availability table. P4 is approved and unchanged.
 
-- The Model validates HH:MM with toMinutes, real YYYY-MM-DD calendar dates with isValidDate, and handles corrupted or unavailable browser-storage reads safely.
+The production Node server serves the built UI and API. GET `/api/catalog` returns only the shared-storage flag; GET `/api/events` lists upcoming records or looks up `?id=...`; POST `/api/events` accepts only the seven EventDraft fields. Public PUT/PATCH/DELETE are rejected. Read deadlines are 10 seconds. The server's upstream fetch aborts at 15 seconds. An uncertain insert is not automatically retried; users are told to check Discover before another submission.
 
-## CRC — Classes/components, responsibilities, collaborators
-
-### VIEW — app/src/App.tsx
-
-**Responsibilities:** display the event-creation form and availability form; collect input; show errors, confirmation, event cards and saved-event list; maintain React state; load/save browser-local events; allow removal.
-
-**Collaborators:** Controller functions createEvent and findEvents; Model’s readStoredEvents and saveStoredEvents helpers.
-
-### CONTROLLER — app/src/controller/findEvents.ts
-
-**Responsibilities:** validate event-creation and search requests; coordinate Model checks; return { events, error } or { matches, error }; sort valid search matches; keep browser rendering and persistence out of the Controller.
-
-**Collaborators:** View (receives requests and displays results); Model (date/time validation, matching rule, CampusEvent type).
-
-### MODEL — app/src/model/events.ts
-
-**Responsibilities:** define CampusEvent and EventDraft; convert and validate dates/times; determine whether an event fits via fitsFully; serialize and restore locally stored events.
-
-**Collaborators:** Controller for search/creation decisions; View for browser-storage integration.
-
-## End-to-end acceptance check (informal walkthrough)
-
-1. Open SideQuest in a browser. Enter “Art Workshop,” “Arts Building,” a chosen date, and 14:30–15:30; select “Create event.”
-
-2. Confirm the event appears in “Your created events.” Choose that same date and free time 14:00–16:00. Confirm “Art Workshop” appears in “Made for your window.”
-
-3. Change free time to 15:45–17:00, or change to a different date. Confirm “Art Workshop” is not listed as a match.
-
-4. Refresh the same browser and confirm the event is still present if localStorage is available. Select “Remove” and verify the event disappears.
-
-5. Try an event ending before it starts and a reversed search window. Confirm each is rejected with explanatory feedback.
-
-## Verification
-
-- Unit tests live in `app/tests/*.test.ts` and run with `npm test` from `app/`.
-- `npm run build` checks TypeScript and produces the React build.
-- `.github/workflows/react-ci.yml` runs the tests and build automatically for GitHub pushes and pull requests.
-
-**Historical M1 scope note:** the next agreed M2 MVP focuses on a shared EventCatalog, event posting and browsing, full-fit availability search, and a browser-local personal Schedule. Live imports of SCU events, travel-time checks, registration eligibility, and broader attendance rules are possible **later-product** features, not requirements for the selected M2 MVP.
-
----
-
-**Related document:** [SideQuest User Requirements](REQUIREMENTS.md) · [Google Docs version](https://docs.google.com/document/d/1yTrAU-RBO4YYBJLUYtjB1kb0U94_vN3iIjDeQBZ-gk0/edit)
-
-## Post-feedback specification addendum (October 28, 2026)
-
-**Status:** The original M1 text above is preserved as the historical submission baseline. The post-feedback behavior below is now **implemented on `master` via merged PR #12**. See [M1 QA checklist](docs/M1_POST_FEEDBACK_QA.md).
-
-### S1a — Event date and description
-
-- Reject creating new events with a date earlier than the user's local calendar date. Product follow-up: also reject an event **starting** before the current local time on today's date; yesterday/today/tomorrow and same-day clock boundaries need regression tests.
-- A description field (up to 500 characters) differentiates events with similar titles. Descriptions are optional for compatibility with old browser records and appear in both results and created-event listings.
-- The **Model**, invoked through the Controller (not merely the HTML `min` attribute), validates dates, time intervals, title/location lengths, descriptions, and IDs.
-
-### S2a — MVC collaboration and persistence
-
-- **View** collects/render inputs and UI state and invokes Controller functions. It must not import Model helpers directly.
-- **Controller** mediates create/search/remove operations, delegates reusable business rules to the Model, loads/persists event state through the Model, and exposes presentation-friendly date/time values.
-- **Model** owns the `CampusEvent` schema, local date/time primitives, validation/business rules, matching/filtering, removal/restoration, storage integrity checks and serialization. Existing saved events without descriptions remain valid. Date/time display formatting lives in the separate presentation helper, not in the Model.
-- Browser storage remains per device; write failures must surface prominently. Avoid overwriting good saved data after malformed storage reads. Browser tabs can conflict when saving whole arrays; reconcile external writes or document single-tab limitation.
-
-### S3a — Date and time display
-
-- Keep machine-readable date/time data as YYYY-MM-DD and HH:mm. Present dates in M/D/YYYY and times in a 12-hour `h:mmam/pm` display in both results and created-event lists (e.g. 2026-10-27 → 10/27/2026; 14:30 → 2:30pm).
-- Date/time inputs use browser-native controls, whose visible locale styling may vary by browser/OS. Automated and manual browser checks should verify the intended display on event cards.
-
-### S4a — Verification
-
-- Verify controller/model edge cases, rendered React UI, real-browser create → match → reload → remove flow, descriptions, date guards, errors, persistence and accessibility.
-- The original 26 M1 logic tests were not sufficient proof of UI coverage. [Merged PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12) implements the feedback fixes and UI/browser tests together; **59 Vitest cases in 14 files** and a Chromium smoke test passed on its final head. Old PRs #10 and #11 were closed without merging.
+Request bodies are limited to 16 KiB, browser cross-origin writes are rejected, and a per-process 20/minute/IP posting guard applies. The hosting edge should supply durable rate limiting before a real public deployment. This does not add authentication or verified organizer identity.

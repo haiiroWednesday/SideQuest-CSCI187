@@ -12,6 +12,19 @@ permissions:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: sidequest-ci-fixture
+          POSTGRES_DB: sidequest_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     defaults:
       run:
         working-directory: app
@@ -24,6 +37,18 @@ jobs:
       # 📦 npm ci uses the checked-in package-lock.json for repeatable installs.
       - name: Install locked packages
         run: npm ci --no-audit --no-fund
+      - name: Verify isolated PostgreSQL grants, RLS and constraints
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: sidequest-ci-fixture
+          PGDATABASE: sidequest_test
+        run: |
+          if ! command -v psql >/dev/null; then sudo apt-get update && sudo apt-get install -y postgresql-client; fi
+          psql -v ON_ERROR_STOP=1 -c 'create role anon nologin; create role authenticated nologin;'
+          psql -v ON_ERROR_STOP=1 -f ../supabase/migrations/20261103000000_create_events.sql
+          psql -v ON_ERROR_STOP=1 -f ../supabase/tests/event_catalog_permissions.sql
       - name: Run unit tests
         run: npm test
       - name: Type-check and build

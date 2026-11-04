@@ -1,59 +1,58 @@
-# SideQuest — M1 Walking Skeleton: User Requirements
+# SideQuest — Current M2 MVP User Requirements
 
-> **Historical M1 deliverable.** The text below preserves the original milestone and feedback history. The proposed M2 production integration follows `docs/MVP_TEAM_PLAYBOOK.md` and the current `README.md`: shared catalog posting and discovery, required host/description (up to 2000 description characters), California time, full-fit filtering, and device-local planned IDs. Removing a plan keeps the public event. Anonymous public deletion, the legacy 500-character cap and direct View-to-Model persistence are not current M2 behavior. See `docs/M2_INTEGRATION_VERIFICATION.md` for checks and limits. P4 is professor-approved and resolved.
+**Current implementation contract, updated November 4, 2026.** This supersedes the M1-focused root requirements. Historical M1 requirements remain in [docs/M1_HISTORICAL_REQUIREMENTS.md](docs/M1_HISTORICAL_REQUIREMENTS.md). Follow the professor-reviewed narrower P4-based MVP scope; the wider P3 research vision remains a future plan.
 
-## Purpose and original P3 feature grouping
+## R1 — Post a campus event
+- A student should be able to submit an event with a title, host display name, description, location, day, start and end time.
+- A student should receive clear per-field feedback on invalid or missing details.
+- New events must be today or in the future, and events posted for today must not already have started, using Santa Clara campus time.
+- A successful post should receive a stable event ID and remain available after page refresh when the selected storage works.
+- The host name is self-reported, **not** an authenticated organizer identity.
 
-Feature grouping from P3: Determining whether an event fits.
+**Acceptance:** Valid future post succeeds; yesterday, same-day past start, invalid date, blank required fields, oversized values and reversed intervals are rejected. A storage/network error preserves what was typed, reports failure and must not claim success.
 
-> Original team requirement (preserved): Users should be able to specify a period of free time and find SCU events they could realistically participate in during that period.
+## R2 — Discover the posted event catalog
+- Students should be able to see upcoming publicly posted campus events with title, host, description, location, date and time.
+- Two different students should see the same posted events when the shared public backend is configured.
+- The list should show honest loading, empty and failure states, and permit a retry.
+- Event details must remain associated with stable IDs even if titles repeat.
 
-Updated M1 scope: A user first creates an event in SideQuest, then searches the events they have created for those that fit a selected day and free-time window. This is one working end-to-end feature, not the full MVP.
+**Acceptance:** Post in Browser A, load the same event in Browser B, and confirm it survives reload. A browser-only development fallback must display its **not shared** warning, never pretend to be public.
 
-## R1 — Create a campus event
+## R3 — Find events that fully fit free time
+- Students should be able to supply a calendar day and start/end of their available time.
+- Results must include events only when the complete scheduled interval is inside the free-time window. Exact boundary equality is allowed.
+- Students should see relevant event details in readable US dates and 12-hour times.
+- Invalid search windows and no matches should receive useful feedback.
 
-Users should be able to add an event by entering an event name, location, calendar date, start time, and end time.
+**Acceptance:** Event 2:30–3:30pm matches 2–4pm and 2:30–3:30pm; it does not match 3–4pm, a different day, or a time window with zero/negative duration.
 
-**Acceptance check:** With complete, valid information, selecting “Create event” adds the event to the list and displays a confirmation. The event is created through the application rather than being prewritten in its code.
+## R4 — Plan attendance and revisit a personal Schedule
+- Students should be able to add a posted Event to their personal Schedule and revisit their plans in chronological order.
+- Repeated additions of the same event ID should not duplicate plans.
+- Removing a plan must not delete its public Event.
+- Plans are currently saved on **this browser/device only** as event IDs; no cross-device personal Schedule is promised.
+- Overlapping plans should receive a warning while back-to-back events are permitted.
+- Retrieval failures must not be misrepresented as an event being deleted, and damaged local storage must not be silently overwritten.
 
-## R2 — View, retain, and remove created events
+**Acceptance:** Post → find → plan → reload → revisit → remove plan, and the public post remains visible. Test overlapping, duplicate, unavailable, temporarily unreachable and corrupt-record cases.
 
-Users should be able to see events they have created, including each event’s name, location, date, and times. Users should be able to remove an event they no longer want.
+## R5 — Dependable, usable implementation
+- The UI should give timely success/error/loading feedback, display clear labels, work with keyboard controls and remain legible on small screens.
+- View components should communicate with Controllers rather than access domain Models or SQL/database storage directly.
+- The Model should enforce reusable validity rules, including posting-time restrictions, even for callers that bypass the UI.
+- All core features need meaningful normal, invalid, boundary and failure tests; CI should build the React app and run unit and browser checks.
+- All database API keys stay on the Node server. Browser code and requests must contain no database credentials, including publishable keys. No real keys may be committed to Git.
 
-**Acceptance check:** A newly created event appears in “Your created events.” It remains after refreshing the page in the same browser when browser storage is available. Selecting “Remove” takes it out of the list.
+## Scope and storage decisions
+- **M2 includes:** anonymous event posting/browsing, one shared EventCatalog backend when configured, full-fit time matching, and a device-local ID-based Schedule.
+- **M2 excludes for now:** accounts and verified identities, partial attendance, travel-time feasibility, weather, cost/registration enforcement, saved availability, group scheduling, calendar import, public edit/delete and AI recommendations.
+- **Event times:** same-day Santa Clara campus wall time; overnight events are deferred.
+- **Shared storage:** the repository includes a Supabase adapter, SQL schema and browser fallback; the browser uses a same-origin Node API. A successful local build does not establish that the live Supabase instance is configured or independently verified.
+- **Provisional choice:** maximum 100 saved local plans, subject to explicit team confirmation.
+- **Safety boundary:** anonymous public insertion is a class-prototype choice and needs deployment/security review, including the instructor's server-side API-key rules where applicable.
 
-## R3 — Find events that fit available time
+## Required M2 evidence
+Professor Kandel's [M2 Part 1 assignment](https://docs.google.com/document/d/1_LlAb9mtASfutgVjKdjjt7Esh7g0ab6J4FmCzREJDEU/edit) requires this file, [SPECIFICATIONS.md](SPECIFICATIONS.md), code, tests, updated CRC and ER diagrams, and a README describing the **MVP rather than M1**. See [the full-course compliance audit](docs/COURSE_LECTURES_01_TO_16_COMPLIANCE_AUDIT.md) and [MVP build playbook](docs/MVP_TEAM_PLAYBOOK.md). The team reports that the professor reviewed and accepted narrowing the earlier P3 goals; this file records that reported decision without claiming independent documentary proof of the approval.
 
-Users should be able to select a calendar date and a free-time start and end, then see which of their created events fit within that available period.
-
-**Acceptance check:** A matching event must take place on the selected date, start at or after the free-time start, and end at or before the free-time end. Show its name, location, date, and time. Do not list an event outside that window.
-
-## R4 — Receive clear feedback
-
-Users should be informed when required event details are missing, dates or times are invalid, or no events match their search.
-
-**Acceptance check:** Invalid event information is rejected without adding an event; an invalid free-time window produces an explanatory message; searches with no results display an empty-state message.
-
-## M1 boundaries and assumptions
-
-- The walking skeleton uses events entered by its user; it does not retrieve or verify live SCU event listings.
-
-- Created events are stored locally in that browser. They are not shared between teammates, devices, or accounts, and they may not persist if browser storage is unavailable.
-
-- The current matching rule is date + full scheduled event duration. Walking time, registration, event eligibility, partial attendance, overnight activities, and campus-wide sharing are outside this milestone.
-
-- “Realistically participate” remains the wider MVP goal. M1 tests the narrower, measurable question of whether the event’s entire scheduled time fits the user’s free-time window.
-
-**Related document:** [SideQuest Technical Specifications](SPECIFICATIONS.md) · [Google Docs version](https://docs.google.com/document/d/1CUcQPC5-_3Lziyf88H2oCPYRIR1wrgaSF1K15VK5_Gs/edit)
-
-## Post-feedback acceptance addendum (October 28, 2026)
-
-This section records the professor's M1 feedback and further QA improvements; the original R1–R4 above remain the historical assignment baseline. The M1 post-feedback code fixes are **merged into `master` via PR #12**. The original R1–R4 above remain the historical submitted baseline.
-
-- **R1:** For new event postings, reject dates before the user's local today. As an additional real-world safeguard, reject a same-day start time that has already elapsed; ensure tests handle the local calendar and midnight boundary. Include an optional short description that appears beside each event and persists in browser storage.
-- **R2:** Continue to load legacy events without descriptions. Preserve unrelated events when removing one, and provide recovery from an accidental removal. Make storage-write failure visible; do not silently overwrite data after a read failure.
-- **R3:** Keep entire-event, same-date matching (inclusive edges). User-facing event cards and saved lists use US calendar and 12-hour time presentation, while storage keeps machine-readable ISO date and 24-hour time.
-- **R4:** Invalid form/search inputs must produce clear feedback. Check keyboard navigation, contrast and small-screen presentation.
-- **Architecture:** React View communicates with the Controller; Model handles event data, validation and persistence. Update CRC and tests when implementing the change.
-
-These are not new M2 requirements. See [Post-feedback QA checklist](docs/M1_POST_FEEDBACK_QA.md) and [merged PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12) for implementation and test evidence.
+**Current diagrams:** [M2 responsibilities and actual storage](docs/M2_IMPLEMENTATION_DIAGRAMS.md), with an editable [draw.io file](docs/diagrams/M2_IMPLEMENTATION.drawio). The approved P4 remains unchanged.

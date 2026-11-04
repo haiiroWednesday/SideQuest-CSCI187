@@ -10,8 +10,8 @@ window's end is allowed; an event starting at the window's end is excluded.
 Exact start/end matches are allowed. Invalid, empty, reversed or zero-length
 windows produce a validation message rather than results.
 
-Choose **Plan to attend** on a matching result or an event in the existing
-created-event library. **My Schedule** (`#schedule`) is a separate page, ordered
+Choose **Plan to attend** on a matching result or an event in **Posted events**.
+**My Schedule** (`#schedule`) is a separate page, ordered
 by date, start time, end time and ID. Plans survive same-device reloads.
 Removing a plan removes only its ID, never the original event.
 
@@ -41,8 +41,8 @@ explicit confirmation and preserves only valid, unique IDs.
 - `src/view/PersonalSchedule.tsx` requests Controller operations and renders
   the Schedule page, controls and messages. It never imports Model functions,
   accesses localStorage, sorts events or compares their times directly.
-- `src/App.tsx` connects the existing event source and hash navigation. The
-  create/search flow and its existing Controller remain compatible with M1.
+- `src/App.tsx` connects the shared catalog snapshot and hash navigation.
+  Search reuses M1's existing full-fit rules.
 
 Plans use `sidequest.planned-event-ids.v1`, containing **IDs only**. They never
 write `sidequest.created-events.v1`. Each action reads the latest stored IDs;
@@ -51,20 +51,16 @@ best effort, not an atomic multi-tab database transaction.
 
 ## Integration boundary
 
-The shared public catalog is not yet implemented on this branch. This feature
-currently consumes the M1 browser-local event list. The array is a
-complete local snapshot, not the result of an upcoming-only query. Do not pass
-`listUpcoming()` results as a complete Schedule catalog: older planned events
-may be absent from that list. Shared integration follows the handoff below;
-keep the plan storage format as IDs rather than copying event records.
+Search uses `listUpcoming()`. My Schedule uses `getById()` because older
+planned events may be absent from the upcoming list.
 The existing CampusEvent fields and catalog APIs are unchanged. No accounts,
 saved availability records, public event deletion or database tables were added.
 
-## EventCatalogPort handoff for shared integration
+## EventCatalog integration
 
-This is a proposed integration checklist for Daven and the consuming features,
-not a claim that the shared adapter or asynchronous Schedule UI exists here.
-Use the existing playbook contract without adding another schema or port:
+Posting and full-fit Search share one upcoming-events list. Posting and
+**Refresh events** reload that list. When My Schedule opens, it looks up saved
+IDs through the same catalog. The existing contract is unchanged:
 `getById(id): Promise<CampusEvent | null>` and
 `listUpcoming(): Promise<CampusEvent[]>`.
 
@@ -85,11 +81,12 @@ Use the existing playbook contract without adding another schema or port:
   React components must not query Supabase directly. Schedule removal writes
   only the local ID list and never deletes a catalog event.
 
-Before replacing the local snapshot, jointly verify: an older saved event
-outside the upcoming list still resolves; pending/rejected lookups never show
-missing-event labels; a successful null response does; retry preserves IDs;
-and removing a plan leaves the shared record readable from another browser.
-No cross-browser M2 completion claim is made until that integration passes.
+Legacy browser events remain separate and are never uploaded automatically.
+Old plan IDs that do not exist in the catalog remain saved and can be removed
+from Schedule. The browser-only catalog exercises posting → matching → planning
+in Chromium. Before the team demo, verify the configured Supabase catalog in
+two independent browsers: both should see the same posted event, each should
+have its own Schedule, and removing a plan must leave the public event visible.
 
 ## PR 13 compatibility check
 
@@ -108,8 +105,7 @@ by this verification. Repeat integration checks if either branch changes before
 merge; these results do not replace teammate approval.
 
 The student walkthrough and whole-team confirmation of the provisional
-100-plan limit remain pending human follow-ups. The shared catalog handoff
-above still needs agreement with Daven before implementation.
+100-plan limit remain pending human follow-ups.
 ## Verification
 
 From `app/` run `npm test`, `npm run build` and `npm run test:e2e`.

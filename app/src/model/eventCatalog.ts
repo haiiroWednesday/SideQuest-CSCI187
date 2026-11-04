@@ -9,7 +9,7 @@
 // no hostName, keeps description optional, and backs the browser-only
 // `sidequest.created-events.v1` list. The posting PR migrates the form and
 // tests to this contract; until then both types exist side by side.
-import { isValidDate, toMinutes } from './events'
+import { isValidDate, toMinutes } from './events.ts'
 
 export type CampusEvent = {
   id: string
@@ -84,8 +84,9 @@ export function trimDraft(draft: EventDraft): EventDraft {
   }
 }
 
-// Structural rules apply to new drafts and restored records. Temporal posting
-// rules are separate so older stored events remain readable.
+// Storage rules that hold for every caller, matching the database's CHECK
+// constraints. Posting-form rules such as "not in the past" live in the
+// posting controller (controller/postEvent.ts).
 //
 // Note: JavaScript counts an emoji as 2 characters, while Postgres counts it as 1.
 // The app is therefore slightly stricter than the database, never looser.
@@ -107,18 +108,7 @@ export function catalogDraftErrors(draft: EventDraft): CatalogFieldErrors {
   return errors
 }
 
-// New-post rules remain in Model even when another controller calls the catalog.
-export function postingDraftErrors(draft: EventDraft, now: Date = new Date()): CatalogFieldErrors {
-  const errors = catalogDraftErrors(draft)
-  const cleaned = trimDraft(draft)
-  const campus = campusNow(now)
-  if (!errors.date && cleaned.date < campus.date) {
-    errors.date = 'Events cannot be posted in the past. Choose today or a future date.'
-  } else if (!errors.date && !errors.start && !errors.end && cleaned.date === campus.date && cleaned.start < campus.time) {
-    errors.start = 'This event has already started. Choose a future start time.'
-  }
-  return errors
-}
+export const postingDraftErrors = catalogPostingErrors
 
 export function isCatalogEvent(value: unknown): value is CampusEvent {
   if (!value || typeof value !== 'object') return false
@@ -153,6 +143,22 @@ export function campusNow(now: Date = new Date()): { date: string; time: string 
   }).formatToParts(now)
   const get = (type: string) => parts.find(part => part.type === type)?.value ?? ''
   return { date: `${get('year')}-${get('month')}-${get('day')}`, time: `${get('hour')}:${get('minute')}` }
+}
+
+// The same posting-time rule must protect every catalog caller, including
+// scripts or future controllers that do not use the React posting form.
+// Use the Santa Clara wall-clock, not the browser's arbitrary timezone.
+export function catalogPostingErrors(draft: EventDraft, now: Date = new Date()): CatalogFieldErrors {
+  const errors = catalogDraftErrors(draft)
+  const value = trimDraft(draft)
+  const campus = campusNow(now)
+  if (!errors.date && value.date < campus.date) {
+    errors.date = 'Events cannot be posted in the past. Choose today or a future date.'
+  } else if (!errors.date && !errors.start && !errors.end &&
+    value.date === campus.date && value.start < campus.time) {
+    errors.start = 'This event has already started. Choose a future start time.'
+  }
+  return errors
 }
 
 // An event is upcoming until it ends. One that is still running counts too.
@@ -241,17 +247,13 @@ export function createEventCatalog(table: EventTable, clock: () => Date = () => 
 
   return {
     async create(draft) {
-      const postingError = firstFieldError(postingDraftErrors(draft, clock()))
+      const postingError = firstFieldError(catalogPostingErrors(draft, clock()))
       if (postingError !== null) throw new EventCatalogError('invalid', postingError)
       const result = validateCatalogDraft(draft)
       if (result.error !== null) throw new EventCatalogError('invalid', result.error)
       let row: EventRow
       try { row = await table.insert(toEventRow(result.draft)) }
-      catch (cause) {
-        // A lost response does not prove the insert failed. Never encourage an
-        // immediate second insert when the first may already be public.
-        throw new EventCatalogError('unavailable', 'Could not confirm this post. Check Discover before trying again.', { cause })
-      }
+      catch (cause) { throw new EventCatalogError('unavailable', 'Could not confirm this post. Check Discover before trying again.', { cause }) }
       return fromEventRow(row)
     },
 

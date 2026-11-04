@@ -19,7 +19,8 @@
   },
   "include": [
     "src",
-    "tests"
+    "tests",
+    "server"
   ],
   "exclude": [
     "node_modules",

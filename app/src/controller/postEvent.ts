@@ -7,13 +7,15 @@ import {
 } from '../model/eventCatalog'
 import { createBrowserEventTable, type CatalogStorage } from '../model/browserEventTable'
 import { readCatalogWithDeadline, CatalogReadTimeoutError } from './catalogReads'
-import { createSupabaseEventCatalogFromEnv } from '../model/supabaseEventTable'
+import { createHttpEventCatalog } from '../model/httpEventCatalog'
 
 export type { CampusEvent, CatalogFieldErrors, EventCatalogPort, EventDraft } from '../model/eventCatalog'
 
 // ---------------------------------------------------------------------------
 // Which catalog the app talks to. `shared` is false for the browser-only
 // fallback, and the UI must say so on screen.
+export const browserCatalogStorage = browserStorage()
+
 export type ConnectedCatalog = { catalog: EventCatalogPort; shared: boolean }
 
 export function localEventCatalog(storage: CatalogStorage): ConnectedCatalog {
@@ -21,8 +23,7 @@ export function localEventCatalog(storage: CatalogStorage): ConnectedCatalog {
 }
 
 export function connectEventCatalog(env: Readonly<Record<string, unknown>>, storage: CatalogStorage): ConnectedCatalog {
-  const supabase = createSupabaseEventCatalogFromEnv(env)
-  return supabase ? { catalog: supabase, shared: true } : localEventCatalog(storage)
+  return env.shared === true ? { catalog: createHttpEventCatalog(), shared: true } : localEventCatalog(storage)
 }
 
 // Acquire storage only inside guarded Model reads/writes. A blocked getter must
@@ -34,8 +35,21 @@ export function browserStorage(): CatalogStorage {
   }
 }
 
-export function connectBrowserEventCatalog(env: Readonly<Record<string, unknown>>): ConnectedCatalog {
+export function connectBrowserEventCatalog(env: Readonly<Record<string, unknown>> = {}): ConnectedCatalog {
   return connectEventCatalog(env, browserStorage())
+}
+
+export async function connectServerEventCatalog(): Promise<ConnectedCatalog> {
+  try {
+    const response = await readCatalogWithDeadline(() => fetch('/api/catalog', { credentials: 'same-origin' }))
+    if (!response.ok) throw new Error('configuration unavailable')
+    const config: unknown = await response.json()
+    if (!config || typeof config !== 'object' || !('shared' in config) || typeof config.shared !== 'boolean') throw new Error('invalid configuration')
+    return connectBrowserEventCatalog({ shared: config.shared })
+  } catch {
+    // A network error never silently turns shared data into browser-only data.
+    return { catalog: createHttpEventCatalog(), shared: true }
+  }
 }
 
 export { postingDraftErrors, CATALOG_LIMITS, campusNow } from '../model/eventCatalog'

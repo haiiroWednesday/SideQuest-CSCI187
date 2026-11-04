@@ -155,6 +155,6 @@ describe('database mapping and configuration', () => {
 
   it('returns null instead of a fake catalog when Supabase is not configured', () => {
     expect(createSupabaseEventCatalogFromEnv({})).toBeNull()
-    expect(createSupabaseEventCatalogFromEnv({ VITE_SUPABASE_URL: 'https://x.supabase.co', VITE_SUPABASE_PUBLISHABLE_KEY: '  ' })).toBeNull()
+    expect(createSupabaseEventCatalogFromEnv({ SUPABASE_URL: 'https://x.supabase.co', SUPABASE_PUBLISHABLE_KEY: '  ' })).toBeNull()
   })
 })

@@ -1,11 +1,33 @@
 // MODEL: device-local plan identities, ordering, overlap rules and persistence.
 // No React or Controller imports. Catalog events are never changed by a plan.
-import { isCampusEvent, type CampusEvent } from './events'
-import { isCatalogEvent } from './eventCatalog'
+import { isValidDate, toMinutes, type CampusEvent } from './events'
 import { overlapSpan } from './eventTiming'
+import { CATALOG_LIMITS } from './eventCatalog'
 
+
+// Schedule accepts catalog events using the M2 field limits. Legacy M1
+// events lack hostName and may lack description; they remain readable.
+// Do not reuse the M1 isCampusEvent guard: its 500-character description
+// limit incorrectly rejects valid 501–2000-character public events.
 export function isScheduleEvent(value: unknown): value is CampusEvent {
-  return isCatalogEvent(value) || isCampusEvent(value)
+  if (typeof value !== 'object' || value === null) return false
+  const item = value as Record<string, unknown>
+  const text = (key: string, max: number) =>
+    typeof item[key] === 'string' && (item[key] as string).trim().length > 0 &&
+    (item[key] as string).length <= max
+  const date = item.date
+  const start = item.start
+  const end = item.end
+  const first = typeof start === 'string' ? toMinutes(start) : null
+  const last = typeof end === 'string' ? toMinutes(end) : null
+  return typeof item.id === 'string' && item.id.trim().length > 0 &&
+    text('title', CATALOG_LIMITS.title) &&
+    text('location', CATALOG_LIMITS.location) &&
+    (item.hostName === undefined || text('hostName', CATALOG_LIMITS.hostName)) &&
+    (item.description === undefined ||
+      (typeof item.description === 'string' && item.description.length <= CATALOG_LIMITS.description)) &&
+    typeof date === 'string' && isValidDate(date) &&
+    first !== null && last !== null && first < last
 }
 
 export const PLANNED_IDS_KEY = 'sidequest.planned-event-ids.v1'

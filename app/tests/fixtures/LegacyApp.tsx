@@ -9,7 +9,7 @@ import {
 import { localEventCatalog, type ConnectedCatalog } from '../../src/controller/postEvent'
 import { PostEventForm } from '../../src/view/PostEventForm'
 
-import { usePersonalSchedule, PlanButton, SchedulePage, ScheduleFeedback } from '../../src/view/PersonalSchedule'
+import { usePersonalSchedule, PlanButton, SchedulePage, ScheduleFeedback } from './LegacyPersonalSchedule'
 
 // main.tsx passes the configured catalog (Supabase when app/.env.local is set).
 // Without a prop, App uses the browser-only fallback, so tests never reach the network.

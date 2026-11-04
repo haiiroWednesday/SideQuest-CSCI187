@@ -1,32 +1,29 @@
-# SideQuest React app
+# Run SideQuest M2
 
-This directory contains the working SideQuest M1 prototype. See the [main README](../README.md) for the feature overview, requirements, and architecture.
-
-## Run
-
-Requires Node.js 22.12+ (Node 24 recommended). From this `app/` directory:
+Use Node 24, or Node 22.12+. Install from `app/`:
 
 ```bash
 npm ci
+cp .env.example .env.local
 npm run dev
 ```
 
-Open the local URL shown by Vite (usually `http://localhost:5173/`).
+Fill `.env.local` with `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` for the team database. These are **server-only** variables, including the publishable key. Remove the old browser-prefixed variables from local configuration. Never use a service-role key.
 
-**Where posted events go.** The "Post an event" form writes to the EventCatalog:
+The Vite development server mounts the same API handler as production. It returns only `{ shared: true/false }` to the browser. If the server is not configured, the app visibly uses the browser-only fallback. Network failures do not silently switch a shared catalog to local storage.
 
-- **With Supabase configured** (`app/.env.local`, see below): one shared public catalog that every browser reads.
-- **Without it:** a fallback kept in *this browser only* (`sidequest.local-catalog.v1`). The page says so in a yellow notice.
+## Build and run production
 
-The older "Your created events" list and the free-time search still read the M1 browser-only list until catalog browsing is integrated.
+```bash
+npm run build
+npm start
+```
 
-### Connect the shared catalog (Supabase)
+Set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and optionally `PORT` in the **Node hosting environment**. The default port is 3000. The server serves `dist/` and `/api/events`; `dist-server/` is server code and must never be served as static files. A static-only Vite preview is not the production application.
 
-1. Create a Supabase project. In **SQL Editor**, run `../supabase/migrations/20261103000000_create_events.sql` once.
-2. Copy `.env.example` to `.env.local` and fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` (Project Settings → API). Use only the **publishable** key, never a secret or service-role key. `.env.local` is git-ignored.
-3. Restart `npm run dev`. The "not shared" notice disappears and "Posted events" reads "shared catalog".
+`npm run build` type-checks, builds the browser and Node server, and scans browser output for database credential markers. Browser requests contain no database key or Supabase auth header.
 
-## Verify
+## Check
 
 ```bash
 npm test
@@ -35,14 +32,16 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-`src/App.tsx` renders the View; `src/controller/findEvents.ts` mediates user actions; `src/model/events.ts` owns reusable business rules, event data, and storage; `src/presentation/formatEvents.ts` formats user-facing dates/times. Model, Controller, and React UI tests live in `tests/`; the Chromium smoke test lives in `e2e/`.
+Browser checks start a local fake PostgREST service, two development servers and the real production server. They use explicitly fake server credentials and do not mutate the team database. Build first so the production browser test has current artifacts.
 
-The active application is on the repository's default `master` branch. The old root-level C++ starter does not need to be built to run this app.
+## Database and public-write safeguards
 
-## Learn the code
+The existing reviewed SQL migration creates one public `events` table with anonymous SELECT and bounded INSERT grants. It grants no anonymous UPDATE or DELETE. Apply it only through the team's database process; this code change does not run a live migration.
 
-New to TypeScript, React, or MVC? Start with the repository's **[Code Walkthrough](../CODE_WALKTHROUGH.md)**. It describes the current app, its data flow, and its tests in beginner-friendly terms.
+The API reuses Model validation, accepts only the seven draft fields, limits JSON bodies to 16 KiB, rejects cross-origin browser writes and public edit/delete methods, and applies a per-process 20-submission/minute/IP guard. It does not trust forwarded IP headers. A shared reverse proxy may group users under one IP; configure production rate limiting at the hosting edge for a real release. These are prototype safeguards, not an authenticated ownership system.
 
-## M1 feedback follow-up (documentation status)
+Use two independent browsers against the configured live instance to verify public persistence and denied mutations. A local fixture cannot certify live grants or RLS.
 
-The post-feedback M1 code is now **merged into `master`** via [PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12), merge commit `6e461fd`, with a validated Model/Controller/View split, event descriptions, same-day time checks, readable dates/times, safer storage, and Undo. The [M1 QA checklist](../docs/M1_POST_FEEDBACK_QA.md) records final CI and remaining non-code checks. This is not the full M2 product.
+## Course documents
+
+The root [requirements](../REQUIREMENTS.md), [specifications](../SPECIFICATIONS.md) and [M2 diagrams](../docs/M2_IMPLEMENTATION_DIAGRAMS.md) describe this release. Archived M1 tests/documents are historical. **P4 is professor-approved and resolved.**

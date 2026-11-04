@@ -114,7 +114,7 @@ describe('production wiring and request order', () => {
   it('loads shared events when the localStorage getter throws, and disables planning safely', async () => {
     vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => { throw Error('blocked') })
     // Catalog selection itself must not touch localStorage, even with Supabase configured.
-    expect(connectBrowserEventCatalog({ VITE_SUPABASE_URL: 'https://example.supabase.co', VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test' }).shared).toBe(true)
+    expect(connectBrowserEventCatalog({ shared: true }).shared).toBe(true)
     render(<App catalog={{ catalog: port(), shared: true }} now={now} />)
     expect(await screen.findByRole('button', { name: 'View details for Ceramics' })).toBeTruthy()
     await waitFor(() => expect((screen.getByRole('button', { name: '+ Plan to attend' }) as HTMLButtonElement).disabled).toBe(true))

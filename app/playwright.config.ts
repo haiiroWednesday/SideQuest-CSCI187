@@ -18,16 +18,27 @@ export default defineConfig({
   // 🚀 Start SideQuest's Vite server before browser tests. On a local
   // computer Playwright may reuse a server that's already running.
   webServer: [{
+    command: 'node e2e/fixtures/catalog-backend.mjs',
+    url: 'http://127.0.0.1:5176/__fixture/state',
+    reuseExistingServer: false,
+    timeout: 30_000,
+  }, {
     command: 'npm run dev -- --host 127.0.0.1 --port 5173 --strictPort',
     url: 'http://127.0.0.1:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
-    env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '' },
+    env: { SUPABASE_URL: '', SUPABASE_PUBLISHABLE_KEY: '' },
   }, {
     command: 'npm run dev -- --host 127.0.0.1 --port 5175 --strictPort',
     url: 'http://127.0.0.1:5175',
     reuseExistingServer: false,
     timeout: 60_000,
-    env: { VITE_SUPABASE_URL: 'https://sidequest-browser.test', VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_browser_fixture' },
+    env: { SUPABASE_URL: 'http://127.0.0.1:5176', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_server_fixture' },
+  }, {
+    command: 'npm start',
+    url: 'http://127.0.0.1:5177',
+    reuseExistingServer: false,
+    timeout: 30_000,
+    env: { PORT: '5177', SUPABASE_URL: 'http://127.0.0.1:5176', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_server_fixture' },
   }],
 })

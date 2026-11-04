@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
 :root{font-family:'DM Sans',system-ui,sans-serif;background:#f8f6f1;color:#202823;font-synthesis:none;--scu-maroon:#a32035;--scu-maroon-dark:#7d192b;--scu-gold:#ffb600;--scu-gold-wash:#fff3d3}
 *{box-sizing:border-box}body{margin:0;min-width:320px}button,input,textarea{font:inherit}.shell{max-width:1080px;margin:auto;padding:0 28px}
 .topbar{padding:24px 0;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--scu-gold)}
@@ -54,3 +53,4 @@ footer{border-top:1px solid #e4e1d8;padding:25px 0 40px;color:#596b5d;font-size:
 .primary-button:disabled{opacity:.7;cursor:progress}
 .posted-events{margin-top:22px}.posted-events h3{font-size:14px;margin:0;display:flex;gap:8px;align-items:baseline}
 .posted-events h3 small{color:#506252;font-size:11px;font-weight:600}
+.undo-control{margin:8px 0 12px}.undo-control .undo-button{margin-left:0}
