@@ -25,6 +25,25 @@ Updated November 4, 2026. This release combines the current master release-audit
 
 Local Chromium was extracted from a temporary @sparticuz/chromium package outside the repository. An incomplete executable extraction was detected by comparing it with the decompressed package and replaced before the final passing run. GitHub uses its standard Playwright-managed Chromium.
 
+## Live shared-catalog acceptance (NOT VERIFIED)
+
+**Record status as of November 4, 2026: pending actual authorized team-run test.** Local Vitest, Chromium, isolated PostgreSQL and a `/api/catalog` `{"shared":true}` response do **not** establish that the current team Supabase instance is provisioned and functioning.
+
+Use the [VS Code server-only Supabase setup and two-browser checklist](SUPABASE_LOCAL_SETUP.md). Actual tester(s) should fill in this table **only after running the steps**:
+
+| Check | Observed result / evidence | Status |
+| --- | --- | --- |
+| Date, team tester(s), localhost/hosted URL (never credentials) | To be recorded | PENDING |
+| Migration applied; anonymous SELECT and bounded INSERT work; UPDATE/DELETE denied | To be recorded by authorized project owner | PENDING |
+| Browser A posts one future event; exact event ID recorded | To be recorded | PENDING |
+| Independent Browser B sees same public event ID and full-fit search finds it | To be recorded | PENDING |
+| B adds plan, reloads and retains plan, then removes it without deleting public event | To be recorded | PENDING |
+| A retains event but does not inherit B's device-local plan | To be recorded | PENDING |
+| Teammate removes any temporary test event through authorized Supabase dashboard access | To be recorded | PENDING |
+| Failures, fixes and reviewer acknowledgement | To be recorded; no result assumed | PENDING |
+
+**Professor:** `jkandel-scu` has verified private-repository collaborator access. The professor does not need `app/.env.local` just to inspect code, tests and diagrams. Live shared-data demonstration requires a configured Node environment or a separately hosted app; the team should provide the means to review it, rather than asking the professor to create or manage the project database.
+
 ## External validation boundary
 
 No live migration, deployment, real key publication or database mutation was performed. This environment has no configured Supabase server credentials. A read-only reachability attempt to the supplied project endpoint timed out. Consequently, the tests certify the application path and the supplied SQL permissions in isolated databases, **not** that the team's live database is reachable or has that migration applied.
