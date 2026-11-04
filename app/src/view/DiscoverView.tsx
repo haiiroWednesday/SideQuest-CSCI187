@@ -169,6 +169,16 @@ export function DiscoverView({ screen, onRetry, onPlan, onFreeWindowChange, rout
   useEffect(() => {
     if (screen.status !== 'ready' || screen.count === 0) setSheetOpen(false)
   }, [screen.status, screen.count])
+  // Planning can disable the focused button while the sheet stays open.
+  // Keep keyboard focus on an enabled control inside the dialog.
+  useEffect(() => {
+    const panel = sheet.current
+    if (!modal || !panel) return
+    const active = document.activeElement
+    if (!panel.contains(active) || (active instanceof HTMLButtonElement && active.disabled)) {
+      panel.querySelector<HTMLElement>('button:not(:disabled), a[href]')?.focus()
+    }
+  }, [modal, selected?.id, selected?.planned, screen.planningBlocked])
   const ready = screen.status === 'ready'
   const free = screen.freeWindow
 

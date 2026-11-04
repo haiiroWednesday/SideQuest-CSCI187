@@ -38,12 +38,25 @@ The existing migration is unchanged and was not applied. The legacy M1 event key
 
 All commands ran in `app/` against the final source:
 
-- `npm test -- --reporter=dot`: **222 passed in 26 files**. Presenter tests include 300 generated catalogs. This total includes historical M1 tests and new integration regressions, not 222 new tests.
+- `npm test -- --reporter=dot`: **242 passed in 29 files**. Presenter tests include 300 generated catalogs. This total includes historical M1 tests and new integration regressions, not 242 new tests.
 - `npm run build`: **passed**, including TypeScript checks and the Vite production bundle.
-- `SIDEQUEST_CHROMIUM_PATH=/tmp/sidequest-chromium npm run test:e2e`: **9 passed**. Desktop workflow, phone Schedule, phone keyboard modal, expiration while open, denied storage, real two-tab updates, Tokyo defaults, cancel/confirm recovery, and Tokyo lab frame.
+- `SIDEQUEST_CHROMIUM_PATH=/tmp/sidequest-chromium npm run test:e2e`: **14 passed**. The original nine checks plus independent shared-browser sessions, shared read retry, failed plan lookup/retry/removal, rejected post retry, and focus after the plan button becomes disabled.
 - `git diff --check`: passed when packaging the patch.
 
 The standard Playwright browser download returned an invalid/truncated archive in this environment. The browser checks therefore used a temporary Chromium 153 binary extracted from `@sparticuz/chromium` with Playwright 1.64.1. This temporary package is outside the project and is not a dependency change. The optional `SIDEQUEST_CHROMIUM_PATH` setting supports an installed browser; without it, Playwright uses its normal managed Chromium. CI should run the standard configured browser before merge.
+
+## Additional coverage after the first review
+
+The first version passed 222 unit/rendered tests and nine browser checks. The follow-up adds **20 unit/rendered checks and five browser checks**. Three targeted timeout tests failed before the read-deadline fix; a separate mobile keyboard test failed before the focus fix. Both reproductions now pass.
+
+- **Hung reads:** a 10-second Controller deadline ends indefinite Discover/Schedule loading, preserves resolved events and every saved plan ID, keeps a stalled lookup retryable, prevents a timed-out add from storing an ID, and ignores late results after retry. The port has no cancellation method, so the underlying read may continue; it cannot settle the caller again or modify saved plans. Writes are not automatically retried or timed out by this helper.
+- **Production persistence failures:** failed add/remove writes leave real App state and saved IDs intact and show an error without success feedback. A stale initial Schedule request cannot resurrect a removed plan. A response carrying the wrong ID is rejected. Pending posting disables repeated submission and editable fields.
+- **Actual Supabase SDK:** HTTP tests exercise the real client and adapter, approved insert columns, server-assigned IDs, date/order/ID query encoding, returned time mapping, malformed responses, 401/403/500 errors and transport failure. A response lost after an accepted insert is not automatically retried. Its message tells the user to check Discover before trying again; without an idempotency key, a manual retry can still create a duplicate. The schema and port remain unchanged.
+- **Independent browser sessions:** a second Vite test server configures the production app for a controlled HTTP endpoint. Separate browser contexts share its event table while retaining separate device plans. Posting, discovery, filtering, planning, reload and local removal work through the real SDK. Tests also verify failed reads retry without switching to browser storage, failed plan lookups retain IDs, local removal still works offline, and rejected posts retain drafts before retry. The test endpoint is a fixture, not deployed Supabase.
+- **Keyboard focus after an action:** the phone sheet traps focus with two enabled controls. When planning disables its focused button, focus moves to the remaining enabled Close control.
+- **MVC guard:** AST checks reject direct Model imports or browser persistence access from production Views and reject React/View/Controller imports from Model modules. These support the professor's architecture feedback; they do not claim to prove every design responsibility automatically.
+
+No new dependencies were required. The database migration, P4 diagram and teammate branches are unchanged.
 
 ## Remaining review and external validation
 

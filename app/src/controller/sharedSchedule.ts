@@ -1,4 +1,5 @@
 // Resolve local plan identities through the agreed async port, including past events.
+import { readCatalogWithDeadline } from './catalogReads'
 import { createScheduleController, type ScheduleResult } from './personalSchedule'
 import { browserStorage, type EventCatalogPort } from './postEvent'
 import type { CampusEvent } from '../model/events'
@@ -25,7 +26,7 @@ export function createSharedScheduleController(
     if (snapshot.schedule.blocked) {
       return { events: [] as CampusEvent[], result: decorate({ ...snapshot, schedule: { ...snapshot.schedule, missingIds: [] } }) }
     }
-    const resolved = await Promise.allSettled(snapshot.schedule.ids.map(id => catalog.getById(id)))
+    const resolved = await Promise.allSettled(snapshot.schedule.ids.map(id => readCatalogWithDeadline(() => catalog.getById(id))))
     const events: CampusEvent[] = []
     const missing = new Set<string>()
     const failed = new Set<string>()
@@ -66,7 +67,7 @@ export function createSharedScheduleController(
       const { events, result } = await resolve()
       if (result.schedule.blocked) return result
       try {
-        const event = await catalog.getById(id)
+        const event = await readCatalogWithDeadline(() => catalog.getById(id))
         if (!event) return { ...result, error: 'This event is unavailable. Refresh the event list before adding it.' }
         if (!isCatalogEvent(event) || event.id !== id) return { ...result, error: 'Could not load this event. Your saved plans have not changed. Try again.' }
         return finish(core([...events.filter(item => item.id !== id), event]).add(id))

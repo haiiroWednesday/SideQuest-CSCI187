@@ -6,6 +6,7 @@ import {
   type CampusEvent, type CatalogFieldErrors, type EventCatalogPort, type EventDraft,
 } from '../model/eventCatalog'
 import { createBrowserEventTable, type CatalogStorage } from '../model/browserEventTable'
+import { readCatalogWithDeadline, CatalogReadTimeoutError } from './catalogReads'
 import { createSupabaseEventCatalogFromEnv } from '../model/supabaseEventTable'
 
 export type { CampusEvent, CatalogFieldErrors, EventCatalogPort, EventDraft } from '../model/eventCatalog'
@@ -67,8 +68,8 @@ export async function postEvent(
 // never an exception, so the View can always show something honest.
 export async function loadPostedEvents(catalog: EventCatalogPort): Promise<{ events: CampusEvent[]; error: string | null }> {
   try {
-    return { events: await catalog.listUpcoming(), error: null }
+    return { events: await readCatalogWithDeadline(() => catalog.listUpcoming()), error: null }
   } catch (error) {
-    return { events: [], error: error instanceof EventCatalogError ? error.message : 'Could not load posted events.' }
+    return { events: [], error: error instanceof EventCatalogError || error instanceof CatalogReadTimeoutError ? error.message : 'Could not load posted events.' }
   }
 }

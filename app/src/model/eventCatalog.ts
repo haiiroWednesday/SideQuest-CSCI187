@@ -247,7 +247,11 @@ export function createEventCatalog(table: EventTable, clock: () => Date = () => 
       if (result.error !== null) throw new EventCatalogError('invalid', result.error)
       let row: EventRow
       try { row = await table.insert(toEventRow(result.draft)) }
-      catch (cause) { throw unavailable('post this event', cause) }
+      catch (cause) {
+        // A lost response does not prove the insert failed. Never encourage an
+        // immediate second insert when the first may already be public.
+        throw new EventCatalogError('unavailable', 'Could not confirm this post. Check Discover before trying again.', { cause })
+      }
       return fromEventRow(row)
     },
 
