@@ -1,6 +1,9 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 // Sembiyan: full-fit search -> plan -> separate chronological Schedule -> remove.
+// Pages: Post an event (#post), Discover (/), My Schedule (#schedule).
+const nav = (page: Page) => page.getByRole('navigation', { name: 'SideQuest primary' })
+
 test('availability and personal Schedule work across navigation and reload', async ({ page }) => {
   await page.goto('/')
   const dates = await page.evaluate(() => {
@@ -11,7 +14,7 @@ test('availability and personal Schedule work across navigation and reload', asy
     date.setDate(date.getDate() + 1)
     return [first, iso(date)]
   })
-  // Use the real posting form so this fails if Search still reads the M1 list.
+  // Use the real posting form so this fails if Discover still reads the M1 list.
   const form = page.locator('.event-form')
   const post = async (title: string, date: string, start: string, end: string) => {
     await form.getByLabel('EVENT NAME', { exact: true }).fill(title)
@@ -24,38 +27,54 @@ test('availability and personal Schedule work across navigation and reload', asy
     await form.getByRole('button', { name: '+ Post event' }).click()
     await expect(page.getByRole('status').filter({ hasText: `Posted “${title}”` })).toBeVisible()
   }
-  await page.getByRole('link', { name: 'My Schedule', exact: true }).click()
-  await expect(page.getByRole('heading', { name: 'No events planned yet' })).toBeVisible()
-  await page.getByRole('navigation').getByRole('link', { name: 'Find events' }).click()
+  await nav(page).getByRole('link', { name: 'My Schedule', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Nothing planned yet.' })).toBeVisible()
+  await nav(page).getByRole('link', { name: /Post an event/ }).click()
   await post('Tomorrow concert', dates[1], '14:30', '15:30')
   await post('Early workshop', dates[0], '14:30', '15:30')
   await post('Choir overlap', dates[0], '15:00', '16:00')
   await post('Starts at window end', dates[0], '16:00', '17:00')
   await expect(page.getByRole('region', { name: /posted events/i }).getByText('Starts at window end')).toBeVisible()
-  await page.getByLabel('Free on date', { exact: true }).fill(dates[0])
-  await page.getByLabel('Free from', { exact: true }).fill('14:00')
-  await page.getByLabel('Free until', { exact: true }).fill('16:00')
-  await expect(page.getByRole('heading', { name: 'Starts at window end', exact: true })).not.toBeVisible()
-  // Posted events can be planned even when the current search excludes them.
+  // Posted events can be planned from the Post page even when no search is set.
   await page.getByRole('button', { name: 'Plan to attend Tomorrow concert', exact: true }).click()
-  const results = page.locator('.results')
-  await results.getByRole('button', { name: 'Plan to attend Early workshop', exact: true }).click()
-  await results.getByRole('button', { name: 'Plan to attend Choir overlap', exact: true }).click()
+
+  await nav(page).getByRole('link', { name: 'Discover', exact: true }).click()
+  const free = page.getByRole('search', { name: 'When are you free?' })
+  await free.getByLabel('Free on').fill(dates[0])
+  await free.getByLabel('from').fill('14:00')
+  await free.getByLabel('until').fill('16:00')
+  await expect(page.getByText('2 events fit', { exact: false })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'View details for Starts at window end' })).toHaveCount(0)
+  const ticket = page.getByRole('complementary')
+  const plan = async (title: string) => {
+    await page.getByRole('button', { name: `View details for ${title}` }).click()
+    await expect(ticket.getByRole('heading', { name: title })).toBeVisible()
+    await ticket.getByRole('button', { name: '+ Plan to attend' }).click()
+    await expect(ticket.getByRole('button', { name: 'In My Schedule' })).toBeDisabled()
+  }
+  await plan('Early workshop')
+  await plan('Choir overlap')
   await expect(page.getByText(/Schedule overlap:.*Choir overlap/)).toBeVisible()
-  await page.getByRole('link', { name: 'My Schedule', exact: true }).click()
-  const list = page.getByRole('list', { name: 'Planned events' })
-  await expect(list.getByRole('heading')).toHaveText(['Early workshop', 'Choir overlap', 'Tomorrow concert'])
-  await expect(page.getByRole('alert')).toHaveText("Some planned events overlap. Review their times if this wasn't intentional.")
+
+  await nav(page).getByRole('link', { name: /My Schedule/ }).click()
+  const stubs = page.getByRole('button', { name: /^View details for / })
+  await expect(stubs.first()).toBeVisible()
+  const titles = () => stubs.evaluateAll(els => els.map(el => el.getAttribute('aria-label')!.replace('View details for ', '')))
+  expect(await titles()).toEqual(['Early workshop', 'Choir overlap', 'Tomorrow concert'])
+  await expect(page.getByText('2 plans overlap')).toBeVisible()
+  await expect(ticket.getByText('Overlaps 1 plan')).toBeVisible()
   await page.screenshot({ path: test.info().outputPath('schedule-desktop.png'), fullPage: true })
   await page.reload()
-  await expect(list.getByRole('heading')).toHaveText(['Early workshop', 'Choir overlap', 'Tomorrow concert'])
+  await expect(ticket.getByRole('heading', { name: 'Early workshop' })).toBeVisible()
+  expect(await titles()).toEqual(['Early workshop', 'Choir overlap', 'Tomorrow concert'])
   await page.getByRole('button', { name: 'Remove Early workshop from plans', exact: true }).click()
-  await expect(list.getByRole('heading')).toHaveText(['Choir overlap', 'Tomorrow concert'])
-  await expect(page.getByText(/Some planned events overlap/)).not.toBeVisible()
-  await page.getByRole('link', { name: 'Find events', exact: true }).click()
-  await page.getByLabel('Free on date', { exact: true }).fill(dates[0])
-  await expect(results.getByRole('heading', { name: 'Early workshop', exact: true })).toBeVisible()
-  await expect(results.getByRole('button', { name: 'Plan to attend Early workshop', exact: true })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'View details for Early workshop' })).toHaveCount(0)
+  expect(await titles()).toEqual(['Choir overlap', 'Tomorrow concert'])
+  await expect(page.getByText(/plans overlap/)).toHaveCount(0)
+
+  await nav(page).getByRole('link', { name: 'Discover', exact: true }).click()
+  await page.getByRole('button', { name: 'View details for Early workshop' }).click()
+  await expect(ticket.getByRole('button', { name: '+ Plan to attend' })).toBeEnabled()
   const stored = await page.evaluate(() => ({
     catalog: JSON.parse(localStorage.getItem('sidequest.local-catalog.v1')!),
     plans: JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1')!),
@@ -69,9 +88,12 @@ test('phone Schedule keeps overlaps, long names and unavailable events readable'
   await page.setViewportSize({ width: 375, height: 812 })
   await page.goto('/')
   await page.evaluate(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 7)
+    const date = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
     const a = '00000000-0000-4000-8000-000000000001'
     const b = '00000000-0000-4000-8000-000000000002'
-    const common = { host_name: 'SCU student club', description: 'Open to all.', event_date: '2020-11-01' }
+    const common = { host_name: 'SCU student club', description: 'Open to all.', event_date: date }
     const records = [
       { ...common, id: a, title: 'Campus photography and creative storytelling workshop', location: 'Student Center', start_time: '14:30:00', end_time: '15:30:00' },
       { ...common, id: b, title: 'Choir rehearsal', location: 'Music Hall', start_time: '15:00:00', end_time: '16:00:00' },
@@ -81,12 +103,13 @@ test('phone Schedule keeps overlaps, long names and unavailable events readable'
   })
   await page.goto('/#schedule')
   await page.reload()
-  await expect(page.getByRole('heading', { name: 'My Schedule' })).toBeVisible()
-  await expect(page.getByText(/Some planned events overlap/)).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Event unavailable' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'My Schedule.' })).toBeVisible()
+  await expect(page.getByText('2 plans overlap')).toBeVisible()
+  await expect(page.getByText('An event you planned')).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   await page.screenshot({ path: test.info().outputPath('schedule-phone.png'), fullPage: true })
   await page.getByRole('button', { name: 'Remove unavailable event missing from plans' }).click()
-  await expect(page.getByRole('heading', { name: 'Event unavailable' })).not.toBeVisible()
-  await expect(page.getByText('2 planned', { exact: true })).toBeVisible()
+  await expect(page.getByText('An event you planned')).toHaveCount(0)
+  const planned = page.locator('.sq-stats div').filter({ hasText: 'planned' }).first()
+  await expect(planned.locator('dd')).toHaveText('2')
 })

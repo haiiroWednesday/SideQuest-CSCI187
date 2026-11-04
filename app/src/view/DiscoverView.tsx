@@ -126,13 +126,17 @@ export type DiscoverViewProps = {
   onShowAllChange?: (showAll: boolean) => void
   routes?: SideQuestRoutes
   sourceNote?: string
+  /** feedback from the Schedule controller after planning (status and alert text as it wrote them) */
+  notice?: ReactNode
+  /** false while saved plans cannot be read, so Plan to attend waits for recovery */
+  canPlan?: boolean
 }
 
 const PHONE = '(max-width: 760px)'
 const isPhone = () => typeof window.matchMedia === 'function' && window.matchMedia(PHONE).matches
 
 /** The picked event as a ticket. Rendered beside the trail on wide screens and inside the phone dialog. */
-function TicketCard({ stub, onPlan, titleId }: { stub: StubModel; onPlan?: (id: string) => void; titleId: string }) {
+function TicketCard({ stub, onPlan, titleId, canPlan = true }: { stub: StubModel; onPlan?: (id: string) => void; titleId: string; canPlan?: boolean }) {
   return (
     <>
       {stub.live && <span className={`sq-nx sq-live-${stub.live.kind}`}>{stub.live.text}</span>}
@@ -156,7 +160,7 @@ function TicketCard({ stub, onPlan, titleId }: { stub: StubModel; onPlan?: (id: 
       </dl>
       <p className="sq-sticker-desc">{stub.description ?? 'No description was provided.'}</p>
       {onPlan && (
-        <button className="sq-plan-button" type="button" disabled={stub.planned} onClick={() => onPlan(stub.id)}>
+        <button className="sq-plan-button" type="button" disabled={stub.planned || !canPlan} onClick={() => onPlan(stub.id)}>
           {stub.planned ? 'In My Schedule' : '+ Plan to attend'}
         </button>
       )}
@@ -164,7 +168,7 @@ function TicketCard({ stub, onPlan, titleId }: { stub: StubModel; onPlan?: (id: 
   )
 }
 
-export function DiscoverView({ screen, onRetry, onPlan, onFreeWindowChange, onShowAllChange, routes, sourceNote }: DiscoverViewProps) {
+export function DiscoverView({ screen, onRetry, onPlan, onFreeWindowChange, onShowAllChange, routes, sourceNote, notice, canPlan = true }: DiscoverViewProps) {
   const [requestedId, setRequestedId] = useState<string | null>(null)
   const stubs = screen.days.flatMap(day => day.events)
   // Keep the student's pick while it is still listed; otherwise fall back to the first event shown.
@@ -244,6 +248,8 @@ export function DiscoverView({ screen, onRetry, onPlan, onFreeWindowChange, onSh
           </div>
         )}
 
+        {notice && <div className="sq-notice">{notice}</div>}
+
         <div className="sq-board">
           <section className="sq-results" aria-labelledby="sq-events-heading">
             <h2 id="sq-events-heading" className="sq-visually-hidden">{screen.headingText}</h2>
@@ -300,7 +306,7 @@ export function DiscoverView({ screen, onRetry, onPlan, onFreeWindowChange, onSh
           {ready && selected && (
             <aside className="sq-sticker" aria-labelledby="sq-detail-title">
               <div className="sq-sticker-card" key={selected.id}>
-                <TicketCard stub={selected} onPlan={onPlan} titleId="sq-detail-title" />
+                <TicketCard stub={selected} onPlan={onPlan} canPlan={canPlan} titleId="sq-detail-title" />
               </div>
             </aside>
           )}
@@ -310,7 +316,7 @@ export function DiscoverView({ screen, onRetry, onPlan, onFreeWindowChange, onSh
           {sheetOpen && selected && ready && (
             <div className="sq-sticker-card">
               <button type="button" className="sq-sheet-close" aria-label="Close details" onClick={closeSheet}>×</button>
-              <TicketCard stub={selected} onPlan={onPlan} titleId="sq-sheet-title" />
+              <TicketCard stub={selected} onPlan={onPlan} canPlan={canPlan} titleId="sq-sheet-title" />
             </div>
           )}
         </dialog>

@@ -24,7 +24,7 @@ async function post(page: Page, title: string, date: string, start: string, end:
 
 test('post → discover → match a free window → plan → reload → remove, on real pages', async ({ page }) => {
   const date = await futureDate(page)
-  await page.goto('/')
+  await page.goto('/#post')
   await post(page, 'Ceramics Workshop', date, '14:30', '15:30')
   await post(page, 'Poetry Reading', date, '15:00', '16:30')
 
@@ -64,7 +64,7 @@ test('post → discover → match a free window → plan → reload → remove, 
 
 test('phone: the details open in a dialog that Escape closes, returning focus to the event', async ({ page }) => {
   const date = await futureDate(page)
-  await page.goto('/')
+  await page.goto('/#post')
   await post(page, 'Ceramics Workshop', date, '14:30', '15:30')
   await page.setViewportSize({ width: 375, height: 812 })
   await page.goto('/discover-preview.html')

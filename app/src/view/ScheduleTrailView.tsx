@@ -19,6 +19,9 @@ export type ScheduleTrailViewProps = {
   onRecover?: () => void
   /** re-reads the catalog after a failed lookup */
   onRetry?: () => void
+  /** some plans could not be looked up (not the same as missing); retry asks again */
+  lookupError?: string | null
+  onRetryLookup?: () => void
   routes?: SideQuestRoutes
   /** feedback text from the Schedule controller, shown as it was written */
   message?: string | null
@@ -26,7 +29,7 @@ export type ScheduleTrailViewProps = {
   error?: string | null
 }
 
-export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes, message = null, warning = null, error = null }: ScheduleTrailViewProps) {
+export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, lookupError = null, onRetryLookup, routes, message = null, warning = null, error = null }: ScheduleTrailViewProps) {
   const next = screen.nextUp
   // The sticker shows Next up until the student taps another plan.
   const [pickedId, setPickedId] = useState<string | null>(null)
@@ -62,6 +65,12 @@ export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes
         {screen.capacityMessage && !error && <p className="sq-feedback" role="status">{screen.capacityMessage}</p>}
         {message && <p className="sq-feedback" role="status">{message}</p>}
         {warning && <p className="sq-feedback sq-feedback-error" role="alert">{warning}</p>}
+        {lookupError && (
+          <div className="sq-feedback sq-feedback-error" role="alert">
+            <p>{lookupError}</p>
+            {onRetryLookup && <button type="button" className="sq-recover" onClick={onRetryLookup}>Try again</button>}
+          </div>
+        )}
         {error && (
           <div className="sq-feedback sq-feedback-error" role="alert">
             <p>{error}</p>
@@ -71,7 +80,7 @@ export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes
 
         {screen.status === 'empty' ? (
           <div className="sq-empty-card">
-            <b>Nothing planned yet.</b>
+            <h2>Nothing planned yet.</h2>
             {routes?.discover && <a className="sq-plan-button sq-plan-link" href={routes.discover}>Browse Discover →</a>}
           </div>
         ) : screen.status === 'blocked' && !error ? (
@@ -152,7 +161,7 @@ export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes
                           <span className="sq-stub-body">
                             <strong>An event you planned</strong>
                             <span className="sq-by">It may have ended or been taken down.</span>
-                            {remove(item.id, 'unavailable event')}
+                            {remove(item.id, `unavailable event ${item.id}`)}
                           </span>
                         </div>
                       </li>

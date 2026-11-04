@@ -2,7 +2,7 @@
 // Keep coverage for legacy Remove/Undo, recovery, and multi-tab safety.
 // Search now reads the EventCatalog; legacy records are not published.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../src/App'
 import { STORAGE_KEY, type CampusEvent } from '../src/model/events'
@@ -34,14 +34,19 @@ function sharedCatalog(events: CampusEvent[]) {
   return { catalog: createEventCatalog(createInMemoryEventTable(rows)), shared: true }
 }
 
-// Point the free-time search at the seeded event's date (14:00–16:00 is the default window).
-function searchOn(date: string) {
-  fireEvent.change(screen.getByLabelText('Free on date'), { target: { value: date } })
+// Set Discover's free-time window: the seeded event runs 2:30–3:30pm.
+function searchOn(date: string, start = '14:00', end = '16:00') {
+  fireEvent.change(screen.getByLabelText('Free on'), { target: { value: date } })
+  fireEvent.change(screen.getByLabelText('from'), { target: { value: start } })
+  fireEvent.change(screen.getByLabelText('until'), { target: { value: end } })
 }
 
+// The legacy M1 list and its Remove/Undo/recovery live on the Post page.
 beforeEach(() => {
   window.localStorage.clear()
+  window.location.hash = '#post'
 })
+const goTo = (hash: string) => act(async () => { window.location.hash = hash; window.dispatchEvent(new HashChangeEvent('hashchange')) })
 
 afterEach(() => {
   cleanup()
@@ -51,16 +56,20 @@ afterEach(() => {
 
 describe('M1 rendered user workflow', () => {
   it('shows a catalog event in full-fit results without publishing a legacy record', async () => {
+    window.location.hash = '#discover'
     seed([workshop({ title: 'Legacy workshop' })])
     render(<App catalog={sharedCatalog([workshop()])} />)
+    await screen.findByRole('button', { name: 'View details for Art Workshop' })
     searchOn(futureDate())
 
-    expect(await screen.findByRole('heading', { name: 'Art Workshop' })).toBeTruthy()
-    expect(screen.queryByRole('heading', { name: 'Legacy workshop' })).toBeNull()
+    const stub = screen.getByRole('button', { name: 'View details for Art Workshop' })
+    expect(within(stub).getByText('Fits your window')).toBeTruthy()
+    expect(screen.getByText('1 event fits')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'View details for Legacy workshop' })).toBeNull()
+
+    await goTo('#post')
     expect(screen.getByRole('button', { name: 'Remove Legacy workshop' })).toBeTruthy()
     expect(screen.getByText('1 total')).toBeTruthy()
-    expect(screen.getByText('1 event')).toBeTruthy()
-    expect(screen.getByText('✓ Fits')).toBeTruthy()
   })
 
   it('R2: preserves events across unmount/reload and persists removal', async () => {
@@ -82,23 +91,27 @@ describe('M1 rendered user workflow', () => {
   })
 
   it('R3/R4: displays both empty-search states and an invalid-search message', async () => {
+    window.location.hash = '#discover'
     render(<App />)
-    expect(await screen.findByText('No upcoming events to match. Post an event above!')).toBeTruthy()
+    expect(await screen.findByText('No events to show yet.')).toBeTruthy()
     cleanup()
 
     render(<App catalog={sharedCatalog([workshop()])} />)
-    searchOn(futureDate())
-    fireEvent.change(screen.getByLabelText('Free from'), { target: { value: '17:00' } })
-    fireEvent.change(screen.getByLabelText('Free until'), { target: { value: '18:00' } })
-    expect(await screen.findByText('No upcoming events fit this date and time. Try a different window.')).toBeTruthy()
+    await screen.findByRole('button', { name: 'View details for Art Workshop' })
+    searchOn(futureDate(), '17:00', '18:00')
+    expect(screen.getByRole('heading', { name: /^No event fits all of / })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'See all upcoming events' })).toBeTruthy()
 
-    fireEvent.change(screen.getByLabelText('Free until'), { target: { value: '16:00' } })
+    fireEvent.change(screen.getByLabelText('until'), { target: { value: '16:00' } })
     expect(screen.getByRole('alert').textContent).toContain('Please choose an end time later')
-    expect(screen.getByText('Correct your available date or time to see matching events.')).toBeTruthy()
+    // An invalid window filters nothing: every event stays listed while it is corrected.
+    expect(screen.getByRole('button', { name: 'View details for Art Workshop' })).toBeTruthy()
 
-    fireEvent.change(screen.getByLabelText('Free until'), { target: { value: '18:00' } })
-    fireEvent.change(screen.getByLabelText('Free on date'), { target: { value: '' } })
-    expect(screen.getByRole('alert').textContent).toContain('Please choose a valid date.')
+    // Clearing the date means "no window": Discover goes back to listing everything, with no error.
+    fireEvent.change(screen.getByLabelText('until'), { target: { value: '18:00' } })
+    fireEvent.change(screen.getByLabelText('Free on'), { target: { value: '' } })
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.getByRole('button', { name: 'View details for Art Workshop' })).toBeTruthy()
   })
 
   it('R2/R4: warns when a list change cannot be persisted', async () => {
@@ -115,14 +128,19 @@ describe('M1 rendered user workflow', () => {
   })
 
   it('R1/R3: shows catalog descriptions and human-readable dates and times', async () => {
+    window.location.hash = '#discover'
     const date = futureDate()
     render(<App catalog={sharedCatalog([workshop({ title: 'Two Choirs', description: 'A cappella rehearsals', location: 'Music Hall', date })])} />)
     searchOn(date)
 
-    expect(await screen.findByText('A cappella rehearsals')).toBeTruthy()
+    const ticket = within(await screen.findByRole('complementary'))
+    expect(ticket.getByText('A cappella rehearsals')).toBeTruthy()
     const [year, month, day] = date.split('-')
-    expect(screen.getAllByText(`${Number(month)}/${Number(day)}/${year}`)).toHaveLength(1)
-    expect(screen.getByText('2:30pm – 3:30pm')).toBeTruthy()
+    expect(ticket.getAllByText(`${Number(month)}/${Number(day)}/${year}`)).toHaveLength(1)
+    expect(ticket.getByText('until 3:30pm · 1 hr')).toBeTruthy()
+    const stub = within(screen.getByRole('button', { name: 'View details for Two Choirs' }))
+    expect(stub.getByText('2:30').textContent).toBe('2:30pm')
+    expect(stub.getByText('to 3:30pm')).toBeTruthy()
   })
 
   it('R2: offers an Undo button after removing a saved event', async () => {

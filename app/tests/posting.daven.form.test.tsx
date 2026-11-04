@@ -41,7 +41,7 @@ async function fillAndPost(user: User, values: { title?: string; hostName?: stri
 
 const postedList = () => within(screen.getByRole('region', { name: /posted events/i }))
 
-beforeEach(() => window.localStorage.clear())
+beforeEach(() => { window.localStorage.clear(); window.location.hash = '#post' })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 describe('PostEventForm', () => {
@@ -52,14 +52,15 @@ describe('PostEventForm', () => {
     const initialRead = new Promise<CampusEvent[]>(resolve => { finishInitialRead = resolve })
     vi.spyOn(catalog, 'listUpcoming').mockImplementationOnce(() => initialRead)
     render(<App catalog={{ catalog, shared: true }} />)
-    fireEvent.change(screen.getByLabelText('Free on date'), { target: { value: futureDate() } })
 
     await fillAndPost(user)
-    await screen.findByRole('heading', { name: 'Photo Walk' })
+    await waitFor(() => expect(postedList().getByText('Photo Walk')).toBeTruthy())
     await act(async () => { finishInitialRead([]) })
-
-    expect(screen.getByRole('heading', { name: 'Photo Walk' })).toBeTruthy()
     expect(postedList().getByText('Photo Walk')).toBeTruthy()
+
+    // Discover shares the same catalog snapshot, so the late initial read did not drop the new post.
+    await act(async () => { window.location.hash = '#discover'; window.dispatchEvent(new HashChangeEvent('hashchange')) })
+    expect(await screen.findByRole('button', { name: 'View details for Photo Walk' })).toBeTruthy()
   })
 
   it('posts to the catalog, shows the new ID, and lists the event with its host', async () => {

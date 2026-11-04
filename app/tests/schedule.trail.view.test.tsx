@@ -57,7 +57,7 @@ describe('My Schedule trail view: draws the Controller screen', () => {
   it('reports the exact plan ID to remove, including an unavailable one', () => {
     const onRemove = vi.fn()
     render(draw(campusAt('2030-11-07', '13:00'), onRemove))
-    fireEvent.click(screen.getByRole('button', { name: 'Remove unavailable event from plans' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Remove unavailable event gone-7 from plans' }))
     expect(onRemove).toHaveBeenCalledWith('gone-7')
     expect(screen.getByText('It may have ended or been taken down.')).toBeTruthy()
   })

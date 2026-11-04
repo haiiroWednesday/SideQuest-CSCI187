@@ -1,24 +1,32 @@
-// VIEW: Post events and search the catalog for your available time.
+// VIEW: SideQuest's three pages. Discover (catalog + free-time window + plan),
+// My Schedule (this device's plans) and Post (Daven's form, plus the legacy M1
+// list). Rules and persistence are mediated through the Controllers.
 import { useEffect, useRef, useState } from 'react'
 import {
-  findEvents, todayLocal, displayDate, displayTime,
+  displayDate, displayTime,
   loadEventsChecked, persistEvents, removeEventWithReceipt, restoreRemovedEvent, isPastEvent,
   STORAGE_KEY, type CampusEvent, type RemovedEvent,
 } from './controller/findEvents'
 import { browserCatalogStorage, localEventCatalog, type ConnectedCatalog } from './controller/postEvent'
 import { PostEventForm } from './view/PostEventForm'
 import { useCatalogEvents } from './view/useCatalogEvents'
+import { DiscoverView, SideQuestHeader, useDiscoverScreen, type FreeWindow } from './view/DiscoverView'
+import { ScheduleTrailView, useScheduleScreen } from './view/ScheduleTrailView'
 
-import { usePersonalSchedule, PlanButton, SchedulePage, ScheduleFeedback } from './view/PersonalSchedule'
+import { usePersonalSchedule, PlanButton, ScheduleFeedback } from './view/PersonalSchedule'
+
+type Page = 'discover' | 'schedule' | 'post'
+const pageFromHash = (): Page => window.location.hash === '#schedule' ? 'schedule' : window.location.hash === '#post' ? 'post' : 'discover'
+const ROUTES = { discover: '#discover', schedule: '#schedule', post: '#post' }
 
 // main.tsx passes the configured catalog (Supabase when app/.env.local is set).
 // Without a prop, App uses the browser-only fallback, so tests never reach the network.
 export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
   const [connection] = useState<ConnectedCatalog>(() => catalog ?? localEventCatalog(browserCatalogStorage))
   const posted = useCatalogEvents(connection.catalog)
-  const [page, setPage] = useState(() => window.location.hash === '#schedule' ? 'schedule' : 'discover')
+  const [page, setPage] = useState<Page>(pageFromHash)
   useEffect(() => {
-    const navigate = () => setPage(window.location.hash === '#schedule' ? 'schedule' : 'discover')
+    const navigate = () => setPage(pageFromHash())
     window.addEventListener('hashchange', navigate)
     return () => window.removeEventListener('hashchange', navigate)
   }, [])
@@ -42,9 +50,15 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
   const [createError, setCreateError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [storageWarning, setStorageWarning] = useState(false)
-  const [freeDate, setFreeDate] = useState(todayLocal)
-  const [freeStart, setFreeStart] = useState('14:00')
-  const [freeEnd, setFreeEnd] = useState('16:00')
+  // Discover's free-time window. Empty means browse everything; a complete
+  // window lists only what fits, unless the student chooses Show all events.
+  const [freeWindow, setFreeWindow] = useState<FreeWindow>({ date: '', start: '', end: '' })
+  const [showAll, setShowAll] = useState(false)
+  const discover = useDiscoverScreen({
+    events: posted.events, loading: posted.loading && posted.events.length === 0, error: posted.error,
+    plannedIds: plans.schedule.ids, freeWindow, showAll,
+  })
+  const schedule = useScheduleScreen(plans.schedule, { loading: plans.loading, error: null })
 
   // Past-event labels should update even when someone leaves SideQuest open.
   useEffect(() => {
@@ -130,12 +144,6 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
     setNotice(saved ? 'Saved event data recovered.' : null)
   }
 
-  // The matching list is calculated from current inputs on every render;
-  // changing the search date or times updates results automatically.
-  // Object destructuring pulls out matches and renames error to searchError
-  // so it is easy to distinguish search errors from event-creation errors.
-  const { matches, error: searchError } = findEvents(posted.events, freeDate, freeStart, freeEnd)
-
   // The returned removal receipt allows Undo to restore the event later.
   // A failed save during deletion still needs clearer confirmation messaging.
   function removeEvent(id: string) {
@@ -162,141 +170,90 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
 
   // JSX below describes the visible page. React updates it when state
   // changes, and every event ID serves as a stable key for its event card.
+  const footer = `${connection.shared ? 'Posted events are shared.' : 'Posted events are stored in this browser.'} Personal plans stay on this device.`
+  if (page === 'discover') return (
+    <DiscoverView
+      screen={discover}
+      routes={ROUTES}
+      onPlan={plans.add}
+      canPlan={!plans.schedule.blocked}
+      onRetry={() => { void posted.refresh() }}
+      onFreeWindowChange={next => { setFreeWindow(next); setShowAll(false) }}
+      onShowAllChange={setShowAll}
+      notice={<ScheduleFeedback plans={plans} />}
+      sourceNote={footer}
+    />
+  )
+  if (page === 'schedule') return (
+    <ScheduleTrailView
+      screen={schedule}
+      routes={ROUTES}
+      onRemove={plans.remove}
+      onRecover={plans.recover}
+      message={plans.message}
+      error={plans.error}
+      lookupError={plans.lookupError}
+      onRetryLookup={plans.retryLookup}
+    />
+  )
   return (
-    <main className="shell">
-      <header className="topbar">
-        <div className="wordmark"><span className="flower">✳</span> sidequest<span className="dot">.</span></div>
-        <span className="tag">SCU · Events &amp; personal plans</span>
-      </header>
-      <nav className="page-nav" aria-label="Main navigation">
-        <a href="#discover" aria-current={page === 'discover' ? 'page' : undefined}>Find events</a>
-        <a href="#schedule" aria-current={page === 'schedule' ? 'page' : undefined}>My Schedule</a>
-      </nav>
-      {page === 'schedule' ? <SchedulePage plans={plans} /> : <>
-      <section className="hero">
-        <div className="eyebrow">YOUR FREE TIME, WELL SPENT</div>
-        <h1>There's more to campus <em>than class.</em></h1>
-        <p className="lead">Create an event, then discover what fits your free time.</p>
-      </section>
-
-      <section className="workspace" aria-label="Create and find events">
-        <section className="panel" aria-labelledby="create-heading">
-          <div className="panel-heading">
-            <h2 id="create-heading">Post an event</h2>
-            <span>Step 1</span>
-          </div>
-          <p className="panel-description">Post a campus event. Events today must start at or after the current time.</p>
-          <PostEventForm connection={connection} catalogEvents={posted}
-            renderEventActions={event => <PlanButton event={event} plans={plans} />} />
-          {createError && <p className="error" role="alert">{createError}</p>}
-          {notice && <div className="success" role="status">{notice}</div>}
-          {lastRemoved && <div className="undo-control">
-            <button type="button" className="undo-button" onClick={undoRemove}>Undo removal</button>
-          </div>}
-          {storageBlocked && <div className="storage-alert" role="alert">
-            Some saved browser data could not be read. It has not been overwritten.
-            <button type="button" className="recovery-button" onClick={recoverSavedEvents}>
-              Recover valid events
-            </button>
-          </div>}
-          {!storageBlocked && storageWarning && <p className="error" role="alert">Browser storage could not save your changes. They may disappear after reload.</p>}
+    <div className="sq-discover-page sq-post-page">
+      <SideQuestHeader routes={ROUTES} active="post" plannedCount={plans.schedule.ids.length} />
+      <main className="sq-main" id="content">
+        <section className="sq-hero" aria-labelledby="create-heading">
+          <h1 id="create-heading">Post an <em>event.</em></h1>
         </section>
 
-        <section className="panel" aria-labelledby="search-heading">
-          <div className="panel-heading">
-            <h2 id="search-heading">When are you free?</h2>
-            <span>Step 2</span>
-          </div>
-          <p className="panel-description">Find upcoming events that fit your whole free-time window.</p>
-          <div className="search-fields">
-            <label>
-              <span>DATE</span>
-              <input aria-label="Free on date" type="date" value={freeDate} onChange={(e) => setFreeDate(e.target.value)} />
-            </label>
-            <div className="time-row">
-              <label>
-                <span>FROM</span>
-                <input aria-label="Free from" type="time" value={freeStart} onChange={(e) => setFreeStart(e.target.value)} />
-              </label>
-              <label>
-                <span>UNTIL</span>
-                <input aria-label="Free until" type="time" value={freeEnd} onChange={(e) => setFreeEnd(e.target.value)} />
-              </label>
-            </div>
-          </div>
-          {searchError && <p className="error" role="alert">{searchError}</p>}
-          <div className="mini-summary"><strong>{matches.length}</strong> matching {matches.length === 1 ? 'event' : 'events'}</div>
-        </section>
-      </section>
+        <div className="sq-post-columns">
+          <section className="panel sq-post-panel" aria-label="Post an event form">
+            <p className="panel-description">Post a campus event. Events today must start at or after the current time.</p>
+            <PostEventForm connection={connection} catalogEvents={posted}
+              renderEventActions={event => <PlanButton event={event} plans={plans} />} />
+            <ScheduleFeedback plans={plans} />
+          </section>
 
-      {/* 📢 aria-live="polite" lets screen readers announce search updates
-          without interrupting what the person is already doing. */}
-      <ScheduleFeedback plans={plans} />
-      <section className="results" aria-live="polite">
-        <div className="section-title">
-          <h2>Made for your window</h2>
-          <span className="counter">{matches.length} {matches.length === 1 ? 'event' : 'events'}</span>
+          {/* Keep earlier local events accessible without publishing them or
+              including them in results from the new catalog. */}
+          <section className="library sq-legacy" aria-labelledby="saved-heading">
+            <div className="section-title"><h2 id="saved-heading">Legacy browser events</h2><span className="counter">{legacyEvents.length} total</span></div>
+            {createError && <p className="error" role="alert">{createError}</p>}
+            {notice && <div className="success" role="status">{notice}</div>}
+            {lastRemoved && <div className="undo-control">
+              <button type="button" className="undo-button" onClick={undoRemove}>Undo removal</button>
+            </div>}
+            {storageBlocked && <div className="storage-alert" role="alert">
+              Some saved browser data could not be read. It has not been overwritten.
+              <button type="button" className="recovery-button" onClick={recoverSavedEvents}>
+                Recover valid events
+              </button>
+            </div>}
+            {!storageBlocked && storageWarning && <p className="error" role="alert">Browser storage could not save your changes. They may disappear after reload.</p>}
+            {legacyEvents.length === 0
+              ? <p className="library-empty">No legacy events saved in this browser.</p>
+              : <ul className="saved-list">
+                  {legacyEvents.map((event) => (
+                    <li key={event.id}>
+                      <div>
+                        <strong>{event.title}</strong>
+                        {isPastEvent(event) && <small className="past-tag">Past event</small>}
+                        <span>{displayDate(event.date)} · {displayTime(event.start)}–{displayTime(event.end)} · {event.location}</span>
+                        {event.description && <span className="event-description">{event.description}</span>}
+                      </div>
+                      <div className="event-actions">
+                        <button type="button" className="remove-button" onClick={() => removeEvent(event.id)}
+                          aria-label={`Remove ${event.title}`}>Remove</button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>}
+          </section>
         </div>
-        {/* 🔎 Three display cases: invalid search, zero matches, or a list
-            of event cards. The ? : operator chooses between them. */}
-        {posted.error ? (
-          <div className="empty">Matching events are unavailable. Retry loading the posted events above.</div>
-        ) : posted.loading && posted.events.length === 0 ? (
-          <div className="empty">Loading events to match…</div>
-        ) : searchError ? (
-          <div className="empty">Correct your available date or time to see matching events.</div>
-        ) : matches.length === 0 ? (
-          <div className="empty">{posted.events.length === 0
-            ? 'No upcoming events to match. Post an event above!'
-            : 'No upcoming events fit this date and time. Try a different window.'}</div>
-        ) : (
-          <div className="events">
-            {/* .map makes one card for every match; key={event.id} helps
-                React keep the correct card when the list changes. */}
-            {matches.map((event) => (
-              <article className="event-card" key={event.id}>
-                <div className="event-left">
-                  <span className="category">Campus event</span>
-                  <h3>{event.title}</h3><p>{event.location}</p>
-                  {event.description && <p className="event-description">{event.description}</p>}
-                </div>
-                <div className="event-right">
-                  <span className="fit">✓ Fits</span>
-                  <strong>{displayDate(event.date)}</strong>
-                  <strong>{displayTime(event.start)} – {displayTime(event.end)}</strong>
-                  <PlanButton event={event} plans={plans} />
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Keep earlier local events accessible without publishing them or
-          including them in results from the new catalog. */}
-      <section className="library" aria-labelledby="saved-heading">
-        <div className="section-title"><h2 id="saved-heading">Legacy browser events</h2><span className="counter">{legacyEvents.length} total</span></div>
-        {legacyEvents.length === 0
-          ? <p className="library-empty">No legacy events saved in this browser.</p>
-          : <ul className="saved-list">
-              {legacyEvents.map((event) => (
-                <li key={event.id}>
-                  <div>
-                    <strong>{event.title}</strong>
-                    {isPastEvent(event) && <small className="past-tag">Past event</small>}
-                    <span>{displayDate(event.date)} · {displayTime(event.start)}–{displayTime(event.end)} · {event.location}</span>
-                    {event.description && <span className="event-description">{event.description}</span>}
-                  </div>
-                  <div className="event-actions">
-                    <button type="button" className="remove-button" onClick={() => removeEvent(event.id)}
-                      aria-label={`Remove ${event.title}`}>Remove</button>
-                  </div>
-                </li>
-              ))}
-            </ul>}
-      </section>
-      </>}
-      <footer>{connection.shared ? 'Posted events are shared.' : 'Posted events are stored in this browser.'} Personal plans stay on this device.</footer>
-    </main>
+        <p className="sq-source-note">{footer}</p>
+      </main>
+      <footer className="sq-footer">
+        <span>SideQuest</span>
+        <span>Santa Clara · California</span>
+      </footer>
+    </div>
   )
 }

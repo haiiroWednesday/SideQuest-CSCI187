@@ -1,6 +1,6 @@
 # SideQuest Campus Index: Cynthia UI foundation
 
-**Status:** feature-branch UI slice, merged up to date with `master` (PR #15 Schedule, PR #18 EventCatalog, PR #19 posting, PR #22 release hardening) and running on those controllers in a preview page. `App.tsx` is unchanged; Devonny integrates the views there. The source of truth for M2 behavior remains the [MVP Team Playbook](MVP_TEAM_PLAYBOOK.md).
+**Status:** feature-branch UI slice, merged up to date with `master` (PR #15 Schedule, PR #18 EventCatalog, PR #19 posting, PR #22 release hardening). `App.tsx` now renders three real pages on those controllers: **Discover** at `/`, **My Schedule** at `#schedule`, **Post an event** at `#post`. Devonny owns `App.tsx`, so she reviews this change before it merges. The source of truth for M2 behavior remains the [MVP Team Playbook](MVP_TEAM_PLAYBOOK.md).
 
 ## Preview it
 
@@ -11,8 +11,8 @@ npm ci
 npm run dev
 ```
 
-1. Open **http://localhost:5173/** and post an event with the existing form (Daven's posting controller).
-2. Open **http://localhost:5173/discover-preview.html**: the event is there, read through the shared `useCatalogEvents(catalog)` snapshot. Without `app/.env.local` this is the labeled browser-only catalog; with Supabase settings it is the shared one.
+1. Open **http://localhost:5173/#post** and post an event with Daven's form. The legacy M1 list (Remove, Undo, Recover valid events, two-tab sync) sits beside it.
+2. Open **http://localhost:5173/**: Discover lists the event, read through the same `useCatalogEvents(catalog)` snapshot. Without `app/.env.local` this is the labeled browser-only catalog; with Supabase settings it is the shared one. (`discover-preview.html` still works and shows the same views.)
 3. Set **When are you free?**: only events that fit the whole window are listed, with **Show all events** to browse everything. **+ Plan to attend** goes through Sembiyan's Schedule controller.
 4. **My Schedule** (`#schedule`) shows Next up, conflicts, plans whose details are unavailable, recovery for unreadable storage, and the plan limit notice, all from his controller.
 5. **http://localhost:5173/scenario-lab.html** (dev only) shows catalog data, Controller output and both views side by side, with a draggable campus clock.
@@ -31,7 +31,9 @@ The View never reads the clock, compares dates or times, touches storage or impo
 | `app/scenario-lab.html`, `app/src/lab/` | Dev only | Fixture events (labeled, never stored) run through the real presenters and the real Schedule controller with in-memory storage. |
 | `app/tests/present.screens.test.ts`, `discover.view.test.tsx`, `schedule.trail.view.test.tsx`, `catalog-to-screens.integration.test.ts`, `e2e/discover-preview.spec.ts` | Tests | Campus time from other visitor zones; the Model's end rule; separate and multiple conflicts; recovery and limit; catalog → Schedule → screens with the real modules; post → discover → match → plan → reload → remove in Chromium; phone dialog keyboard behavior. |
 
-### Wiring it into the real app (Devonny owns `App.tsx`)
+### How `App.tsx` wires it (Devonny owns `App.tsx`)
+
+`App.tsx` keeps one `posted` snapshot and one `plans` hook for all three pages, so a post made on `#post` shows up on Discover without a second read, and the 100-plan limit, recovery and save errors behave the same on every page. Simplified:
 
 ```tsx
 const posted = useCatalogEvents(connection.catalog)                     // Daven's catalog snapshot
@@ -40,14 +42,26 @@ const { events: catalogEvents, loading, error } = posted
 const [freeWindow, setFreeWindow] = useState({ date: '', start: '', end: '' })
 const [showAll, setShowAll] = useState(false)
 const discover = useDiscoverScreen({ events: catalogEvents, loading, error, plannedIds: plans.schedule.ids, freeWindow, showAll })
-<DiscoverView screen={discover} onPlan={plans.add} onRetry={reloadCatalog}
+<DiscoverView screen={discover} onPlan={plans.add} canPlan={!plans.schedule.blocked} onRetry={posted.refresh}
   onFreeWindowChange={w => { setFreeWindow(w); setShowAll(false) }} onShowAllChange={setShowAll}
-  routes={{ discover: '/', schedule: '#schedule', post: '#post' }} />
+  notice={<ScheduleFeedback plans={plans} />} routes={{ discover: '#discover', schedule: '#schedule', post: '#post' }} />
 
-const schedule = useScheduleScreen(plans.schedule, { loading: loading || plans.loading, error })
-<ScheduleTrailView screen={schedule} onRemove={plans.remove} onRecover={plans.recover} onRetry={() => { posted.refresh(); plans.retryLookup() }}
-  message={plans.message} warning={plans.warning ?? plans.lookupError} error={plans.error} routes={...} />
+const schedule = useScheduleScreen(plans.schedule, { loading: plans.loading, error: null })
+<ScheduleTrailView screen={schedule} onRemove={plans.remove} onRecover={plans.recover}
+  message={plans.message} error={plans.error} lookupError={plans.lookupError} onRetryLookup={plans.retryLookup} routes={...} />
 ```
+
+The add-time overlap alert ("Schedule overlap: …") appears on Discover, where the plan was made. My Schedule draws overlaps on the trail itself ("2 plans overlap", an **Overlaps** pill per plan), as Sembiyan's page did with `showWarning={false}`.
+
+### Teammates' tests after the move
+
+Every behavior the old tests checked is still checked; only the selectors moved to the new pages.
+
+| Test file | Owner | What changed |
+|---|---|---|
+| `tests/app.m1.integration.test.tsx`, `e2e/m1.spec.ts` | M1 | Legacy list tests open `#post`. Search tests use Discover's **Free on / from / until** and read the event from its stub and ticket. An empty date now means "no window" (every event listed) instead of an error. |
+| `tests/posting.daven.form.test.tsx` | Daven | The two `App` tests open `#post`. The late-initial-read test also checks the new post on Discover. |
+| `tests/schedule.integration.test.tsx`, `e2e/schedule.spec.ts` | Sembiyan | Plan from the Discover ticket (**+ Plan to attend**). Schedule checks read stubs in order, "2 plans overlap", **An event you planned**, "Looking up your planned events…". Recovery, two-tab sync, pending/failed lookups, failed saves and the 100-plan limit are unchanged. The phone spec now seeds a future date so its plans stay upcoming. |
 
 ### Behavior decisions in this pass (from the two reviews)
 
@@ -68,11 +82,10 @@ const schedule = useScheduleScreen(plans.schedule, { loading: loading || plans.l
 
 ## Integration sequence
 
-1. Done in this pass: merged `master` (#15, #18, #19) and wired the preview to those controllers.
-2. Agree on the final shared `CampusEvent` contract (including `hostName` and description-length limit) with Daven.
-3. Devonny integrates `DiscoverView` into a single owner-edited `App.tsx`/navigation flow, supplying the actual `EventCatalogPort.listUpcoming()` results. Keep loading, network failures and genuinely missing records distinct.
-4. Sembiyan connects `onPlan` and `plannedEventIds` through the Schedule controller; never duplicate plan state inside the view. Preserve the fully-fitting search behavior.
-5. Test posting in Browser A and viewing in Browser B, then adding/removing a plan locally without deleting the public event.
+1. Done: merged `master` (#15, #18, #19, #22) and wired the views to those controllers.
+2. Done: `App.tsx` renders Discover, My Schedule and Post as three pages on one catalog snapshot and one Schedule hook. Loading, network failures and genuinely missing records stay distinct.
+3. Devonny reviews the `App.tsx` change (she owns it); Daven and Sembiyan check their moved tests above.
+4. Test posting in Browser A and viewing in Browser B, then adding/removing a plan locally without deleting the public event.
 6. After integration, remove the temporary preview entry and its extra Vite input **if the team no longer needs it**. This should be an intentional follow-up, not part of the initial isolated UI PR.
 
 ## Quality and future-readiness checks
