@@ -120,7 +120,7 @@
 }
 
 .sq-hero h1 {
-  font: 400 clamp(58px, 6.4vw, 92px)/.95 var(--font-display);
+  font: 400 92px/.95 var(--font-display);
   letter-spacing: -1px;
   margin: 0;
   white-space: nowrap;
@@ -134,7 +134,7 @@
 /* the drawing sits behind the hero like a watermark: a warm glow, fading out toward the words and the free-time row */
 .sq-hero:has(.sq-campus-drawing)::before { content: ""; position: absolute; z-index: -1; right: 1%; top: 0; width: min(720px, 58%); height: 250px; pointer-events: none;
   background: radial-gradient(closest-side, rgba(232, 170, 36, .16), rgba(232, 170, 36, 0)); }
-.sq-campus-drawing { position: absolute; z-index: 0; right: 5%; bottom: -52px; height: clamp(190px, 17vw, 236px); width: auto; max-width: none; display: block; margin: 0; pointer-events: none; opacity: .62;
+.sq-campus-drawing { position: absolute; z-index: 0; right: 5%; bottom: -52px; height: 236px; width: auto; max-width: none; display: block; margin: 0; pointer-events: none; opacity: .62;
   -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 34%, #000 88%, transparent 100%), linear-gradient(to bottom, #000 58%, transparent 96%);
   -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent 0%, #000 34%, #000 88%, transparent 100%), linear-gradient(to bottom, #000 58%, transparent 96%); mask-composite: intersect; }
 
@@ -298,7 +298,7 @@
 .sq-stub-time small { display: block; font: 600 16px var(--font-sans); color: var(--sq-ink); margin-top: 8px; }
 .sq-stub-time em { display: block; font: 500 15px var(--font-sans); font-style: normal; color: var(--sq-muted); margin-top: 4px; }
 .sq-stub-body { display: flex; flex-direction: column; justify-content: center; gap: 6px; min-width: 0; padding: 16px 18px 16px 22px; }
-.sq-stub-body strong { font: 400 31px/1.02 var(--font-display); overflow-wrap: anywhere; padding-right: 24px; }
+.sq-stub-body strong { font: 400 31px/1.02 var(--font-display); overflow-wrap: break-word; padding-right: 24px; }
 .sq-by { font: 400 16.5px/1.35 var(--font-sans); overflow-wrap: anywhere; }
 .sq-by b { font-weight: 600; }
 .sq-by i { font-style: normal; color: var(--sq-red); }
@@ -481,7 +481,7 @@
 /* Application composition and recovery controls. */
 [hidden] { display: none !important; }
 .sq-post-panel { max-width: 780px; margin: 0 auto; }
-.sq-post-panel h1 { margin: 6px 0 12px; font: 400 clamp(56px, 6vw, 84px)/.95 var(--font-display); letter-spacing: -1px; }
+.sq-post-panel h1 { margin: 6px 0 12px; font: 400 84px/.95 var(--font-display); letter-spacing: -1px; }
 .sq-post-panel h1 em { color: var(--sq-red); }
 .sq-post-panel > p { margin: 0 0 30px; font: 500 19px/1.5 var(--font-sans); color: var(--sq-muted); }
 /* the form is a ticket card with the same red edge as the event details */
@@ -552,3 +552,78 @@
   .sq-toast-text { font-size: 15px; }
 }
 @media (prefers-reduced-motion: reduce) { .sq-toast, .sq-toast-leaving { animation-name: none; } }
+
+/* ---------- Zoom and mid widths: sizes step down by layout width, never by vw ---------- */
+@media (max-width: 1160px) and (min-width: 761px) {
+  .sq-hero h1 { font-size: 76px; }
+  .sq-campus-drawing { height: 204px; }
+  .sq-post-panel h1 { font-size: 72px; }
+}
+@media (max-width: 1024px) and (min-width: 761px) {
+  .sq-hero h1 { font-size: 64px; }
+  .sq-campus-drawing { height: 176px; right: 2%; }
+  .sq-board { grid-template-columns: minmax(0, 1fr) 330px; gap: 24px; }
+  .sq-board-schedule { grid-template-columns: minmax(0, 1fr) 330px; }
+  .sq-trail { padding-left: 66px; }
+  .sq-trail::before { left: 24px; }
+  .sq-endcap { margin-left: -66px; padding-left: 66px; }
+  .sq-endcap::before { left: 4px; }
+  .sq-endcap a { display: block; padding: 12px 22px 12px 24px; border-radius: 28px; }
+  .sq-endcap-lead { display: block; }
+  .sq-endcap-cta { margin-left: 0; }
+  .sq-stub { grid-template-columns: 108px minmax(0, 1fr); }
+  .sq-stub-time b { font-size: 32px; } .sq-stub-time b i { font-size: 20px; }
+  .sq-stub-body { padding: 14px 14px 14px 18px; }
+  .sq-stub-body strong { font-size: 26px; padding-right: 18px; }
+  .sq-sticker-time b { font-size: 76px; }
+  .sq-sticker h2 { font-size: 40px; }
+}
+
+/* ---------- Event details: a paper ticket taped to the page, matching the stubs ---------- */
+.sq-sticker-card { border: 1.5px solid var(--sq-rule-strong); border-radius: 24px; padding: 0 30px 30px;
+  box-shadow: 0 3px 0 var(--sq-ticket-under), 0 22px 44px rgba(48, 36, 33, .14); transform: rotate(-.7deg); }
+.sq-sticker-card::before { content: ""; position: absolute; z-index: 2; top: -18px; left: 50%; width: 132px; height: 46px; margin-left: -66px;
+  background: url('./assets/tape.svg') center / 100% 100% no-repeat; transform: rotate(-3deg); pointer-events: none; }
+/* the stub: tinted like the trail tickets, cut off by a perforation with punched notches */
+.sq-sticker-top { position: relative; margin: 0 -30px 0; padding: 30px 30px 22px; background: var(--sq-row-selected); border-radius: 22px 22px 0 0;
+  border-bottom: 2px dashed var(--sq-rule-strong); align-items: center; }
+.sq-sticker-top::before, .sq-sticker-top::after { content: ""; position: absolute; bottom: -14px; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--sq-paper); border: 1.5px solid var(--sq-rule-strong); }
+.sq-sticker-top::before { left: -14px; clip-path: inset(0 0 0 50%); }
+.sq-sticker-top::after { right: -14px; clip-path: inset(0 50% 0 0); }
+.sq-sticker-time .sq-nx { display: flex; width: fit-content; max-width: 100%; white-space: nowrap; margin: 0 0 14px; color: var(--sq-on-red); font: 800 13px var(--font-sans); letter-spacing: 1.6px; }
+.sq-sticker-time .sq-nx.sq-live-soon { color: var(--sq-red); letter-spacing: .3px; }
+.sq-sticker-time .sq-nx i { margin: 0; font: inherit; font-style: normal; letter-spacing: .3px; color: #f7c14e; }
+.sq-sticker-time b { color: var(--sq-red); }
+.sq-sticker-time i { color: var(--sq-red); }
+.sq-sticker-time span { color: var(--sq-ink); font-weight: 600; }
+/* the date as a postmark stamp */
+.sq-sticker-day { flex: none; width: 92px; height: 92px; border-radius: 50%; border: 2px dashed var(--sq-red); color: var(--sq-red);
+  align-content: center; transform: rotate(9deg); background: rgba(255, 250, 242, .6); }
+.sq-sticker-day b { color: var(--sq-red); font-size: 40px; margin: 3px 0 2px; }
+.sq-sticker-day small { font-size: 11.5px; }
+.sq-sticker h2 { margin-top: 26px; }
+/* Host, Where and Date: bold labels, roomier values */
+.sq-facts { gap: 12px 20px; margin-bottom: 22px; }
+.sq-facts dt { font: 800 13.5px/1.6 var(--font-sans); letter-spacing: .14em; text-transform: uppercase; color: var(--sq-red); }
+.sq-facts dd { font: 600 22px/1.35 var(--font-sans); }
+.sq-sticker-desc { font-size: 20px; }
+.sq-sticker .sq-detail-verification { padding-top: 34px; }
+@media (max-width: 1024px) and (min-width: 761px) {
+  .sq-sticker-card { padding: 0 22px 24px; }
+  .sq-sticker-top { margin: 0 -22px; padding: 28px 22px 20px; }
+  .sq-sticker-day { width: 78px; height: 78px; } .sq-sticker-day b { font-size: 32px; }
+}
+@media (max-width: 760px) {
+  .sq-sticker-card { transform: none; padding: 0 20px 28px; }
+  .sq-sticker-card::before { top: -14px; width: 112px; height: 38px; margin-left: -56px; }
+  .sq-sticker-top { margin: 0 -20px; padding: 40px 20px 20px; border-radius: 24px 24px 0 0; }
+  .sq-sticker-top::before, .sq-sticker-top::after { display: none; }
+  .sq-sticker-day { width: 78px; height: 78px; } .sq-sticker-day b { font-size: 32px; }
+  .sq-facts dd { font-size: 19px; }
+  .sq-sticker-desc { font-size: 18px; }
+  .sq-sticker-static .sq-sticker-card { border: 1.5px solid var(--sq-rule-strong); box-shadow: 0 3px 0 var(--sq-ticket-under), 0 16px 32px rgba(48, 36, 33, .12); padding: 0 20px 24px; }
+  .sq-sticker-static .sq-sticker-top::before, .sq-sticker-static .sq-sticker-top::after { display: block; }
+  .sq-sticker-static .sq-sticker-top { padding-top: 30px; }
+}
+@media (prefers-reduced-motion: reduce) { .sq-sticker-card { transform: none; } }

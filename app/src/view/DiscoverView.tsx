@@ -307,9 +307,9 @@ export function DiscoverView({
                   </div>
                 ) : (
                 <>
-                {selected.live && <span className={`sq-nx sq-live-${selected.live.kind}`}>{selected.live.text}</span>}
                 <div className="sq-sticker-top">
                   <div className="sq-sticker-time">
+                    {selected.live && <span className={`sq-nx sq-live-${selected.live.kind}`}>{selected.live.text}</span>}
                     <b>{selected.start.time}</b><i>{selected.start.ampm}</i>
                     <span>until {selected.endText} · {selected.durationText}</span>
                   </div>
