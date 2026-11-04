@@ -1,12 +1,25 @@
 // VIEW: Create events and search your available time. Rules and persistence are mediated through the Controller.
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
 import {
-  createEvent, findEvents, todayLocal, initialEventWindow, displayDate, displayTime,
+  findEvents, todayLocal, displayDate, displayTime,
   loadEventsChecked, persistEvents, removeEventWithReceipt, restoreRemovedEvent, isPastEvent,
-  type CampusEvent, type EventDraft, type RemovedEvent,
+  type CampusEvent, type RemovedEvent,
 } from './controller/findEvents'
+import { localEventCatalog, type ConnectedCatalog } from './controller/postEvent'
+import { PostEventForm } from './view/PostEventForm'
 
-export default function App() {
+import { usePersonalSchedule, PlanButton, SchedulePage, ScheduleFeedback } from './view/PersonalSchedule'
+
+// main.tsx passes the configured catalog (Supabase when app/.env.local is set).
+// Without a prop, App uses the browser-only fallback, so tests never reach the network.
+export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
+  const [connection] = useState<ConnectedCatalog>(() => catalog ?? localEventCatalog(window.localStorage))
+  const [page, setPage] = useState(() => window.location.hash === '#schedule' ? 'schedule' : 'discover')
+  useEffect(() => {
+    const navigate = () => setPage(window.location.hash === '#schedule' ? 'schedule' : 'discover')
+    window.addEventListener('hashchange', navigate)
+    return () => window.removeEventListener('hashchange', navigate)
+  }, [])
   // Hydrate without writing: a malformed stored value must never be erased on mount.
   // Read the initial event list when React sets up this component. A failed
   // read must never automatically overwrite damaged browser storage.
@@ -19,11 +32,8 @@ export default function App() {
   const [events, setEvents] = useState<CampusEvent[]>(initial.events)
   const [storageBlocked, setStorageBlocked] = useState(initial.blocked)
   const [lastRemoved, setLastRemoved] = useState<RemovedEvent | null>(null)
-  // draft is what the user is still typing. It becomes an event only
-  // after Controller and Model validation and the assignment of an ID.
-  const [draft, setDraft] = useState<EventDraft>(() => ({
-    title: '', description: '', location: '', ...initialEventWindow(),
-  }))
+  const plans = usePersonalSchedule(events)
+  // Errors from the M1 list's Remove/Undo actions. Posting errors live in PostEventForm.
   const [createError, setCreateError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [storageWarning, setStorageWarning] = useState(false)
@@ -102,43 +112,6 @@ export default function App() {
   // Object destructuring pulls out matches and renames error to searchError
   // so it is easy to distinguish search errors from event-creation errors.
   const { matches, error: searchError } = findEvents(events, freeDate, freeStart, freeEnd)
-  // keyof limits field names to properties of EventDraft, and the object
-  // spread keeps other form values while updating only one field.
-  const updateDraft = (field: keyof EventDraft, value: string) =>
-    // [field] means "use the field-name VARIABLE as this object's key".
-    // For example, updateDraft('title', 'Choir') changes draft.title only.
-    setDraft((current) => ({ ...current, [field]: value }))
-
-  // On form submit, ask the Controller to create a valid event. Only then
-  // attempt storage and show the user the appropriate result.
-  function handleCreate(event: FormEvent<HTMLFormElement>) {
-    // Submitting an HTML form normally reloads/navigates the browser.
-    // React handles this form locally, so we prevent that default action.
-    event.preventDefault()
-    if (storageBlocked) {
-      setCreateError('Saved data needs recovery before changes can be made.')
-      return
-    }
-    // 🔑 IDs distinguish two events even if their titles are identical.
-    // The Controller checks that the generated ID is not already used.
-    const result = createEvent(events, draft, crypto.randomUUID())
-    if (result.error) {
-      setCreateError(result.error)
-      setNotice(null)
-      return
-    }
-    const outcome = store(result.events)
-    if (outcome === 'conflict') return
-    setLastRemoved(null)
-    setCreateError(null)
-    setNotice(outcome === 'saved'
-      ? `Created “${draft.title.trim()}”! It now appears in your event list.`
-      : 'Event added temporarily, but your browser could not save it. It may disappear after reloading.')
-    setFreeDate(draft.date)
-    // Clear the typed description/title/location after posting, but keep
-    // the chosen date and times to make posting another event easier.
-    setDraft((current) => ({ ...current, title: '', description: '', location: '' }))
-  }
 
   // The returned removal receipt allows Undo to restore the event later.
   // A failed save during deletion still needs clearer confirmation messaging.
@@ -168,8 +141,13 @@ export default function App() {
     <main className="shell">
       <header className="topbar">
         <div className="wordmark"><span className="flower">✳</span> sidequest<span className="dot">.</span></div>
-        <span className="tag">SCU · M1 walking skeleton</span>
+        <span className="tag">SCU · Events &amp; personal plans</span>
       </header>
+      <nav className="page-nav" aria-label="Main navigation">
+        <a href="#discover" aria-current={page === 'discover' ? 'page' : undefined}>Find events</a>
+        <a href="#schedule" aria-current={page === 'schedule' ? 'page' : undefined}>My Schedule</a>
+      </nav>
+      {page === 'schedule' ? <SchedulePage plans={plans} /> : <>
       <section className="hero">
         <div className="eyebrow">YOUR FREE TIME, WELL SPENT</div>
         <h1>There's more to campus <em>than class.</em></h1>
@@ -179,45 +157,11 @@ export default function App() {
       <section className="workspace" aria-label="Create and find events">
         <section className="panel" aria-labelledby="create-heading">
           <div className="panel-heading">
-            <h2 id="create-heading">Create an event</h2>
+            <h2 id="create-heading">Post an event</h2>
             <span>Step 1</span>
           </div>
-          <p className="panel-description">Add a campus event yourself. Events today must start at or after the current time.</p>
-          {/* 📝 Controlled inputs: React state supplies the value; onChange
-              records what the user types. See draft/title below. */}
-          <form className="event-form" onSubmit={handleCreate}>
-            <label>
-              <span>EVENT NAME</span>
-              <input type="text" value={draft.title} required maxLength={100}
-                placeholder="e.g. Art Workshop" onChange={(e) => updateDraft('title', e.target.value)} />
-            </label>
-            <label>
-              <span>DESCRIPTION (OPTIONAL)</span>
-              <textarea value={draft.description ?? ''} maxLength={500} rows={3}
-                placeholder="What makes this event special?"
-                onChange={(e) => updateDraft('description', e.target.value)} />
-            </label>
-            <label>
-              <span>LOCATION</span>
-              <input type="text" value={draft.location} required maxLength={100}
-                placeholder="e.g. Student Center" onChange={(e) => updateDraft('location', e.target.value)} />
-            </label>
-            <label>
-              <span>DATE</span>
-              <input type="date" value={draft.date} min={todayLocal()} required onChange={(e) => updateDraft('date', e.target.value)} />
-            </label>
-            <div className="time-row">
-              <label>
-                <span>START</span>
-                <input type="time" value={draft.start} required onChange={(e) => updateDraft('start', e.target.value)} />
-              </label>
-              <label>
-                <span>END</span>
-                <input type="time" value={draft.end} required onChange={(e) => updateDraft('end', e.target.value)} />
-              </label>
-            </div>
-            <button className="primary-button" type="submit">+ Create event</button>
-          </form>
+          <p className="panel-description">Post a public campus event. Events today must start at or after the current time.</p>
+          <PostEventForm connection={connection} />
           {createError && <p className="error" role="alert">{createError}</p>}
           {notice && <div className="success" role="status">{notice}
             {lastRemoved && <button type="button" className="undo-button" onClick={undoRemove}>Undo removal</button>}
@@ -260,6 +204,7 @@ export default function App() {
 
       {/* 📢 aria-live="polite" lets screen readers announce search updates
           without interrupting what the person is already doing. */}
+      <ScheduleFeedback plans={plans} />
       <section className="results" aria-live="polite">
         <div className="section-title">
           <h2>Made for your window</h2>
@@ -288,6 +233,7 @@ export default function App() {
                   <span className="fit">✓ Fits</span>
                   <strong>{displayDate(event.date)}</strong>
                   <strong>{displayTime(event.start)} – {displayTime(event.end)}</strong>
+                  <PlanButton event={event} plans={plans} />
                 </div>
               </article>
             ))}
@@ -310,13 +256,17 @@ export default function App() {
                     <span>{displayDate(event.date)} · {displayTime(event.start)}–{displayTime(event.end)} · {event.location}</span>
                     {event.description && <span className="event-description">{event.description}</span>}
                   </div>
-                  <button type="button" className="remove-button" onClick={() => removeEvent(event.id)}
-                    aria-label={`Remove ${event.title}`}>Remove</button>
+                  <div className="event-actions">
+                    <PlanButton event={event} plans={plans} />
+                    <button type="button" className="remove-button" onClick={() => removeEvent(event.id)}
+                      aria-label={`Remove ${event.title}`}>Remove</button>
+                  </div>
                 </li>
               ))}
             </ul>}
       </section>
-      <footer>M1 prototype · Events are saved only in this browser, not shared across devices.</footer>
+      </>}
+      <footer>Prototype · Events and personal plans are saved only in this browser. Shared catalog integration is pending.</footer>
     </main>
   )
 }
