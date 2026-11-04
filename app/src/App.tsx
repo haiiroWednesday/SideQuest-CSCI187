@@ -8,10 +8,18 @@ import {
 import { localEventCatalog, type ConnectedCatalog } from './controller/postEvent'
 import { PostEventForm } from './view/PostEventForm'
 
+import { usePersonalSchedule, PlanButton, SchedulePage, ScheduleFeedback } from './view/PersonalSchedule'
+
 // main.tsx passes the configured catalog (Supabase when app/.env.local is set).
 // Without a prop, App uses the browser-only fallback, so tests never reach the network.
 export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
   const [connection] = useState<ConnectedCatalog>(() => catalog ?? localEventCatalog(window.localStorage))
+  const [page, setPage] = useState(() => window.location.hash === '#schedule' ? 'schedule' : 'discover')
+  useEffect(() => {
+    const navigate = () => setPage(window.location.hash === '#schedule' ? 'schedule' : 'discover')
+    window.addEventListener('hashchange', navigate)
+    return () => window.removeEventListener('hashchange', navigate)
+  }, [])
   // Hydrate without writing: a malformed stored value must never be erased on mount.
   // Read the initial event list when React sets up this component. A failed
   // read must never automatically overwrite damaged browser storage.
@@ -24,6 +32,7 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
   const [events, setEvents] = useState<CampusEvent[]>(initial.events)
   const [storageBlocked, setStorageBlocked] = useState(initial.blocked)
   const [lastRemoved, setLastRemoved] = useState<RemovedEvent | null>(null)
+  const plans = usePersonalSchedule(events)
   // Errors from the M1 list's Remove/Undo actions. Posting errors live in PostEventForm.
   const [createError, setCreateError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -132,8 +141,13 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
     <main className="shell">
       <header className="topbar">
         <div className="wordmark"><span className="flower">✳</span> sidequest<span className="dot">.</span></div>
-        <span className="tag">SCU · M1 walking skeleton</span>
+        <span className="tag">SCU · Events &amp; personal plans</span>
       </header>
+      <nav className="page-nav" aria-label="Main navigation">
+        <a href="#discover" aria-current={page === 'discover' ? 'page' : undefined}>Find events</a>
+        <a href="#schedule" aria-current={page === 'schedule' ? 'page' : undefined}>My Schedule</a>
+      </nav>
+      {page === 'schedule' ? <SchedulePage plans={plans} /> : <>
       <section className="hero">
         <div className="eyebrow">YOUR FREE TIME, WELL SPENT</div>
         <h1>There's more to campus <em>than class.</em></h1>
@@ -190,6 +204,7 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
 
       {/* 📢 aria-live="polite" lets screen readers announce search updates
           without interrupting what the person is already doing. */}
+      <ScheduleFeedback plans={plans} />
       <section className="results" aria-live="polite">
         <div className="section-title">
           <h2>Made for your window</h2>
@@ -218,6 +233,7 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
                   <span className="fit">✓ Fits</span>
                   <strong>{displayDate(event.date)}</strong>
                   <strong>{displayTime(event.start)} – {displayTime(event.end)}</strong>
+                  <PlanButton event={event} plans={plans} />
                 </div>
               </article>
             ))}
@@ -240,13 +256,17 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
                     <span>{displayDate(event.date)} · {displayTime(event.start)}–{displayTime(event.end)} · {event.location}</span>
                     {event.description && <span className="event-description">{event.description}</span>}
                   </div>
-                  <button type="button" className="remove-button" onClick={() => removeEvent(event.id)}
-                    aria-label={`Remove ${event.title}`}>Remove</button>
+                  <div className="event-actions">
+                    <PlanButton event={event} plans={plans} />
+                    <button type="button" className="remove-button" onClick={() => removeEvent(event.id)}
+                      aria-label={`Remove ${event.title}`}>Remove</button>
+                  </div>
                 </li>
               ))}
             </ul>}
       </section>
-      <footer>M1 prototype · Events are saved only in this browser, not shared across devices.</footer>
+      </>}
+      <footer>Prototype · Events and personal plans are saved only in this browser. Shared catalog integration is pending.</footer>
     </main>
   )
 }
