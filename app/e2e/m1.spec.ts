@@ -20,16 +20,16 @@ test('post an event through the catalog; it is readable again after a reload', a
 
   const form = page.locator('.event-form')
   // An invalid post shows a field-level error and stores nothing.
-  await form.getByLabel('EVENT NAME').fill('Art Workshop')
+  await form.getByLabel('EVENT NAME', { exact: true }).fill('Art Workshop')
   await form.getByRole('button', { name: '+ Post event' }).click()
   await expect(page.getByText('Please enter the host name.')).toBeVisible()
 
-  await form.getByLabel('HOST NAME').fill('SCU Art Club')
-  await form.getByLabel('DESCRIPTION').fill('Paint with friends')
-  await form.getByLabel('LOCATION').fill('Arts Building')
-  await form.getByLabel('DATE').fill(await futureDate(page))
-  await form.getByLabel('START').fill('14:30')
-  await form.getByLabel('END').fill('15:30')
+  await form.getByLabel('HOST NAME', { exact: true }).fill('SCU Art Club')
+  await form.getByLabel('DESCRIPTION', { exact: true }).fill('Paint with friends')
+  await form.getByLabel('LOCATION', { exact: true }).fill('Arts Building')
+  await form.getByLabel('DATE', { exact: true }).fill(await futureDate(page))
+  await form.getByLabel('START', { exact: true }).fill('14:30')
+  await form.getByLabel('END', { exact: true }).fill('15:30')
   await form.getByRole('button', { name: '+ Post event' }).click()
 
   await expect(page.getByRole('status')).toContainText('Posted “Art Workshop”')
