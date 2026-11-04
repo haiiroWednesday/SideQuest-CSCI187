@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   addPlannedId, canAddPlanCount, eventsOverlap, MAX_PLANNED_EVENTS,
   PLANNED_IDS_KEY, readPlannedIds, removePlannedId, resolvePlannedEvents,
-  savePlannedIds, scheduleConflicts,
+  savePlannedIds, scheduleConflicts, isScheduleEvent,
 } from '../src/model/schedule'
 import { type CampusEvent } from '../src/model/events'
 
@@ -71,6 +71,25 @@ describe('personal Schedule Model', () => {
     expect(resolvePlannedEvents(read.ids, catalog).events).toHaveLength(MAX_PLANNED_EVENTS)
     expect(scheduleConflicts(catalog).size).toBe(MAX_PLANNED_EVENTS)
   })
+})
+
+it('accepts catalog-size event fields in Schedule without weakening validity checks', () => {
+  const valid = {
+    ...event('long'),
+    hostName: 'S'.repeat(120),
+    title: 'T'.repeat(120),
+    location: 'L'.repeat(200),
+    description: 'D'.repeat(2000),
+  }
+  expect(isScheduleEvent(valid)).toBe(true)
+  expect(resolvePlannedEvents(['long'], [valid]).events).toHaveLength(1)
+  expect(isScheduleEvent({ ...valid, description: 'D'.repeat(2001) })).toBe(false)
+  expect(isScheduleEvent({ ...valid, title: 'T'.repeat(121) })).toBe(false)
+  expect(isScheduleEvent({ ...valid, location: 'L'.repeat(201) })).toBe(false)
+  expect(isScheduleEvent({ ...valid, end: valid.start })).toBe(false)
+  expect(isScheduleEvent({ ...valid, hostName: '' })).toBe(false)
+  // A historical M1 record with no hostName or description remains readable.
+  expect(isScheduleEvent(event('legacy'))).toBe(true)
 })
 
 describe('Schedule overlap warnings', () => {
