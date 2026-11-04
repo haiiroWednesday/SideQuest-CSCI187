@@ -70,3 +70,23 @@ test('legacy events stay private, survive reload, and can still be removed', asy
   await expect(page.getByText('No legacy events saved in this browser.')).toBeVisible()
   await expect(page.getByText('0 total')).toBeVisible()
 })
+
+test('two browser tabs synchronize legacy M1 records without losing a saved change', async ({ context }) => {
+  const first = await context.newPage()
+  const second = await context.newPage()
+  await first.goto('/')
+  await second.goto('/')
+  const date = await futureDate(first)
+  await first.evaluate(eventDate => {
+    localStorage.setItem('sidequest.created-events.v1', JSON.stringify([{
+      id: 'legacy-tab', title: 'Shared legacy tab event', location: 'Student Center',
+      date: eventDate, start: '14:30', end: '15:30',
+    }]))
+  }, date)
+  await expect(second.getByRole('button', { name: 'Remove Shared legacy tab event' })).toBeVisible()
+  await second.getByRole('button', { name: 'Remove Shared legacy tab event' }).click()
+  await expect(first.getByRole('button', { name: 'Remove Shared legacy tab event' })).toHaveCount(0)
+  expect(await first.evaluate(() => localStorage.getItem('sidequest.created-events.v1'))).toBe('[]')
+  await first.close()
+  await second.close()
+})
