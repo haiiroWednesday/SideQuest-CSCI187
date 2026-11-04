@@ -1,17 +1,13 @@
 // @vitest-environment jsdom
-// M1 requirements R2-R4: exercise the rendered search panel and the legacy
-// browser-created event list ("Your created events").
-//
-// M2 note: the create form now posts to the EventCatalog (see
-// tests/posting.daven.form.test.tsx). Nothing writes M1 records through the
-// form anymore, so these tests SEED the legacy M1 storage key directly and
-// keep checking that search, Remove/Undo, recovery and multi-tab safety
-// still work on those records.
+// Keep coverage for legacy Remove/Undo, recovery, and multi-tab safety.
+// Search now reads the EventCatalog; legacy records are not published.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../src/App'
 import { STORAGE_KEY, type CampusEvent } from '../src/model/events'
+import { createEventCatalog, toEventRow } from '../src/model/eventCatalog'
+import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 
 // Dynamically choose a future date so these UI tests don't expire as
 // calendar time passes. Model tests can instead inject a fixed clock.
@@ -31,6 +27,13 @@ function seed(events: CampusEvent[]) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(events))
 }
 
+function sharedCatalog(events: CampusEvent[]) {
+  const rows = new Map(events.map(event => [
+    event.id, { ...toEventRow({ ...event, hostName: 'SCU club', description: event.description ?? 'Campus event' }), id: event.id },
+  ]))
+  return { catalog: createEventCatalog(createInMemoryEventTable(rows)), shared: true }
+}
+
 // Point the free-time search at the seeded event's date (14:00–16:00 is the default window).
 function searchOn(date: string) {
   fireEvent.change(screen.getByLabelText('Free on date'), { target: { value: date } })
@@ -47,13 +50,14 @@ afterEach(() => {
 })
 
 describe('M1 rendered user workflow', () => {
-  it('R1/R3: shows a stored event in the list and as a full-fit search result', () => {
-    seed([workshop()])
-    render(<App />)
+  it('shows a catalog event in full-fit results without publishing a legacy record', async () => {
+    seed([workshop({ title: 'Legacy workshop' })])
+    render(<App catalog={sharedCatalog([workshop()])} />)
     searchOn(futureDate())
 
-    expect(screen.getByRole('heading', { name: 'Art Workshop' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Remove Art Workshop' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Art Workshop' })).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Legacy workshop' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Remove Legacy workshop' })).toBeTruthy()
     expect(screen.getByText('1 total')).toBeTruthy()
     expect(screen.getByText('1 event')).toBeTruthy()
     expect(screen.getByText('✓ Fits')).toBeTruthy()
@@ -74,20 +78,19 @@ describe('M1 rendered user workflow', () => {
     cleanup() // Simulates closing the page; storage is intentionally preserved.
     render(<App />)
     expect(screen.queryByRole('button', { name: 'Remove Art Workshop' })).toBeNull()
-    expect(screen.getByText('Events you create will show up here.')).toBeTruthy()
+    expect(screen.getByText('No legacy events saved in this browser.')).toBeTruthy()
   })
 
-  it('R3/R4: displays both empty-search states and an invalid-search message', () => {
+  it('R3/R4: displays both empty-search states and an invalid-search message', async () => {
     render(<App />)
-    expect(screen.getByText('No events yet. Create your first event above!')).toBeTruthy()
+    expect(await screen.findByText('No upcoming events to match. Post an event above!')).toBeTruthy()
     cleanup()
 
-    seed([workshop()])
-    render(<App />)
+    render(<App catalog={sharedCatalog([workshop()])} />)
     searchOn(futureDate())
     fireEvent.change(screen.getByLabelText('Free from'), { target: { value: '17:00' } })
     fireEvent.change(screen.getByLabelText('Free until'), { target: { value: '18:00' } })
-    expect(screen.getByText('No created events fit this date and time. Try a different window.')).toBeTruthy()
+    expect(await screen.findByText('No upcoming events fit this date and time. Try a different window.')).toBeTruthy()
 
     fireEvent.change(screen.getByLabelText('Free until'), { target: { value: '16:00' } })
     expect(screen.getByRole('alert').textContent).toContain('Please choose an end time later')
@@ -111,13 +114,12 @@ describe('M1 rendered user workflow', () => {
     })
   })
 
-  it('R1/R3: shows stored descriptions and human-readable dates and times', () => {
+  it('R1/R3: shows catalog descriptions and human-readable dates and times', async () => {
     const date = futureDate()
-    seed([workshop({ title: 'Two Choirs', description: 'A cappella rehearsals', location: 'Music Hall', date })])
-    render(<App />)
+    render(<App catalog={sharedCatalog([workshop({ title: 'Two Choirs', description: 'A cappella rehearsals', location: 'Music Hall', date })])} />)
     searchOn(date)
 
-    expect(screen.getAllByText('A cappella rehearsals')).toHaveLength(2) // search card + list
+    expect(await screen.findByText('A cappella rehearsals')).toBeTruthy()
     const [year, month, day] = date.split('-')
     expect(screen.getAllByText(`${Number(month)}/${Number(day)}/${year}`)).toHaveLength(1)
     expect(screen.getByText('2:30pm – 3:30pm')).toBeTruthy()
@@ -170,7 +172,55 @@ describe('M1 rendered user workflow', () => {
   it('R2/R4: recovers from malformed saved JSON without crashing the UI', () => {
     window.localStorage.setItem(STORAGE_KEY, '{corrupt json')
     render(<App />)
-    expect(screen.getByText('Events you create will show up here.')).toBeTruthy()
+    expect(screen.getByText('No legacy events saved in this browser.')).toBeTruthy()
     expect(screen.getByText('0 total')).toBeTruthy()
+  })
+
+  it('does not claim a legacy removal was saved if browser writes fail', async () => {
+    const user = userEvent.setup()
+    seed([workshop()])
+    render(<App />)
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw Error('quota') })
+    await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
+    expect(screen.getByRole('status').textContent).toContain('removed temporarily')
+    expect(window.localStorage.getItem(STORAGE_KEY)).toContain('Art Workshop')
+  })
+
+  it('does not claim a legacy Undo was persisted if browser writes fail', async () => {
+    const user = userEvent.setup()
+    seed([workshop()])
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw Error('quota') })
+    await user.click(screen.getByRole('button', { name: 'Undo removal' }))
+    expect(screen.getByRole('status').textContent).toContain('restored temporarily')
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('[]')
+  })
+
+  it('compares a second write with the last persisted list, not failed local state', async () => {
+    const user = userEvent.setup()
+    seed([workshop(), workshop({ id: 'second', title: 'Choir Practice' })])
+    render(<App />)
+    const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => { throw Error('quota once') })
+    await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
+    write.mockRestore()
+    await user.click(screen.getByRole('button', { name: 'Remove Choir Practice' }))
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? 'null')).toEqual([])
+    expect(screen.queryByText(/Your events changed in another tab/)).toBeNull()
+  })
+
+  it('keeps unsaved legacy edits visible when another tab writes', async () => {
+    const user = userEvent.setup()
+    seed([workshop()])
+    render(<App />)
+    const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => { throw Error('quota once') })
+    await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
+    write.mockRestore()
+    const remote = [workshop({ id: 'remote', title: 'Remote Change' })]
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(remote))
+    fireEvent(window, new StorageEvent('storage', { key: STORAGE_KEY, storageArea: window.localStorage }))
+    expect(screen.queryByRole('button', { name: 'Remove Remote Change' })).toBeNull()
+    expect(screen.getAllByRole('alert').some(alert => alert.textContent?.includes('Another tab changed saved events'))).toBe(true)
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual(remote)
   })
 })

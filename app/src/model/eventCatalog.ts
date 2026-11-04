@@ -135,6 +135,22 @@ export function campusNow(now: Date = new Date()): { date: string; time: string 
   return { date: `${get('year')}-${get('month')}-${get('day')}`, time: `${get('hour')}:${get('minute')}` }
 }
 
+// The same posting-time rule must protect every catalog caller, including
+// scripts or future controllers that do not use the React posting form.
+// Use the Santa Clara wall-clock, not the browser's arbitrary timezone.
+export function catalogPostingErrors(draft: EventDraft, now: Date = new Date()): CatalogFieldErrors {
+  const errors = catalogDraftErrors(draft)
+  const value = trimDraft(draft)
+  const campus = campusNow(now)
+  if (!errors.date && value.date < campus.date) {
+    errors.date = 'Events cannot be posted in the past. Choose today or a future date.'
+  } else if (!errors.date && !errors.start && !errors.end &&
+    value.date === campus.date && value.start < campus.time) {
+    errors.start = 'This event has already started. Choose a future start time.'
+  }
+  return errors
+}
+
 // An event is upcoming until it ends. One that is still running counts too.
 export function isUpcoming(event: Pick<CampusEvent, 'date' | 'end'>, now: Date = new Date()): boolean {
   const campus = campusNow(now)
@@ -221,6 +237,8 @@ export function createEventCatalog(table: EventTable, clock: () => Date = () => 
 
   return {
     async create(draft) {
+      const postingError = firstFieldError(catalogPostingErrors(draft, clock()))
+      if (postingError !== null) throw new EventCatalogError('invalid', postingError)
       const result = validateCatalogDraft(draft)
       if (result.error !== null) throw new EventCatalogError('invalid', result.error)
       let row: EventRow

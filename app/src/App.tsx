@@ -1,19 +1,21 @@
-// VIEW: Create events and search your available time. Rules and persistence are mediated through the Controller.
-import { useEffect, useState } from 'react'
+// VIEW: Post events and search the catalog for your available time.
+import { useEffect, useRef, useState } from 'react'
 import {
   findEvents, todayLocal, displayDate, displayTime,
   loadEventsChecked, persistEvents, removeEventWithReceipt, restoreRemovedEvent, isPastEvent,
-  type CampusEvent, type RemovedEvent,
+  STORAGE_KEY, type CampusEvent, type RemovedEvent,
 } from './controller/findEvents'
-import { localEventCatalog, type ConnectedCatalog } from './controller/postEvent'
+import { browserCatalogStorage, localEventCatalog, type ConnectedCatalog } from './controller/postEvent'
 import { PostEventForm } from './view/PostEventForm'
+import { useCatalogEvents } from './view/useCatalogEvents'
 
 import { usePersonalSchedule, PlanButton, SchedulePage, ScheduleFeedback } from './view/PersonalSchedule'
 
 // main.tsx passes the configured catalog (Supabase when app/.env.local is set).
 // Without a prop, App uses the browser-only fallback, so tests never reach the network.
 export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
-  const [connection] = useState<ConnectedCatalog>(() => catalog ?? localEventCatalog(window.localStorage))
+  const [connection] = useState<ConnectedCatalog>(() => catalog ?? localEventCatalog(browserCatalogStorage))
+  const posted = useCatalogEvents(connection.catalog)
   const [page, setPage] = useState(() => window.location.hash === '#schedule' ? 'schedule' : 'discover')
   useEffect(() => {
     const navigate = () => setPage(window.location.hash === '#schedule' ? 'schedule' : 'discover')
@@ -29,10 +31,13 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
   })
   // In React, events holds the current list; setEvents asks React to
   // update the list on screen. Other state variables track the form and alerts.
-  const [events, setEvents] = useState<CampusEvent[]>(initial.events)
+  const [legacyEvents, setLegacyEvents] = useState<CampusEvent[]>(initial.events)
+  const savedEventsRef = useRef<CampusEvent[]>(initial.events)
+  const hasUnsavedRef = useRef(false)
+  const [, refreshPastLabels] = useState(0)
   const [storageBlocked, setStorageBlocked] = useState(initial.blocked)
   const [lastRemoved, setLastRemoved] = useState<RemovedEvent | null>(null)
-  const plans = usePersonalSchedule(events)
+  const plans = usePersonalSchedule(connection.catalog, posted.events, posted.revision, page === 'schedule')
   // Errors from the M1 list's Remove/Undo actions. Posting errors live in PostEventForm.
   const [createError, setCreateError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -41,6 +46,12 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
   const [freeStart, setFreeStart] = useState('14:00')
   const [freeEnd, setFreeEnd] = useState('16:00')
 
+  // Past-event labels should update even when someone leaves SideQuest open.
+  useEffect(() => {
+    const timer = window.setInterval(() => refreshPastLabels(value => value + 1), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
+
   // Sync updates from other browser tabs without writing the same list back.
   useEffect(() => {
     // The browser notifies other tabs when storage changes. We read the
@@ -48,11 +59,17 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
     const onStorage = (event: StorageEvent) => {
       // 🪟 Ignore changes from other storage areas/keys. A null key can
       // mean the other tab cleared storage, which also needs a refresh.
-      if (event.storageArea !== window.localStorage || (event.key !== null && event.key !== 'sidequest.created-events.v1')) return
+      if (event.storageArea !== window.localStorage || (event.key !== null && event.key !== STORAGE_KEY)) return
       let current: { events: CampusEvent[]; blocked: boolean }
       try { current = loadEventsChecked(window.localStorage) }
       catch { current = { events: [], blocked: true } }
-      setEvents(current.events)
+      if (hasUnsavedRef.current) {
+        setCreateError('Another tab changed saved events while this tab has unsaved changes. Review or reload before making more changes.')
+        setNotice(null)
+        return
+      }
+      savedEventsRef.current = current.events
+      setLegacyEvents(current.events)
       setStorageBlocked(current.blocked)
       setStorageWarning(false)
       setLastRemoved(null)
@@ -76,8 +93,10 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
         // 🔐 JSON.stringify compares the list's CONTENT rather than array
         // identity (two different arrays can hold the same event data).
         // This is a best-effort check, not an atomic database transaction.
-        if (latest.blocked || JSON.stringify(latest.events) !== JSON.stringify(events)) {
-          setEvents(latest.events)
+        if (latest.blocked || JSON.stringify(latest.events) !== JSON.stringify(savedEventsRef.current)) {
+          savedEventsRef.current = latest.events
+          hasUnsavedRef.current = false
+          setLegacyEvents(latest.events)
           setStorageBlocked(latest.blocked)
           setStorageWarning(false)
           setLastRemoved(null)
@@ -88,7 +107,9 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
         saved = persistEvents(window.localStorage, next)
       }
     } catch { /* browser storage may be disabled */ }
-    setEvents(next)
+    if (saved) savedEventsRef.current = next
+    hasUnsavedRef.current = !saved
+    setLegacyEvents(next)
     setStorageWarning(!saved)
     // The ternary (? :) is a short if/else. Unsaved changes may appear
     // on screen but disappear after the next page reload.
@@ -100,8 +121,10 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
   function recoverSavedEvents() {
     if (!window.confirm('Replace unreadable saved data with the valid events currently shown? Any corrupt entries will be discarded.')) return
     let saved = false
-    try { saved = persistEvents(window.localStorage, events) }
+    try { saved = persistEvents(window.localStorage, legacyEvents) }
     catch { /* browser storage may be disabled */ }
+    if (saved) savedEventsRef.current = legacyEvents
+    hasUnsavedRef.current = !saved
     setStorageBlocked(!saved)
     setStorageWarning(!saved)
     setNotice(saved ? 'Saved event data recovered.' : null)
@@ -111,7 +134,7 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
   // changing the search date or times updates results automatically.
   // Object destructuring pulls out matches and renames error to searchError
   // so it is easy to distinguish search errors from event-creation errors.
-  const { matches, error: searchError } = findEvents(events, freeDate, freeStart, freeEnd)
+  const { matches, error: searchError } = findEvents(posted.events, freeDate, freeStart, freeEnd)
 
   // The returned removal receipt allows Undo to restore the event later.
   // A failed save during deletion still needs clearer confirmation messaging.
@@ -120,19 +143,21 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
       setCreateError('Recover saved data before removing an event.')
       return
     }
-    const result = removeEventWithReceipt(events, id)
+    const result = removeEventWithReceipt(legacyEvents, id)
     if (!result.removed) return
-    if (store(result.events) === 'conflict') return
+    const outcome = store(result.events)
+    if (outcome === 'conflict') return
     setLastRemoved(result.removed)
     setCreateError(null)
-    setNotice('Event removed.')
+    setNotice(outcome === 'saved' ? 'Event removed.' : 'Event removed temporarily, but your browser could not save the deletion. It may return after reloading.')
   }
 
   function undoRemove() {
     if (!lastRemoved || storageBlocked) return
-    if (store(restoreRemovedEvent(events, lastRemoved)) === 'conflict') return
+    const outcome = store(restoreRemovedEvent(legacyEvents, lastRemoved))
+    if (outcome === 'conflict') return
     setLastRemoved(null)
-    setNotice('Event restored.')
+    setNotice(outcome === 'saved' ? 'Event restored.' : 'Event restored temporarily, but your browser could not save it. It may disappear after reloading.')
   }
 
   // JSX below describes the visible page. React updates it when state
@@ -160,11 +185,13 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
             <h2 id="create-heading">Post an event</h2>
             <span>Step 1</span>
           </div>
-          <p className="panel-description">Post a public campus event. Events today must start at or after the current time.</p>
-          <PostEventForm connection={connection} />
+          <p className="panel-description">Post a campus event. Events today must start at or after the current time.</p>
+          <PostEventForm connection={connection} catalogEvents={posted}
+            renderEventActions={event => <PlanButton event={event} plans={plans} />} />
           {createError && <p className="error" role="alert">{createError}</p>}
-          {notice && <div className="success" role="status">{notice}
-            {lastRemoved && <button type="button" className="undo-button" onClick={undoRemove}>Undo removal</button>}
+          {notice && <div className="success" role="status">{notice}</div>}
+          {lastRemoved && <div className="undo-control">
+            <button type="button" className="undo-button" onClick={undoRemove}>Undo removal</button>
           </div>}
           {storageBlocked && <div className="storage-alert" role="alert">
             Some saved browser data could not be read. It has not been overwritten.
@@ -180,7 +207,7 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
             <h2 id="search-heading">When are you free?</h2>
             <span>Step 2</span>
           </div>
-          <p className="panel-description">Find events you created that fit your whole free-time window.</p>
+          <p className="panel-description">Find upcoming events that fit your whole free-time window.</p>
           <div className="search-fields">
             <label>
               <span>DATE</span>
@@ -212,12 +239,16 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
         </div>
         {/* 🔎 Three display cases: invalid search, zero matches, or a list
             of event cards. The ? : operator chooses between them. */}
-        {searchError ? (
+        {posted.error ? (
+          <div className="empty">Matching events are unavailable. Retry loading the posted events above.</div>
+        ) : posted.loading && posted.events.length === 0 ? (
+          <div className="empty">Loading events to match…</div>
+        ) : searchError ? (
           <div className="empty">Correct your available date or time to see matching events.</div>
         ) : matches.length === 0 ? (
-          <div className="empty">{events.length === 0
-            ? 'No events yet. Create your first event above!'
-            : 'No created events fit this date and time. Try a different window.'}</div>
+          <div className="empty">{posted.events.length === 0
+            ? 'No upcoming events to match. Post an event above!'
+            : 'No upcoming events fit this date and time. Try a different window.'}</div>
         ) : (
           <div className="events">
             {/* .map makes one card for every match; key={event.id} helps
@@ -225,7 +256,7 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
             {matches.map((event) => (
               <article className="event-card" key={event.id}>
                 <div className="event-left">
-                  <span className="category">Your event</span>
+                  <span className="category">Campus event</span>
                   <h3>{event.title}</h3><p>{event.location}</p>
                   {event.description && <p className="event-description">{event.description}</p>}
                 </div>
@@ -241,14 +272,14 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
         )}
       </section>
 
-      {/* 📚 This library shows ALL created events, even when the search
-          above shows only the events that fit the current time window. */}
+      {/* Keep earlier local events accessible without publishing them or
+          including them in results from the new catalog. */}
       <section className="library" aria-labelledby="saved-heading">
-        <div className="section-title"><h2 id="saved-heading">Your created events</h2><span className="counter">{events.length} total</span></div>
-        {events.length === 0
-          ? <p className="library-empty">Events you create will show up here.</p>
+        <div className="section-title"><h2 id="saved-heading">Legacy browser events</h2><span className="counter">{legacyEvents.length} total</span></div>
+        {legacyEvents.length === 0
+          ? <p className="library-empty">No legacy events saved in this browser.</p>
           : <ul className="saved-list">
-              {events.map((event) => (
+              {legacyEvents.map((event) => (
                 <li key={event.id}>
                   <div>
                     <strong>{event.title}</strong>
@@ -257,7 +288,6 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
                     {event.description && <span className="event-description">{event.description}</span>}
                   </div>
                   <div className="event-actions">
-                    <PlanButton event={event} plans={plans} />
                     <button type="button" className="remove-button" onClick={() => removeEvent(event.id)}
                       aria-label={`Remove ${event.title}`}>Remove</button>
                   </div>
@@ -266,7 +296,7 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
             </ul>}
       </section>
       </>}
-      <footer>Prototype · Events and personal plans are saved only in this browser. Shared catalog integration is pending.</footer>
+      <footer>{connection.shared ? 'Posted events are shared.' : 'Posted events are stored in this browser.'} Personal plans stay on this device.</footer>
     </main>
   )
 }

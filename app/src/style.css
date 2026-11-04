@@ -54,3 +54,4 @@ footer{border-top:1px solid #e4e1d8;padding:25px 0 40px;color:#596b5d;font-size:
 .primary-button:disabled{opacity:.7;cursor:progress}
 .posted-events{margin-top:22px}.posted-events h3{font-size:14px;margin:0;display:flex;gap:8px;align-items:baseline}
 .posted-events h3 small{color:#506252;font-size:11px;font-weight:600}
+.undo-control{margin:8px 0 12px}.undo-control .undo-button{margin-left:0}

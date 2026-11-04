@@ -8,6 +8,7 @@ import {
 import { formatEventDate, formatEventTime } from '../presentation/formatEvents'
 
 export type { CampusEvent, EventDraft } from '../model/events'
+export { STORAGE_KEY } from '../model/events'
 
 // ⏳ These numbers suggest a convenient event time in the form.
 // The Model separately checks whether the final choice is allowed.

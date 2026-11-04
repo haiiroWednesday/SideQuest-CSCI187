@@ -21,3 +21,9 @@ TEST_CASE("isPrime handles boundary values") {
     CHECK(isPrime(1) == false);
     CHECK(isPrime(2) == true);
 }
+
+// 🔢 The largest 32-bit signed prime catches overflow in divisor * divisor.
+TEST_CASE("isPrime handles large integers without arithmetic overflow") {
+    CHECK(isPrime(2147483647) == true);
+    CHECK(isPrime(2147483646) == false);
+}

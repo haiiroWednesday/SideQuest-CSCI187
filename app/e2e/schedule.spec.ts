@@ -11,28 +11,32 @@ test('availability and personal Schedule work across navigation and reload', asy
     date.setDate(date.getDate() + 1)
     return [first, iso(date)]
   })
-  // The create form now posts to the EventCatalog (feature/event-posting-daven),
-  // while search and My Schedule still read the M1 browser list. So these
-  // events are seeded into that list directly, as in the phone test below.
-  const seeded: { id: string; title: string; location: string; date: string; start: string; end: string }[] = []
-  const create = (title: string, date: string, start: string, end: string) => {
-    seeded.push({ id: `e2e-${seeded.length + 1}`, title, location: 'Student Center', date, start, end })
+  // Use the real posting form so this fails if Search still reads the M1 list.
+  const form = page.locator('.event-form')
+  const post = async (title: string, date: string, start: string, end: string) => {
+    await form.getByLabel('EVENT NAME', { exact: true }).fill(title)
+    await form.getByLabel('HOST NAME', { exact: true }).fill('SCU student club')
+    await form.getByLabel('DESCRIPTION', { exact: true }).fill('Open to all students.')
+    await form.getByLabel('LOCATION', { exact: true }).fill('Student Center')
+    await form.getByLabel('DATE', { exact: true }).fill(date)
+    await form.getByLabel('START', { exact: true }).fill(start)
+    await form.getByLabel('END', { exact: true }).fill(end)
+    await form.getByRole('button', { name: '+ Post event' }).click()
+    await expect(page.getByRole('status').filter({ hasText: `Posted “${title}”` })).toBeVisible()
   }
   await page.getByRole('link', { name: 'My Schedule', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'No events planned yet' })).toBeVisible()
   await page.getByRole('navigation').getByRole('link', { name: 'Find events' }).click()
-  create('Tomorrow concert', dates[1], '14:30', '15:30')
-  create('Early workshop', dates[0], '14:30', '15:30')
-  create('Choir overlap', dates[0], '15:00', '16:00')
-  create('Starts at window end', dates[0], '16:00', '17:00')
-  await page.evaluate((records) => localStorage.setItem('sidequest.created-events.v1', JSON.stringify(records)), seeded)
-  await page.reload()
-  // The old form also moved the search to the last event's date; do that explicitly.
+  await post('Tomorrow concert', dates[1], '14:30', '15:30')
+  await post('Early workshop', dates[0], '14:30', '15:30')
+  await post('Choir overlap', dates[0], '15:00', '16:00')
+  await post('Starts at window end', dates[0], '16:00', '17:00')
+  await expect(page.getByRole('region', { name: /posted events/i }).getByText('Starts at window end')).toBeVisible()
   await page.getByLabel('Free on date', { exact: true }).fill(dates[0])
   await page.getByLabel('Free from', { exact: true }).fill('14:00')
   await page.getByLabel('Free until', { exact: true }).fill('16:00')
   await expect(page.getByRole('heading', { name: 'Starts at window end', exact: true })).not.toBeVisible()
-  // Library entries remain available even when the current search excludes them.
+  // Posted events can be planned even when the current search excludes them.
   await page.getByRole('button', { name: 'Plan to attend Tomorrow concert', exact: true }).click()
   const results = page.locator('.results')
   await results.getByRole('button', { name: 'Plan to attend Early workshop', exact: true }).click()
@@ -53,7 +57,7 @@ test('availability and personal Schedule work across navigation and reload', asy
   await expect(results.getByRole('heading', { name: 'Early workshop', exact: true })).toBeVisible()
   await expect(results.getByRole('button', { name: 'Plan to attend Early workshop', exact: true })).toBeEnabled()
   const stored = await page.evaluate(() => ({
-    catalog: JSON.parse(localStorage.getItem('sidequest.created-events.v1')!),
+    catalog: JSON.parse(localStorage.getItem('sidequest.local-catalog.v1')!),
     plans: JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1')!),
   }))
   expect(stored.catalog).toHaveLength(4)
@@ -65,12 +69,15 @@ test('phone Schedule keeps overlaps, long names and unavailable events readable'
   await page.setViewportSize({ width: 375, height: 812 })
   await page.goto('/')
   await page.evaluate(() => {
+    const a = '00000000-0000-4000-8000-000000000001'
+    const b = '00000000-0000-4000-8000-000000000002'
+    const common = { host_name: 'SCU student club', description: 'Open to all.', event_date: '2020-11-01' }
     const records = [
-      { id: 'a', title: 'Campus photography and creative storytelling workshop', location: 'Student Center', date: '2030-11-01', start: '14:30', end: '15:30' },
-      { id: 'b', title: 'Choir rehearsal', location: 'Music Hall', date: '2030-11-01', start: '15:00', end: '16:00' },
+      { ...common, id: a, title: 'Campus photography and creative storytelling workshop', location: 'Student Center', start_time: '14:30:00', end_time: '15:30:00' },
+      { ...common, id: b, title: 'Choir rehearsal', location: 'Music Hall', start_time: '15:00:00', end_time: '16:00:00' },
     ]
-    localStorage.setItem('sidequest.created-events.v1', JSON.stringify(records))
-    localStorage.setItem('sidequest.planned-event-ids.v1', '["b","missing","a"]')
+    localStorage.setItem('sidequest.local-catalog.v1', JSON.stringify(records))
+    localStorage.setItem('sidequest.planned-event-ids.v1', JSON.stringify([b, 'missing', a]))
   })
   await page.goto('/#schedule')
   await page.reload()

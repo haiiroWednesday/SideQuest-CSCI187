@@ -6,9 +6,8 @@ import { expect, it } from 'vitest'
 import { createEvent } from '../src/controller/findEvents'
 import type { EventDraft } from '../src/model/events'
 
-// ⚠️ Review note: this event date is now in the past. The first two
-// rejection tests should supply a fixed clock and assert an ID-specific
-// error, or they can pass because of an unrelated past-date error.
+// 🔑 Fix the clock to October 1: an ID test must never pass just because
+// its October 26 event happens to be in the past on the day CI runs.
 const draft: EventDraft = {
   title: 'Speaker Event',
   location: 'Library',
@@ -20,9 +19,9 @@ const draft: EventDraft = {
 it('rejects an empty event ID', () => {
   const events = [{ ...draft, id: 'event-1' }]
 
-  const result = createEvent(events, draft, '')
+  const result = createEvent(events, draft, '', new Date(2026, 9, 1))
 
-  expect(result.error).not.toBeNull()
+  expect(result.error).toMatch(/unique event/i)
 
   expect(result.events).toEqual([
     { ...draft, id: 'event-1' },
@@ -43,9 +42,9 @@ it('rejects an ID that another event already uses', () => {
     title: 'Art Workshop',
   }
 
-  const result = createEvent(events, differentEvent, 'event-1')
+  const result = createEvent(events, differentEvent, 'event-1', new Date(2026, 9, 1))
 
-  expect(result.error).not.toBeNull()
+  expect(result.error).toMatch(/unique event/i)
 
   expect(result.events).toEqual([
     { ...draft, id: 'event-1' },
