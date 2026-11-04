@@ -2,6 +2,16 @@
 
 A student-built Santa Clara University event finder: **post an event → browse upcoming events → find full-fit availability → plan to attend → revisit or remove the plan.**
 
+## Professor Kandel: M2 Part 1 diagrams (current editable submissions)
+
+**Updated November 4, 2026.** Open these **course-format Draw.io files**, rather than the older architecture-summary previews:
+
+- **[M2 CRC diagram (.drawio)](docs/diagrams/M2_CRC.drawio)**: P4-style EventCatalog / Event / Schedule responsibility cards, UML relationships, and a second-page rationale, reconciled with the M2 code.
+- **[M2 ER diagram (.drawio)](docs/diagrams/M2_STORAGE_ER.drawio)**: P5-style rectangles, attribute ovals and a relationship diamond, with all nine columns from the `public.events` SQL migration. Device-local planned IDs are explicitly outside SQL.
+- **[Combined editable Draw.io file](docs/diagrams/M2_IMPLEMENTATION.drawio)** and **[diagram/code evidence guide](docs/M2_IMPLEMENTATION_DIAGRAMS.md)**. Copies are in the [M2 team Drive folder](https://drive.google.com/drive/folders/1Nr67cdT8tEKPWBe9j3LNm6Wzw6alGgPc).
+
+GitHub collaborator access for `jkandel-scu` was verified as **write**. These links are on `master`. The approved P4 and P5 originals have not been altered. These diagrams cover **M2 Part 1's implemented MVP**; M2 Part 2 separately asks for full-final-project planning diagrams. The repository update does not confirm a Camino submission.
+
 ## Current M2 MVP
 
 This M2 release combines current master’s integration/audit fixes with the supplied Discover and Schedule views. It includes:
@@ -79,7 +89,7 @@ The historical M1-created-event list is retained locally for compatibility, dist
 - [Team setup and Claude coding-agent guide](TEAM_SETUP_GUIDE.md) covers Git, VS Code, team-access permissions and optional coding assistants.
 - [M1 historical requirements](docs/M1_HISTORICAL_REQUIREMENTS.md) and [M1 specifications](docs/M1_HISTORICAL_SPECIFICATIONS.md) preserve the original walking-skeleton record.
 - [Product research and future roadmap](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md) is reference material, not authorization to expand M2 scope.
-- **Instructor-ready editable M2 Draw.io files:** [standalone CRC diagram](docs/diagrams/M2_CRC.drawio) and [standalone storage/ER diagram](docs/diagrams/M2_STORAGE_ER.drawio). Open either `.drawio` file in [diagrams.net](https://app.diagrams.net/) to inspect or edit the actual diagram. The original [combined two-page version](docs/diagrams/M2_IMPLEMENTATION.drawio), [SVG previews and explanation](docs/M2_IMPLEMENTATION_DIAGRAMS.md), and copies in the [CSCI187 Group 3 M2 Drive folder](https://drive.google.com/drive/folders/1Nr67cdT8tEKPWBe9j3LNm6Wzw6alGgPc) remain available.
+- **Editable M2 files:** [CRC](docs/diagrams/M2_CRC.drawio), [ER](docs/diagrams/M2_STORAGE_ER.drawio), [combined](docs/diagrams/M2_IMPLEMENTATION.drawio), and [code-to-diagram guide](docs/M2_IMPLEMENTATION_DIAGRAMS.md).
 - [P4 conceptual CRC/architecture](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit) and [selected P5 coursework ER draw.io](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view). The P5 conceptual drawing contains ideas beyond the implemented one-table M2 SQL. Updated MVP diagrams must match the actual system.
 
 **Instructor access:** The private GitHub repository grants `jkandel-scu` collaborator **write** permission (verified November 4, 2026). The two diagram files above are committed on `master`; the professor can open them using that GitHub account. Team Drive copies are restricted to SCU-domain access rather than public anonymous access. The original P4 and P5 coursework diagrams were not changed.\n\nUse the [M2 Part 1 instructions](https://docs.google.com/document/d/1_LlAb9mtASfutgVjKdjjt7Esh7g0ab6J4FmCzREJDEU/edit) and the current course portal for submission details. Assignment and lecture deadline text differ; repository contents cannot establish the actual submission status or an extension.
