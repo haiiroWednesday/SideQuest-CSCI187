@@ -1,5 +1,14 @@
 # Current M2 implementation diagrams
 
+## Editable files for M2 Part 1 review
+
+- **[CRC / responsibilities diagram (.drawio)](diagrams/M2_CRC.drawio)** — standalone editable Draw.io source.
+- **[Storage / ER diagram (.drawio)](diagrams/M2_STORAGE_ER.drawio)** — standalone editable Draw.io source, distinguishing the one shared SQL events table from device-local planned IDs.
+- [Combined two-page source (.drawio)](diagrams/M2_IMPLEMENTATION.drawio) — preserved for convenience.
+- **[Google Drive team folder](https://drive.google.com/drive/folders/1Nr67cdT8tEKPWBe9j3LNm6Wzw6alGgPc)** — contains the original combined editable file and separate [CRC](https://drive.google.com/file/d/1EQOXQXHnbeXry1-HULe60I2nKLw_gMR-/view) and [ER](https://drive.google.com/file/d/1gIQn3a0d6uCOkaqzQsg2r29I_IUkml-e/view) `.drawio` copies.
+
+For Professor Kandel: `jkandel-scu` has verified write/collaborator access to this private GitHub repository. The source files in this section are available on `master`, without requiring Google Drive access. SCU-account access to the Drive copies is permitted, but those links are not public anonymous links.
+
 These supplement the professor-approved P4 without changing its accepted symbols or ownership decisions. They describe the combined implementation for M2 rather than the broader P5 future design.
 
 Open [M2_IMPLEMENTATION.drawio](diagrams/M2_IMPLEMENTATION.drawio) in diagrams.net. It contains two editable pages. GitHub can display the SVG previews below directly.
