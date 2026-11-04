@@ -1,12 +1,18 @@
 // @vitest-environment jsdom
-// M1 requirements R1-R4: exercise the rendered React UI and browser storage.
+// M1 requirements R2-R4: exercise the rendered search panel and the legacy
+// browser-created event list ("Your created events").
+//
+// M2 note: the create form now posts to the EventCatalog (see
+// tests/posting.daven.form.test.tsx). Nothing writes M1 records through the
+// form anymore, so these tests SEED the legacy M1 storage key directly and
+// keep checking that search, Remove/Undo, recovery and multi-tab safety
+// still work on those records.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../src/App'
-import { STORAGE_KEY } from '../src/model/events'
+import { STORAGE_KEY, type CampusEvent } from '../src/model/events'
 
-type User = ReturnType<typeof userEvent.setup>
 // Dynamically choose a future date so these UI tests don't expire as
 // calendar time passes. Model tests can instead inject a fixed clock.
 function futureDate(): string {
@@ -15,24 +21,23 @@ function futureDate(): string {
   return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
 }
 
-// This helper fills the real rendered form and clicks Create, just as
-// a user would. Tests below check the resulting UI and saved data.
-async function createWorkshop(user: User, title = 'Art Workshop') {
-  const form = document.querySelector<HTMLFormElement>('.event-form')
-  if (!form) throw new Error('Create-event form was not rendered')
-  await user.type(within(form).getByLabelText('EVENT NAME'), title)
-  await user.type(within(form).getByLabelText('LOCATION'), 'Arts Building')
-  fireEvent.change(within(form).getByLabelText('DATE'), { target: { value: futureDate() } })
-  fireEvent.change(within(form).getByLabelText('START'), { target: { value: '14:30' } })
-  fireEvent.change(within(form).getByLabelText('END'), { target: { value: '15:30' } })
-  await user.click(within(form).getByRole('button', { name: /create event/i }))
+const workshop = (overrides: Partial<CampusEvent> = {}): CampusEvent => ({
+  id: 'm1-workshop-1', title: 'Art Workshop', location: 'Arts Building',
+  date: futureDate(), start: '14:30', end: '15:30', ...overrides,
+})
+
+// Put M1 events in browser storage the way the M1 form used to.
+function seed(events: CampusEvent[]) {
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(events))
 }
 
-// Start with empty browser storage and a predictable generated ID.
-// This keeps one test from accidentally depending on another test's data.
+// Point the free-time search at the seeded event's date (14:00–16:00 is the default window).
+function searchOn(date: string) {
+  fireEvent.change(screen.getByLabelText('Free on date'), { target: { value: date } })
+}
+
 beforeEach(() => {
   window.localStorage.clear()
-  vi.stubGlobal('crypto', { randomUUID: () => 'm1-workshop-1' })
 })
 
 afterEach(() => {
@@ -42,12 +47,11 @@ afterEach(() => {
 })
 
 describe('M1 rendered user workflow', () => {
-  it('R1/R3: creates an event from the form, confirms it, and shows a full-fit search result', async () => {
-    const user = userEvent.setup()
+  it('R1/R3: shows a stored event in the list and as a full-fit search result', () => {
+    seed([workshop()])
     render(<App />)
-    await createWorkshop(user)
+    searchOn(futureDate())
 
-    expect(screen.getByRole('status').textContent).toContain('Created “Art Workshop”')
     expect(screen.getByRole('heading', { name: 'Art Workshop' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Remove Art Workshop' })).toBeTruthy()
     expect(screen.getByText('1 total')).toBeTruthy()
@@ -57,13 +61,7 @@ describe('M1 rendered user workflow', () => {
 
   it('R2: preserves events across unmount/reload and persists removal', async () => {
     const user = userEvent.setup()
-    render(<App />)
-    await createWorkshop(user)
-    await waitFor(() => {
-      expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '[]')).toHaveLength(1)
-    })
-
-    cleanup() // Simulates closing the page; storage is intentionally preserved.
+    seed([workshop()])
     render(<App />)
     expect(screen.getByRole('button', { name: 'Remove Art Workshop' })).toBeTruthy()
 
@@ -73,39 +71,20 @@ describe('M1 rendered user workflow', () => {
       expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? 'null')).toEqual([])
     })
 
-    cleanup()
+    cleanup() // Simulates closing the page; storage is intentionally preserved.
     render(<App />)
     expect(screen.queryByRole('button', { name: 'Remove Art Workshop' })).toBeNull()
     expect(screen.getByText('Events you create will show up here.')).toBeTruthy()
   })
 
-  it('R4: displays a useful error when the title contains only whitespace', async () => {
-    const user = userEvent.setup()
-    render(<App />)
-    await createWorkshop(user, '   ')
-    expect(screen.getByRole('alert').textContent).toContain('Please enter an event title and location.')
-    expect(screen.getByText('0 total')).toBeTruthy()
-  })
-
-  it('R4: rejects reversed event times and leaves the list unchanged', async () => {
-    const user = userEvent.setup()
-    render(<App />)
-    const form = document.querySelector<HTMLFormElement>('.event-form')
-    if (!form) throw new Error('Create-event form was not rendered')
-    await user.type(within(form).getByLabelText('EVENT NAME'), 'Late Workshop')
-    await user.type(within(form).getByLabelText('LOCATION'), 'Library')
-    fireEvent.change(within(form).getByLabelText('START'), { target: { value: '17:00' } })
-    fireEvent.change(within(form).getByLabelText('END'), { target: { value: '16:00' } })
-    await user.click(within(form).getByRole('button', { name: /create event/i }))
-    expect(screen.getByRole('alert').textContent).toContain('The event must end later than it starts')
-    expect(screen.getByText('0 total')).toBeTruthy()
-  })
-
-  it('R3/R4: displays both empty-search states and an invalid-search message', async () => {
-    const user = userEvent.setup()
+  it('R3/R4: displays both empty-search states and an invalid-search message', () => {
     render(<App />)
     expect(screen.getByText('No events yet. Create your first event above!')).toBeTruthy()
-    await createWorkshop(user)
+    cleanup()
+
+    seed([workshop()])
+    render(<App />)
+    searchOn(futureDate())
     fireEvent.change(screen.getByLabelText('Free from'), { target: { value: '17:00' } })
     fireEvent.change(screen.getByLabelText('Free until'), { target: { value: '18:00' } })
     expect(screen.getByText('No created events fit this date and time. Try a different window.')).toBeTruthy()
@@ -119,42 +98,35 @@ describe('M1 rendered user workflow', () => {
     expect(screen.getByRole('alert').textContent).toContain('Please choose a valid date.')
   })
 
-  it('R2/R4: warns when a new event cannot be persisted', async () => {
+  it('R2/R4: warns when a list change cannot be persisted', async () => {
     const user = userEvent.setup()
+    seed([workshop()])
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('Storage denied')
     })
     render(<App />)
-    await createWorkshop(user)
+    await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
     await waitFor(() => {
       expect(screen.getByRole('alert').textContent).toContain('Browser storage could not save')
     })
   })
 
-  it('R1/R3: shows submitted descriptions and human-readable dates and times', async () => {
-    const user = userEvent.setup()
-    render(<App />)
-    const form = document.querySelector<HTMLFormElement>('.event-form')!
-    await user.type(within(form).getByLabelText('EVENT NAME'), 'Two Choirs')
-    await user.type(within(form).getByLabelText('DESCRIPTION (OPTIONAL)'), 'A cappella rehearsals')
-    await user.type(within(form).getByLabelText('LOCATION'), 'Music Hall')
+  it('R1/R3: shows stored descriptions and human-readable dates and times', () => {
     const date = futureDate()
-    fireEvent.change(within(form).getByLabelText('DATE'), { target: { value: date } })
-    fireEvent.change(within(form).getByLabelText('START'), { target: { value: '14:30' } })
-    fireEvent.change(within(form).getByLabelText('END'), { target: { value: '15:30' } })
-    await user.click(within(form).getByRole('button', { name: /create event/i }))
-    expect(screen.getAllByText('A cappella rehearsals')).toHaveLength(2)
-    const formatted = date.split('-')
-    const usDate = Number(formatted[1]) + '/' + Number(formatted[2]) + '/' + formatted[0]
-    expect(screen.getAllByText(usDate)).toHaveLength(1)
+    seed([workshop({ title: 'Two Choirs', description: 'A cappella rehearsals', location: 'Music Hall', date })])
+    render(<App />)
+    searchOn(date)
+
+    expect(screen.getAllByText('A cappella rehearsals')).toHaveLength(2) // search card + list
+    const [year, month, day] = date.split('-')
+    expect(screen.getAllByText(`${Number(month)}/${Number(day)}/${year}`)).toHaveLength(1)
     expect(screen.getByText('2:30pm – 3:30pm')).toBeTruthy()
-    expect(window.localStorage.getItem(STORAGE_KEY)).toContain('A cappella rehearsals')
   })
 
   it('R2: offers an Undo button after removing a saved event', async () => {
     const user = userEvent.setup()
+    seed([workshop()])
     render(<App />)
-    await createWorkshop(user)
     await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
     await user.click(screen.getByRole('button', { name: 'Undo removal' }))
     expect(screen.getByRole('button', { name: 'Remove Art Workshop' })).toBeTruthy()
@@ -175,11 +147,12 @@ describe('M1 rendered user workflow', () => {
 
   it('R2: refuses to overwrite an unseen change from another browser tab', async () => {
     const user = userEvent.setup()
+    seed([workshop()])
     render(<App />)
     const remote = [{ id: 'tab-b', title: 'Other Tab', location: 'Library', date: futureDate(), start: '09:00', end: '10:00' }]
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(remote))
-    // Do not deliver a storage event yet: the View still has stale [] state.
-    await createWorkshop(user)
+    // Do not deliver a storage event yet: the View still has stale state.
+    await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
     expect(screen.getByRole('alert').textContent).toContain('another tab')
     expect(screen.getByRole('button', { name: 'Remove Other Tab' })).toBeTruthy()
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '[]')).toEqual(remote)

@@ -11,7 +11,20 @@ npm ci
 npm run dev
 ```
 
-Open the local URL shown by Vite (usually `http://localhost:5173/`). Events are saved in the current browser, not shared across computers or users.
+Open the local URL shown by Vite (usually `http://localhost:5173/`).
+
+**Where posted events go.** The "Post an event" form writes to the EventCatalog:
+
+- **With Supabase configured** (`app/.env.local`, see below): one shared public catalog that every browser reads.
+- **Without it:** a fallback kept in *this browser only* (`sidequest.local-catalog.v1`). The page says so in a yellow notice.
+
+The older "Your created events" list and the free-time search still read the M1 browser-only list until catalog browsing is integrated.
+
+### Connect the shared catalog (Supabase)
+
+1. Create a Supabase project. In **SQL Editor**, run `../supabase/migrations/20261103000000_create_events.sql` once.
+2. Copy `.env.example` to `.env.local` and fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` (Project Settings → API). Use only the **publishable** key, never a secret or service-role key. `.env.local` is git-ignored.
+3. Restart `npm run dev`. The "not shared" notice disappears and "Posted events" reads "shared catalog".
 
 ## Verify
 

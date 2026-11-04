@@ -64,11 +64,16 @@ const FIELD_LABELS: Record<keyof typeof CATALOG_LIMITS, string> = {
   location: 'location',
 }
 
-// Check a draft against the shared contract and return a trimmed copy.
-// These are storage rules that hold for every caller. Posting-form rules,
-// such as "not in the past", stay in the posting controller.
-export function validateCatalogDraft(draft: EventDraft): { draft: EventDraft; error: null } | { draft: null; error: string } {
-  const trimmed: EventDraft = {
+// One message per invalid field, keyed by contract field name, so a form can
+// show each error next to its own input. An empty object means valid.
+export type CatalogFieldErrors = Partial<Record<keyof EventDraft, string>>
+
+// The order in which fields are checked. It is also the order of the form.
+export const DRAFT_FIELD_ORDER: readonly (keyof EventDraft)[] =
+  ['title', 'hostName', 'description', 'location', 'date', 'start', 'end']
+
+export function trimDraft(draft: EventDraft): EventDraft {
+  return {
     title: String(draft.title ?? '').trim(),
     hostName: String(draft.hostName ?? '').trim(),
     description: String(draft.description ?? '').trim(),
@@ -77,19 +82,42 @@ export function validateCatalogDraft(draft: EventDraft): { draft: EventDraft; er
     start: draft.start,
     end: draft.end,
   }
+}
+
+// Storage rules that hold for every caller, matching the database's CHECK
+// constraints. Posting-form rules such as "not in the past" live in the
+// posting controller (controller/postEvent.ts).
+//
+// Note: JavaScript counts an emoji as 2 characters, while Postgres counts it as 1.
+// The app is therefore slightly stricter than the database, never looser.
+export function catalogDraftErrors(draft: EventDraft): CatalogFieldErrors {
+  const trimmed = trimDraft(draft)
+  const errors: CatalogFieldErrors = {}
   for (const field of Object.keys(CATALOG_LIMITS) as (keyof typeof CATALOG_LIMITS)[]) {
-    if (!trimmed[field]) return { draft: null, error: `Please enter a ${FIELD_LABELS[field]}.` }
-    if (trimmed[field].length > CATALOG_LIMITS[field]) {
-      return { draft: null, error: `The ${FIELD_LABELS[field]} must be ${CATALOG_LIMITS[field]} characters or fewer.` }
+    if (!trimmed[field]) errors[field] = `Please enter the ${FIELD_LABELS[field]}.`
+    else if (trimmed[field].length > CATALOG_LIMITS[field]) {
+      errors[field] = `The ${FIELD_LABELS[field]} must be ${CATALOG_LIMITS[field]} characters or fewer.`
     }
   }
-  if (!isValidDate(trimmed.date)) return { draft: null, error: 'Please choose a valid event date.' }
+  if (!isValidDate(trimmed.date)) errors.date = 'Please choose a valid event date.'
   const start = toMinutes(trimmed.start)
   const end = toMinutes(trimmed.end)
   if (start === null || end === null || start >= end) {
-    return { draft: null, error: 'The event must end later than it starts, on the same day.' }
+    errors[start === null ? 'start' : 'end'] = 'The event must end later than it starts, on the same day.'
   }
-  return { draft: trimmed, error: null }
+  return errors
+}
+
+// The first error in form order, or null when there is none.
+export function firstFieldError(errors: CatalogFieldErrors): string | null {
+  for (const field of DRAFT_FIELD_ORDER) if (errors[field]) return errors[field]
+  return null
+}
+
+// Check a draft against the shared contract and return a trimmed copy.
+export function validateCatalogDraft(draft: EventDraft): { draft: EventDraft; error: null } | { draft: null; error: string } {
+  const error = firstFieldError(catalogDraftErrors(draft))
+  return error === null ? { draft: trimDraft(draft), error: null } : { draft: null, error }
 }
 
 // ---------------------------------------------------------------------------

@@ -1,14 +1,19 @@
 // VIEW: Create events and search your available time. Rules and persistence are mediated through the Controller.
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
 import {
-  createEvent, findEvents, todayLocal, initialEventWindow, displayDate, displayTime,
+  findEvents, todayLocal, displayDate, displayTime,
   loadEventsChecked, persistEvents, removeEventWithReceipt, restoreRemovedEvent, isPastEvent,
-  type CampusEvent, type EventDraft, type RemovedEvent,
+  type CampusEvent, type RemovedEvent,
 } from './controller/findEvents'
+import { localEventCatalog, type ConnectedCatalog } from './controller/postEvent'
+import { PostEventForm } from './view/PostEventForm'
 
 import { usePersonalSchedule, PlanButton, SchedulePage, ScheduleFeedback } from './view/PersonalSchedule'
 
-export default function App() {
+// main.tsx passes the configured catalog (Supabase when app/.env.local is set).
+// Without a prop, App uses the browser-only fallback, so tests never reach the network.
+export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
+  const [connection] = useState<ConnectedCatalog>(() => catalog ?? localEventCatalog(window.localStorage))
   const [page, setPage] = useState(() => window.location.hash === '#schedule' ? 'schedule' : 'discover')
   useEffect(() => {
     const navigate = () => setPage(window.location.hash === '#schedule' ? 'schedule' : 'discover')
@@ -28,11 +33,7 @@ export default function App() {
   const [storageBlocked, setStorageBlocked] = useState(initial.blocked)
   const [lastRemoved, setLastRemoved] = useState<RemovedEvent | null>(null)
   const plans = usePersonalSchedule(events)
-  // draft is what the user is still typing. It becomes an event only
-  // after Controller and Model validation and the assignment of an ID.
-  const [draft, setDraft] = useState<EventDraft>(() => ({
-    title: '', description: '', location: '', ...initialEventWindow(),
-  }))
+  // Errors from the M1 list's Remove/Undo actions. Posting errors live in PostEventForm.
   const [createError, setCreateError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [storageWarning, setStorageWarning] = useState(false)
@@ -111,43 +112,6 @@ export default function App() {
   // Object destructuring pulls out matches and renames error to searchError
   // so it is easy to distinguish search errors from event-creation errors.
   const { matches, error: searchError } = findEvents(events, freeDate, freeStart, freeEnd)
-  // keyof limits field names to properties of EventDraft, and the object
-  // spread keeps other form values while updating only one field.
-  const updateDraft = (field: keyof EventDraft, value: string) =>
-    // [field] means "use the field-name VARIABLE as this object's key".
-    // For example, updateDraft('title', 'Choir') changes draft.title only.
-    setDraft((current) => ({ ...current, [field]: value }))
-
-  // On form submit, ask the Controller to create a valid event. Only then
-  // attempt storage and show the user the appropriate result.
-  function handleCreate(event: FormEvent<HTMLFormElement>) {
-    // Submitting an HTML form normally reloads/navigates the browser.
-    // React handles this form locally, so we prevent that default action.
-    event.preventDefault()
-    if (storageBlocked) {
-      setCreateError('Saved data needs recovery before changes can be made.')
-      return
-    }
-    // 🔑 IDs distinguish two events even if their titles are identical.
-    // The Controller checks that the generated ID is not already used.
-    const result = createEvent(events, draft, crypto.randomUUID())
-    if (result.error) {
-      setCreateError(result.error)
-      setNotice(null)
-      return
-    }
-    const outcome = store(result.events)
-    if (outcome === 'conflict') return
-    setLastRemoved(null)
-    setCreateError(null)
-    setNotice(outcome === 'saved'
-      ? `Created “${draft.title.trim()}”! It now appears in your event list.`
-      : 'Event added temporarily, but your browser could not save it. It may disappear after reloading.')
-    setFreeDate(draft.date)
-    // Clear the typed description/title/location after posting, but keep
-    // the chosen date and times to make posting another event easier.
-    setDraft((current) => ({ ...current, title: '', description: '', location: '' }))
-  }
 
   // The returned removal receipt allows Undo to restore the event later.
   // A failed save during deletion still needs clearer confirmation messaging.
@@ -193,45 +157,11 @@ export default function App() {
       <section className="workspace" aria-label="Create and find events">
         <section className="panel" aria-labelledby="create-heading">
           <div className="panel-heading">
-            <h2 id="create-heading">Create an event</h2>
+            <h2 id="create-heading">Post an event</h2>
             <span>Step 1</span>
           </div>
-          <p className="panel-description">Add a campus event yourself. Events today must start at or after the current time.</p>
-          {/* 📝 Controlled inputs: React state supplies the value; onChange
-              records what the user types. See draft/title below. */}
-          <form className="event-form" onSubmit={handleCreate}>
-            <label>
-              <span>EVENT NAME</span>
-              <input type="text" value={draft.title} required maxLength={100}
-                placeholder="e.g. Art Workshop" onChange={(e) => updateDraft('title', e.target.value)} />
-            </label>
-            <label>
-              <span>DESCRIPTION (OPTIONAL)</span>
-              <textarea value={draft.description ?? ''} maxLength={500} rows={3}
-                placeholder="What makes this event special?"
-                onChange={(e) => updateDraft('description', e.target.value)} />
-            </label>
-            <label>
-              <span>LOCATION</span>
-              <input type="text" value={draft.location} required maxLength={100}
-                placeholder="e.g. Student Center" onChange={(e) => updateDraft('location', e.target.value)} />
-            </label>
-            <label>
-              <span>DATE</span>
-              <input type="date" value={draft.date} min={todayLocal()} required onChange={(e) => updateDraft('date', e.target.value)} />
-            </label>
-            <div className="time-row">
-              <label>
-                <span>START</span>
-                <input type="time" value={draft.start} required onChange={(e) => updateDraft('start', e.target.value)} />
-              </label>
-              <label>
-                <span>END</span>
-                <input type="time" value={draft.end} required onChange={(e) => updateDraft('end', e.target.value)} />
-              </label>
-            </div>
-            <button className="primary-button" type="submit">+ Create event</button>
-          </form>
+          <p className="panel-description">Post a public campus event. Events today must start at or after the current time.</p>
+          <PostEventForm connection={connection} />
           {createError && <p className="error" role="alert">{createError}</p>}
           {notice && <div className="success" role="status">{notice}
             {lastRemoved && <button type="button" className="undo-button" onClick={undoRemove}>Undo removal</button>}
