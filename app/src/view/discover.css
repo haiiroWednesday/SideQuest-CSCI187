@@ -327,6 +327,10 @@
 .sq-facts dd { margin: 0; font: 500 21px/1.35 var(--font-sans); overflow-wrap: anywhere; }
 .sq-facts dd.sq-unset { color: var(--sq-muted); font-style: italic; font-weight: 400; }
 .sq-sticker-desc { margin: 0 0 24px; font: 400 19px/1.55 var(--font-sans); overflow-wrap: anywhere; }
+.sq-detail-verification { min-height: 190px; display: grid; align-content: center; gap: 14px; }
+.sq-detail-verification h2 { margin: 0; }
+.sq-detail-verification p { margin: 0; font: 400 17px/1.5 var(--font-sans); color: var(--sq-muted); }
+.sq-detail-verification .sq-text-button { justify-self: start; }
 .sq-sticker-placeholder { padding: 28px 30px; border: 2px dashed var(--sq-rule-strong); border-radius: 30px; color: var(--sq-muted); }
 .sq-sticker-placeholder h2 { color: var(--sq-ink); margin: 6px 0 0; }
 .sq-sheet-close, .sq-scrim { display: none; }
