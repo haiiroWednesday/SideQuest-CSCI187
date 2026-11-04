@@ -132,9 +132,9 @@
 .sq-free { position: relative; z-index: 1; }
 .sq-hero h1 { position: relative; z-index: 1; }
 /* the drawing sits behind the hero like a watermark: a warm glow, fading out toward the words and the free-time row */
-.sq-hero:has(.sq-campus-drawing)::before { content: ""; position: absolute; z-index: -1; right: 4%; top: 0; width: min(720px, 58%); height: 250px; pointer-events: none;
+.sq-hero:has(.sq-campus-drawing)::before { content: ""; position: absolute; z-index: -1; right: 1%; top: 0; width: min(720px, 58%); height: 250px; pointer-events: none;
   background: radial-gradient(closest-side, rgba(232, 170, 36, .16), rgba(232, 170, 36, 0)); }
-.sq-campus-drawing { position: absolute; z-index: 0; right: 9%; bottom: -52px; height: clamp(190px, 17vw, 236px); width: auto; max-width: none; display: block; margin: 0; pointer-events: none; opacity: .62;
+.sq-campus-drawing { position: absolute; z-index: 0; right: 5%; bottom: -52px; height: clamp(190px, 17vw, 236px); width: auto; max-width: none; display: block; margin: 0; pointer-events: none; opacity: .62;
   -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 34%, #000 88%, transparent 100%), linear-gradient(to bottom, #000 58%, transparent 96%);
   -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent 0%, #000 34%, #000 88%, transparent 100%), linear-gradient(to bottom, #000 58%, transparent 96%); mask-composite: intersect; }
 
