@@ -1,0 +1,43 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Current M2 responsibilities">
+    <mxGraphModel grid="1" page="1" pageWidth="1600" pageHeight="950">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="views" parent="1" vertex="1" value="&lt;b&gt;Views: Discover | Post an event | My Schedule&lt;/b&gt;&lt;br&gt;&lt;br&gt;Render prepared output, collect input and manage keyboard focus. No direct persistence or Model imports." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#edf2f7;strokeColor=#38516c;fontSize=20;align=left;spacing=20;verticalAlign=top;">
+          <mxGeometry as="geometry" x="60" y="125" width="1480" height="100" />
+        </mxCell>
+        <mxCell id="controllers" parent="1" vertex="1" value="&lt;b&gt;Controllers: postEvent | findEvents | sharedSchedule | presentScreens&lt;/b&gt;&lt;br&gt;&lt;br&gt;Coordinate commands and asynchronous reads; prepare presentation text and states.&lt;br&gt;HTTP Controller: server/api.ts mediates shared catalog requests; local plans remain on the current device." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2da;strokeColor=#38516c;fontSize=20;align=left;spacing=20;verticalAlign=top;">
+          <mxGeometry as="geometry" x="60" y="290" width="1480" height="130" />
+        </mxCell>
+        <mxCell id="event" parent="1" vertex="1" value="&lt;b&gt;Event&lt;/b&gt;&lt;br&gt;&lt;br&gt;Knows: ID, title, host, description,&lt;br&gt;location, campus date/start/end.&lt;br&gt;Does: validate fields and posting time;&lt;br&gt;full-fit and interval/clock rules.&lt;br&gt;Collaborators: EventCatalog, Schedule." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#edf4ec;strokeColor=#38516c;fontSize=20;align=left;spacing=20;verticalAlign=top;">
+          <mxGeometry as="geometry" x="60" y="510" width="450" height="300" />
+        </mxCell>
+        <mxCell id="catalog" parent="1" vertex="1" value="&lt;b&gt;EventCatalog&lt;/b&gt;&lt;br&gt;&lt;br&gt;Knows: public Event records.&lt;br&gt;Does: create, listUpcoming, getById;&lt;br&gt;validate and map store data.&lt;br&gt;Collaborators: Event and table adapter.&lt;br&gt;HTTP client / server-side Supabase." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#edf4ec;strokeColor=#38516c;fontSize=20;align=left;spacing=20;verticalAlign=top;">
+          <mxGeometry as="geometry" x="575" y="510" width="450" height="300" />
+        </mxCell>
+        <mxCell id="schedule" parent="1" vertex="1" value="&lt;b&gt;Schedule&lt;/b&gt;&lt;br&gt;&lt;br&gt;Knows: current-device Event IDs.&lt;br&gt;Does: add/remove/recover plans;&lt;br&gt;capacity, chronology and overlaps.&lt;br&gt;Collaborators: Event, EventCatalog.&lt;br&gt;Removing a plan keeps the Event." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#edf4ec;strokeColor=#38516c;fontSize=20;align=left;spacing=20;verticalAlign=top;">
+          <mxGeometry as="geometry" x="1090" y="510" width="450" height="300" />
+        </mxCell>
+        <mxCell id="e0" parent="1" edge="1" source="views" target="controllers" value="" style="endArrow=open;html=1;strokeWidth=2;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e1" parent="1" edge="1" source="controllers" target="event" value="" style="endArrow=open;html=1;strokeWidth=2;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e2" parent="1" edge="1" source="controllers" target="catalog" value="" style="endArrow=open;html=1;strokeWidth=2;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e3" parent="1" edge="1" source="controllers" target="schedule" value="" style="endArrow=open;html=1;strokeWidth=2;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e4" parent="1" edge="1" source="catalog" target="event" value="" style="endArrow=open;html=1;strokeWidth=2;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e5" parent="1" edge="1" source="schedule" target="catalog" value="" style="endArrow=open;html=1;strokeWidth=2;dashed=1;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
