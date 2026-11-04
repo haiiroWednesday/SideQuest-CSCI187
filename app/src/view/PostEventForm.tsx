@@ -83,59 +83,47 @@ export function PostEventForm({ connection, now = () => new Date() }: Props) {
         Shared catalog not connected. Posts are saved in this browser only, and other people can't see them.
       </p>}
       <form className="event-form" onSubmit={handleSubmit} noValidate aria-busy={submitting}>
+        {/* Each label points at its control with htmlFor/id instead of wrapping it.
+            A wrapped textarea would include its typed text in its accessible name. */}
         <div className="field">
-          <label>
-            <span>EVENT NAME</span>
-            <input type="text" value={draft.title} required maxLength={CATALOG_LIMITS.title} {...errorProps('title')}
-              placeholder="e.g. Art Workshop" onChange={(e) => update('title', e.target.value)} />
-          </label>
+          <label htmlFor="post-title"><span>EVENT NAME</span></label>
+          <input id="post-title" type="text" value={draft.title} required maxLength={CATALOG_LIMITS.title} {...errorProps('title')}
+            placeholder="e.g. Art Workshop" onChange={(e) => update('title', e.target.value)} />
           {fieldError('title')}
         </div>
         <div className="field">
-          <label>
-            <span>HOST NAME</span>
-            <input type="text" value={draft.hostName} required maxLength={CATALOG_LIMITS.hostName} {...errorProps('hostName')}
-              placeholder="e.g. SCU Photography Club" onChange={(e) => update('hostName', e.target.value)} />
-          </label>
+          <label htmlFor="post-hostName"><span>HOST NAME</span></label>
+          <input id="post-hostName" type="text" value={draft.hostName} required maxLength={CATALOG_LIMITS.hostName} {...errorProps('hostName')}
+            placeholder="e.g. SCU Photography Club" onChange={(e) => update('hostName', e.target.value)} />
           {fieldError('hostName')}
         </div>
         <div className="field">
-          <label>
-            <span>DESCRIPTION</span>
-            <textarea value={draft.description} required maxLength={CATALOG_LIMITS.description} rows={3} {...errorProps('description')}
-              placeholder="What makes this event special?" onChange={(e) => update('description', e.target.value)} />
-          </label>
+          <label htmlFor="post-description"><span>DESCRIPTION</span></label>
+          <textarea id="post-description" value={draft.description} required maxLength={CATALOG_LIMITS.description} rows={3} {...errorProps('description')}
+            placeholder="What makes this event special?" onChange={(e) => update('description', e.target.value)} />
           {fieldError('description')}
         </div>
         <div className="field">
-          <label>
-            <span>LOCATION</span>
-            <input type="text" value={draft.location} required maxLength={CATALOG_LIMITS.location} {...errorProps('location')}
-              placeholder="e.g. Student Center" onChange={(e) => update('location', e.target.value)} />
-          </label>
+          <label htmlFor="post-location"><span>LOCATION</span></label>
+          <input id="post-location" type="text" value={draft.location} required maxLength={CATALOG_LIMITS.location} {...errorProps('location')}
+            placeholder="e.g. Student Center" onChange={(e) => update('location', e.target.value)} />
           {fieldError('location')}
         </div>
         <div className="field">
-          <label>
-            <span>DATE</span>
-            <input type="date" value={draft.date} min={todayLocal(now())} required {...errorProps('date')}
-              onChange={(e) => update('date', e.target.value)} />
-          </label>
+          <label htmlFor="post-date"><span>DATE</span></label>
+          <input id="post-date" type="date" value={draft.date} min={todayLocal(now())} required {...errorProps('date')}
+            onChange={(e) => update('date', e.target.value)} />
           {fieldError('date')}
         </div>
         <div className="time-row">
           <div className="field">
-            <label>
-              <span>START</span>
-              <input type="time" value={draft.start} required {...errorProps('start')} onChange={(e) => update('start', e.target.value)} />
-            </label>
+            <label htmlFor="post-start"><span>START</span></label>
+            <input id="post-start" type="time" value={draft.start} required {...errorProps('start')} onChange={(e) => update('start', e.target.value)} />
             {fieldError('start')}
           </div>
           <div className="field">
-            <label>
-              <span>END</span>
-              <input type="time" value={draft.end} required {...errorProps('end')} onChange={(e) => update('end', e.target.value)} />
-            </label>
+            <label htmlFor="post-end"><span>END</span></label>
+            <input id="post-end" type="time" value={draft.end} required {...errorProps('end')} onChange={(e) => update('end', e.target.value)} />
             {fieldError('end')}
           </div>
         </div>

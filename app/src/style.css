@@ -48,7 +48,7 @@ footer{border-top:1px solid #e4e1d8;padding:25px 0 40px;color:#596b5d;font-size:
 .storage-alert{margin-top:15px;padding:13px;border:1px solid #9f5d17;border-radius:9px;background:#fff7df;color:#6d3717;font-size:13px;line-height:1.6}
 .past-tag{display:inline-block;font-size:11px;color:#6d4f28;background:#fff0d7;padding:3px 7px;border-radius:5px}
 /* Event posting (PostEventForm): per-field errors and the posted-events list. */
-.event-form .field{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+.event-form .field{display:flex;flex-direction:column;gap:8px;min-width:0;flex:1}
 .field-error{color:#a33128;font-size:12px;line-height:1.4}
 .event-form [aria-invalid="true"]{border-color:#a33128}
 .primary-button:disabled{opacity:.7;cursor:progress}

@@ -107,6 +107,19 @@ describe('PostEventForm', () => {
     expect(screen.queryByRole('status')).toBeNull()
   })
 
+  it('keeps each field’s accessible name equal to its label, even after typing', async () => {
+    const user = userEvent.setup()
+    render(<PostEventForm connection={{ catalog: createEventCatalog(createInMemoryEventTable()), shared: true }} />)
+
+    // A label wrapped around a textarea would make its name "DESCRIPTION Paint with friends".
+    await user.type(form().getByLabelText('DESCRIPTION'), 'Paint with friends')
+
+    expect(screen.getByRole('textbox', { name: 'DESCRIPTION' })).toBeTruthy()
+    expect(screen.getByRole('textbox', { name: 'EVENT NAME' })).toBeTruthy()
+    expect(document.querySelector('label[for="post-end"]')?.textContent).toBe('END')
+    expect(form().getByLabelText('END').id).toBe('post-end')
+  })
+
   it('shows a retry option when the posted list cannot load', async () => {
     const user = userEvent.setup()
     let fail = true
