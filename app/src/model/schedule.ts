@@ -1,6 +1,7 @@
 // MODEL: device-local plan identities, ordering, overlap rules and persistence.
 // No React or Controller imports. Catalog events are never changed by a plan.
 import { isValidDate, toMinutes, type CampusEvent } from './events'
+import { overlapSpan } from './eventTiming'
 import { CATALOG_LIMITS } from './eventCatalog'
 
 
@@ -91,11 +92,7 @@ export function resolvePlannedEvents(ids: readonly string[], catalog: readonly C
 
 // Half-open intervals: 10:00-11:00 and 11:00-12:00 do not overlap.
 export function eventsOverlap(a: CampusEvent, b: CampusEvent): boolean {
-  if (a.id === b.id || a.date !== b.date) return false
-  const aStart = toMinutes(a.start), aEnd = toMinutes(a.end)
-  const bStart = toMinutes(b.start), bEnd = toMinutes(b.end)
-  return aStart !== null && aEnd !== null && bStart !== null && bEnd !== null &&
-    aStart < aEnd && bStart < bEnd && aStart < bEnd && bStart < aEnd
+  return overlapSpan(a, b) !== null
 }
 
 // One representative conflicting event per plan keeps a busy schedule's output

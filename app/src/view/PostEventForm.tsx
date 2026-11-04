@@ -2,32 +2,42 @@
 // Rules live in controller/postEvent.ts, and storage lives behind the
 // EventCatalogPort. This component only holds what the user is typing and
 // what came back.
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import {
-  postEvent, CATALOG_LIMITS,
-  type CampusEvent, type CatalogFieldErrors, type ConnectedCatalog, type EventDraft,
+  loadPostedEvents, postEvent,
+  CATALOG_LIMITS, campusNow, initialCampusWindow, type CampusEvent, type CatalogFieldErrors, type ConnectedCatalog, type EventDraft,
 } from '../controller/postEvent'
-import { displayDate, displayTime, initialEventWindow, todayLocal } from '../controller/findEvents'
-import { useCatalogEvents, type CatalogEvents } from './useCatalogEvents'
+import { displayDate, displayTime } from '../controller/findEvents'
 
-type Props = {
-  connection: ConnectedCatalog
-  now?: () => Date
-  catalogEvents?: CatalogEvents
-  renderEventActions?: (event: CampusEvent) => ReactNode
-}
+type Props = { connection: ConnectedCatalog; now?: () => Date; onPosted?: (event: CampusEvent) => void; showPostedEvents?: boolean; showConnectionNotice?: boolean }
 
-export function PostEventForm({ connection, now = () => new Date(), catalogEvents, renderEventActions }: Props) {
+export function PostEventForm({ connection, now = () => new Date(), onPosted, showPostedEvents = true, showConnectionNotice = true }: Props) {
   const { catalog, shared } = connection
   const [draft, setDraft] = useState<EventDraft>(() => ({
-    title: '', hostName: '', description: '', location: '', ...initialEventWindow(now()),
+    title: '', hostName: '', description: '', location: '', ...initialCampusWindow(now()),
   }))
   const [fieldErrors, setFieldErrors] = useState<CatalogFieldErrors>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const standalone = useCatalogEvents(catalog, catalogEvents === undefined)
-  const posted = catalogEvents ?? standalone
+  const [posted, setPosted] = useState<{ events: CampusEvent[]; error: string | null; loading: boolean }>(
+    { events: [], error: null, loading: true },
+  )
+
+  const generation = useRef(0)
+  const refresh = useCallback(async () => {
+    const request = ++generation.current
+    setPosted(current => ({ ...current, loading: true }))
+    const result = await loadPostedEvents(catalog)
+    if (request === generation.current) setPosted({ ...result, loading: false })
+  }, [catalog])
+
+  // Read the catalog when the page opens. This is what makes a posted event
+  // visible again after a refresh.
+  useEffect(() => {
+    if (showPostedEvents) void refresh()
+    return () => { generation.current++ }
+  }, [refresh, showPostedEvents])
 
   const update = (field: keyof EventDraft, value: string) => {
     setDraft(current => ({ ...current, [field]: value }))
@@ -57,7 +67,8 @@ export function PostEventForm({ connection, now = () => new Date(), catalogEvent
     setNotice(result.message)
     // Keep host name, date and times to make posting a similar event quicker.
     setDraft(current => ({ ...current, title: '', description: '', location: '' }))
-    await posted.refresh()
+    onPosted?.(result.event)
+    if (showPostedEvents) await refresh()
   }
 
   // Connect an input to its error message for screen readers.
@@ -69,10 +80,10 @@ export function PostEventForm({ connection, now = () => new Date(), catalogEvent
 
   return (
     <>
-      {!shared && <p className="storage-alert" data-testid="catalog-not-shared">
+      {showConnectionNotice && !shared && <p className="storage-alert" data-testid="catalog-not-shared">
         Shared catalog not connected. Posts are saved in this browser only, and other people can't see them.
       </p>}
-      <form className="event-form" onSubmit={handleSubmit} noValidate aria-busy={submitting}>
+      <form className="event-form" onSubmit={handleSubmit} noValidate aria-busy={submitting}><fieldset className="sq-post-fieldset" disabled={submitting}>
         {/* Each label points at its control with htmlFor/id instead of wrapping it.
             A wrapped textarea would include its typed text in its accessible name. */}
         <div className="field">
@@ -101,7 +112,7 @@ export function PostEventForm({ connection, now = () => new Date(), catalogEvent
         </div>
         <div className="field">
           <label htmlFor="post-date"><span>DATE</span></label>
-          <input id="post-date" type="date" value={draft.date} min={todayLocal(now())} required {...errorProps('date')}
+          <input id="post-date" type="date" value={draft.date} min={campusNow(now()).date} required {...errorProps('date')}
             onChange={(e) => update('date', e.target.value)} />
           {fieldError('date')}
         </div>
@@ -120,17 +131,15 @@ export function PostEventForm({ connection, now = () => new Date(), catalogEvent
         <button className="primary-button" type="submit" disabled={submitting}>
           {submitting ? 'Posting…' : '+ Post event'}
         </button>
-      </form>
+      </fieldset></form>
       {formError && <p className="error" role="alert">{formError}</p>}
       {notice && <p className="success" role="status">{notice}</p>}
 
-      <section className="posted-events" aria-labelledby="posted-heading">
+      {showPostedEvents && <section className="posted-events" aria-labelledby="posted-heading">
         <h3 id="posted-heading">Posted events <small>{shared ? 'shared catalog' : 'this browser only'}</small></h3>
-        {!posted.error && <button type="button" className="undo-button" disabled={posted.loading}
-          onClick={posted.refresh}>Refresh events</button>}
         {posted.loading && posted.events.length === 0 ? <p className="library-empty">Loading posted events…</p>
           : posted.error ? <p className="error" role="alert">{posted.error}
-              <button type="button" className="undo-button" onClick={posted.refresh}>Try again</button></p>
+              <button type="button" className="undo-button" onClick={refresh}>Try again</button></p>
           : posted.events.length === 0 ? <p className="library-empty">No upcoming events posted yet.</p>
           : <ul className="saved-list">
               {posted.events.map(item => (
@@ -140,11 +149,10 @@ export function PostEventForm({ connection, now = () => new Date(), catalogEvent
                     <span>Hosted by {item.hostName}</span>
                     <span>{displayDate(item.date)} · {displayTime(item.start)}–{displayTime(item.end)} · {item.location}</span>
                   </div>
-                  {renderEventActions?.(item)}
                 </li>
               ))}
             </ul>}
-      </section>
+      </section>}
     </>
   )
 }

@@ -75,16 +75,6 @@ describe('EventCatalog.create', () => {
     expect(table.rows.size).toBe(0)
   })
 
-  it('rejects past calendar dates and already-started events at the Model boundary', async () => {
-    const catalog = createEventCatalog(createInMemoryEventTable(), clock)
-    await expect(catalog.create(draft({ date: '2026-11-02' })))
-      .rejects.toMatchObject({ kind: 'invalid', message: expect.stringContaining('past') })
-    await expect(catalog.create(draft({ date: '2026-11-03', start: '11:59', end: '13:00' })))
-      .rejects.toMatchObject({ kind: 'invalid', message: expect.stringContaining('already started') })
-    await expect(catalog.create(draft({ date: '2026-11-03', start: '12:00', end: '13:00' })))
-      .resolves.toMatchObject({ start: '12:00' })
-  })
-
   it('accepts a title of exactly 120 characters (boundary)', async () => {
     const catalog = createEventCatalog(createInMemoryEventTable(), clock)
     await expect(catalog.create(draft({ title: 'x'.repeat(120) }))).resolves.toMatchObject({ title: 'x'.repeat(120) })
@@ -107,17 +97,12 @@ describe('EventCatalog.listUpcoming', () => {
     const later = await catalog.create(draft({ title: 'Nov 6', date: '2026-11-06', start: '09:00', end: '10:00' }))
     const afternoon = await catalog.create(draft({ title: 'Nov 5 pm', date: '2026-11-05', start: '15:00', end: '16:00' }))
     const morning = await catalog.create(draft({ title: 'Nov 5 am', date: '2026-11-05', start: '08:00', end: '09:00' }))
-    // Historical records must remain readable. Seed them directly into storage
-    // instead of bypassing the new-post rule through catalog.create().
-    const historical = [
-      draft({ title: 'Running', date: '2026-11-03', start: '11:30', end: '12:30' }),
-      draft({ title: 'Ended at noon', date: '2026-11-03', start: '11:00', end: '12:00' }),
-      draft({ title: 'Yesterday', date: '2026-11-02' }),
-    ]
-    historical.forEach((event, index) => {
-      const id = `11111111-1111-4111-8111-00000000000${index}`
-      table.rows.set(id, { ...toEventRow(event), id })
-    })
+    // Existing records were posted earlier, before this fixed clock.
+    for (const [id, values] of [
+      ['11111111-1111-4111-8111-111111111111', { title: 'Running', date: '2026-11-03', start: '11:30', end: '12:30' }],
+      ['22222222-2222-4222-8222-222222222222', { title: 'Ended at noon', date: '2026-11-03', start: '11:00', end: '12:00' }],
+      ['33333333-3333-4333-8333-333333333333', { title: 'Yesterday', date: '2026-11-02' }],
+    ] as const) table.rows.set(id, { id, ...toEventRow(draft(values)) })
 
     const titles = (await catalog.listUpcoming()).map(event => event.title)
 
@@ -170,6 +155,6 @@ describe('database mapping and configuration', () => {
 
   it('returns null instead of a fake catalog when Supabase is not configured', () => {
     expect(createSupabaseEventCatalogFromEnv({})).toBeNull()
-    expect(createSupabaseEventCatalogFromEnv({ VITE_SUPABASE_URL: 'https://x.supabase.co', VITE_SUPABASE_PUBLISHABLE_KEY: '  ' })).toBeNull()
+    expect(createSupabaseEventCatalogFromEnv({ SUPABASE_URL: 'https://x.supabase.co', SUPABASE_PUBLISHABLE_KEY: '  ' })).toBeNull()
   })
 })

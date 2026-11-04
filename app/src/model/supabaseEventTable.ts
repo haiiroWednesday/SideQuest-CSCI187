@@ -1,15 +1,14 @@
 /// <reference types="vite/client" />
-// ADAPTER: the real shared EventCatalog storage, a Supabase Postgres
+// SERVER-ONLY ADAPTER: the real shared EventCatalog storage, a Supabase Postgres
 // `public.events` table (schema: supabase/migrations/*_create_events.sql).
 //
 // 🔐 Only the PUBLISHABLE key ever belongs here. It is public by design and
-// relies on the RLS policies and grants in the migration. Never put a
+// is retained server-side for this course and relies on the RLS policies and grants in the migration. Never put a
 // service-role or secret key in Vite code, .env files sent to the browser, or Git.
-// Open question (playbook "extra-credit conflict"): the instructor may require
-// all keys to stay server-side. In that case, swap this file for a server proxy
-// that implements the same EventTable. Nothing else has to change.
+// Only the Node API imports this configured adapter. Browser code uses the
+// same-origin HTTP port and receives no Supabase URL, key or auth headers.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { createEventCatalog, type EventCatalogPort, type EventRow, type EventTable } from './eventCatalog'
+import { createEventCatalog, type EventCatalogPort, type EventRow, type EventTable } from './eventCatalog.ts'
 
 const COLUMNS = 'id,title,host_name,description,location,event_date,start_time,end_time'
 
@@ -41,13 +40,21 @@ export function createSupabaseEventTable(client: SupabaseClient): EventTable {
 // Returns null when the variables are missing, so callers can show an honest
 // "catalog not configured" state rather than silently using fake data.
 export function createSupabaseEventCatalogFromEnv(
-  env: Readonly<Record<string, unknown>> = import.meta.env,
+  env: Readonly<Record<string, unknown>> = {},
 ): EventCatalogPort | null {
   const read = (name: string) => (typeof env[name] === 'string' ? (env[name] as string).trim() : '')
-  const url = read('VITE_SUPABASE_URL')
-  const key = read('VITE_SUPABASE_PUBLISHABLE_KEY')
+  const url = read('SUPABASE_URL')
+  const key = read('SUPABASE_PUBLISHABLE_KEY')
   if (!url || !key) return null
+  let legacyAnon = false
+  try { legacyAnon = JSON.parse(Buffer.from(key.split('.')[1] ?? '', 'base64url').toString('utf8')).role === 'anon' } catch { /* not a legacy JWT */ }
+  if (!key.startsWith('sb_publishable_') && !legacyAnon) {
+    throw new Error('Configure a publishable or legacy anonymous Supabase key. Privileged keys are not supported.')
+  }
   // No logins in this MVP: don't persist or refresh an auth session.
-  const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+  const client = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.any([...(init?.signal ? [init.signal] : []), AbortSignal.timeout(15_000)]) }) },
+  })
   return createEventCatalog(createSupabaseEventTable(client))
 }

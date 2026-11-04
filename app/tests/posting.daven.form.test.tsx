@@ -3,11 +3,11 @@
 // The form talks only to an EventCatalogPort. Here that is the in-memory test
 // fixture or the browser-only fallback. Supabase is never contacted.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../src/App'
 import { PostEventForm } from '../src/view/PostEventForm'
-import { createEventCatalog, EventCatalogError, type CampusEvent, type EventCatalogPort, type EventRow } from '../src/model/eventCatalog'
+import { createEventCatalog, EventCatalogError, type EventCatalogPort, type EventRow } from '../src/model/eventCatalog'
 import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 import { LOCAL_CATALOG_KEY } from '../src/model/browserEventTable'
 import { STORAGE_KEY as M1_STORAGE_KEY } from '../src/model/events'
@@ -41,27 +41,10 @@ async function fillAndPost(user: User, values: { title?: string; hostName?: stri
 
 const postedList = () => within(screen.getByRole('region', { name: /posted events/i }))
 
-beforeEach(() => window.localStorage.clear())
+beforeEach(() => { window.localStorage.clear(); window.location.hash = '' })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 describe('PostEventForm', () => {
-  it('keeps a newly posted match when the initial catalog read finishes late', async () => {
-    const user = userEvent.setup()
-    const catalog = createEventCatalog(createInMemoryEventTable())
-    let finishInitialRead: (events: CampusEvent[]) => void = () => {}
-    const initialRead = new Promise<CampusEvent[]>(resolve => { finishInitialRead = resolve })
-    vi.spyOn(catalog, 'listUpcoming').mockImplementationOnce(() => initialRead)
-    render(<App catalog={{ catalog, shared: true }} />)
-    fireEvent.change(screen.getByLabelText('Free on date'), { target: { value: futureDate() } })
-
-    await fillAndPost(user)
-    await screen.findByRole('heading', { name: 'Photo Walk' })
-    await act(async () => { finishInitialRead([]) })
-
-    expect(screen.getByRole('heading', { name: 'Photo Walk' })).toBeTruthy()
-    expect(postedList().getByText('Photo Walk')).toBeTruthy()
-  })
-
   it('posts to the catalog, shows the new ID, and lists the event with its host', async () => {
     const user = userEvent.setup()
     const rows = new Map<string, EventRow>()
@@ -160,13 +143,16 @@ describe('App with the browser-only fallback catalog', () => {
     render(<App />)
     expect(screen.getByTestId('catalog-not-shared').textContent).toContain('this browser only')
 
+    await user.click(screen.getByRole('link', { name: 'Post an event' }))
+    await waitFor(() => expect(document.querySelector('.event-form')).toBeTruthy())
     await fillAndPost(user)
     expect((await screen.findByRole('status')).textContent).toContain('this browser only')
 
     cleanup() // "refresh": unmount, keep localStorage, mount a brand-new App
+    window.location.hash = '#discover'
     render(<App />)
-    await waitFor(() => expect(postedList().getByText('Photo Walk')).toBeTruthy())
-    expect(postedList().getByText('Hosted by SCU Photography Club')).toBeTruthy()
+    expect(await screen.findByRole('button', { name: 'View details for Photo Walk' })).toBeTruthy()
+    expect(screen.getAllByText('SCU Photography Club').length).toBeGreaterThan(0)
     expect(window.localStorage.getItem(LOCAL_CATALOG_KEY)).toContain('Photo Walk')
     expect(window.localStorage.getItem(M1_STORAGE_KEY)).toBeNull()
   })

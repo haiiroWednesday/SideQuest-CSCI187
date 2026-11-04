@@ -1,4 +1,5 @@
 // CONTROLLER: the View requests every plan read/change here, never in the Model.
+import { readCatalogWithDeadline } from './catalogReads'
 import type { CampusEvent } from '../model/events'
 import type { EventCatalogPort } from '../model/eventCatalog'
 import {
@@ -27,7 +28,7 @@ export type ScheduleResult = {
 export async function loadPlannedEvents(catalog: EventCatalogPort, ids: readonly string[]) {
   const lookups = await Promise.all(ids.map(async id => {
     try {
-      const event = await catalog.getById(id)
+      const event = await readCatalogWithDeadline(() => catalog.getById(id))
       if (event !== null && (!isScheduleEvent(event) || event.id !== id)) {
         return { id, event: null, failed: true }
       }

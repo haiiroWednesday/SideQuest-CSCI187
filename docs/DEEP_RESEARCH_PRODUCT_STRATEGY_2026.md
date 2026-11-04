@@ -450,7 +450,7 @@ Original: [Final Project Extra Credit Opportunities](https://docs.google.com/doc
 
 ### Important credential conflict to resolve *before* architecture lock
 
-The instructor's rubric says **all API keys server-side, never frontend**. Supabase's publishable key is intentionally public and normally used with browser RLS, but **do not assume the professor distinguishes publishable from secret keys**. Ask her whether client-side Supabase publishable keys satisfy the rubric; if not, use a server-side catalog endpoint. It also complicates direct client-side Supabase WebSocket subscriptions. Don't call SSE/polling a WebSocket implementation. Never bundle a service-role or AI-secret key into the React app.
+The instructor's rubric says **all API keys server-side, never frontend**. Supabase's publishable key is intentionally public and normally used with browser RLS, but **do not assume the professor distinguishes publishable from secret keys**. The current M2 release uses a server-side catalog endpoint and keeps even the publishable database key out of the browser, so no client-key exception is assumed. It also complicates direct client-side Supabase WebSocket subscriptions. Don't call SSE/polling a WebSocket implementation. Never bundle a service-role or AI-secret key into the React app.
 
 **If classroom and deployment time are short:** finish M2, then secure + test + publish, then real-time updates; use maps and AI only if feasible and testable. Plan a justified advanced architecture refactor for the final phase only if the course rubric can be met without destabilizing the MVP.
 

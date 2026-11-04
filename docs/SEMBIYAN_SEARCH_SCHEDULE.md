@@ -1,5 +1,7 @@
 # Sembiyan availability search and personal Schedule
 
+> **M2 integration update:** `sharedSchedule.ts` now wraps the existing Schedule controller with asynchronous catalog resolution, and production Discover/Post/Schedule use the same port. The original local-snapshot implementation and handoff notes below are retained as history. See [current integration verification](M2_INTEGRATION_VERIFICATION.md).
+
 ## Behavior
 
 Use **Find events** to enter one calendar date and a same-day free-time window.

@@ -32,7 +32,7 @@
 - Final PR-head CI: [SideQuest React CI run](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions/runs/40988470385), head `58f8b29b01044b864d16a9b81b27444fa919e0cf`: 59 passing Vitest tests, production build, one passing Chromium browser smoke test.
 - Merge commit: [`6e461fd`](https://github.com/haiiroWednesday/SideQuest-CSCI187/commit/6e461fd15421f70591799d599d12075b553262d9).
 - **Team process caveat:** No teammate GitHub review had been submitted before the user explicitly authorized the merge. A successful build does not substitute for peer review or course reflection evidence.
-- **Professor access caveat:** The GitHub repository is private, and the check for GitHub user `jade-kandel` returned no confirmed collaborator permission. Verify her accepted repository access in GitHub repository Settings; an unaccepted invitation may not be reflected in this check.
+- **Professor access, verified November 4:** the correct GitHub account `jkandel-scu` has write access to the repository.
 
 ## Alignment with Professor Kandel's CSCI 187 lecture slides
 

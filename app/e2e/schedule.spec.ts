@@ -1,92 +1,140 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
-// Sembiyan: full-fit search -> plan -> separate chronological Schedule -> remove.
-test('availability and personal Schedule work across navigation and reload', async ({ page }) => {
+const ids = ['11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222']
+async function seed(page: Page) {
+  await page.clock.install({ time: new Date('2030-11-07T17:00:00Z') })
   await page.goto('/')
-  const dates = await page.evaluate(() => {
-    const date = new Date()
-    date.setDate(date.getDate() + 7)
-    const iso = (value: Date) => [value.getFullYear(), String(value.getMonth() + 1).padStart(2, '0'), String(value.getDate()).padStart(2, '0')].join('-')
-    const first = iso(date)
-    date.setDate(date.getDate() + 1)
-    return [first, iso(date)]
-  })
-  // Use the real posting form so this fails if Search still reads the M1 list.
-  const form = page.locator('.event-form')
-  const post = async (title: string, date: string, start: string, end: string) => {
-    await form.getByLabel('EVENT NAME', { exact: true }).fill(title)
-    await form.getByLabel('HOST NAME', { exact: true }).fill('SCU student club')
-    await form.getByLabel('DESCRIPTION', { exact: true }).fill('Open to all students.')
-    await form.getByLabel('LOCATION', { exact: true }).fill('Student Center')
-    await form.getByLabel('DATE', { exact: true }).fill(date)
-    await form.getByLabel('START', { exact: true }).fill(start)
-    await form.getByLabel('END', { exact: true }).fill(end)
-    await form.getByRole('button', { name: '+ Post event' }).click()
-    await expect(page.getByRole('status').filter({ hasText: `Posted “${title}”` })).toBeVisible()
-  }
-  await page.getByRole('link', { name: 'My Schedule', exact: true }).click()
-  await expect(page.getByRole('heading', { name: 'No events planned yet' })).toBeVisible()
-  await page.getByRole('navigation').getByRole('link', { name: 'Find events' }).click()
-  await post('Tomorrow concert', dates[1], '14:30', '15:30')
-  await post('Early workshop', dates[0], '14:30', '15:30')
-  await post('Choir overlap', dates[0], '15:00', '16:00')
-  await post('Starts at window end', dates[0], '16:00', '17:00')
-  await expect(page.getByRole('region', { name: /posted events/i }).getByText('Starts at window end')).toBeVisible()
-  await page.getByLabel('Free on date', { exact: true }).fill(dates[0])
-  await page.getByLabel('Free from', { exact: true }).fill('14:00')
-  await page.getByLabel('Free until', { exact: true }).fill('16:00')
-  await expect(page.getByRole('heading', { name: 'Starts at window end', exact: true })).not.toBeVisible()
-  // Posted events can be planned even when the current search excludes them.
-  await page.getByRole('button', { name: 'Plan to attend Tomorrow concert', exact: true }).click()
-  const results = page.locator('.results')
-  await results.getByRole('button', { name: 'Plan to attend Early workshop', exact: true }).click()
-  await results.getByRole('button', { name: 'Plan to attend Choir overlap', exact: true }).click()
-  await expect(page.getByText(/Schedule overlap:.*Choir overlap/)).toBeVisible()
-  await page.getByRole('link', { name: 'My Schedule', exact: true }).click()
-  const list = page.getByRole('list', { name: 'Planned events' })
-  await expect(list.getByRole('heading')).toHaveText(['Early workshop', 'Choir overlap', 'Tomorrow concert'])
-  await expect(page.getByRole('alert')).toHaveText("Some planned events overlap. Review their times if this wasn't intentional.")
-  await page.screenshot({ path: test.info().outputPath('schedule-desktop.png'), fullPage: true })
-  await page.reload()
-  await expect(list.getByRole('heading')).toHaveText(['Early workshop', 'Choir overlap', 'Tomorrow concert'])
-  await page.getByRole('button', { name: 'Remove Early workshop from plans', exact: true }).click()
-  await expect(list.getByRole('heading')).toHaveText(['Choir overlap', 'Tomorrow concert'])
-  await expect(page.getByText(/Some planned events overlap/)).not.toBeVisible()
-  await page.getByRole('link', { name: 'Find events', exact: true }).click()
-  await page.getByLabel('Free on date', { exact: true }).fill(dates[0])
-  await expect(results.getByRole('heading', { name: 'Early workshop', exact: true })).toBeVisible()
-  await expect(results.getByRole('button', { name: 'Plan to attend Early workshop', exact: true })).toBeEnabled()
-  const stored = await page.evaluate(() => ({
-    catalog: JSON.parse(localStorage.getItem('sidequest.local-catalog.v1')!),
-    plans: JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1')!),
-  }))
-  expect(stored.catalog).toHaveLength(4)
-  expect(stored.plans).toHaveLength(2)
-  expect(stored.plans.every((id: unknown) => typeof id === 'string')).toBe(true)
-})
-
-test('phone Schedule keeps overlaps, long names and unavailable events readable', async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 812 })
-  await page.goto('/')
-  await page.evaluate(() => {
-    const a = '00000000-0000-4000-8000-000000000001'
-    const b = '00000000-0000-4000-8000-000000000002'
-    const common = { host_name: 'SCU student club', description: 'Open to all.', event_date: '2020-11-01' }
+  await page.evaluate(ids => {
     const records = [
-      { ...common, id: a, title: 'Campus photography and creative storytelling workshop', location: 'Student Center', start_time: '14:30:00', end_time: '15:30:00' },
-      { ...common, id: b, title: 'Choir rehearsal', location: 'Music Hall', start_time: '15:00:00', end_time: '16:00:00' },
+      { id: ids[0], title: 'Campus photography and creative storytelling workshop', host_name: 'Art Club', description: 'Bring a camera.', location: 'Student Center', event_date: '2030-11-07', start_time: '14:30:00', end_time: '15:30:00' },
+      { id: ids[1], title: 'Choir rehearsal', host_name: 'Music Club', description: 'Sing together.', location: 'Music Hall', event_date: '2030-11-07', start_time: '15:00:00', end_time: '16:00:00' },
     ]
     localStorage.setItem('sidequest.local-catalog.v1', JSON.stringify(records))
-    localStorage.setItem('sidequest.planned-event-ids.v1', JSON.stringify([b, 'missing', a]))
-  })
-  await page.goto('/#schedule')
+    localStorage.setItem('sidequest.planned-event-ids.v1', JSON.stringify([ids[1], 'missing', ids[0]]))
+  }, ids)
   await page.reload()
-  await expect(page.getByRole('heading', { name: 'My Schedule' })).toBeVisible()
-  await expect(page.getByText(/Some planned events overlap/)).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Event unavailable' })).toBeVisible()
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+}
+
+test('phone Schedule preserves overlap warnings, missing IDs, and public events after removal', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await seed(page)
+  await page.goto('/#schedule')
+  await expect(page.getByText('2 plans have conflicts')).toBeVisible()
+  await expect(page.getByText('An event you planned')).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: test.info().outputPath('schedule-phone.png'), fullPage: true })
   await page.getByRole('button', { name: 'Remove unavailable event missing from plans' }).click()
-  await expect(page.getByRole('heading', { name: 'Event unavailable' })).not.toBeVisible()
-  await expect(page.getByText('2 planned', { exact: true })).toBeVisible()
+  await expect(page.getByText('An event you planned')).toHaveCount(0)
+  await page.reload()
+  await expect(page.getByText('2 plans have conflicts')).toBeVisible()
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sidequest.local-catalog.v1')!).length)).toBe(2)
+})
+
+test('phone details are hidden while closed, trap keyboard focus, and return focus on Escape', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await seed(page)
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.locator('.sq-sticker')).toBeHidden()
+  const trigger = page.getByRole('button', { name: 'View details for Choir rehearsal' })
+  await trigger.click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  const close = dialog.getByRole('button', { name: 'Close details' })
+  await expect(close).toBeFocused()
+  // The plan is already saved, so Close is the only enabled control.
+  await page.keyboard.press('Shift+Tab')
+  await expect(close).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(close).toBeFocused()
+  await page.screenshot({ path: test.info().outputPath('discover-phone-sheet.png'), fullPage: true })
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(trigger).toBeFocused()
+  await expect(page.locator('.sq-sticker')).toBeHidden()
+  expect(await page.evaluate(() => document.body.style.overflow)).toBe('')
+})
+
+test('an event ending while its sheet is open releases the modal and the page', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await seed(page)
+  await page.getByRole('button', { name: 'View details for Choir rehearsal' }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.clock.setSystemTime(new Date('2030-11-08T00:00:00Z')) // 4pm campus, both events ended
+  await page.clock.runFor(30_000)
+  await expect(page.getByText('No events to show yet.')).toBeVisible()
+  expect(await page.locator('[inert]').count()).toBe(0)
+  expect(await page.evaluate(() => document.body.style.overflow)).toBe('')
+})
+
+test('blocked storage does not crash startup', async ({ page }) => {
+  await page.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('blocked', 'SecurityError') } }))
+  await page.goto('/')
+  await expect(page.getByRole('heading', { name: 'More to do. Right here.' })).toBeVisible()
+  await expect(page.getByText('Events could not be loaded.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Recover valid plans' })).toBeVisible()
+})
+
+test('another tab refreshes the same device Schedule automatically', async ({ page, context }) => {
+  await seed(page)
+  await page.goto('/#schedule')
+  await expect(page.getByText('2 plans have conflicts')).toBeVisible()
+  const other = await context.newPage()
+  await other.goto('/')
+  await other.evaluate(() => localStorage.setItem('sidequest.planned-event-ids.v1', '[]'))
+  await expect(page.getByText('Nothing planned yet.')).toBeVisible()
+})
+
+test('a browser in Tokyo still uses the California date and time', async ({ browser }) => {
+  const context = await browser.newContext({ timezoneId: 'Asia/Tokyo' })
+  const page = await context.newPage()
+  await page.clock.install({ time: new Date('2030-11-08T04:00:00Z') }) // Nov 8 in Tokyo, Nov 7 California
+  await page.goto('/#post')
+  await expect(page.getByLabel('DATE', { exact: true })).toHaveValue('2030-11-07')
+  await expect(page.getByLabel('START', { exact: true })).toHaveValue('20:30')
+  await context.close()
+})
+
+
+test('corrupt plans remain untouched until recovery is confirmed', async ({ page }) => {
+  await seed(page)
+  await page.evaluate(id => localStorage.setItem('sidequest.planned-event-ids.v1', JSON.stringify([id, 7, id])), ids[0])
+  await page.goto('/#schedule')
+  await page.reload()
+  await expect(page.getByText('Your saved plans could not be read.')).toBeVisible()
+  page.once('dialog', dialog => dialog.dismiss())
+  await page.getByRole('button', { name: 'Recover valid plans' }).click()
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1')!))).toEqual([ids[0], 7, ids[0]])
+  page.once('dialog', dialog => dialog.accept())
+  await page.getByRole('button', { name: 'Recover valid plans' }).click()
+  await expect(page.getByText('Valid plans recovered.')).toBeVisible()
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1')!))).toEqual([ids[0]])
+})
+
+test('scenario lab uses the same campus clock and Schedule conflict rules', async ({ browser }) => {
+  const context = await browser.newContext({ timezoneId: 'Asia/Tokyo' })
+  const page = await context.newPage()
+  await page.clock.install({ time: new Date('2030-11-07T17:00:00Z') })
+  await page.goto('/scenario-lab.html?frame=1&s=busy&t=100&k=schedule')
+  await expect(page.getByRole('complementary')).toContainText('Happening now · until 3:30pm')
+  await expect(page.getByText('2 plans have conflicts')).toBeVisible()
+  await context.close()
+})
+
+test('phone keyboard focus stays in the sheet when planning disables the focused button', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await seed(page)
+  await page.evaluate(() => localStorage.setItem('sidequest.planned-event-ids.v1', '[]'))
+  await page.reload()
+  await page.getByRole('button', { name: 'View details for Choir rehearsal' }).click()
+  const dialog = page.getByRole('dialog')
+  const close = dialog.getByRole('button', { name: 'Close details' })
+  const plan = dialog.getByRole('button', { name: '+ Plan to attend' })
+  await expect(close).toBeFocused()
+  await page.keyboard.press('Shift+Tab')
+  await expect(plan).toBeFocused()
+  await page.keyboard.press('Enter')
+  await expect(dialog.getByRole('button', { name: 'In My Schedule' })).toBeDisabled()
+  await expect(close).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(close).toBeFocused()
 })

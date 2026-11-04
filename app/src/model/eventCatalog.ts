@@ -9,7 +9,7 @@
 // no hostName, keeps description optional, and backs the browser-only
 // `sidequest.created-events.v1` list. The posting PR migrates the form and
 // tests to this contract; until then both types exist side by side.
-import { isValidDate, toMinutes } from './events'
+import { isValidDate, toMinutes } from './events.ts'
 
 export type CampusEvent = {
   id: string
@@ -106,6 +106,16 @@ export function catalogDraftErrors(draft: EventDraft): CatalogFieldErrors {
     errors[start === null ? 'start' : 'end'] = 'The event must end later than it starts, on the same day.'
   }
   return errors
+}
+
+export const postingDraftErrors = catalogPostingErrors
+
+export function isCatalogEvent(value: unknown): value is CampusEvent {
+  if (!value || typeof value !== 'object') return false
+  const event = value as Partial<CampusEvent>
+  if (typeof event.id !== 'string' || !event.id.trim()) return false
+  for (const field of DRAFT_FIELD_ORDER) if (typeof event[field] !== 'string') return false
+  return firstFieldError(catalogDraftErrors(event as EventDraft)) === null
 }
 
 // The first error in form order, or null when there is none.
@@ -243,7 +253,7 @@ export function createEventCatalog(table: EventTable, clock: () => Date = () => 
       if (result.error !== null) throw new EventCatalogError('invalid', result.error)
       let row: EventRow
       try { row = await table.insert(toEventRow(result.draft)) }
-      catch (cause) { throw unavailable('post this event', cause) }
+      catch (cause) { throw new EventCatalogError('unavailable', 'Could not confirm this post. Check Discover before trying again.', { cause }) }
       return fromEventRow(row)
     },
 

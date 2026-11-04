@@ -42,15 +42,17 @@
 - View components should communicate with Controllers rather than access domain Models or SQL/database storage directly.
 - The Model should enforce reusable validity rules, including posting-time restrictions, even for callers that bypass the UI.
 - All core features need meaningful normal, invalid, boundary and failure tests; CI should build the React app and run unit and browser checks.
-- The app should never expose secret/service-role credentials in client code or Git.
+- All database API keys stay on the Node server. Browser code and requests must contain no database credentials, including publishable keys. No real keys may be committed to Git.
 
 ## Scope and storage decisions
 - **M2 includes:** anonymous event posting/browsing, one shared EventCatalog backend when configured, full-fit time matching, and a device-local ID-based Schedule.
 - **M2 excludes for now:** accounts and verified identities, partial attendance, travel-time feasibility, weather, cost/registration enforcement, saved availability, group scheduling, calendar import, public edit/delete and AI recommendations.
 - **Event times:** same-day Santa Clara campus wall time; overnight events are deferred.
-- **Shared storage:** the repository includes a Supabase adapter, SQL schema and browser fallback; a successful local build does not establish that a live Supabase instance has been configured or independently verified.
+- **Shared storage:** the repository includes a Supabase adapter, SQL schema and browser fallback; the browser uses a same-origin Node API. A successful local build does not establish that the live Supabase instance is configured or independently verified.
 - **Provisional choice:** maximum 100 saved local plans, subject to explicit team confirmation.
 - **Safety boundary:** anonymous public insertion is a class-prototype choice and needs deployment/security review, including the instructor's server-side API-key rules where applicable.
 
 ## Required M2 evidence
 Professor Kandel's [M2 Part 1 assignment](https://docs.google.com/document/d/1_LlAb9mtASfutgVjKdjjt7Esh7g0ab6J4FmCzREJDEU/edit) requires this file, [SPECIFICATIONS.md](SPECIFICATIONS.md), code, tests, updated CRC and ER diagrams, and a README describing the **MVP rather than M1**. See [the full-course compliance audit](docs/COURSE_LECTURES_01_TO_16_COMPLIANCE_AUDIT.md) and [MVP build playbook](docs/MVP_TEAM_PLAYBOOK.md). The team reports that the professor reviewed and accepted narrowing the earlier P3 goals; this file records that reported decision without claiming independent documentary proof of the approval.
+
+**Current diagrams:** [M2 responsibilities and actual storage](docs/M2_IMPLEMENTATION_DIAGRAMS.md), with an editable [draw.io file](docs/diagrams/M2_IMPLEMENTATION.drawio). The approved P4 remains unchanged.

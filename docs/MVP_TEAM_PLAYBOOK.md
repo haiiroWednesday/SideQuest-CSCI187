@@ -1,5 +1,7 @@
 # SideQuest MVP — the team's build playbook
 
+> **Implementation status update:** the proposed integration now connects the merged catalog/posting/Schedule code and Cynthia’s supplied view patch in production `App.tsx`. Contract and coursework sections below remain authoritative; older “not implemented yet” descriptions are historical. See [integration verification](M2_INTEGRATION_VERIFICATION.md) for tested behavior and remaining checks. P4 has been approved by the professor and is resolved.
+
 **Updated 28 October 2026 · CSCI 187 · M2 implementation guide + separately identified P5 coursework ER**  
 **Repository:** [`haiiroWednesday/SideQuest-CSCI187`](https://github.com/haiiroWednesday/SideQuest-CSCI187) · **Branch:** `master`  
 **Status:** Team-confirmed small MVP scope, checked against both pages of the original P4 draw.io diagram. Technical interfaces and the proposed daily schedule remain implementation suggestions, not additional course requirements.
@@ -51,7 +53,7 @@ Your team's [P4 architecture Google Doc](https://docs.google.com/document/d/11MK
 
 The [original P3 requirements](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit) were broader, but the team chose the smaller P4 implementation. Professor Kandel suggested create → find → save/revisit as a useful end-to-end path and marked that suggestion optional. Our personal Schedule supplies that simple list of plans. The current P5 coursework drawing contains USER and saved AVAILABILITY_WINDOW concepts, but those records are **not authorized as current M2 code features** unless the team explicitly expands scope.
 
-**P4 diagram status, corrected November 4:** The original P4 instructor comment suggested composition for EventCatalog → Event, but the team subsequently reported that Professor Kandel confirmed its existing P4 diagram is acceptable. That later confirmation is recorded in the [PR #13 review discussion](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/13). Treat the earlier filled-diamond advice as superseded; do not change the approved diagram based on this older note.
+**P4 status:** Professor Kandel confirmed the existing P4 diagram is correct. It is approved and resolved; no notation or lifecycle changes are pending.
 
 ### The settled MVP rules — do not reopen these inside coding prompts
 
@@ -115,7 +117,7 @@ classDiagram
 - **Event:** provides event data, duration calculation, full-fit comparison and valid end-after-start time rules.
 - **Schedule:** retrieves selected Event by ID from EventCatalog; adds it once; removes only its local reference; shows planned events in time order; uses current Event details without copying them.
 
-**P4 relationship notes:** The drawing uses a hollow aggregation diamond for `EventCatalog`→`Event` and for `Schedule`→`Event`, plus a dashed `Schedule`→`EventCatalog` lookup dependency. Professor Kandel specifically suggested **composition** for the catalog-to-event relationship because posts live in the catalog. That is an open **UML notation/lifecycle feedback item**, not a reason to add accounts, erase plans, or create another feature.
+**P4 status:** Professor Kandel confirmed the existing P4 diagram is correct. It is approved and resolved; no notation or lifecycle changes are pending.
 
 ### Implementation storage: simple, not a new account system
 
@@ -376,14 +378,14 @@ create policy "Anyone may submit a valid event"
 
 Review column permissions and policies with `supabase test db` as described in Supabase's [RLS documentation](https://supabase.com/docs/guides/database/postgres/row-level-security). The database generates `id` and `created_at`. No anonymous UPDATE/DELETE permission is granted. Database `date`/`time` map to the agreed TypeScript strings at the adapter boundary; don't let every feature write independent field translations.
 
-**Important course extra-credit conflict (verify with the professor before deployment):** the [final-project bonus document](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit?usp=sharing) states that **all API keys must stay on the server, never in front-end code or on GitHub**, and exposed keys forfeit extra credit. Supabase normally expects an intended-public publishable client key to be bundled in the frontend and protected by RLS. These two rules need explicit instructor clarification; do **not** assume the Supabase publishable-key exception satisfies her grading condition. If the requirement is literal, use a server-side adapter/proxy for public database operations instead. Never expose service-role, secret, third-party, or AI keys. This affects the choice of catalog adapter, not the Event/Console domain contract.
+**Course key-handling requirement:** The current release uses a same-origin Node API. All database keys, including the publishable key, stay on that server and out of browser output and Git. The client receives only a connection flag. This implements the literal server-side rule in the final-project rubric; no publishable-key exception is assumed.
 
 **Security caveat:** because inserts are anonymous, someone who knows the public endpoint can post fake host names or flood the catalog. SQL constraints and RLS restrict operations and malformed field values, but do not prevent abuse. This is only acceptable for a **limited classroom prototype with monitored access**, not a broad public rollout. Before public deployment, require a separate protected and rate-limited write path (for example a small serverless/Edge Function with abuse checks). Never put a Supabase secret/service-role key into Vite code or a browser. A **publishable** key is intended to be public, subject to RLS.
 
 ### Connecting React to the catalog
 
 1. Daven creates the team Supabase project and applies one reviewed SQL migration. The dashboard permissions are for team developers only; **students using SideQuest still do not log in**.
-2. In `app/`, install `@supabase/supabase-js`. Create `app/.env.local` with `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. Keep `.env.local` out of Git; document variable **names**, not project secrets, in `.env.example`.
+2. In `app/`, use the installed server-side Supabase adapter. Configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in the Node server environment or development `app/.env.local`. The browser uses the same-origin API and receives no key. Keep `.env.local` out of Git; document variable **names**, not project secrets, in `.env.example`.
 3. Implement **one** `EventCatalogPort` adapter that maps between camelCase (`hostName,date,start,end`) and SQL column names (`host_name,event_date,start_time,end_time`). For tests, provide a fake adapter implementing the identical interface; that fake is not public storage.
 4. Devonny uses only the catalog port for browsing and details. Cynthia builds visual components from the agreed `CampusEvent` type. Sembiyan reuses the current full-fit logic with catalog results and stores planned Event IDs in `localStorage`.
 5. Replace the M1 *created events* list deliberately rather than calling it My Schedule. Do not auto-upload old local test events into the public catalog.
@@ -532,7 +534,7 @@ This is a foundational workstream. M1 create/validate logic already exists. Buil
 1. Start from the selected same-day `CampusEvent` type (`id`, `title`, `hostName`, `description`, `location`, `date`, `start`, `end`) and shared catalog interface in the [implementation contract](#implementation-contract--database-and-supabase-setup). No login, cost, USER table, or alternate timestamp type.
 2. Keep existing `createEvent` validation behavior or reuse its rules behind the new posting controller. Don't overwrite tested logic without replacement tests.
 3. Build `listUpcoming`, `getById`, and `create` against a fake in-memory adapter **first**. Include unique IDs and persistent ordering.
-4. Configure Supabase Postgres and version the table schema/privileges/RLS policy in a SQL migration; integrate it with the `@supabase/supabase-js` adapter. The **publishable** key is intended for client-side use; NEVER put a secret/service-role key in React or GitHub. For classroom anonymous inserts, enforce data constraints and SELECT/INSERT-only role permissions, and document the spam risk. For wider public access, add a server-side rate-limited write endpoint.
+4. Configure Supabase Postgres and apply the reviewed schema/grants/RLS through the team database process. The Node API alone uses the Supabase adapter and server-only key. Browser requests use the same-origin HTTP port. The API restricts draft fields, body size, browser origins and submission rate; the database still grants anonymous SELECT and bounded INSERT only.
 5. Connect the creation form to the agreed controller/port; return clear field-level errors and a success message containing the created event ID or stable reference.
 6. Verify a new event can be retrieved in a **second browser/session**. Restart the service if persistence is promised and verify again.
 7. Write model/controller/API tests: empty title/host name, invalid date, `end <= start`, duplicate IDs, hostName surviving create/read, server failure.
@@ -771,7 +773,7 @@ gantt
 5. **60 seconds — plans:** Add the event to My Schedule, refresh, remove it, then prove the original event is still discoverable.
 6. **40 seconds — quality:** Show GitHub CI, tests, one mobile screenshot, and honestly describe what's postponed.
 
-**Before calling MVP complete:** confirm P5 submission and public-commenter sharing, resolve the professor's literal 'each model class' P5 instruction against the current course drawing, discuss catalog composition feedback, preserve the distinction between the broader P5 ER and the small M2 code contract, implement a shared event catalog and browser-local Schedule, assign reviewers, secure credentials, and test the cross-browser journey on `master`.
+**Before calling MVP complete:** confirm P5 submission and public-commenter sharing, use the current M2 implementation diagrams, preserve the distinction between the broader P5 ER and the small M2 code contract, implement a shared event catalog and browser-local Schedule, assign reviewers, secure credentials, and test the cross-browser journey on `master`.
 
 ### Documented source links and ownership
 
@@ -1267,3 +1269,7 @@ Wait for the **green check** and save the second run link. Your team can review 
 
 **A good test doesn't have to be long or hand-typed; it has to exercise the real function and assert the rule you decided to check.**
 
+
+## Current M2 release mapping
+
+Use the [M2 implementation diagrams](M2_IMPLEMENTATION_DIAGRAMS.md), [current requirements](../REQUIREMENTS.md), [current specifications](../SPECIFICATIONS.md) and [app run guide](../app/README.md). Older implementation suggestions above are historical. All database API keys now stay on the Node server; the client uses the same-origin HTTP port. The accepted P4 is approved and resolved.

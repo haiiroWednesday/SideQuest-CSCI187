@@ -55,7 +55,9 @@
 3. Implement one focused feature change, with real assertions and meaningful negative/edge tests.
 4. Inside `app/`, run `npm test` and `npm run build`. Report actual output, not an assumed pass.
 5. Review `git diff`; ask before commits, pushes, PR creation, database migrations, deployment, secret access, destructive commands, or merges.
-6. Keep secrets off GitHub and out of browser bundles. Supabase publishable key is public only with correctly configured grants/RLS; never expose service-role or secret keys.
+6. Keep secrets off GitHub and out of browser bundles. All Supabase keys, including publishable keys, stay on the Node server. Browser code calls the same-origin HTTP port; never expose database credentials in front-end code or Git.
 7. Use the smallest working change; preserve M1 behavior and tests unless the team intentionally replaces them.
 
 **Default:** If a prompt conflicts with the agreed implementation contract or another teammate's file ownership, stop and explain the conflict. Do not invent features.
+
+**P4 is professor-approved and resolved.** Keep the accepted diagram unchanged. Current M2 implementation diagrams are in `docs/diagrams/M2_IMPLEMENTATION.drawio`; they supplement the accepted P4 without changing it.

@@ -15,7 +15,7 @@
 - `app/src/controller/postEvent.ts`: mediates posting, handles results, errors, and the choice between configured shared catalog and explicitly labeled local fallback.
 - `app/src/model/eventCatalog.ts`: canonical event contract, field checks, campus-time posting restriction, conversions, sorting, lookup and `EventCatalogPort`. **Model-level validation must reject historical new posts even when called without the form.**
 - `app/src/model/supabaseEventTable.ts`: remote storage adapter, never imported by Views; `app/src/model/browserEventTable.ts`: browser-only fallback. `app/src/model/inMemoryEventTable.ts` is a test fixture.
-- `app/src/main.tsx`: chooses the catalog using `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`; the app must visibly distinguish shared from browser-only storage.
+- `app/src/main.tsx`: obtains only the connection flag from `/api/catalog`. `server/api.ts` mediates same-origin catalog requests; only the Node server loads `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`.
 
 **Validation boundaries:** title <=120; hostName <=120; required description <=2000; location <=200; nonempty trimmed fields, valid date, strictly increasing times. The local legacy M1 event list has a separate historical contract and limits.
 
@@ -29,7 +29,7 @@ getById(id: string): Promise<CampusEvent | null>
 
 `listUpcoming` returns non-ended events ordered by date/start/id. `getById` supports older stored events outside upcoming search, so local plans remain meaningful. Rejected promises represent network/storage failures; a successful `null` lookup means missing record. This distinction must be preserved by every consumer.
 
-`app/src/view/useCatalogEvents.ts` loads one current catalog snapshot for posted-event lists and searching, safely ignores obsolete responses, and exposes a refresh action. The **Campus Index** `DiscoverView` on the separate design branch has not been integrated into the canonical application as of this document's source-review baseline. Do not label test fixtures or browser fallback as a live campus-wide feed.
+`app/src/view/useEventCatalog.ts` loads the current catalog snapshot, ignores obsolete responses and exposes refresh. `controller/presentScreens.ts` prepares Discover/Schedule text and flags from Model rules. The supplied Discover and Schedule views are integrated into the production app. Do not label test fixtures or browser fallback as a live campus-wide feed.
 
 ## S3 — Full-fit availability search (R3)
 `App.tsx` asks `findEvents` in `controller/findEvents.ts` to search upcoming catalog events. The reusable full-fit rule in `model/events.ts` accepts exactly:
@@ -42,14 +42,14 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 
 ## S4 — Personal Schedule (R4)
 - `model/schedule.ts`: `sidequest.planned-event-ids.v1` stores **only IDs** in the current browser. Model checks IDs, sorts resolved event details, calculates overlaps and enforces the provisional 100-plan limit.
-- `controller/personalSchedule.ts`: mediates read/add/remove/recovery, resolves saved IDs using `getById()`, separates missing from failed requests and refuses unsafe overwrites.
-- `view/PersonalSchedule.tsx`: renders plans, conflicts, error/loading/retry states and remove controls. Removal edits only locally stored planned IDs, never the catalog.
+- `controller/personalSchedule.ts` preserves synchronous local plan writes. `controller/sharedSchedule.ts` coordinates `getById()` reads, distinguishes missing/failed/timed-out details, and rejects obsolete results without changing saved IDs.
+- `view/ScheduleTrailView.tsx` renders controller-prepared plans, conflicts, error/loading/retry states and remove controls. Removal edits only locally stored planned IDs, never the catalog.
 - Public M2 event details must pass the M2 field limits (including a 2,000-character description) even though older M1 records used a 500-character limit. Legacy records remain readable where applicable.
 - Consecutive events with end == next start do not overlap; real overlaps warn without blocking the user.
 
 ## S5 — Persistence, permissions, and failures (R1–R5)
 - Proposed SQL migration: `supabase/migrations/20261103000000_create_events.sql` creates one `public.events` table with `id` UUID PK, `title`, `host_name`, `description`, `location`, `event_date`, `start_time`, `end_time`, `created_at`. It enables row-level security and grants anonymous SELECT and bounded INSERT, **not UPDATE/DELETE**.
-- Only a **publishable** Supabase key may appear in browser settings. No secret/service-role keys, Anthropic API keys, or other private credentials are permitted in client code or Git history.
+- All Supabase keys, including the publishable key, remain server-side. `model/httpEventCatalog.ts` uses same-origin requests with no database credentials. `server/api.ts` calls the Model adapter; the browser bundle is scanned for credential markers during build. No real keys belong in Git.
 - The existence of a migration file is not proof of deployment. Verify real permissions and two-browser reads/writes in a configured Supabase project before claiming the public catalog works in production.
 - Local storage failures show honest feedback; no success claim after a failed write. Corrupt saved data is not silently replaced. A previously saved plan ID survives a remote lookup error.
 - Real public deployment needs a review of anonymous-write abuse and the instructor's applicable key handling/extra-credit criteria.
@@ -72,3 +72,11 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 3. Boundary/negative cases: already-past posts, valid long descriptions 500/501/2000/2001, invalid times and dates, duplicate plans, 100/101 plan limit, overlapping and back-to-back events, unknown plan IDs, network timeouts and denied/corrupted storage.
 4. Architecture review: Views import only Controller APIs for domain operations; Models never import React or Views; database operations stay in Models.
 5. Verify code, current CRC/ER, README and tests against [Professor Kandel's M2 Part 1 instructions](https://docs.google.com/document/d/1_LlAb9mtASfutgVjKdjjt7Esh7g0ab6J4FmCzREJDEU/edit), not just a green test count. See [lecture 01–16 audit](docs/COURSE_LECTURES_01_TO_16_COMPLIANCE_AUDIT.md).
+
+## Current implementation diagrams and Node API
+
+[Editable current M2 CRC/storage diagrams](docs/diagrams/M2_IMPLEMENTATION.drawio) and [their explanation](docs/M2_IMPLEMENTATION_DIAGRAMS.md) map Event, EventCatalog and Schedule responsibilities to the actual modules. The SQL ER contains only `public.events`; browser-local plan IDs are explicitly outside SQL. There is no USER or saved availability table. P4 is approved and unchanged.
+
+The production Node server serves the built UI and API. GET `/api/catalog` returns only the shared-storage flag; GET `/api/events` lists upcoming records or looks up `?id=...`; POST `/api/events` accepts only the seven EventDraft fields. Public PUT/PATCH/DELETE are rejected. Read deadlines are 10 seconds. The server's upstream fetch aborts at 15 seconds. An uncertain insert is not automatically retried; users are told to check Discover before another submission.
+
+Request bodies are limited to 16 KiB, browser cross-origin writes are rejected, and a per-process 20/minute/IP posting guard applies. The hosting edge should supply durable rate limiting before a real public deployment. This does not add authentication or verified organizer identity.
