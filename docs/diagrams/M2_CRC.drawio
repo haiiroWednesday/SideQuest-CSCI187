@@ -1,41 +1,196 @@
-<mxfile host="app.diagrams.net">
-  <diagram name="Current M2 responsibilities">
-    <mxGraphModel grid="1" page="1" pageWidth="1600" pageHeight="950">
+<?xml version='1.0' encoding='UTF-8'?>
+<mxfile host="app.diagrams.net" pages="2">
+  <diagram name="M2 CRC - Current MVP" id="m2-crc-current">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="1123" pageHeight="794" math="0" shadow="0">
       <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-        <mxCell id="views" parent="1" vertex="1" value="&lt;b&gt;Views: Discover | Post an event | My Schedule&lt;/b&gt;&lt;br&gt;&lt;br&gt;Render prepared output, collect input and manage keyboard focus. No direct persistence or Model imports." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#edf2f7;strokeColor=#38516c;fontSize=20;align=left;spacing=20;verticalAlign=top;">
-          <mxGeometry as="geometry" x="60" y="125" width="1480" height="100" />
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" parent="1" style="text;html=1;align=left;fontFamily=Georgia;fontSize=26;fontColor=#202E40;" value="&lt;b&gt;SideQuest&lt;/b&gt; | M2 CRC: responsibilities &amp;amp; relationships" vertex="1">
+          <mxGeometry height="37.795275591" width="1046.9291338707" x="37.795275591" y="37.795275591" as="geometry"/>
         </mxCell>
-        <mxCell id="controllers" parent="1" vertex="1" value="&lt;b&gt;Controllers: postEvent | findEvents | sharedSchedule | presentScreens&lt;/b&gt;&lt;br&gt;&lt;br&gt;Coordinate commands and asynchronous reads; prepare presentation text and states.&lt;br&gt;HTTP Controller: server/api.ts mediates shared catalog requests; local plans remain on the current device." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2da;strokeColor=#38516c;fontSize=20;align=left;spacing=20;verticalAlign=top;">
-          <mxGeometry as="geometry" x="60" y="290" width="1480" height="130" />
+        <mxCell id="subtitle" parent="1" style="text;html=1;align=left;fontFamily=Georgia;fontSize=14;fontColor=#202E40;" value="&lt;b&gt;Post → discover → full-fit search → plan → revisit.&lt;/b&gt; Current integrated MVP (November 2026)." vertex="1">
+          <mxGeometry height="20" width="1046.9291338707" x="37.795275591" y="79.3700787411" as="geometry"/>
         </mxCell>
-        <mxCell id="event" parent="1" vertex="1" value="&lt;b&gt;Event&lt;/b&gt;&lt;br&gt;&lt;br&gt;Knows: ID, title, host, description,&lt;br&gt;location, campus date/start/end.&lt;br&gt;Does: validate fields and posting time;&lt;br&gt;full-fit and interval/clock rules.&lt;br&gt;Collaborators: EventCatalog, Schedule." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#edf4ec;strokeColor=#38516c;fontSize=20;align=left;spacing=20;verticalAlign=top;">
-          <mxGeometry as="geometry" x="60" y="510" width="450" height="300" />
+        <mxCell id="page-two-pointer" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Georgia;fontSize=14;fontColor=#254F88;fillColor=#FFF0B3;spacingLeft=6;" value="&lt;b&gt;Page 2: relationship rationale.&lt;/b&gt; Same P4 notation; M2 responsibilities updated to match the code." vertex="1">
+          <mxGeometry height="21" width="1046.9291338707" x="37.795275591" y="102" as="geometry"/>
         </mxCell>
-        <mxCell id="catalog" parent="1" vertex="1" value="&lt;b&gt;EventCatalog&lt;/b&gt;&lt;br&gt;&lt;br&gt;Knows: public Event records.&lt;br&gt;Does: create, listUpcoming, getById;&lt;br&gt;validate and map store data.&lt;br&gt;Collaborators: Event and table adapter.&lt;br&gt;HTTP client / server-side Supabase." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#edf4ec;strokeColor=#38516c;fontSize=20;align=left;spacing=20;verticalAlign=top;">
-          <mxGeometry as="geometry" x="575" y="510" width="450" height="300" />
+        <mxCell id="catalog" parent="1" style="swimlane;html=1;startSize=42;horizontal=1;childLayout=stackLayout;horizontalStack=0;resizeParent=0;resizeLast=0;collapsible=0;fontFamily=Georgia;fontSize=20;fontStyle=1;align=left;spacingLeft=12;fillColor=#8B4B10;fontColor=#FFFFFF;strokeColor=#8B4B10;strokeWidth=1.4;" value="EventCatalog" vertex="1">
+          <mxGeometry height="211.6535433096" width="355.2755905554" x="37.795275591" y="128.5039370094" as="geometry"/>
         </mxCell>
-        <mxCell id="schedule" parent="1" vertex="1" value="&lt;b&gt;Schedule&lt;/b&gt;&lt;br&gt;&lt;br&gt;Knows: current-device Event IDs.&lt;br&gt;Does: add/remove/recover plans;&lt;br&gt;capacity, chronology and overlaps.&lt;br&gt;Collaborators: Event, EventCatalog.&lt;br&gt;Removing a plan keeps the Event." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#edf4ec;strokeColor=#38516c;fontSize=20;align=left;spacing=20;verticalAlign=top;">
-          <mxGeometry as="geometry" x="1090" y="510" width="450" height="300" />
+        <mxCell id="catalog-r0" parent="catalog" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="&lt;b&gt;Knows:&lt;/b&gt; Public Event records by UUID." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="42.33070866192" as="geometry"/>
         </mxCell>
-        <mxCell id="e0" parent="1" edge="1" source="views" target="controllers" value="" style="endArrow=open;html=1;strokeWidth=2;">
-          <mxGeometry as="geometry" relative="1" />
+        <mxCell id="catalog-r1" parent="catalog" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="&lt;b&gt;Does:&lt;/b&gt; Validate and create Event records." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="70.525984252806" as="geometry"/>
         </mxCell>
-        <mxCell id="e1" parent="1" edge="1" source="controllers" target="event" value="" style="endArrow=open;html=1;strokeWidth=2;">
-          <mxGeometry as="geometry" relative="1" />
+        <mxCell id="catalog-r2" parent="catalog" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="List upcoming Events in date/time order." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="98.72125984369198" as="geometry"/>
         </mxCell>
-        <mxCell id="e2" parent="1" edge="1" source="controllers" target="catalog" value="" style="endArrow=open;html=1;strokeWidth=2;">
-          <mxGeometry as="geometry" relative="1" />
+        <mxCell id="catalog-r3" parent="catalog" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="Retrieve any Event by stable ID." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="126.916535434578" as="geometry"/>
         </mxCell>
-        <mxCell id="e3" parent="1" edge="1" source="controllers" target="schedule" value="" style="endArrow=open;html=1;strokeWidth=2;">
-          <mxGeometry as="geometry" relative="1" />
+        <mxCell id="catalog-r4" parent="catalog" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="Use EventTable; report storage failures." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="155.111811025464" as="geometry"/>
         </mxCell>
-        <mxCell id="e4" parent="1" edge="1" source="catalog" target="event" value="" style="endArrow=open;html=1;strokeWidth=2;">
-          <mxGeometry as="geometry" relative="1" />
+        <mxCell id="catalog-r5" parent="catalog" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="Keep posts in the shared catalog." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="183.30708661635" as="geometry"/>
         </mxCell>
-        <mxCell id="e5" parent="1" edge="1" source="schedule" target="catalog" value="" style="endArrow=open;html=1;strokeWidth=2;dashed=1;">
-          <mxGeometry as="geometry" relative="1" />
+        <mxCell id="event" parent="1" style="swimlane;html=1;startSize=42;horizontal=1;childLayout=stackLayout;horizontalStack=0;resizeParent=0;resizeLast=0;collapsible=0;fontFamily=Georgia;fontSize=20;fontStyle=1;align=left;spacingLeft=12;fillColor=#254F88;fontColor=#FFFFFF;strokeColor=#254F88;strokeWidth=1.4;" value="Event" vertex="1">
+          <mxGeometry height="211.6535433096" width="355.2755905554" x="729.4488189063" y="302.362204728" as="geometry"/>
+        </mxCell>
+        <mxCell id="event-r0" parent="event" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="&lt;b&gt;Knows:&lt;/b&gt; ID, title, host, description," vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="42" as="geometry"/>
+        </mxCell>
+        <mxCell id="event-r1" parent="event" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="location, date, start/end (CA time)." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="70.195275590886" as="geometry"/>
+        </mxCell>
+        <mxCell id="nbYbbl87hOnFE1enV0Nx-1" edge="1" parent="event" source="event-r2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370.55118109370005" y="105.637795272" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="event-r2" parent="event" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="&lt;b&gt;Does:&lt;/b&gt; Check required fields and limits." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="98.390551181772" as="geometry"/>
+        </mxCell>
+        <mxCell id="event-r3" parent="event" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="Reject past posts and invalid intervals." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="126.585826772658" as="geometry"/>
+        </mxCell>
+        <mxCell id="event-r4" parent="event" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="Match entire Event within free time." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="154.781102363544" as="geometry"/>
+        </mxCell>
+        <mxCell id="event-r5" parent="event" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="Require same-day start before end." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="182.97637795443" as="geometry"/>
+        </mxCell>
+        <mxCell id="schedule" parent="1" style="swimlane;html=1;startSize=42;horizontal=1;childLayout=stackLayout;horizontalStack=0;resizeParent=0;resizeLast=0;collapsible=0;fontFamily=Georgia;fontSize=20;fontStyle=1;align=left;spacingLeft=12;fillColor=#116B59;fontColor=#FFFFFF;strokeColor=#116B59;strokeWidth=1.4;" value="Schedule" vertex="1">
+          <mxGeometry height="211.6535433096" width="355.2755905554" x="37.795275591" y="461.1023622102" as="geometry"/>
+        </mxCell>
+        <mxCell id="schedule-r0" parent="schedule" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="&lt;b&gt;Knows:&lt;/b&gt; Unique Event IDs in this browser." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="42.33070866192" as="geometry"/>
+        </mxCell>
+        <mxCell id="schedule-r1" parent="schedule" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="&lt;b&gt;Does:&lt;/b&gt; Resolve saved IDs via catalog." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="70.525984252806" as="geometry"/>
+        </mxCell>
+        <mxCell id="schedule-r2" parent="schedule" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="Add plans once (limit 100, provisional)." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="98.72125984369198" as="geometry"/>
+        </mxCell>
+        <mxCell id="schedule-r3" parent="schedule" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="Remove local plan, not public Event." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="126.916535434578" as="geometry"/>
+        </mxCell>
+        <mxCell id="schedule-r4" parent="schedule" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="Sort resolved plans; warn on overlaps." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="155.111811025464" as="geometry"/>
+        </mxCell>
+        <mxCell id="schedule-r5" parent="schedule" style="text;html=1;align=left;verticalAlign=middle;spacingLeft=12;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;strokeColor=none;fontColor=#202E40;" value="Retain IDs on failed remote lookups." vertex="1">
+          <mxGeometry height="28.195275590886" width="355.2755905554" y="183.30708661635" as="geometry"/>
+        </mxCell>
+        <mxCell id="A" edge="1" parent="1" source="catalog" style="html=1;startArrow=diamondThin;startFill=0;startSize=16;endArrow=none;strokeWidth=1.6;strokeColor=#202E40;exitX=1;exitY=.42857;entryX=0;entryY=.21429;" target="event">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="B" edge="1" parent="1" source="schedule" style="html=1;rounded=0;endArrow=open;endFill=0;endSize=10;strokeWidth=1.6;strokeColor=#202E40;dashed=1;strokeColor=#116B59;exitX=.5;exitY=0;entryX=.5;entryY=1;" target="catalog">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="C" edge="1" parent="1" source="schedule" style="html=1;startArrow=diamondThin;startFill=0;startSize=16;endArrow=none;strokeWidth=1.6;strokeColor=#202E40;exitX=1;exitY=.48214;entryX=0;entryY=.78571;" target="event">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="la" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;fontColor=#202E40;rotation=0;" value="&lt;b&gt;A / public Event collection&lt;/b&gt;&lt;br&gt;One catalog lists many Events." vertex="1">
+          <mxGeometry height="70" width="310" x="408" y="245" as="geometry"/>
+        </mxCell>
+        <mxCell id="lb" parent="1" style="text;html=1;align=center;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;rotation=0;fontColor=#202E40;" value="&lt;b&gt;B / catalog lookup&lt;/b&gt;&lt;br&gt;Schedule resolves planned IDs." vertex="1">
+          <mxGeometry height="58" width="298" x="411" y="367" as="geometry"/>
+        </mxCell>
+        <mxCell id="lc" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;fontColor=#202E40;rotation=0;" value="&lt;b&gt;C / local attendance references&lt;/b&gt;&lt;br&gt;Zero or more IDs per browser; Events survive removal." vertex="1">
+          <mxGeometry height="75" width="315" x="405" y="454" as="geometry"/>
+        </mxCell>
+        <mxCell id="footer0" parent="1" style="text;html=1;align=left;fontFamily=Georgia;fontSize=12;fontColor=#202E40;" value="&lt;b&gt;HOLLOW DIAMOND&lt;/b&gt; / Groups independent Event records.  &lt;b&gt;DASHED ARROW&lt;/b&gt; / Uses catalog lookup." vertex="1">
+          <mxGeometry height="22.6771653546" width="1046.9291338707" x="37.795275591" y="695.4330708744" as="geometry"/>
+        </mxCell>
+        <mxCell id="footer1" parent="1" style="text;html=1;align=left;fontFamily=Georgia;fontSize=12;fontColor=#202E40;" value="&lt;b&gt;DELETION&lt;/b&gt; / Removing a planned ID never deletes its public Event.  &lt;b&gt;MATCH&lt;/b&gt; / Entire interval fits." vertex="1">
+          <mxGeometry height="22.6771653546" width="1046.9291338707" x="37.795275591" y="718.110236229" as="geometry"/>
+        </mxCell>
+        <mxCell id="footer2" parent="1" style="text;html=1;align=left;fontFamily=Georgia;fontSize=12;fontColor=#202E40;" value="&lt;b&gt;SCOPE&lt;/b&gt; / M2 conceptual CRC for TypeScript types, functions and ports. P4 and P5 originals unchanged." vertex="1">
+          <mxGeometry height="22.6771653546" width="1046.9291338707" x="37.795275591" y="740.7874015836" as="geometry"/>
+        </mxCell>
+        <mxCell id="match-note" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;fontColor=#202E40;rotation=0;" value="&lt;b&gt;Exact full-fit rule&lt;/b&gt;&lt;br&gt;Same date; window.start ≤ event.start&lt;br&gt;and event.end ≤ window.end.&lt;br&gt;Equal boundaries count." vertex="1">
+          <mxGeometry height="120" width="350" x="735" y="145" as="geometry"/>
+        </mxCell>
+        <mxCell id="storage-note" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Georgia;fontSize=13;fillColor=#FFFFFF;fontColor=#202E40;rotation=0;" value="&lt;b&gt;Storage boundaries&lt;/b&gt;&lt;br&gt;Public events: shared SQL if configured.&lt;br&gt;Plan IDs: localStorage on this device.&lt;br&gt;Free-time window: temporary input." vertex="1">
+          <mxGeometry height="116" width="350" x="735" y="570" as="geometry"/>
+        </mxCell>
+        <mxCell id="ownership-note" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacing=10;fontFamily=Georgia;fontSize=13;fontColor=#202E40;fillColor=#EDF3FA;strokeColor=#254F88;strokeWidth=1;arcSize=8;" value="&lt;b&gt;EVENT LIFETIME&lt;/b&gt;&lt;br&gt;Public Events remain in catalog when a plan is removed. Schedule stores IDs, not copies of the Events. No SQL attendance table." vertex="1">
+          <mxGeometry height="124" width="298" x="414" y="563" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="m2-crc-notes" name="M2 - Relationship Rationale">
+    <mxGraphModel grid="0" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="1123" pageHeight="794" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="r-title" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;fontSize=26;" value="&lt;b&gt;SideQuest&lt;/b&gt; | M2 relationship rationale" vertex="1">
+          <mxGeometry height="40" width="1047" x="38" y="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="r-intro" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;fontSize=15;" value="A, B and C refer to the M2 CRC page. This is the agreed P4-style conceptual model updated for current code." vertex="1">
+          <mxGeometry height="37" width="1047" x="38" y="83" as="geometry"/>
+        </mxCell>
+        <mxCell id="panel0" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;shape=rectangle;fillColor=#FBF5EE;strokeColor=#8B4B10;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="479" width="335" x="38" y="133" as="geometry"/>
+        </mxCell>
+        <mxCell id="head0" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;fontSize=16;fontColor=#8B4B10;" value="A / EventCatalog groups Events" vertex="1">
+          <mxGeometry height="30" width="311" x="50" y="145" as="geometry"/>
+        </mxCell>
+        <mxCell id="sample-left0" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;align=center;verticalAlign=middle;fontSize=13;fillColor=#FFFFFF;strokeColor=#8B4B10;" value="EventCatalog" vertex="1">
+          <mxGeometry height="25" width="105" x="50" y="184" as="geometry"/>
+        </mxCell>
+        <mxCell id="sample-right0" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;align=center;verticalAlign=middle;fontSize=13;fillColor=#FFFFFF;strokeColor=#8B4B10;" value="Event" vertex="1">
+          <mxGeometry height="25" width="118" x="243" y="184" as="geometry"/>
+        </mxCell>
+        <mxCell id="sample-edge0" edge="1" parent="1" source="sample-left0" style="html=1;strokeWidth=2;exitX=1;exitY=.5;entryX=0;entryY=.5;startArrow=diamondThin;startFill=0;startSize=15;endArrow=none;strokeColor=#8B4B10;" target="sample-right0">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="body0" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;fontSize=13;" value="&lt;b&gt;Meaning.&lt;/b&gt; The EventCatalog is a shared public collection. It exposes create(draft), listUpcoming() and getById(id). The underlying EventTable adapter stores public Events; a Node API shields database keys from browsers.&lt;br&gt;&lt;br&gt;&lt;b&gt;Why a hollow diamond?&lt;/b&gt; Posted Events have independent persistence in the shared SQL table. Discarding an adapter or clearing a screen must never delete them. The original professor-approved P4 ownership notation is retained.&lt;br&gt;&lt;br&gt;&lt;b&gt;Card implementation.&lt;/b&gt; The TypeScript catalog is an interface plus Model functions, not an instantiable UML class. This diagram expresses CRC responsibilities." vertex="1">
+          <mxGeometry height="375" width="311" x="50" y="210" as="geometry"/>
+        </mxCell>
+        <mxCell id="panel1" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;shape=rectangle;fillColor=#EFF7F3;strokeColor=#116B59;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="479" width="335" x="394" y="133" as="geometry"/>
+        </mxCell>
+        <mxCell id="head1" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;fontSize=16;fontColor=#116B59;" value="B / Schedule uses EventCatalog" vertex="1">
+          <mxGeometry height="30" width="311" x="406" y="145" as="geometry"/>
+        </mxCell>
+        <mxCell id="sample-left1" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;align=center;verticalAlign=middle;fontSize=13;fillColor=#FFFFFF;strokeColor=#116B59;" value="Schedule" vertex="1">
+          <mxGeometry height="25" width="105" x="406" y="184" as="geometry"/>
+        </mxCell>
+        <mxCell id="sample-right1" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;align=center;verticalAlign=middle;fontSize=13;fillColor=#FFFFFF;strokeColor=#116B59;" value="EventCatalog" vertex="1">
+          <mxGeometry height="25" width="118" x="599" y="184" as="geometry"/>
+        </mxCell>
+        <mxCell id="sample-edge1" edge="1" parent="1" source="sample-left1" style="html=1;strokeWidth=2;exitX=1;exitY=.5;entryX=0;entryY=.5;dashed=1;startArrow=none;endArrow=open;endFill=0;endSize=10;strokeColor=#116B59;" target="sample-right1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="body1" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;fontSize=13;" value="&lt;b&gt;Meaning.&lt;/b&gt; Personal plans are device-local Event ID strings. The sharedSchedule Controller asks EventCatalog.getById(id) to resolve those IDs, including events older than the upcoming browse list.&lt;br&gt;&lt;br&gt;&lt;b&gt;Why the dashed dependency?&lt;/b&gt; Schedule behavior needs catalog lookup, but the catalog does not own plans and the schedule does not own Event records. In code the Controller mediates the call.&lt;br&gt;&lt;br&gt;&lt;b&gt;Failure behavior.&lt;/b&gt; Failed or timed-out lookups preserve saved IDs; successful null results identify missing Events." vertex="1">
+          <mxGeometry height="375" width="311" x="406" y="225" as="geometry"/>
+        </mxCell>
+        <mxCell id="panel2" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;shape=rectangle;fillColor=#EFF7F3;strokeColor=#116B59;strokeWidth=1;" value="" vertex="1">
+          <mxGeometry height="479" width="335" x="750" y="133" as="geometry"/>
+        </mxCell>
+        <mxCell id="head2" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;fontSize=16;fontColor=#116B59;" value="C / Schedule references Events" vertex="1">
+          <mxGeometry height="30" width="311" x="762" y="145" as="geometry"/>
+        </mxCell>
+        <mxCell id="sample-left2" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;align=center;verticalAlign=middle;fontSize=13;fillColor=#FFFFFF;strokeColor=#116B59;" value="Schedule" vertex="1">
+          <mxGeometry height="25" width="105" x="762" y="184" as="geometry"/>
+        </mxCell>
+        <mxCell id="sample-right2" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;align=center;verticalAlign=middle;fontSize=13;fillColor=#FFFFFF;strokeColor=#116B59;" value="Event" vertex="1">
+          <mxGeometry height="25" width="118" x="955" y="184" as="geometry"/>
+        </mxCell>
+        <mxCell id="sample-edge2" edge="1" parent="1" source="sample-left2" style="html=1;strokeWidth=2;exitX=1;exitY=.5;entryX=0;entryY=.5;startArrow=diamondThin;startFill=0;startSize=15;endArrow=none;strokeColor=#116B59;" target="sample-right2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="body2" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;fontSize=13;" value="&lt;b&gt;Meaning.&lt;/b&gt; One browser maintains zero or more distinct planned Event IDs under sidequest.planned-event-ids.v1, provisionally capped at 100.&lt;br&gt;&lt;br&gt;&lt;b&gt;Why a hollow diamond?&lt;/b&gt; Removing a plan never deletes the public Event. Many devices may independently plan the same Event. The local list records references rather than copies of public records.&lt;br&gt;&lt;br&gt;&lt;b&gt;Time rules.&lt;/b&gt; The Model sorts resolved Events chronologically and warns about overlaps; adjoining events are allowed. The dependency is logical, not an SQL foreign key." vertex="1">
+          <mxGeometry height="375" width="311" x="762" y="225" as="geometry"/>
+        </mxCell>
+        <mxCell id="shared-explanation" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;fontSize=13;fillColor=#EDF3FA;strokeColor=#254F88;spacing=10;" value="&lt;b&gt;READING THE M2 DIAGRAM&lt;/b&gt;&lt;br&gt;Three conceptual CRC roles match the accepted P4: Event, EventCatalog and Schedule. Browser Views and coordinating Controllers are implementation layers, not new domain classes. Public events use one SQL table; the personal schedule is a separate browser JSON list. Free-time search is transient. The ER diagram documents the two storage boundaries explicitly." vertex="1">
+          <mxGeometry height="130" width="1047" x="38" y="619" as="geometry"/>
+        </mxCell>
+        <mxCell id="sources" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Georgia;fontSize=14;fontColor=#202E40;spacing=0;fontSize=11;" value="&lt;b&gt;Evidence:&lt;/b&gt; app/src/model/eventCatalog.ts, schedule.ts, events.ts; controller/sharedSchedule.ts; SQL migration; original P4 design." vertex="1">
+          <mxGeometry height="22" width="1047" x="38" y="760" as="geometry"/>
         </mxCell>
       </root>
     </mxGraphModel>
