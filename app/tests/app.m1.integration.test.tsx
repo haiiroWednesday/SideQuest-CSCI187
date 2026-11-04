@@ -175,4 +175,52 @@ describe('M1 rendered user workflow', () => {
     expect(screen.getByText('No legacy events saved in this browser.')).toBeTruthy()
     expect(screen.getByText('0 total')).toBeTruthy()
   })
+
+  it('does not claim a legacy removal was saved if browser writes fail', async () => {
+    const user = userEvent.setup()
+    seed([workshop()])
+    render(<App />)
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw Error('quota') })
+    await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
+    expect(screen.getByRole('status').textContent).toContain('removed temporarily')
+    expect(window.localStorage.getItem(STORAGE_KEY)).toContain('Art Workshop')
+  })
+
+  it('does not claim a legacy Undo was persisted if browser writes fail', async () => {
+    const user = userEvent.setup()
+    seed([workshop()])
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw Error('quota') })
+    await user.click(screen.getByRole('button', { name: 'Undo removal' }))
+    expect(screen.getByRole('status').textContent).toContain('restored temporarily')
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('[]')
+  })
+
+  it('compares a second write with the last persisted list, not failed local state', async () => {
+    const user = userEvent.setup()
+    seed([workshop(), workshop({ id: 'second', title: 'Choir Practice' })])
+    render(<App />)
+    const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => { throw Error('quota once') })
+    await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
+    write.mockRestore()
+    await user.click(screen.getByRole('button', { name: 'Remove Choir Practice' }))
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? 'null')).toEqual([])
+    expect(screen.queryByText(/Your events changed in another tab/)).toBeNull()
+  })
+
+  it('keeps unsaved legacy edits visible when another tab writes', async () => {
+    const user = userEvent.setup()
+    seed([workshop()])
+    render(<App />)
+    const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => { throw Error('quota once') })
+    await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
+    write.mockRestore()
+    const remote = [workshop({ id: 'remote', title: 'Remote Change' })]
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(remote))
+    fireEvent(window, new StorageEvent('storage', { key: STORAGE_KEY, storageArea: window.localStorage }))
+    expect(screen.queryByRole('button', { name: 'Remove Remote Change' })).toBeNull()
+    expect(screen.getAllByRole('alert').some(alert => alert.textContent?.includes('Another tab changed saved events'))).toBe(true)
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual(remote)
+  })
 })

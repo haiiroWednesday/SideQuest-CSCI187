@@ -1,9 +1,9 @@
 // VIEW: Post events and search the catalog for your available time.
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   findEvents, todayLocal, displayDate, displayTime,
   loadEventsChecked, persistEvents, removeEventWithReceipt, restoreRemovedEvent, isPastEvent,
-  type CampusEvent, type RemovedEvent,
+  STORAGE_KEY, type CampusEvent, type RemovedEvent,
 } from './controller/findEvents'
 import { browserCatalogStorage, localEventCatalog, type ConnectedCatalog } from './controller/postEvent'
 import { PostEventForm } from './view/PostEventForm'
@@ -32,6 +32,9 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
   // In React, events holds the current list; setEvents asks React to
   // update the list on screen. Other state variables track the form and alerts.
   const [legacyEvents, setLegacyEvents] = useState<CampusEvent[]>(initial.events)
+  const savedEventsRef = useRef<CampusEvent[]>(initial.events)
+  const hasUnsavedRef = useRef(false)
+  const [, refreshPastLabels] = useState(0)
   const [storageBlocked, setStorageBlocked] = useState(initial.blocked)
   const [lastRemoved, setLastRemoved] = useState<RemovedEvent | null>(null)
   const plans = usePersonalSchedule(connection.catalog, posted.events, posted.revision, page === 'schedule')
@@ -43,6 +46,12 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
   const [freeStart, setFreeStart] = useState('14:00')
   const [freeEnd, setFreeEnd] = useState('16:00')
 
+  // Past-event labels should update even when someone leaves SideQuest open.
+  useEffect(() => {
+    const timer = window.setInterval(() => refreshPastLabels(value => value + 1), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
+
   // Sync updates from other browser tabs without writing the same list back.
   useEffect(() => {
     // The browser notifies other tabs when storage changes. We read the
@@ -50,10 +59,16 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
     const onStorage = (event: StorageEvent) => {
       // 🪟 Ignore changes from other storage areas/keys. A null key can
       // mean the other tab cleared storage, which also needs a refresh.
-      if (event.storageArea !== window.localStorage || (event.key !== null && event.key !== 'sidequest.created-events.v1')) return
+      if (event.storageArea !== window.localStorage || (event.key !== null && event.key !== STORAGE_KEY)) return
       let current: { events: CampusEvent[]; blocked: boolean }
       try { current = loadEventsChecked(window.localStorage) }
       catch { current = { events: [], blocked: true } }
+      if (hasUnsavedRef.current) {
+        setCreateError('Another tab changed saved events while this tab has unsaved changes. Review or reload before making more changes.')
+        setNotice(null)
+        return
+      }
+      savedEventsRef.current = current.events
       setLegacyEvents(current.events)
       setStorageBlocked(current.blocked)
       setStorageWarning(false)
@@ -78,7 +93,9 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
         // 🔐 JSON.stringify compares the list's CONTENT rather than array
         // identity (two different arrays can hold the same event data).
         // This is a best-effort check, not an atomic database transaction.
-        if (latest.blocked || JSON.stringify(latest.events) !== JSON.stringify(legacyEvents)) {
+        if (latest.blocked || JSON.stringify(latest.events) !== JSON.stringify(savedEventsRef.current)) {
+          savedEventsRef.current = latest.events
+          hasUnsavedRef.current = false
           setLegacyEvents(latest.events)
           setStorageBlocked(latest.blocked)
           setStorageWarning(false)
@@ -90,6 +107,8 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
         saved = persistEvents(window.localStorage, next)
       }
     } catch { /* browser storage may be disabled */ }
+    if (saved) savedEventsRef.current = next
+    hasUnsavedRef.current = !saved
     setLegacyEvents(next)
     setStorageWarning(!saved)
     // The ternary (? :) is a short if/else. Unsaved changes may appear
@@ -104,6 +123,8 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
     let saved = false
     try { saved = persistEvents(window.localStorage, legacyEvents) }
     catch { /* browser storage may be disabled */ }
+    if (saved) savedEventsRef.current = legacyEvents
+    hasUnsavedRef.current = !saved
     setStorageBlocked(!saved)
     setStorageWarning(!saved)
     setNotice(saved ? 'Saved event data recovered.' : null)
@@ -124,17 +145,19 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
     }
     const result = removeEventWithReceipt(legacyEvents, id)
     if (!result.removed) return
-    if (store(result.events) === 'conflict') return
+    const outcome = store(result.events)
+    if (outcome === 'conflict') return
     setLastRemoved(result.removed)
     setCreateError(null)
-    setNotice('Event removed.')
+    setNotice(outcome === 'saved' ? 'Event removed.' : 'Event removed temporarily, but your browser could not save the deletion. It may return after reloading.')
   }
 
   function undoRemove() {
     if (!lastRemoved || storageBlocked) return
-    if (store(restoreRemovedEvent(legacyEvents, lastRemoved)) === 'conflict') return
+    const outcome = store(restoreRemovedEvent(legacyEvents, lastRemoved))
+    if (outcome === 'conflict') return
     setLastRemoved(null)
-    setNotice('Event restored.')
+    setNotice(outcome === 'saved' ? 'Event restored.' : 'Event restored temporarily, but your browser could not save it. It may disappear after reloading.')
   }
 
   // JSX below describes the visible page. React updates it when state
@@ -166,8 +189,9 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
           <PostEventForm connection={connection} catalogEvents={posted}
             renderEventActions={event => <PlanButton event={event} plans={plans} />} />
           {createError && <p className="error" role="alert">{createError}</p>}
-          {notice && <div className="success" role="status">{notice}
-            {lastRemoved && <button type="button" className="undo-button" onClick={undoRemove}>Undo removal</button>}
+          {notice && <div className="success" role="status">{notice}</div>}
+          {lastRemoved && <div className="undo-control">
+            <button type="button" className="undo-button" onClick={undoRemove}>Undo removal</button>
           </div>}
           {storageBlocked && <div className="storage-alert" role="alert">
             Some saved browser data could not be read. It has not been overwritten.

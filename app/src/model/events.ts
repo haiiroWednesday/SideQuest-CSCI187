@@ -96,7 +96,7 @@ export function validateEventDraft(
   }
   // 🔑 .some(...) is true if ANY saved event has the same ID.
   // Duplicate titles are fine, but duplicate IDs would confuse React's list.
-  if (!id || existingEvents.some(event => event.id === id)) {
+  if (!id.trim() || existingEvents.some(event => event.id === id)) {
     return { event: null, error: 'Could not create a unique event. Please try again.' }
   }
   // 🧩 The ... spread adds { description } only when it's nonempty.
@@ -148,7 +148,7 @@ export function restoreEventInList(events: CampusEvent[], removed: RemovedEvent)
 export function isPastEventDate(event: CampusEvent, now: Date = new Date()): boolean {
   const date = todayLocalISO(now)
   const minute = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0')
-  return event.date < date || (event.date === date && event.end < minute)
+  return event.date < date || (event.date === date && event.end <= minute)
 }
 
 export function fitsFully(event: CampusEvent, freeDate: string, freeStart: string, freeEnd: string): boolean {
@@ -166,10 +166,10 @@ export function isCampusEvent(value: unknown): value is CampusEvent {
   // 'as Partial' helps TypeScript inspect possible fields; it does NOT
   // validate unknown JSON. All the checks below still have to run.
   const item = value as Partial<CampusEvent>
-  return typeof item.id === 'string' && item.id.length > 0 &&
-    typeof item.title === 'string' && item.title.trim().length > 0 &&
+  return typeof item.id === 'string' && item.id.trim().length > 0 &&
+    typeof item.title === 'string' && item.title.trim().length > 0 && item.title.trim().length <= MAX_EVENT_TITLE_LENGTH &&
     (item.description === undefined || (typeof item.description === 'string' && item.description.length <= MAX_EVENT_DESCRIPTION_LENGTH)) &&
-    typeof item.location === 'string' && item.location.trim().length > 0 &&
+    typeof item.location === 'string' && item.location.trim().length > 0 && item.location.trim().length <= MAX_EVENT_LOCATION_LENGTH &&
     typeof item.date === 'string' && isValidDate(item.date) &&
     typeof item.start === 'string' && typeof item.end === 'string' &&
     toMinutes(item.start) !== null && toMinutes(item.end) !== null &&

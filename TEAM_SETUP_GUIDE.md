@@ -23,13 +23,13 @@ If any command is missing, install that tool and restart VS Code.
 ```bash
 git clone https://github.com/haiiroWednesday/SideQuest-CSCI187.git
 cd SideQuest-CSCI187/app
-npm install
+npm ci
 npm run dev
 ```
 
 Open the **Local** URL printed by Vite (often `http://localhost:5173/`).
 
-If cloning a private repository fails, confirm that your GitHub account has accepted the collaborator invitation. If `npm install` encounters an `edgesOut` dependency error, try `npm install --legacy-peer-deps`.
+If cloning the private repository fails, confirm that your GitHub account has accepted the collaborator invitation. If `npm ci` fails, inspect the actual dependency error instead of overriding peer-dependency checks.
 
 ## Update an existing clone
 
@@ -50,14 +50,15 @@ git pull --ff-only origin master
 
 If `master` does not exist locally, use `git switch --track origin/master` after fetching. Then run `npm run dev` from `app/` and refresh the browser. GitHub updates do not automatically reach your laptop.
 
-## Quick app check
+## Quick M2 app check
 
-1. Create **Art Workshop** at **Arts Building** on a chosen date, from **14:30** to **15:30**.
-2. Search the same date with free time **14:00–16:00**. The event should match.
-3. Search **15:45–17:00** instead. It should no longer match.
-4. Refresh in the same browser to verify the event persists, and then remove it.
+1. Post **Art Workshop** with host name **SCU Art Club**, description **Bring materials**, location **Arts Building**, a valid future date, and **14:30–15:30**.
+2. Search the same date with availability **14:00–16:00**. The posted catalog event should match; **15:45–17:00** should not match.
+3. Choose **Plan to attend**, open **My Schedule**, refresh, and then **Remove from plans**. Verify the original post remains under **Posted events**.
+4. Check the **Shared catalog not connected** warning. If it appears, this is a **browser-only fallback**, not a shared public project. To demonstrate cross-browser sharing, the owner must configure Supabase per [app/README.md](app/README.md) and verify Browser A's post is visible in independent Browser B.
+5. Confirm an event with a long valid description, denied browser storage, an invalid date, and a failed catalog read behave sensibly. Do not assume tests establish live database permissions.
 
-Events are saved in this browser's `localStorage`; teammates do not see each other's local events.
+Personal plans always remain on the current device. The posting list is public across browsers **only when the shared Supabase connection is successfully configured**.
 
 ## Automated verification
 
@@ -66,6 +67,8 @@ From `app/`:
 ```bash
 npm test
 npm run build
+npx playwright install chromium
+npm run test:e2e
 ```
 
 Our [React GitHub Actions workflow](.github/workflows/react-ci.yml) runs equivalent checks online. Student test examples and CI experiments are documented in [test appendix in the MVP playbook](docs/MVP_TEAM_PLAYBOOK.md#appendix--detailed-unit-testing-examples).
