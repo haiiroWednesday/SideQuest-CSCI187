@@ -1,10 +1,13 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { DiscoverView, type DiscoverEvent, type DiscoverViewProps } from '../src/view/DiscoverView'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { DiscoverView, type DiscoverEvent, type DiscoverViewProps, useDiscoverScreen } from '../src/view/DiscoverView'
 import { presentDiscover } from '../src/controller/presentScreens'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
 
 // The view only draws what the Controller prepares, so every render goes through presentDiscover
 // with a fixed clock: Thursday 11/7/2030 at 9:00am.
@@ -12,6 +15,8 @@ const NOW = new Date('2030-11-07T09:00:00-08:00')
 type Input = Omit<Parameters<typeof presentDiscover>[0], 'events' | 'now'>
 const draw = (events: DiscoverEvent[], input: Input = {}, props: Omit<DiscoverViewProps, 'screen'> = {}, now = NOW) =>
   <DiscoverView screen={presentDiscover({ events, now, ...input })} {...props} />
+const MountedDiscover = ({ events }: { events: DiscoverEvent[] }) =>
+  <DiscoverView screen={useDiscoverScreen({ events })} />
 
 const events: DiscoverEvent[] = [
   {
@@ -114,6 +119,26 @@ describe('Discover View: draws the Controller screen', () => {
     // Same data, the next evening: Thursday's events have ended and Friday is today.
     rerender(draw([events[0], events[1], tomorrow, later], {}, {}, new Date('2030-11-08T18:00:00-08:00')))
     expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual(['TOMORROWSaturday, 11/9/2030'])
+  })
+
+  it('removes an event that expires while Discover remains mounted', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2030-11-07T09:59:45-08:00'))
+    const expiring = {
+      ...events[0],
+      id: 'expiring-ceramics',
+      title: 'Ends at ten',
+      start: '09:00',
+      end: '10:00',
+    }
+
+    render(<MountedDiscover events={[expiring]} />)
+    expect(screen.getByRole('button', { name: 'View details for Ends at ten' })).toBeTruthy()
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000) })
+
+    expect(screen.queryByRole('button', { name: 'View details for Ends at ten' })).toBeNull()
+    expect(screen.getByText('No events to show yet.')).toBeTruthy()
   })
 
   it('marks planned events, how long each runs, and what is happening right now', () => {
