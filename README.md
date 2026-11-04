@@ -1,93 +1,63 @@
-# SideQuest — CSCI 187
+# SideQuest · CSCI 187
 
-SideQuest helps Santa Clara University students find campus activities that fit into their available time.
+SideQuest helps students discover campus activities, find events that fully fit their free time, and keep a personal Schedule on this device.
 
-## Working M1 feature
+## Current M2 integration
 
-The React walking skeleton supports one complete workflow:
+The production app connects **Post an event → Discover → full-fit availability filter → Plan to attend → My Schedule → remove a plan** through one asynchronous `EventCatalogPort`. Posting supplies the required host name and description. Public events remain in the catalog when a personal plan is removed. Anonymous public deletion and Undo of public deletion are absent from this M2 flow.
 
-**Create an event → save it in the browser → enter a date and free-time window → view matching events.**
+When Supabase is configured, the catalog is shared. Without configuration, a visible notice identifies the browser-only fallback. A successful fallback demo does not establish shared database access or RLS correctness.
 
-Users can create events with a title, location, date, and start/end times; view and remove saved events; and search for events that fit **entirely** within a selected free-time window. Results are sorted by start time. Invalid inputs and empty searches display feedback.
+All event wall-clock dates and times use **America/Los_Angeles**, including validation, form defaults, labels and event expiration. Events stop being upcoming at their end time. A valid free-time window shows only events on that date whose full duration fits, with inclusive matching boundaries.
 
-The app uses **React, TypeScript, Vite, and Vitest**. The current implementation and merged tests are on the default **`master`** branch.
+My Schedule stores unique event IDs under `sidequest.planned-event-ids.v1`. It resolves saved IDs with `getById`, including past events. A failed lookup displays retry feedback and retains the ID; only a successful `null` result means the event is unavailable. Storage failures and corrupt data preserve the original value until explicit recovery confirmation. The existing provisional 100-plan cap, overlap warnings and storage-event refresh remain in use.
 
-## Personal Schedule slice of M2
+## Run and verify
 
-This feature branch connects full-fit availability results to **Plan to attend**
-and a separate **My Schedule** page. Plans store unique event IDs in this
-browser, survive refresh, appear chronologically, and can be removed without
-deleting the original event. Overlaps are allowed with an advisory warning;
-back-to-back events are allowed. The provisional capacity is 100 plans, pending
-whole-team confirmation.
-
-**Current data source:** events still come from the browser-local M1 list.
-The shared public EventCatalog is not integrated, so this is the Schedule slice
-of M2 rather than a verified cross-browser posting/discovery workflow. Read the
-[Schedule behavior and catalog handoff](docs/SEMBIYAN_SEARCH_SCHEDULE.md) for
-MVC responsibilities, persistence rules, and the future asynchronous lookup
-contract.
-
-After starting the app, create a future event, enter a free-time window that
-contains its entire duration, choose **Plan to attend**, and open **My Schedule**.
-Refresh to check the saved plan, then choose **Remove from plans**. The event
-remains in **Your created events**, which contains events you posted locally;
-**My Schedule** contains only events you chose to attend. Confirm that distinction
-in a short student walkthrough before calling the UI integrated.
-
-## Run locally
-
-Install [Node.js](https://nodejs.org/) 24 (Node 22.12+ supported) and Git, then:
+Use Node 24, or Node 22.12+:
 
 ```bash
-git clone https://github.com/haiiroWednesday/SideQuest-CSCI187.git
-cd SideQuest-CSCI187/app
-npm install
+cd app
+npm ci
 npm run dev
 ```
 
-Open the local URL shown in the terminal (usually `http://localhost:5173/`).
-
-If you already cloned the repository, check `git status` to protect any local changes, then switch to `master` and run `git pull --ff-only origin master`. Run the commands below inside `app/`.
-
-## Tests and build
+Configure `app/.env.local` using `app/.env.example` for the shared catalog. Use only the publishable key; keep privileged database keys out of client code. Apply the existing database migration through the team's normal database process. This integration does not change or apply that migration.
 
 ```bash
 npm test
 npm run build
+npx playwright install chromium
+npm run test:e2e
 ```
 
-GitHub Actions also runs these checks on pushes and pull requests: [SideQuest React CI](.github/workflows/react-ci.yml). Unit tests are in [`app/tests/`](app/tests/).
+The scenario lab is available in the development server at `/scenario-lab.html`. It uses clearly separate fixture data and the real presenters and Schedule controller. Its clock is California time. It is a development page, not a public catalog or a production route.
 
-## Project structure
+## Responsibilities
 
-- [`app/src/App.tsx`](app/src/App.tsx): **View** — forms, event list, search results, and feedback.
-- [`app/src/controller/findEvents.ts`](app/src/controller/findEvents.ts): **Controller** — creates events and coordinates searches.
-- [`app/src/model/events.ts`](app/src/model/events.ts): **Model** — event data, date/time validation, matching, and browser storage.
-- [`app/tests/`](app/tests/): automated unit tests.
+| Layer | Files and responsibility |
+| --- | --- |
+| View | `App.tsx`, `view/DiscoverView.tsx`, `ScheduleTrailView.tsx`, `PostEventForm.tsx`: render controller output, collect input, report actions, manage focus and request lifecycle |
+| Controller | `postEvent.ts`, `sharedSchedule.ts`, `personalSchedule.ts`, `findEvents.ts`, `presentScreens.ts`: coordinate catalog and plan operations and prepare labels/flags for views |
+| Model | `eventCatalog.ts`, `eventTiming.ts`, `schedule.ts`, `events.ts`: event validation, campus clock, interval rules, matching, plan identity validation and persistence |
+| Adapters | `supabaseEventTable.ts`, `browserEventTable.ts`: shared database or explicitly labeled local storage behind the same port |
 
-## Scope and limitations
+New production regression tests exercise this integration. The original M1 rendered App has been preserved under `app/tests/fixtures/LegacyApp.tsx` so historical M1 assertions remain executable without pretending that its local public-event deletion flow is the current M2 app. Model and Controller M1 tests also remain in the suite.
 
-Events are created by the user and saved in the current browser's `localStorage`. They are **not** synchronized between devices or users. This M1 prototype does not fetch live SCU events, check registration eligibility, or account for travel time; those are future-project features.
+## Review boundaries
 
-The repository also contains the original C++ course starter files, but they are **not needed** to run or test the React application.
+This is a proposed integration of the merged catalog/Schedule work and Cynthia's supplied redesign. It adds the redesign's two font packages and matching lockfile entries. Teammates should review those dependencies and their owned views before merging. It changes no agreed public catalog fields or port methods.
 
-## M1 feedback and code integration status
+**P4 is approved by the professor and resolved.** This work does not reopen or redraw it. The selected P5 coursework ER remains separate from the smaller M2 implementation schema.
 
-**M1 corrections are merged into `master`** via [PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12) (merge commit `6e461fd`). They address past-event validation, descriptions, MVC mediation with business logic in the Model, consistent dates/times, storage recovery, Undo, accessibility, and a React/Chromium test suite. The earlier PRs #10 and #11 were closed unmerged as superseded. See [M1 QA and lecture-slide checklist](docs/M1_POST_FEEDBACK_QA.md). **This is still the M1 walking skeleton, not the fully implemented M2 shared EventCatalog/Schedule.**
+The legacy M1 event key is left intact and is not used as a second M2 catalog. Existing M1-only events are not silently published or migrated. Supabase RLS, a real multi-device persistence smoke test, and a student usability walkthrough need the team's configured environment and participation. Device plans remain local; localStorage updates across tabs are best effort rather than transactional.
 
-## New to TypeScript, React, or this codebase?
+## Project documents
 
-Start with the **[beginner-friendly Code Walkthrough](CODE_WALKTHROUGH.md)**. It explains the current M1 code using actual SideQuest examples, including the View → Controller → Model flow, React state, browser storage, and tests. It supplements the separate M2 implementation playbook below.
+- [MVP team playbook](docs/MVP_TEAM_PLAYBOOK.md): authoritative M2 contract, ownership and coursework diagrams.
+- [Integration changes and verification](docs/M2_INTEGRATION_VERIFICATION.md): concrete fixes, commands and remaining checks.
+- [M1 user requirements](REQUIREMENTS.md) and [M1 specifications](SPECIFICATIONS.md): historical deliverables with current M2 scope notices.
+- [M1 post-feedback QA](docs/M1_POST_FEEDBACK_QA.md): original feedback and lecture alignment.
+- [Team setup](TEAM_SETUP_GUIDE.md), [Code walkthrough](CODE_WALKTHROUGH.md), [product research and future roadmap](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md).
 
-## Documentation — three active guides plus M1 QA
-
-1. **[Build the MVP](docs/MVP_TEAM_PLAYBOOK.md)** — the M2 implementation contract, ownership, testing, P4 architecture, plus the **current selected P5 coursework ER** as Mermaid with a direct editable draw.io link; the original classroom sketch and earlier draft are preserved separately.
-2. **[Set up the team and AI agents](TEAM_SETUP_GUIDE.md)** — install/run/test SideQuest, Git workflow, and a balanced comparison of OpenCode, Cursor, Claude Code, Codex, and Cline, plus multi-agent reviews and troubleshooting.
-3. **[Product research and future roadmap](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md)** — raw interview findings, competitors, HCI research, the full feature vision, ten Mermaid diagrams, final-project expansion, and the verified **five-point extra-credit rubric**.
-
-**Original M1 coursework:** [User requirements](REQUIREMENTS.md) · [Technical specifications](SPECIFICATIONS.md). These are retained as separate historical assignment deliverables, not competing new-MVP instructions.
-
-**P5 direct links:** [Current selected ER diagram in the playbook (Mermaid)](docs/MVP_TEAM_PLAYBOOK.md#p5-coursework-er-diagram--current-drawio-and-mermaid) · [Current editable P5 draw.io in Google Drive](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view) · [Original classroom P5 Google Doc](https://docs.google.com/document/d/1zr55kTHGyVltD1AqU7SrdVOWPlf2ClkwWczfdOT4yO0/edit) · [P5 instructions](https://docs.google.com/document/d/1FcjgTh3lBprpDxkFNuENM1RRAky9lYFeMOAeaJLnAC8/edit). The selected P5 coursework diagram is broader than the M2 coding contract. Its permission still needs an 'Anyone with the link → Commenter' check before Gradescope submission.
-
-**For coding assistants:** [AGENTS.md](AGENTS.md) contains the compact M2 project rules and points to the guides above. The **P5 coursework ER is not an instruction to add USER or AVAILABILITY_WINDOW tables to M2**.
+Original C++ course starter files are retained independently of the React application.

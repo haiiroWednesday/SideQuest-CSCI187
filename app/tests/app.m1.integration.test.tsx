@@ -10,7 +10,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import App from '../src/App'
+import App from './fixtures/LegacyApp'
 import { STORAGE_KEY, type CampusEvent } from '../src/model/events'
 
 // Dynamically choose a future date so these UI tests don't expire as

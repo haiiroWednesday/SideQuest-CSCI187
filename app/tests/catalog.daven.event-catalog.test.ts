@@ -92,17 +92,21 @@ describe('EventCatalog.create', () => {
 
 describe('EventCatalog.listUpcoming', () => {
   it('orders by date, then start time, and hides events that already ended (campus time)', async () => {
-    const catalog = createEventCatalog(createInMemoryEventTable(), clock)
+    const table = createInMemoryEventTable()
+    const catalog = createEventCatalog(table, clock)
     const later = await catalog.create(draft({ title: 'Nov 6', date: '2026-11-06', start: '09:00', end: '10:00' }))
     const afternoon = await catalog.create(draft({ title: 'Nov 5 pm', date: '2026-11-05', start: '15:00', end: '16:00' }))
     const morning = await catalog.create(draft({ title: 'Nov 5 am', date: '2026-11-05', start: '08:00', end: '09:00' }))
-    const runningNow = await catalog.create(draft({ title: 'Running', date: '2026-11-03', start: '11:30', end: '12:30' }))
-    await catalog.create(draft({ title: 'Ended at noon', date: '2026-11-03', start: '11:00', end: '12:00' }))
-    await catalog.create(draft({ title: 'Yesterday', date: '2026-11-02' }))
+    // Existing records were posted earlier, before this fixed clock.
+    for (const [id, values] of [
+      ['11111111-1111-4111-8111-111111111111', { title: 'Running', date: '2026-11-03', start: '11:30', end: '12:30' }],
+      ['22222222-2222-4222-8222-222222222222', { title: 'Ended at noon', date: '2026-11-03', start: '11:00', end: '12:00' }],
+      ['33333333-3333-4333-8333-333333333333', { title: 'Yesterday', date: '2026-11-02' }],
+    ] as const) table.rows.set(id, { id, ...toEventRow(draft(values)) })
 
     const titles = (await catalog.listUpcoming()).map(event => event.title)
 
-    expect(titles).toEqual([runningNow.title, morning.title, afternoon.title, later.title])
+    expect(titles).toEqual(['Running', morning.title, afternoon.title, later.title])
   })
 
   it('returns an empty list for an empty catalog', async () => {

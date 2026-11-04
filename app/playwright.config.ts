@@ -10,6 +10,9 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:5173',
     browserName: 'chromium',
+    launchOptions: process.env.SIDEQUEST_CHROMIUM_PATH ? {
+      executablePath: process.env.SIDEQUEST_CHROMIUM_PATH, args: ['--no-sandbox', '--disable-dev-shm-usage'],
+    } : undefined,
     trace: 'retain-on-failure',
   },
   // 🚀 Start SideQuest's Vite server before browser tests. On a local

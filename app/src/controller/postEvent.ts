@@ -2,7 +2,7 @@
 // file applies the posting rules, then asks the EventCatalogPort to store the
 // event. It never touches storage directly. Every adapter goes through the port.
 import {
-  campusNow, catalogDraftErrors, createEventCatalog, EventCatalogError, firstFieldError,
+  createEventCatalog, EventCatalogError, firstFieldError, postingDraftErrors,
   type CampusEvent, type CatalogFieldErrors, type EventCatalogPort, type EventDraft,
 } from '../model/eventCatalog'
 import { createBrowserEventTable, type CatalogStorage } from '../model/browserEventTable'
@@ -24,19 +24,21 @@ export function connectEventCatalog(env: Readonly<Record<string, unknown>>, stor
   return supabase ? { catalog: supabase, shared: true } : localEventCatalog(storage)
 }
 
-// ---------------------------------------------------------------------------
-// Posting rules = the database rules (catalogDraftErrors) plus M1's
-// "no events in the past" rule, judged on the Santa Clara clock.
-export function postingDraftErrors(draft: EventDraft, now: Date = new Date()): CatalogFieldErrors {
-  const errors = catalogDraftErrors(draft)
-  const campus = campusNow(now)
-  if (!errors.date && draft.date < campus.date) {
-    errors.date = 'Events cannot be posted in the past. Choose today or a future date.'
-  } else if (!errors.date && !errors.start && !errors.end && draft.date === campus.date && draft.start < campus.time) {
-    errors.start = 'This event has already started. Choose a future start time.'
+// Acquire storage only inside guarded Model reads/writes. A blocked getter must
+// never prevent a configured shared catalog from starting.
+export function browserStorage(): CatalogStorage {
+  return {
+    getItem: key => window.localStorage.getItem(key),
+    setItem: (key, value) => window.localStorage.setItem(key, value),
   }
-  return errors
 }
+
+export function connectBrowserEventCatalog(env: Readonly<Record<string, unknown>>): ConnectedCatalog {
+  return connectEventCatalog(env, browserStorage())
+}
+
+export { postingDraftErrors, CATALOG_LIMITS, campusNow } from '../model/eventCatalog'
+export { initialCampusWindow } from '../model/eventTiming'
 
 export type PostResult =
   | { status: 'posted'; event: CampusEvent; message: string }
@@ -54,8 +56,8 @@ export async function postEvent(
     const where = options.shared === false ? 'in this browser only (shared catalog not connected)' : 'to the shared catalog'
     return { status: 'posted', event, message: `Posted “${event.title}” ${where}. Event ID: ${event.id}` }
   } catch (error) {
-    // The catalog re-checks the same rules, so 'invalid' only happens if the
-    // two sets of rules drift apart. Show its message rather than hide it.
+    // The catalog re-checks against its own current clock. A request can cross
+    // a minute boundary while in flight; preserve its validation message.
     if (error instanceof EventCatalogError) return { status: 'failed', error: error.message }
     return { status: 'failed', error: 'Could not post this event right now. Please try again.' }
   }

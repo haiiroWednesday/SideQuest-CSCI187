@@ -1,5 +1,7 @@
 # SideQuest MVP — the team's build playbook
 
+> **Implementation status update:** the proposed integration now connects the merged catalog/posting/Schedule code and Cynthia’s supplied view patch in production `App.tsx`. Contract and coursework sections below remain authoritative; older “not implemented yet” descriptions are historical. See [integration verification](M2_INTEGRATION_VERIFICATION.md) for tested behavior and remaining checks. P4 has been approved by the professor and is resolved.
+
 **Updated 28 October 2026 · CSCI 187 · M2 implementation guide + separately identified P5 coursework ER**  
 **Repository:** [`haiiroWednesday/SideQuest-CSCI187`](https://github.com/haiiroWednesday/SideQuest-CSCI187) · **Branch:** `master`  
 **Status:** Team-confirmed small MVP scope, checked against both pages of the original P4 draw.io diagram. Technical interfaces and the proposed daily schedule remain implementation suggestions, not additional course requirements.

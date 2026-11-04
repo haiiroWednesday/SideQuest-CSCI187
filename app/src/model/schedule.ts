@@ -1,6 +1,12 @@
 // MODEL: device-local plan identities, ordering, overlap rules and persistence.
 // No React or Controller imports. Catalog events are never changed by a plan.
-import { isCampusEvent, toMinutes, type CampusEvent } from './events'
+import { isCampusEvent, type CampusEvent } from './events'
+import { isCatalogEvent } from './eventCatalog'
+import { overlapSpan } from './eventTiming'
+
+export function isScheduleEvent(value: unknown): value is CampusEvent {
+  return isCatalogEvent(value) || isCampusEvent(value)
+}
 
 export const PLANNED_IDS_KEY = 'sidequest.planned-event-ids.v1'
 // Provisional MVP limit pending whole-team confirmation. Keep validation and messages consistent.
@@ -55,7 +61,7 @@ export function compareEventTime(a: CampusEvent, b: CampusEvent): number {
 }
 
 export function resolvePlannedEvents(ids: readonly string[], catalog: readonly CampusEvent[]) {
-  const byId = new Map(catalog.filter(isCampusEvent).map(event => [event.id, event]))
+  const byId = new Map(catalog.filter(isScheduleEvent).map(event => [event.id, event]))
   return {
     events: ids.flatMap(id => byId.has(id) ? [byId.get(id)!] : []).sort(compareEventTime),
     missingIds: ids.filter(id => !byId.has(id)),
@@ -64,11 +70,7 @@ export function resolvePlannedEvents(ids: readonly string[], catalog: readonly C
 
 // Half-open intervals: 10:00-11:00 and 11:00-12:00 do not overlap.
 export function eventsOverlap(a: CampusEvent, b: CampusEvent): boolean {
-  if (a.id === b.id || a.date !== b.date) return false
-  const aStart = toMinutes(a.start), aEnd = toMinutes(a.end)
-  const bStart = toMinutes(b.start), bEnd = toMinutes(b.end)
-  return aStart !== null && aEnd !== null && bStart !== null && bEnd !== null &&
-    aStart < aEnd && bStart < bEnd && aStart < bEnd && bStart < aEnd
+  return overlapSpan(a, b) !== null
 }
 
 // One representative conflicting event per plan keeps a busy schedule's output

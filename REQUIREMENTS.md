@@ -1,5 +1,7 @@
 # SideQuest — M1 Walking Skeleton: User Requirements
 
+> **Historical M1 deliverable.** The text below preserves the original milestone and feedback history. The proposed M2 production integration follows `docs/MVP_TEAM_PLAYBOOK.md` and the current `README.md`: shared catalog posting and discovery, required host/description (up to 2000 description characters), California time, full-fit filtering, and device-local planned IDs. Removing a plan keeps the public event. Anonymous public deletion, the legacy 500-character cap and direct View-to-Model persistence are not current M2 behavior. See `docs/M2_INTEGRATION_VERIFICATION.md` for checks and limits. P4 is professor-approved and resolved.
+
 ## Purpose and original P3 feature grouping
 
 Feature grouping from P3: Determining whether an event fits.

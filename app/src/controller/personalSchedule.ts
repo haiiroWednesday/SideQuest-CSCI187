@@ -1,7 +1,7 @@
 // CONTROLLER: the View requests every plan read/change here, never in the Model.
-import { isCampusEvent, type CampusEvent } from '../model/events'
+import { type CampusEvent } from '../model/events'
 import {
-  addPlannedId, readPlannedIds, removePlannedId, resolvePlannedEvents,
+  isScheduleEvent, addPlannedId, readPlannedIds, removePlannedId, resolvePlannedEvents,
   savePlannedIds, scheduleConflicts, PLANNED_IDS_KEY,
   MAX_PLANNED_EVENTS, SCHEDULE_LIMIT_MESSAGE,
   type PlannedIdsState, type PlanStorage,
@@ -22,8 +22,8 @@ export type ScheduleResult = {
 }
 
 // This is a local-only catalog snapshot; plans store no event copies.
-// Future shared integration must resolve every saved ID with async getById(),
-// distinguish loading/errors from null, and include older events. See the
+// sharedSchedule.ts wraps this core with async getById() resolution,
+// distinguishes loading/errors from null, and includes older events. See the
 // EventCatalogPort handoff in docs/SEMBIYAN_SEARCH_SCHEDULE.md.
 export function createScheduleController(
   catalog: readonly CampusEvent[],
@@ -61,7 +61,7 @@ export function createScheduleController(
       // localStorage read/modify/write is best effort, not a transaction.
       const { state, storage } = current()
       if (state.blocked || !storage) return result(state, readError)
-      const event = catalog.find(item => item.id === id && isCampusEvent(item))
+      const event = catalog.find(item => item.id === id && isScheduleEvent(item))
       if (!event) return result(state, 'This event is unavailable. Refresh the event list before adding it.')
       const next = addPlannedId(state.ids, id)
       if (next.error) return result(state, next.error)

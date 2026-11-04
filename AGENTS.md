@@ -22,8 +22,9 @@
 - Anyone may post/browse events; **no account, login, or USER table**.
 - Every public Event has `id,title,hostName,description,location,date,start,end`. `hostName` is unverified display text, **not** a user ID.
 - Use M1-compatible `date` (YYYY-MM-DD) and `start,end` (HH:mm) on the **same day**, with `start < end`. No overnight events in this MVP.
-- One **shared public EventCatalog**; hosted storage is **planned** with Supabase but is **not yet implemented**.
+- One **shared public EventCatalog**; Supabase supplies shared storage when configured; an explicitly labeled browser-only adapter is used otherwise. The proposed M2 integration routes all production screens through this catalog.
 - **Schedule** stores planned Event IDs **on the current device**. Removing a plan does not delete the public Event.
+- Event dates and times use America/Los_Angeles. New-post validation belongs in the Model; ended events remain readable by ID for Schedule.
 - Free-time matching requires the **entire** event to fit, inclusive boundaries. No partial matching or travel feasibility.
 - Out of scope: user profiles, cost, registration enforcement, saved availability, cross-device schedules, and extra tables for anonymous users.
 

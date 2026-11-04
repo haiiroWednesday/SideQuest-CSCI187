@@ -41,7 +41,7 @@ async function fillAndPost(user: User, values: { title?: string; hostName?: stri
 
 const postedList = () => within(screen.getByRole('region', { name: /posted events/i }))
 
-beforeEach(() => window.localStorage.clear())
+beforeEach(() => { window.localStorage.clear(); window.location.hash = '' })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 describe('PostEventForm', () => {
@@ -143,13 +143,16 @@ describe('App with the browser-only fallback catalog', () => {
     render(<App />)
     expect(screen.getByTestId('catalog-not-shared').textContent).toContain('this browser only')
 
+    await user.click(screen.getByRole('link', { name: 'Post an event' }))
+    await waitFor(() => expect(document.querySelector('.event-form')).toBeTruthy())
     await fillAndPost(user)
     expect((await screen.findByRole('status')).textContent).toContain('this browser only')
 
     cleanup() // "refresh": unmount, keep localStorage, mount a brand-new App
+    window.location.hash = '#discover'
     render(<App />)
-    await waitFor(() => expect(postedList().getByText('Photo Walk')).toBeTruthy())
-    expect(postedList().getByText('Hosted by SCU Photography Club')).toBeTruthy()
+    expect(await screen.findByRole('button', { name: 'View details for Photo Walk' })).toBeTruthy()
+    expect(screen.getAllByText('SCU Photography Club').length).toBeGreaterThan(0)
     expect(window.localStorage.getItem(LOCAL_CATALOG_KEY)).toContain('Photo Walk')
     expect(window.localStorage.getItem(M1_STORAGE_KEY)).toBeNull()
   })
