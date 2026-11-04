@@ -1,6 +1,6 @@
 # SideQuest Campus Index: Cynthia UI foundation
 
-**Status:** feature-branch UI slice, merged up to date with `master` (PR #15 Schedule, PR #18 EventCatalog, PR #19 posting) and running on those controllers in a preview page. `App.tsx` is unchanged; Devonny integrates the views there. The source of truth for M2 behavior remains the [MVP Team Playbook](MVP_TEAM_PLAYBOOK.md).
+**Status:** feature-branch UI slice, merged up to date with `master` (PR #15 Schedule, PR #18 EventCatalog, PR #19 posting, PR #22 release hardening) and running on those controllers in a preview page. `App.tsx` is unchanged; Devonny integrates the views there. The source of truth for M2 behavior remains the [MVP Team Playbook](MVP_TEAM_PLAYBOOK.md).
 
 ## Preview it
 
@@ -12,7 +12,7 @@ npm run dev
 ```
 
 1. Open **http://localhost:5173/** and post an event with the existing form (Daven's posting controller).
-2. Open **http://localhost:5173/discover-preview.html**: the event is there, read through `loadPostedEvents(catalog)`. Without `app/.env.local` this is the labeled browser-only catalog; with Supabase settings it is the shared one.
+2. Open **http://localhost:5173/discover-preview.html**: the event is there, read through the shared `useCatalogEvents(catalog)` snapshot. Without `app/.env.local` this is the labeled browser-only catalog; with Supabase settings it is the shared one.
 3. Set **When are you free?**: only events that fit the whole window are listed, with **Show all events** to browse everything. **+ Plan to attend** goes through Sembiyan's Schedule controller.
 4. **My Schedule** (`#schedule`) shows Next up, conflicts, plans whose details are unavailable, recovery for unreadable storage, and the plan limit notice, all from his controller.
 5. **http://localhost:5173/scenario-lab.html** (dev only) shows catalog data, Controller output and both views side by side, with a draggable campus clock.
@@ -34,7 +34,9 @@ The View never reads the clock, compares dates or times, touches storage or impo
 ### Wiring it into the real app (Devonny owns `App.tsx`)
 
 ```tsx
-const plans = usePersonalSchedule(catalogEvents)            // Sembiyan
+const posted = useCatalogEvents(connection.catalog)                     // Daven's catalog snapshot
+const plans = usePersonalSchedule(connection.catalog, posted.events, posted.revision, page === 'schedule')  // Sembiyan
+const { events: catalogEvents, loading, error } = posted
 const [freeWindow, setFreeWindow] = useState({ date: '', start: '', end: '' })
 const [showAll, setShowAll] = useState(false)
 const discover = useDiscoverScreen({ events: catalogEvents, loading, error, plannedIds: plans.schedule.ids, freeWindow, showAll })
@@ -42,9 +44,9 @@ const discover = useDiscoverScreen({ events: catalogEvents, loading, error, plan
   onFreeWindowChange={w => { setFreeWindow(w); setShowAll(false) }} onShowAllChange={setShowAll}
   routes={{ discover: '/', schedule: '#schedule', post: '#post' }} />
 
-const schedule = useScheduleScreen(plans.schedule, { loading, error })
-<ScheduleTrailView screen={schedule} onRemove={plans.remove} onRecover={plans.recover} onRetry={reloadCatalog}
-  message={plans.message} warning={plans.warning} error={plans.error} routes={...} />
+const schedule = useScheduleScreen(plans.schedule, { loading: loading || plans.loading, error })
+<ScheduleTrailView screen={schedule} onRemove={plans.remove} onRecover={plans.recover} onRetry={() => { posted.refresh(); plans.retryLookup() }}
+  message={plans.message} warning={plans.warning ?? plans.lookupError} error={plans.error} routes={...} />
 ```
 
 ### Behavior decisions in this pass (from the two reviews)
@@ -54,9 +56,10 @@ const schedule = useScheduleScreen(plans.schedule, { loading, error })
 - **Unavailable plans.** Said only after the catalog has answered. While it loads: "Looking up your planned events"; if it fails: "Your plans are safe, but their details could not be loaded" with **Try again**. A plan the loaded catalog does not contain is **An event you planned · It may have ended or been taken down**.
 - **Phone details** use `<dialog>.showModal()`: focus stays inside, Escape closes, focus returns to the stub, and the closed sheet is out of the tab order.
 
-### Known issue for Daven and Sembiyan
+### Resolved during this pass
 
-`CATALOG_LIMITS.description` is 2000, but the Schedule controller resolves events with M1's `isCampusEvent`, which rejects descriptions over 500. A student cannot plan an event with a 501–2000 character description. `tests/catalog-to-screens.integration.test.ts` records this as an expected failure (`it.fails`); flip it to `it` once the limits agree.
+- The catalog/Schedule description-limit mismatch (2000 vs 500) was fixed on `master` in #22; `tests/catalog-to-screens.integration.test.ts` now plans a 501-character event successfully.
+- Plans whose events have ended now resolve through `getById` (#22), so they appear under **Already happened** instead of as unavailable.
 
 ### Still open for the team
 

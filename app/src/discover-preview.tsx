@@ -3,14 +3,15 @@
 // otherwise the labeled browser-only fallback) and Sembiyan's Schedule
 // controller. Post from the main app page; the event shows up here.
 // App.tsx is not changed; Devonny integrates these views there.
-import { StrictMode, useCallback, useEffect, useState } from 'react'
+import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { connectEventCatalog, loadPostedEvents, type CampusEvent } from './controller/postEvent'
+import { browserCatalogStorage, connectEventCatalog } from './controller/postEvent'
 import { DiscoverView, useDiscoverScreen, type FreeWindow } from './view/DiscoverView'
 import { ScheduleTrailView, useScheduleScreen } from './view/ScheduleTrailView'
 import { usePersonalSchedule } from './view/PersonalSchedule'
+import { useCatalogEvents } from './view/useCatalogEvents'
 
-const connection = connectEventCatalog(import.meta.env, window.localStorage)
+const connection = connectEventCatalog(import.meta.env, browserCatalogStorage)
 const routes = { discover: '/discover-preview.html', schedule: '/discover-preview.html#schedule', post: '/#create-heading' }
 const where = connection.shared
   ? 'Design preview on the shared event catalog. Plans stay on this device.'
@@ -24,28 +25,25 @@ function Preview() {
     return () => window.removeEventListener('hashchange', go)
   }, [])
 
-  // The catalog read is asynchronous: loading, an honest error with retry, or the list.
-  const [catalog, setCatalog] = useState<{ events: CampusEvent[]; loading: boolean; error: string | null }>({ events: [], loading: true, error: null })
-  const load = useCallback(() => {
-    setCatalog(c => ({ ...c, loading: true, error: null }))
-    loadPostedEvents(connection.catalog).then(result => setCatalog({ events: result.events, loading: false, error: result.error }))
-  }, [])
-  useEffect(load, [load])
+  // The same catalog snapshot App.tsx uses: loading, an honest error with retry, or the list.
+  const catalog = useCatalogEvents(connection.catalog)
+  const load = () => { void catalog.refresh() }
 
-  // Sembiyan's controller: plan IDs on this device, resolved against the catalog list.
-  const plans = usePersonalSchedule(catalog.events)
+  // Sembiyan's controller: plan IDs on this device; on My Schedule each one is
+  // looked up by ID, so plans whose events have ended still resolve.
+  const plans = usePersonalSchedule(connection.catalog, catalog.events, catalog.revision, page === 'schedule')
   const [freeWindow, setFreeWindow] = useState<FreeWindow>({ date: '', start: '', end: '' })
   const [showAll, setShowAll] = useState(false)
   const changeWindow = (next: FreeWindow) => { setFreeWindow(next); setShowAll(false) }
 
   const discover = useDiscoverScreen({ events: catalog.events, loading: catalog.loading, error: catalog.error, plannedIds: plans.schedule.ids, freeWindow, showAll })
-  const schedule = useScheduleScreen(plans.schedule, catalog)
+  const schedule = useScheduleScreen(plans.schedule, { loading: catalog.loading || plans.loading, error: catalog.error })
 
   return (
     <>
       {page === 'schedule' ? (
-        <ScheduleTrailView screen={schedule} routes={routes} onRemove={plans.remove} onRecover={plans.recover} onRetry={load}
-          message={plans.message} warning={plans.warning} error={plans.error} />
+        <ScheduleTrailView screen={schedule} routes={routes} onRemove={plans.remove} onRecover={plans.recover} onRetry={() => { load(); plans.retryLookup() }}
+          message={plans.message} warning={plans.warning ?? plans.lookupError} error={plans.error} />
       ) : (
         <DiscoverView screen={discover} routes={routes} onRetry={load} onPlan={plans.add}
           onFreeWindowChange={changeWindow} onShowAllChange={setShowAll} sourceNote={where} />

@@ -43,12 +43,8 @@ describe('catalog → schedule → screens', () => {
     expect((await catalog.listUpcoming()).map(e => e.id)).toContain(a.id)
   })
 
-  // KNOWN BUG between two merged modules, recorded here rather than patched in
-  // someone else's file: the catalog accepts descriptions up to 2000 characters
-  // (CATALOG_LIMITS), but the Schedule controller resolves events with M1's
-  // isCampusEvent, which rejects descriptions over 500. Planning such an event
-  // fails. Flip `it.fails` to `it` once the limits agree.
-  it.fails('lets a student plan an event whose description is 501 characters', async () => {
+  // Was a mismatch (catalog allowed 2000 characters, the Schedule check 500); #22 aligned them.
+  it('lets a student plan an event whose description is 501 characters', async () => {
     const catalog = createEventCatalog(createInMemoryEventTable(), () => NOW)
     const long = await catalog.create(draft({ description: 'x'.repeat(501) }))
     const plans = createScheduleController(await catalog.listUpcoming(), () => memoryStorage())
