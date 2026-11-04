@@ -34,13 +34,14 @@ flowchart LR
 
 **Done means** this journey works with real application state, including validation, empty states, and a refresh. **Not done** means a pretty page with hard-coded events, a demo where a post never reaches another browser, or a Schedule that deletes the public event when you remove a plan.
 
-### Where we are today
+### Current verified code status — November 4, 2026
 
-- `app/src/App.tsx` currently handles a create form, free-time search, matching cards, and a list of the **events created in the current browser**.
-- `app/src/controller/findEvents.ts` has `createEvent` and `findEvents`. `app/src/model/events.ts` has `CampusEvent`, `fitsFully`, date/time checks, and local-storage helpers.
-- Current `master` has **26 passing tests in 11 files** and a passing React build (verified 27 October). The test suite proves the M1 slice, **not** the future shared catalog or Personal Schedule.
-- The default branch is **`master`**, not `main`. App commands run inside `app/`.
-- The **current selected P5 coursework ER** and its **editable Google Drive draw.io link** are preserved below, distinct from the small M2 implementation contract and the classroom photograph.
+- **Merged:** M1 corrections [#12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12), personal Schedule [#15](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/15), EventCatalog contract/adapters [#18](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/18), posting [#19](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/19), and Catalog → Search → Schedule wiring [#20](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/20).
+- **Code works with a catalog interface:** post an event → load/browse → full-fit match → plan locally → revisit/remove plan. The fallback is browser-only; **real Supabase setup, permissions and two-browser demonstration remain unverified**, despite passing simulated tests.
+- **Historical audit:** PR #13 from November 1 predates M2 merges; do not overwrite the new `App.tsx` with its old M1-only version. Compatible fixes are being ported and tested in a separate current branch. Claude Console teammate guide PR #16 is merged.
+- **Design:** Cynthia's Campus Index UI branch PR #17 was closed without merging and remains available for later integration. Devonny's catalog browsing/detail contribution should be checked with the teammate.
+- **Current authoritative deliverables:** [M2 requirements](../REQUIREMENTS.md), [M2 specifications](../SPECIFICATIONS.md), and [lecture 01–16 compliance audit](COURSE_LECTURES_01_TO_16_COMPLIANCE_AUDIT.md). Archived M1 requirements/specifications remain under `docs/M1_HISTORICAL_*.md`.
+- **M2 Part 1 assignment** required working MVP, unit tests, **current MVP** README/requirements/specifications and updated CRC/ER. Due November 2, beginning of class. No GitHub audit can confirm the Camino submission or any extension.
 
 ## 1. Start from the course materials, not assumptions
 
@@ -50,7 +51,7 @@ Your team's [P4 architecture Google Doc](https://docs.google.com/document/d/11MK
 
 The [original P3 requirements](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit) were broader, but the team chose the smaller P4 implementation. Professor Kandel suggested create → find → save/revisit as a useful end-to-end path and marked that suggestion optional. Our personal Schedule supplies that simple list of plans. The current P5 coursework drawing contains USER and saved AVAILABILITY_WINDOW concepts, but those records are **not authorized as current M2 code features** unless the team explicitly expands scope.
 
-**One professor comment to resolve:** on the [P4 submission](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit), she said the EventCatalog–Event relationship should use **composition (filled diamond)** because posted Events live in the catalog. The current drawing depicts aggregation and says records outlive the catalog. Discuss the intended lifecycle and correct the diagram/documentation consistently. That is a diagram-and-ownership decision, not an invitation to delete events when somebody removes them from a personal Schedule.
+**P4 diagram status, corrected November 4:** The original P4 instructor comment suggested composition for EventCatalog → Event, but the team subsequently reported that Professor Kandel confirmed its existing P4 diagram is acceptable. That later confirmation is recorded in the [PR #13 review discussion](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/13). Treat the earlier filled-diamond advice as superseded; do not change the approved diagram based on this older note.
 
 ### The settled MVP rules — do not reopen these inside coding prompts
 
@@ -166,7 +167,7 @@ export interface SchedulePort {
 }
 ```
 
-**Existing code is not migrated yet.** M1 currently uses `CampusEvent` with `id,title,location,date,start,end`, a synchronous `createEvent` controller, and the browser-only `sidequest.created-events.v1` store. Add description and hostName carefully; update tests, form, and display consumers in coordinated PRs. Do not delete passing tests. Catalog calls are now asynchronous; adapt UI loading and errors. Catalog IDs come from the database, not from a random string chosen by a browser controller.
+**Current implementation:** The new M2 `CampusEvent` contract, required host name/description, catalog store adapters, posting form and integrated async Search/Schedule consumers are implemented and merged (#18–#20). The historical M1 `CampusEvent` and browser-only `sidequest.created-events.v1` list remain for compatibility. Public sharing still needs a real configured Supabase instance and independent two-browser verification.
 
 **Timezone rule:** treat `date` and `HH:mm` as the wall-clock date and time for Santa Clara campus (`America/Los_Angeles`). Keep the database `date`/`time without time zone` fields as local calendar fields. Do not round-trip them through `Date.toISOString()`, which can shift the event date. Overnight/DST-spanning events are deferred. Validate the full-fit rule as before with inclusive outer boundaries.
 
