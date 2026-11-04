@@ -81,7 +81,8 @@ describe('selected-event controller: validation and timeout boundaries', () => {
 describe('useBrowseDetail: asynchronous selection lifecycle', () => {
   it('does not request details before the student selects an event, and retry is initially harmless', () => {
     const getById = vi.fn(async () => sample)
-    const { result } = renderHook(() => useBrowseDetail(port(getById)))
+    const stableCatalog = port(getById)
+    const { result } = renderHook(() => useBrowseDetail(stableCatalog))
     expect(result.current.state).toBeNull()
     act(() => { result.current.retry() })
     expect(getById).not.toHaveBeenCalled()
@@ -89,7 +90,8 @@ describe('useBrowseDetail: asynchronous selection lifecycle', () => {
 
   it('shows loading before resolution and preserves the requested ID', async () => {
     const pending = deferred<CampusEvent | null>()
-    const { result } = renderHook(() => useBrowseDetail(port(() => pending.promise)))
+    const stableCatalog = port(() => pending.promise)
+    const { result } = renderHook(() => useBrowseDetail(stableCatalog))
     act(() => { result.current.open(FIRST) })
     expect(result.current.state).toEqual({ id: FIRST, status: 'loading' })
     await act(async () => { pending.resolve(sample) })
@@ -99,7 +101,8 @@ describe('useBrowseDetail: asynchronous selection lifecycle', () => {
   it('ignores a stale failed request after a different event is successfully selected', async () => {
     const first = deferred<CampusEvent | null>()
     const getById = (id: string) => id === FIRST ? first.promise : Promise.resolve({ ...sample, id: SECOND })
-    const { result } = renderHook(() => useBrowseDetail(port(getById)))
+    const stableCatalog = port(getById)
+    const { result } = renderHook(() => useBrowseDetail(stableCatalog))
     act(() => { result.current.open(FIRST); result.current.open(SECOND) })
     await waitFor(() => expect(result.current.state).toMatchObject({ id: SECOND, status: 'ready' }))
     await act(async () => { first.reject(Error('offline')) })
@@ -110,7 +113,8 @@ describe('useBrowseDetail: asynchronous selection lifecycle', () => {
     const older = deferred<CampusEvent | null>()
     const newer = deferred<CampusEvent | null>()
     const getById = vi.fn().mockImplementationOnce(() => older.promise).mockImplementationOnce(() => newer.promise)
-    const { result } = renderHook(() => useBrowseDetail(port(getById)))
+    const stableCatalog = port(getById)
+    const { result } = renderHook(() => useBrowseDetail(stableCatalog))
     act(() => { result.current.open(FIRST) })
     act(() => { result.current.retry() })
     await act(async () => { newer.resolve({ ...sample, description: 'Confirmed after retry' }) })
