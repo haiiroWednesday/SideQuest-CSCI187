@@ -1,206 +1,323 @@
-// VIEW: Present events passed in by a controller/catalog consumer.
-// No storage, matching, authentication, or server calls belong here.
-import { useState } from 'react'
-import { displayDate, displayTime, type CampusEvent } from '../controller/findEvents'
+// VIEW: draw the Discover screen the Controller prepared. No storage, matching,
+// clock reads, date or time comparisons, or Model imports belong here.
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
+import {
+  presentDiscover, type DiscoverScreen, type FreeWindow, type ScreenEvent, type StubModel,
+} from '../controller/presentScreens'
+import '@fontsource/instrument-serif/400.css'
+import '@fontsource/instrument-serif/400-italic.css'
+import '@fontsource-variable/instrument-sans/wdth.css'
 import './discover.css'
+import logoUrl from './assets/sidequest-logo-red.svg'
+import drawingUrl from './assets/mission-arcade-trail.svg'
 
-export type DiscoverEvent = CampusEvent & { hostName?: string }
+export type { FreeWindow } from '../controller/presentScreens'
+export type DiscoverEvent = ScreenEvent
 
 export type SideQuestRoutes = {
   discover?: string
-  find?: string
   schedule?: string
   post?: string
 }
 
-export type DiscoverViewProps = {
-  events: readonly DiscoverEvent[]
-  loading?: boolean
-  error?: string | null
-  onRetry?: () => void
-  onPlan?: (eventId: string) => void
-  plannedEventIds?: readonly string[]
-  routes?: SideQuestRoutes
-  sourceNote?: string
+/** Re-render every half minute so clock-driven labels (Today, Happening now, Next up) stay true while a tab is open. */
+export function useMinuteTick(ms = 30_000): number {
+  const [tick, setTick] = useState(0)
+  useEffect(() => {
+    const id = window.setInterval(() => setTick(t => t + 1), ms)
+    return () => window.clearInterval(id)
+  }, [ms])
+  return tick
 }
 
-const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
-
-function shortDate(date: string): { month: string; day: string } {
-  const [, month, day] = date.split('-')
-  const monthIndex = Number(month) - 1
-  return { month: MONTHS[monthIndex] ?? 'DATE', day: day ?? '—' }
-}
-
-function timeRange(event: DiscoverEvent): string {
-  return `${displayTime(event.start)} – ${displayTime(event.end)}`
-}
-
-// Original geometric sketch of a mission arcade and tower, not an SCU logo.
-function CampusLineArt() {
-  return (
-    <svg aria-hidden="true" className="sq-campus-drawing" viewBox="0 0 430 178" fill="none">
-      <path d="M24 161H407M88 161V114H381V161M127 114V91H374V114M184 91V35H235V91M178 35L210 15L241 35M207 15V5M197 6H218" />
-      <path d="M193 49H225V91H193ZM205 58H213V77H205ZM262 91V74H350V91M273 74L306 54L339 74" />
-      <path d="M115 161V132Q134 113 153 132V161M173 161V132Q192 113 211 132V161M231 161V132Q250 113 269 132V161M289 161V132Q308 113 327 132V161M347 161V132Q364 116 381 132V161" />
-      <path d="M29 161V68M29 88C4 52 7 39 29 65M29 88C46 45 69 46 44 85M29 83C-1 77 -3 61 29 76M29 77C38 41 48 31 31 67M29 91C55 68 70 81 43 92" />
-      <path d="M403 161V86M403 103C377 70 375 53 403 85M403 102C426 68 445 76 411 101M403 94C382 90 379 78 401 91" />
-    </svg>
-  )
+/** Ask the Controller for the Discover screen; it reads the clock, the view does not. */
+export function useDiscoverScreen(input: Omit<Parameters<typeof presentDiscover>[0], 'now'>): DiscoverScreen {
+  useMinuteTick()
+  return presentDiscover(input)
 }
 
 export function SideQuestHeader({
   routes = {},
   active = 'discover',
+  plannedCount = 0,
 }: {
   routes?: SideQuestRoutes
-  active?: 'discover' | 'find' | 'schedule' | 'post'
+  active?: 'discover' | 'schedule' | 'post'
+  /** Shown as a badge on My Schedule, so a student sees where a planned event went. */
+  plannedCount?: number
 }) {
+  const current = (key: typeof active) => (active === key ? 'page' : undefined)
   return (
     <header className="sq-masthead">
       <div className="sq-masthead-inner">
-        <a className="sq-brand" href={routes.discover ?? '/discover-preview.html'} aria-label="SideQuest Discover">
-          SideQuest<span className="sq-brand-star" aria-hidden="true">✦</span>
+        <a className="sq-brand" href={routes.discover ?? '/discover-preview.html'}>
+          <img src={logoUrl} alt="SideQuest" width={158} height={86} />
         </a>
-        <span className="sq-brand-divider" aria-hidden="true" />
-        <span className="sq-brand-context">CAMPUS EVENTS · SANTA CLARA</span>
         <nav aria-label="SideQuest primary" className="sq-nav">
-          <a aria-current={active === 'discover' ? 'page' : undefined} className={active === 'discover' ? 'sq-nav-active' : undefined} href={routes.discover ?? '/discover-preview.html'}>Discover</a>
-          {routes.find && <a aria-current={active === 'find' ? 'page' : undefined} className={active === 'find' ? 'sq-nav-active' : undefined} href={routes.find}>Find a time</a>}
-          {routes.schedule && <a aria-current={active === 'schedule' ? 'page' : undefined} className={active === 'schedule' ? 'sq-nav-active' : undefined} href={routes.schedule}>My Schedule</a>}
-          {routes.post && <a aria-current={active === 'post' ? 'page' : undefined} className={active === 'post' ? 'sq-nav-post sq-nav-active' : 'sq-nav-post'} href={routes.post}>Post an event <span aria-hidden="true">↗</span></a>}
+          <a aria-current={current('discover')} className="sq-tab sq-tab-discover" href={routes.discover ?? '/discover-preview.html'}>
+            <i className="sq-ic" aria-hidden="true" /><span>Discover</span>
+          </a>
+          {routes.schedule && (
+            <a aria-current={current('schedule')} className="sq-tab sq-tab-schedule" href={routes.schedule}>
+              <i className="sq-ic" aria-hidden="true" /><span>My Schedule</span>
+              {plannedCount > 0 && <b className="sq-badge" aria-hidden="true">{plannedCount}</b>}
+            </a>
+          )}
+          {routes.post && (
+            <a aria-current={current('post')} className="sq-post" href={routes.post}>
+              <i className="sq-ic" aria-hidden="true" /><span>Post an event</span>
+            </a>
+          )}
         </nav>
       </div>
     </header>
   )
 }
 
-export function DiscoverView({
-  events,
-  loading = false,
-  error = null,
-  onRetry,
-  onPlan,
-  plannedEventIds = [],
-  routes,
-  sourceNote,
-}: DiscoverViewProps) {
+/** One ticket stub. Shared by Discover and My Schedule. */
+export function EventStub({ stub, selected = false, dim = false, onSelect, children }: {
+  stub: StubModel
+  selected?: boolean
+  /** finished plans only; Discover never fades an event a student can act on */
+  dim?: boolean
+  onSelect?: (event: MouseEvent<HTMLButtonElement>) => void
+  children?: ReactNode
+}) {
+  const classes = ['sq-stub', selected && 'sq-stub-selected', dim && 'sq-stub-dim', stub.live && `sq-stub-${stub.live.kind}`].filter(Boolean).join(' ')
+  const body = (
+    <>
+      <span className="sq-stub-time">
+        <b>{stub.start.time}<i>{stub.start.ampm}</i></b>
+        <small>to {stub.endText}</small>
+        <em>{stub.durationText}</em>
+      </span>
+      <span className="sq-stub-body">
+        <strong>{stub.title}</strong>
+        <span className="sq-by">
+          {stub.host && <><b>{stub.host}</b><i> · </i></>}
+          <span>{stub.location}</span>
+        </span>
+        {stub.live && <span className={`sq-live sq-live-${stub.live.kind}`}>{stub.live.text}</span>}
+        {children}
+      </span>
+    </>
+  )
+  return onSelect ? (
+    <button type="button" className={classes} aria-pressed={selected} aria-label={`View details for ${stub.title}`} onClick={onSelect}>{body}</button>
+  ) : (
+    <div className={classes}>{body}</div>
+  )
+}
+
+export function DayBubble({ dow, dayNumber, monthTag }: { dow: string; dayNumber: number; monthTag: string | null }) {
+  return (
+    <div className="sq-bubble" aria-hidden="true">
+      <small>{dow}</small><b>{dayNumber}</b>{monthTag && <small className="sq-bubble-month">{monthTag}</small>}
+    </div>
+  )
+}
+
+export type DiscoverViewProps = {
+  screen: DiscoverScreen
+  onRetry?: () => void
+  onPlan?: (eventId: string) => void
+  onFreeWindowChange?: (window: FreeWindow) => void
+  /** with a window set: true lists every event, false lists only what fits */
+  onShowAllChange?: (showAll: boolean) => void
+  routes?: SideQuestRoutes
+  sourceNote?: string
+}
+
+const PHONE = '(max-width: 760px)'
+const isPhone = () => typeof window.matchMedia === 'function' && window.matchMedia(PHONE).matches
+
+/** The picked event as a ticket. Rendered beside the trail on wide screens and inside the phone dialog. */
+function TicketCard({ stub, onPlan, titleId }: { stub: StubModel; onPlan?: (id: string) => void; titleId: string }) {
+  return (
+    <>
+      {stub.live && <span className={`sq-nx sq-live-${stub.live.kind}`}>{stub.live.text}</span>}
+      <div className="sq-sticker-top">
+        <div className="sq-sticker-time">
+          <b>{stub.start.time}</b><i>{stub.start.ampm}</i>
+          <span>until {stub.endText} · {stub.durationText}</span>
+        </div>
+        <div className="sq-sticker-day" aria-hidden="true">
+          <small>{stub.dow}</small>
+          <b>{stub.dayNumber}</b>
+          <small>{stub.month}</small>
+        </div>
+      </div>
+      <h2 id={titleId}>{stub.title}</h2>
+      <dl className="sq-facts">
+        <dt>Host</dt>
+        <dd className={stub.host ? undefined : 'sq-unset'}>{stub.host ?? 'Host not provided'}</dd>
+        <dt>Where</dt><dd>{stub.location}</dd>
+        <dt>Date</dt><dd>{stub.dateText}</dd>
+      </dl>
+      <p className="sq-sticker-desc">{stub.description ?? 'No description was provided.'}</p>
+      {onPlan && (
+        <button className="sq-plan-button" type="button" disabled={stub.planned} onClick={() => onPlan(stub.id)}>
+          {stub.planned ? 'In My Schedule' : '+ Plan to attend'}
+        </button>
+      )}
+    </>
+  )
+}
+
+export function DiscoverView({ screen, onRetry, onPlan, onFreeWindowChange, onShowAllChange, routes, sourceNote }: DiscoverViewProps) {
   const [requestedId, setRequestedId] = useState<string | null>(null)
-  const selectedIndex = Math.max(0, events.findIndex(event => event.id === requestedId))
-  const selected = events[selectedIndex] ?? null
-  const planned = new Set(plannedEventIds)
+  const stubs = screen.days.flatMap(day => day.events)
+  // Keep the student's pick while it is still listed; otherwise fall back to the first event shown.
+  const selected = stubs.find(stub => stub.id === requestedId) ?? stubs[0] ?? null
+  const ready = screen.status === 'ready'
+  const free = screen.freeWindow
+
+  // Phones show the ticket in a native modal <dialog>: it traps focus, closes on
+  // Escape, and is out of the tab order while closed. Focus returns to the stub.
+  const dialog = useRef<HTMLDialogElement>(null)
+  const opener = useRef<HTMLButtonElement | null>(null)
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const openSheet = (button: HTMLButtonElement) => {
+    if (!isPhone()) return
+    opener.current = button
+    setSheetOpen(true)
+  }
+  useEffect(() => {
+    const d = dialog.current
+    if (!d || !sheetOpen || d.open) return
+    if (typeof d.showModal === 'function') d.showModal()
+    else d.setAttribute('open', '')
+  }, [sheetOpen])
+  const closeSheet = () => {
+    const d = dialog.current
+    if (d?.open) { if (typeof d.close === 'function') d.close(); else d.removeAttribute('open') }
+    setSheetOpen(false)
+    opener.current?.focus()
+  }
+
+  const field = (key: keyof FreeWindow, label: string, type: 'date' | 'time') => (
+    <label className={`sq-free-field${free?.values[key] ? ' sq-set' : ''}`}>
+      <span>{label}</span>
+      <input
+        type={type}
+        value={free?.values[key] ?? ''}
+        onChange={event => free && onFreeWindowChange?.({ ...free.values, [key]: event.target.value })}
+      />
+    </label>
+  )
+  const clear = () => onFreeWindowChange?.({ date: '', start: '', end: '' })
 
   return (
     <div className="sq-discover-page">
-      <SideQuestHeader routes={routes} />
+      <SideQuestHeader routes={routes} plannedCount={screen.plannedCount} />
       <main className="sq-main" id="content">
-        <div className="sq-issue"><span>THE CAMPUS INDEX</span><span className="sq-issue-rule" /></div>
         <section className="sq-hero" aria-labelledby="sq-discover-title">
-          <div className="sq-hero-heading">
-            <h1 id="sq-discover-title">More to do.<br /><em>Right here.</em></h1>
-            <p>Explore student-posted events, discover something worthwhile, and plan what comes next.</p>
-          </div>
-          <CampusLineArt />
+          <h1 id="sq-discover-title">More to do. <em>Right here.</em></h1>
+          {/* Original drawing, not an SCU mark. The red trail ending in an X is the side quest. */}
+          <img className="sq-campus-drawing" src={drawingUrl} alt="" aria-hidden="true" />
         </section>
 
-        <div className="sq-index">
-          <div className="sq-index-label" aria-hidden="true">
-            <span className="sq-gold-mark" />
-            <span>01</span>
-            <strong>CAMPUS<br />EVENTS</strong>
-          </div>
-          <section className="sq-results" aria-labelledby="sq-events-heading">
-            <div className="sq-results-heading">
-              <h2 id="sq-events-heading">Discover events</h2>
-              {!loading && !error && <span>{events.length} {events.length === 1 ? 'event' : 'events'}</span>}
-            </div>
-            {loading ? (
-              <p className="sq-message" role="status">Loading campus events…</p>
-            ) : error ? (
-              <div className="sq-message sq-message-error" role="alert">
-                <p>Events could not be loaded. {error}</p>
-                {onRetry && <button type="button" className="sq-text-button" onClick={onRetry}>Try again</button>}
-              </div>
-            ) : events.length === 0 ? (
-              <div className="sq-message">
-                <h3>No events to show yet.</h3>
-                <p>Once events are posted, they will appear here.</p>
-                {routes?.post && <a className="sq-text-link" href={routes.post}>Post an event</a>}
-              </div>
-            ) : (
-              <ol className="sq-event-list" aria-label="Campus events">
-                {events.map(event => {
-                  const date = shortDate(event.date)
-                  return (
-                    <li key={event.id}>
-                      <button
-                        type="button"
-                        className={`sq-event-row${selected?.id === event.id ? ' sq-event-row-selected' : ''}`}
-                        aria-pressed={selected?.id === event.id}
-                        aria-label={`View details for ${event.title}`}
-                        onClick={() => setRequestedId(event.id)}
-                      >
-                        <span className="sq-date-stamp">
-                          <strong>{date.month} {date.day}</strong>
-                          <span>{displayTime(event.start)}</span>
-                        </span>
-                        <span className="sq-event-summary">
-                          <strong>{event.title}</strong>
-                          <span>{event.hostName?.trim() || 'Host not provided'} · {event.location}</span>
-                          <span>{timeRange(event)}</span>
-                        </span>
-                        <span className="sq-row-arrow" aria-hidden="true">↗</span>
-                      </button>
-                    </li>
-                  )
-                })}
-              </ol>
-            )}
-            {routes?.find && (
-              <p className="sq-discover-next">
-                <span aria-hidden="true">↳</span> Have a free afternoon?{' '}
-                <a href={routes.find}>Find events that fit your entire window.</a>
-              </p>
-            )}
-          </section>
-          <aside className="sq-detail" aria-labelledby="sq-detail-title">
-            {selected && !loading && !error ? (
+        {free && onFreeWindowChange && (
+          <form className="sq-free" role="search" aria-label="When are you free?" onSubmit={event => event.preventDefault()}>
+            <span className="sq-free-label" aria-hidden="true">When are you free?</span>
+            {field('date', 'Free on', 'date')}
+            {field('start', 'from', 'time')}
+            {field('end', 'until', 'time')}
+            {free.canClear && <button type="button" className="sq-free-clear" onClick={clear}>✕ Clear</button>}
+            {free.error && <p className="sq-free-error" role="alert">{free.error}</p>}
+          </form>
+        )}
+
+        {free?.active && (screen.status === 'ready' || screen.status === 'nomatch') && (
+          <div className="sq-filter-bar" role="status">
+            {free.showingAll ? (
               <>
-                <div className="sq-detail-eyebrow">SELECTED EVENT / {String(selectedIndex + 1).padStart(2, '0')}</div>
-                <h2 id="sq-detail-title">{selected.title}</h2>
-                <dl className="sq-detail-grid">
-                  <dt>Host</dt><dd>{selected.hostName?.trim() || 'Host not provided'}</dd>
-                  <dt>Date</dt><dd>{displayDate(selected.date)}</dd>
-                  <dt>Time</dt><dd>{timeRange(selected)}</dd>
-                  <dt>Location</dt><dd>{selected.location}</dd>
-                </dl>
-                <h3 className="sq-detail-subheading">About the event</h3>
-                <p className="sq-detail-description">{selected.description?.trim() || 'No description was provided.'}</p>
-                {onPlan && (
-                  <button
-                    className="sq-plan-button"
-                    type="button"
-                    disabled={planned.has(selected.id)}
-                    onClick={() => onPlan(selected.id)}
-                  >
-                    {planned.has(selected.id) ? 'In My Schedule' : '+ Plan to attend'}
-                  </button>
-                )}
-                {onPlan && <p className="sq-detail-fine">Plans are saved on this device.</p>}
+                <span>Showing all events · <b>{free.fitText}</b> your window, {free.summary}</span>
+                {onShowAllChange && <button type="button" onClick={() => onShowAllChange(false)}>Show only what fits</button>}
               </>
             ) : (
-              <div className="sq-detail-placeholder">
-                <span className="sq-detail-eyebrow">EVENT DETAILS</span>
-                <h2 id="sq-detail-title">Your next discovery.</h2>
-                <p>Select an event to see its host, time, location and description.</p>
+              <>
+                <span>{free.fitCount ? <><b>{free.fitCount === 1 ? '1 event fits' : `${free.fitCount} events fit`}</b> {free.summary}</> : <b>Nothing fits {free.summary}</b>}</span>
+                {onShowAllChange && <button type="button" onClick={() => onShowAllChange(true)}>Show all events</button>}
+              </>
+            )}
+          </div>
+        )}
+
+        <div className="sq-board">
+          <section className="sq-results" aria-labelledby="sq-events-heading">
+            <h2 id="sq-events-heading" className="sq-visually-hidden">{screen.headingText}</h2>
+            {screen.status === 'loading' ? (
+              <p className="sq-message" role="status"><span className="sq-spinner" aria-hidden="true" />Loading campus events…</p>
+            ) : screen.status === 'error' ? (
+              <div className="sq-message sq-message-error" role="alert">
+                <h3>Events could not be loaded.</h3>
+                <p>{screen.errorMessage}</p>
+                {onRetry && <button type="button" className="sq-text-button" onClick={onRetry}>Try again</button>}
+              </div>
+            ) : screen.status === 'empty' ? (
+              <div className="sq-message sq-message-empty">
+                <h3>No events to show yet.</h3>
+                {routes?.post && <a className="sq-text-link" href={routes.post}>Post an event</a>}
+              </div>
+            ) : screen.status === 'nomatch' ? (
+              <div className="sq-message sq-message-empty">
+                <h3>No event fits all of {free?.summary}.</h3>
+                <p>An event has to start and end inside your free time. Try a longer window.</p>
+                <div className="sq-message-actions">
+                  {onShowAllChange && <button type="button" className="sq-text-button" onClick={() => onShowAllChange(true)}>See all upcoming events</button>}
+                  <button type="button" className="sq-text-button" onClick={clear}>Clear the window</button>
+                </div>
+              </div>
+            ) : (
+              <div className="sq-trail">
+                {screen.days.map(day => (
+                  <section key={day.date} aria-label={day.long} className={`sq-trail-day${day.isToday ? ' sq-today' : ''}`}>
+                    <DayBubble dow={day.dow} dayNumber={day.dayNumber} monthTag={day.monthTag} />
+                    <h3 className="sq-day" id={`sq-day-${day.date}`}><span>{day.tag}</span>{day.long}</h3>
+                    <ol className="sq-stubs">
+                      {day.events.map(stub => (
+                        <li key={stub.id}>
+                          <EventStub
+                            stub={stub}
+                            selected={selected?.id === stub.id}
+                            onSelect={event => { setRequestedId(stub.id); openSheet(event.currentTarget) }}
+                          >
+                            {stub.fit === 'fits' && <span className="sq-pill sq-pill-fit">Fits your window</span>}
+                            {stub.planned && <span className="sq-pill">In My Schedule</span>}
+                          </EventStub>
+                        </li>
+                      ))}
+                    </ol>
+                  </section>
+                ))}
+                {routes?.post && (!free?.active || free.showingAll) && (
+                  <p className="sq-endcap"><a href={routes.post}>That's everything coming up. Post something <span aria-hidden="true">→</span></a></p>
+                )}
               </div>
             )}
-          </aside>
+          </section>
+          {ready && selected && (
+            <aside className="sq-sticker" aria-labelledby="sq-detail-title">
+              <div className="sq-sticker-card" key={selected.id}>
+                <TicketCard stub={selected} onPlan={onPlan} titleId="sq-detail-title" />
+              </div>
+            </aside>
+          )}
         </div>
+        <dialog ref={dialog} className="sq-sheet" aria-labelledby="sq-sheet-title" onClose={() => { setSheetOpen(false); opener.current?.focus() }}
+          onClick={event => { if (event.target === event.currentTarget) closeSheet() }}>
+          {sheetOpen && selected && ready && (
+            <div className="sq-sticker-card">
+              <button type="button" className="sq-sheet-close" aria-label="Close details" onClick={closeSheet}>×</button>
+              <TicketCard stub={selected} onPlan={onPlan} titleId="sq-sheet-title" />
+            </div>
+          )}
+        </dialog>
         {sourceNote && <p className="sq-source-note">{sourceNote}</p>}
       </main>
       <footer className="sq-footer">
-        <span>SideQuest · A student-built campus discovery project</span>
+        <span>SideQuest</span>
         <span>Santa Clara · California</span>
       </footer>
     </div>

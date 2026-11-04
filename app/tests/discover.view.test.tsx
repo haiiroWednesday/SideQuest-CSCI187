@@ -1,9 +1,18 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { DiscoverView, type DiscoverEvent } from '../src/view/DiscoverView'
+import { DiscoverView, type DiscoverEvent, type DiscoverViewProps } from '../src/view/DiscoverView'
+import { presentDiscover } from '../src/controller/presentScreens'
+import { campusAt } from './helpers/campusTime'
 
 afterEach(cleanup)
+
+// The view only draws what the Controller prepares, so every render goes through presentDiscover
+// with a fixed campus clock: Thursday 11/7/2030 at 9:00am in Santa Clara.
+const NOW = campusAt('2030-11-07', '09:00')
+type Input = Omit<Parameters<typeof presentDiscover>[0], 'events' | 'now'>
+const draw = (events: DiscoverEvent[], input: Input = {}, props: Omit<DiscoverViewProps, 'screen'> = {}, now = NOW) =>
+  <DiscoverView screen={presentDiscover({ events, now, ...input })} {...props} />
 
 const events: DiscoverEvent[] = [
   {
@@ -18,25 +27,26 @@ const events: DiscoverEvent[] = [
   },
 ]
 
-describe('Discover View: Campus Index', () => {
+describe('Discover View: draws the Controller screen', () => {
   it('shows actual event fields, displays the selected event, and switches by ID', () => {
-    render(<DiscoverView events={events} />)
-    expect(screen.getByRole('heading', { name: 'Ceramics Workshop' })).toBeTruthy()
-    expect(screen.getByText('SCU Art Club')).toBeTruthy()
-    expect(screen.getByText('Try wheel-throwing.')).toBeTruthy()
-    expect(screen.getByText('Arts Building')).toBeTruthy()
+    render(draw(events))
+    const ticket = () => screen.getByRole('complementary')
+    expect(within(ticket()).getByRole('heading', { name: 'Ceramics Workshop' })).toBeTruthy()
+    expect(within(ticket()).getByText('SCU Art Club')).toBeTruthy()
+    expect(within(ticket()).getByText('Try wheel-throwing.')).toBeTruthy()
+    expect(within(ticket()).getByText('Arts Building')).toBeTruthy()
 
     const poetry = screen.getByRole('button', { name: 'View details for Poetry Reading' })
     expect(poetry.getAttribute('aria-pressed')).toBe('false')
     fireEvent.click(poetry)
     expect(poetry.getAttribute('aria-pressed')).toBe('true')
-    expect(screen.getByRole('heading', { name: 'Poetry Reading' })).toBeTruthy()
-    expect(screen.getByText('An afternoon of new poetry.')).toBeTruthy()
-    expect(screen.getByText('Student Literary Society')).toBeTruthy()
+    expect(within(ticket()).getByRole('heading', { name: 'Poetry Reading' })).toBeTruthy()
+    expect(within(ticket()).getByText('An afternoon of new poetry.')).toBeTruthy()
+    expect(within(ticket()).getByText('Student Literary Society')).toBeTruthy()
   })
 
   it('renders missing host/description honestly, and keeps plan controls hidden until integrated', () => {
-    render(<DiscoverView events={[{ ...events[0], hostName: undefined, description: undefined }]} />)
+    render(draw([{ ...events[0], hostName: undefined, description: undefined }]))
     expect(screen.getAllByText('Host not provided').length).toBeGreaterThan(0)
     expect(screen.getByText('No description was provided.')).toBeTruthy()
     expect(screen.queryByRole('button', { name: /Plan to attend/i })).toBeNull()
@@ -45,53 +55,155 @@ describe('Discover View: Campus Index', () => {
 
   it('does not conflate duplicate titles with event identity when planning', () => {
     const onPlan = vi.fn()
-    render(
-      <DiscoverView
-        events={[events[0], { ...events[0], id: 'another-ceramics', location: 'Studio 12' }]}
-        onPlan={onPlan}
-        plannedEventIds={['ceramics-1']}
-      />,
-    )
-    expect(screen.getByRole('button', { name: 'In My Schedule' }).hasAttribute('disabled')).toBe(true)
+    render(draw([events[0], { ...events[0], id: 'another-ceramics', location: 'Studio 12' }], { plannedIds: ['ceramics-1'] }, { onPlan }))
+    // Same title and time: the Controller orders them by ID, so 'another-ceramics' comes first.
     const choices = screen.getAllByRole('button', { name: 'View details for Ceramics Workshop' })
     expect(choices).toHaveLength(2)
     fireEvent.click(choices[1])
+    expect(screen.getByRole('button', { name: 'In My Schedule' }).hasAttribute('disabled')).toBe(true)
+    fireEvent.click(choices[0])
     fireEvent.click(screen.getByRole('button', { name: '+ Plan to attend' }))
     expect(onPlan).toHaveBeenCalledTimes(1)
     expect(onPlan).toHaveBeenCalledWith('another-ceramics')
   })
 
   it('has clear empty, loading, and error states without placeholder events', () => {
-    const { rerender } = render(<DiscoverView events={[]} routes={{ post: '/post' }} />)
+    const { rerender } = render(draw([], {}, { routes: { post: '/post' } }))
     expect(screen.getByText('No events to show yet.')).toBeTruthy()
     expect(screen.getAllByRole('link', { name: 'Post an event' }).some(link => link.getAttribute('href') === '/post')).toBe(true)
     expect(screen.queryByRole('button', { name: /View details for/ })).toBeNull()
 
-    rerender(<DiscoverView events={[]} loading />)
+    rerender(draw([], { loading: true }))
     expect(screen.getByRole('status').textContent).toContain('Loading campus events')
 
     const retry = vi.fn()
-    rerender(<DiscoverView events={[]} error="The network is unavailable." onRetry={retry} />)
+    rerender(draw([], { error: 'The network is unavailable.' }, { onRetry: retry }))
     expect(screen.getByRole('alert').textContent).toContain('network is unavailable')
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     expect(retry).toHaveBeenCalledOnce()
   })
 
-  it('uses real navigation links only when routes exist', () => {
-    render(<DiscoverView events={events} routes={{
-      discover: '/discover', find: '/find', schedule: '/schedule', post: '/post',
-    }} />)
+  it('uses real navigation links only when routes exist: Discover, My Schedule and Post', () => {
+    render(draw(events, { plannedIds: ['poetry-2'] }, { routes: { discover: '/discover', schedule: '/schedule', post: '/post' } }))
     const nav = screen.getByRole('navigation', { name: 'SideQuest primary' })
+    expect(within(nav).getAllByRole('link').map(link => link.textContent)).toEqual(['Discover', 'My Schedule1', 'Post an event'])
     expect(within(nav).getByRole('link', { name: 'Discover' }).getAttribute('aria-current')).toBe('page')
-    expect(within(nav).getByRole('link', { name: 'Find a time' }).getAttribute('href')).toBe('/find')
-    expect(within(nav).getByRole('link', { name: 'My Schedule' }).getAttribute('href')).toBe('/schedule')
+    expect(within(nav).getByRole('link', { name: /My Schedule/ }).getAttribute('href')).toBe('/schedule')
     expect(within(nav).getByRole('link', { name: /Post an event/ }).getAttribute('href')).toBe('/post')
+    expect(within(nav).queryByRole('link', { name: 'Find a time' })).toBeNull()
   })
 
   it('retains a useful selection if the catalog list changes', () => {
-    const { rerender } = render(<DiscoverView events={events} />)
+    const { rerender } = render(draw(events))
     fireEvent.click(screen.getByRole('button', { name: 'View details for Poetry Reading' }))
-    rerender(<DiscoverView events={[events[0]]} />)
+    rerender(draw([events[0]]))
     expect(screen.getByRole('heading', { name: 'Ceramics Workshop' })).toBeTruthy()
+  })
+
+  it('groups the upcoming list under one heading per day, labelled from the clock', () => {
+    const later = { ...events[1], id: 'poetry-3', date: '2030-11-09' }
+    const tomorrow = { ...events[0], id: 'ceramics-4', date: '2030-11-08' }
+    const { rerender } = render(draw([events[0], events[1], tomorrow, later]))
+    expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual([
+      'TODAYThursday, 11/7/2030',
+      'TOMORROWFriday, 11/8/2030',
+      'SATSaturday, 11/9/2030',
+    ])
+    expect(within(screen.getByRole('region', { name: 'Thursday, 11/7/2030' })).getAllByRole('button')).toHaveLength(2)
+    expect(screen.getByRole('heading', { name: 'Coming up, 4 events' })).toBeTruthy()
+
+    // Same data, the next evening: Thursday's events have ended and Friday is today.
+    rerender(draw([events[0], events[1], tomorrow, later], {}, {}, campusAt('2030-11-08', '18:00')))
+    expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual(['TOMORROWSaturday, 11/9/2030'])
+  })
+
+  it('marks planned events, how long each runs, and what is happening right now', () => {
+    render(draw(events, { plannedIds: ['poetry-2'] }, { onPlan: vi.fn() }, campusAt('2030-11-07', '14:40')))
+    const poetry = screen.getByRole('button', { name: 'View details for Poetry Reading' })
+    expect(within(poetry).getByText('In My Schedule')).toBeTruthy()
+    expect(within(poetry).getByText('1 hr')).toBeTruthy()
+    expect(within(poetry).getByText('Starts in 20 min')).toBeTruthy()
+    const ceramics = screen.getByRole('button', { name: 'View details for Ceramics Workshop' })
+    expect(within(ceramics).queryByText('In My Schedule')).toBeNull()
+    expect(within(ceramics).getByText('2:30').textContent).toBe('2:30pm')
+    expect(within(ceramics).getByText('to 3:30pm')).toBeTruthy()
+    expect(within(ceramics).getByText('Happening now · until 3:30pm')).toBeTruthy()
+  })
+
+  it('shows the free-time row only when wired, lists only what fits, and can show everything again', () => {
+    const { rerender } = render(draw(events))
+    expect(screen.queryByRole('search', { name: 'When are you free?' })).toBeNull()
+
+    const onChange = vi.fn()
+    const onShowAll = vi.fn()
+    const window = { date: '2030-11-07', start: '14:00', end: '15:45' }
+    rerender(draw(events, { freeWindow: window }, { onFreeWindowChange: onChange, onShowAllChange: onShowAll }))
+    const row = screen.getByRole('search', { name: 'When are you free?' })
+    expect((within(row).getByLabelText('Free on') as HTMLInputElement).value).toBe('2030-11-07')
+    expect(screen.getByText('1 event fits')).toBeTruthy()
+    expect(screen.getByText('Thu 11/7, 2:00–3:45pm')).toBeTruthy()
+    const ceramics = screen.getByRole('button', { name: 'View details for Ceramics Workshop' })
+    expect(within(ceramics).getByText('Fits your window')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'View details for Poetry Reading' })).toBeNull()
+    // The ticket follows the list: it shows the match, never a hidden outsider.
+    expect(within(screen.getByRole('complementary')).getByRole('heading', { name: 'Ceramics Workshop' })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show all events' }))
+    expect(onShowAll).toHaveBeenLastCalledWith(true)
+    rerender(draw(events, { freeWindow: window, showAll: true }, { onFreeWindowChange: onChange, onShowAllChange: onShowAll }))
+    const poetry = screen.getByRole('button', { name: 'View details for Poetry Reading' })
+    expect(within(poetry).queryByText('Fits your window')).toBeNull()
+    expect(poetry.className).not.toContain('sq-stub-dim')
+    fireEvent.click(screen.getByRole('button', { name: 'Show only what fits' }))
+    expect(onShowAll).toHaveBeenLastCalledWith(false)
+
+    fireEvent.change(within(row).getByLabelText('until'), { target: { value: '16:00' } })
+    expect(onChange).toHaveBeenLastCalledWith({ ...window, end: '16:00' })
+    fireEvent.click(within(row).getByRole('button', { name: '✕ Clear' }))
+    expect(onChange).toHaveBeenLastCalledWith({ date: '', start: '', end: '' })
+
+    rerender(draw(events, { freeWindow: { ...window, end: '13:00' } }, { onFreeWindowChange: onChange }))
+    expect(screen.getByRole('alert').textContent).toContain('end time later')
+    expect(screen.getByRole('button', { name: 'View details for Poetry Reading' })).toBeTruthy()
+  })
+
+  it('explains a window nothing fits and offers the two ways out', () => {
+    const onChange = vi.fn()
+    const onShowAll = vi.fn()
+    render(draw(events, { freeWindow: { date: '2030-11-08', start: '08:00', end: '09:00' } }, { onFreeWindowChange: onChange, onShowAllChange: onShowAll }))
+    expect(screen.getByRole('heading', { name: 'No event fits all of Fri 11/8, 8:00–9:00am.' })).toBeTruthy()
+    expect(screen.queryByRole('complementary')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'See all upcoming events' }))
+    expect(onShowAll).toHaveBeenCalledWith(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Clear the window' }))
+    expect(onChange).toHaveBeenCalledWith({ date: '', start: '', end: '' })
+  })
+
+  it('on a phone, opens the details in a modal dialog and returns focus to the picked stub', () => {
+    const matchMedia = vi.fn().mockReturnValue({ matches: true })
+    vi.stubGlobal('matchMedia', matchMedia)
+    try {
+      render(draw(events))
+      const dialog = document.querySelector('dialog.sq-sheet') as HTMLDialogElement
+      expect(dialog.hasAttribute('open')).toBe(false)
+      expect(within(dialog).queryByRole('button')).toBeNull() // nothing focusable while closed
+      const poetry = screen.getByRole('button', { name: 'View details for Poetry Reading' })
+      fireEvent.click(poetry)
+      expect(dialog.hasAttribute('open')).toBe(true)
+      expect(matchMedia).toHaveBeenCalledWith('(max-width: 760px)')
+      expect(within(dialog).getByRole('heading', { name: 'Poetry Reading' })).toBeTruthy()
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Close details' }))
+      expect(dialog.hasAttribute('open')).toBe(false)
+      expect(document.activeElement).toBe(poetry)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it('on a wide screen, keeps the ticket beside the list and never opens the dialog', () => {
+    render(draw(events))
+    fireEvent.click(screen.getByRole('button', { name: 'View details for Poetry Reading' }))
+    expect((document.querySelector('dialog.sq-sheet') as HTMLDialogElement).hasAttribute('open')).toBe(false)
+    expect(within(screen.getByRole('complementary')).getByRole('heading', { name: 'Poetry Reading' })).toBeTruthy()
   })
 })
