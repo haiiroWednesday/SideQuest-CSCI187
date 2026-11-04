@@ -42,7 +42,7 @@ test('post an event through the catalog; it is readable again after a reload', a
   await expect(posted.getByText('Hosted by SCU Art Club')).toBeVisible()
 })
 
-test('M1 list: find a stored event by free time, reload, and remove it', async ({ page }) => {
+test('legacy events stay private, survive reload, and can still be removed', async ({ page }) => {
   await page.goto('/')
   const date = await futureDate(page)
   // Seed the legacy M1 list the way the M1 form used to save it.
@@ -55,19 +55,18 @@ test('M1 list: find a stored event by free time, reload, and remove it', async (
   await page.reload()
 
   await page.getByLabel('Free on date').fill(date)
-  await expect(page.getByText('✓ Fits')).toBeVisible()
-  await expect(page.getByText('2:30pm – 3:30pm')).toBeVisible()
   await expect(page.getByText('1 total')).toBeVisible()
+  await expect(page.getByRole('region', { name: /posted events/i }).getByText('No upcoming events posted yet.')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Art Workshop' })).toHaveCount(0)
 
-  // A valid window includes the event; an invalid interval shows feedback.
+  // An invalid interval still shows feedback.
   await page.getByLabel('Free until').fill('14:00')
   await expect(page.getByRole('alert')).toContainText('Please choose an end time later')
   await page.getByLabel('Free until').fill('16:00')
-  await expect(page.getByRole('heading', { name: 'Art Workshop' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Remove Art Workshop' }).click()
   await expect(page.getByRole('status')).toContainText('Event removed.')
   await page.reload()
-  await expect(page.getByText('Events you create will show up here.')).toBeVisible()
+  await expect(page.getByText('No legacy events saved in this browser.')).toBeVisible()
   await expect(page.getByText('0 total')).toBeVisible()
 })

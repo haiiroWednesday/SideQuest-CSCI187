@@ -75,6 +75,16 @@ describe('EventCatalog.create', () => {
     expect(table.rows.size).toBe(0)
   })
 
+  it('rejects past calendar dates and already-started events at the Model boundary', async () => {
+    const catalog = createEventCatalog(createInMemoryEventTable(), clock)
+    await expect(catalog.create(draft({ date: '2026-11-02' })))
+      .rejects.toMatchObject({ kind: 'invalid', message: expect.stringContaining('past') })
+    await expect(catalog.create(draft({ date: '2026-11-03', start: '11:59', end: '13:00' })))
+      .rejects.toMatchObject({ kind: 'invalid', message: expect.stringContaining('already started') })
+    await expect(catalog.create(draft({ date: '2026-11-03', start: '12:00', end: '13:00' })))
+      .resolves.toMatchObject({ start: '12:00' })
+  })
+
   it('accepts a title of exactly 120 characters (boundary)', async () => {
     const catalog = createEventCatalog(createInMemoryEventTable(), clock)
     await expect(catalog.create(draft({ title: 'x'.repeat(120) }))).resolves.toMatchObject({ title: 'x'.repeat(120) })
@@ -92,17 +102,26 @@ describe('EventCatalog.create', () => {
 
 describe('EventCatalog.listUpcoming', () => {
   it('orders by date, then start time, and hides events that already ended (campus time)', async () => {
-    const catalog = createEventCatalog(createInMemoryEventTable(), clock)
+    const table = createInMemoryEventTable()
+    const catalog = createEventCatalog(table, clock)
     const later = await catalog.create(draft({ title: 'Nov 6', date: '2026-11-06', start: '09:00', end: '10:00' }))
     const afternoon = await catalog.create(draft({ title: 'Nov 5 pm', date: '2026-11-05', start: '15:00', end: '16:00' }))
     const morning = await catalog.create(draft({ title: 'Nov 5 am', date: '2026-11-05', start: '08:00', end: '09:00' }))
-    const runningNow = await catalog.create(draft({ title: 'Running', date: '2026-11-03', start: '11:30', end: '12:30' }))
-    await catalog.create(draft({ title: 'Ended at noon', date: '2026-11-03', start: '11:00', end: '12:00' }))
-    await catalog.create(draft({ title: 'Yesterday', date: '2026-11-02' }))
+    // Historical records must remain readable. Seed them directly into storage
+    // instead of bypassing the new-post rule through catalog.create().
+    const historical = [
+      draft({ title: 'Running', date: '2026-11-03', start: '11:30', end: '12:30' }),
+      draft({ title: 'Ended at noon', date: '2026-11-03', start: '11:00', end: '12:00' }),
+      draft({ title: 'Yesterday', date: '2026-11-02' }),
+    ]
+    historical.forEach((event, index) => {
+      const id = `11111111-1111-4111-8111-00000000000${index}`
+      table.rows.set(id, { ...toEventRow(event), id })
+    })
 
     const titles = (await catalog.listUpcoming()).map(event => event.title)
 
-    expect(titles).toEqual([runningNow.title, morning.title, afternoon.title, later.title])
+    expect(titles).toEqual(['Running', morning.title, afternoon.title, later.title])
   })
 
   it('returns an empty list for an empty catalog', async () => {

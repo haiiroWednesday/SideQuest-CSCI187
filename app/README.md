@@ -18,7 +18,9 @@ Open the local URL shown by Vite (usually `http://localhost:5173/`).
 - **With Supabase configured** (`app/.env.local`, see below): one shared public catalog that every browser reads.
 - **Without it:** a fallback kept in *this browser only* (`sidequest.local-catalog.v1`). The page says so in a yellow notice.
 
-The older "Your created events" list and the free-time search still read the M1 browser-only list until catalog browsing is integrated.
+**Find events** searches the upcoming events from the same catalog. **My Schedule**
+resolves event details from that catalog and stores only planned IDs on this
+device. Legacy browser events remain separate and are never uploaded automatically.
 
 ### Connect the shared catalog (Supabase)
 

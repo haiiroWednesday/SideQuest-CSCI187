@@ -2,7 +2,7 @@
 // file applies the posting rules, then asks the EventCatalogPort to store the
 // event. It never touches storage directly. Every adapter goes through the port.
 import {
-  campusNow, catalogDraftErrors, createEventCatalog, EventCatalogError, firstFieldError,
+  catalogPostingErrors, createEventCatalog, EventCatalogError, firstFieldError,
   type CampusEvent, type CatalogFieldErrors, type EventCatalogPort, type EventDraft,
 } from '../model/eventCatalog'
 import { createBrowserEventTable, type CatalogStorage } from '../model/browserEventTable'
@@ -15,6 +15,12 @@ export type { CampusEvent, CatalogFieldErrors, EventCatalogPort, EventDraft } fr
 // fallback, and the UI must say so on screen.
 export type ConnectedCatalog = { catalog: EventCatalogPort; shared: boolean }
 
+// Defer accessing localStorage until the adapter can catch a blocked read/write.
+export const browserCatalogStorage: CatalogStorage = {
+  getItem: key => window.localStorage.getItem(key),
+  setItem: (key, value) => window.localStorage.setItem(key, value),
+}
+
 export function localEventCatalog(storage: CatalogStorage): ConnectedCatalog {
   return { catalog: createEventCatalog(createBrowserEventTable(storage)), shared: false }
 }
@@ -25,18 +31,13 @@ export function connectEventCatalog(env: Readonly<Record<string, unknown>>, stor
 }
 
 // ---------------------------------------------------------------------------
-// Posting rules = the database rules (catalogDraftErrors) plus M1's
-// "no events in the past" rule, judged on the Santa Clara clock.
+// Expose Model-level validation through the Controller so the View never
+// bypasses MVC, and a direct catalog caller cannot skip past-date checks.
 export function postingDraftErrors(draft: EventDraft, now: Date = new Date()): CatalogFieldErrors {
-  const errors = catalogDraftErrors(draft)
-  const campus = campusNow(now)
-  if (!errors.date && draft.date < campus.date) {
-    errors.date = 'Events cannot be posted in the past. Choose today or a future date.'
-  } else if (!errors.date && !errors.start && !errors.end && draft.date === campus.date && draft.start < campus.time) {
-    errors.start = 'This event has already started. Choose a future start time.'
-  }
-  return errors
+  return catalogPostingErrors(draft, now)
 }
+
+export { CATALOG_LIMITS } from '../model/eventCatalog'
 
 export type PostResult =
   | { status: 'posted'; event: CampusEvent; message: string }
