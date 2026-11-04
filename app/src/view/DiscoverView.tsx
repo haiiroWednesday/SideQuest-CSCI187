@@ -280,7 +280,7 @@ export function DiscoverView({
                   </section>
                 ))}
                 {routes?.post && (
-                  <p className="sq-endcap"><a href={routes.post}>That's everything coming up. Post something <span aria-hidden="true">→</span></a></p>
+                  <p className="sq-endcap"><a href={routes.post}><span className="sq-endcap-lead">That's everything coming up.</span> <span className="sq-endcap-cta">Post something<span className="sq-endcap-arrow" aria-hidden="true" /></span></a></p>
                 )}
               </div>
             )}

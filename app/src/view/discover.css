@@ -309,6 +309,14 @@
 .sq-endcap::before { content: "✦"; position: absolute; left: 16px; top: -14px; font-size: 44px; color: var(--sq-gold); }
 .sq-endcap a { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 10px 22px; border: 1.5px solid var(--sq-red); border-radius: 999px; color: var(--sq-red); font: 600 18px var(--font-sans); }
 .sq-endcap a:hover { background: var(--sq-red); color: #fff; }
+/* original pen-drawn arrow with a loop; drawn in currentColor so it turns white with the text on hover */
+.sq-endcap a { gap: 0; }
+.sq-endcap-cta { display: inline-flex; align-items: center; gap: 10px; margin-left: .3em; }
+.sq-endcap-arrow { flex: none; width: 86px; height: 27px; margin: 0 -6px 0 6px; background: currentColor;
+  -webkit-mask: url('./assets/pen-arrow-loop.svg') center / contain no-repeat; mask: url('./assets/pen-arrow-loop.svg') center / contain no-repeat;
+  transition: transform .2s cubic-bezier(.3, 1.4, .5, 1); }
+.sq-endcap a:hover .sq-endcap-arrow, .sq-endcap a:focus-visible .sq-endcap-arrow { transform: translateX(5px) rotate(-3deg); }
+@media (prefers-reduced-motion: reduce) { .sq-endcap-arrow { transition: none; } }
 
 /* ---------- The picked event, as a sticker ticket ---------- */
 .sq-sticker { position: sticky; top: 20px; z-index: 1; }
@@ -386,6 +394,10 @@
   .sq-stub-selected::after { display: none; }
   .sq-endcap { margin-left: -58px; padding-left: 58px; }
   .sq-endcap::before { left: 4px; }
+  .sq-endcap a { display: block; padding: 12px 22px 12px 24px; border-radius: 28px; }
+  .sq-endcap-lead { display: block; }
+  .sq-endcap-cta { margin-left: 0; }
+  .sq-endcap-arrow { width: 70px; height: 22px; }
   /* on a phone the ticket is a sheet that slides up when a stub is tapped */
   .sq-sticker { position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; top: auto; max-height: 88vh; overflow-y: auto; transform: translateY(105%); transition: transform .28s ease; }
   .sq-sticker.sq-open { transform: none; }
