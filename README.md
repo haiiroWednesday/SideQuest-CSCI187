@@ -21,6 +21,8 @@ This M2 release combines current master’s integration/audit fixes with the sup
 - **My Schedule:** the user's plan IDs persist in this browser, remain sorted, warn about overlapping times and survive refresh. Removing a plan never deletes a public event.
 - **Graceful states:** error messages, retry/loading, malformed-storage handling, and separate missing-event versus network-error states.
 
+**VS Code and instructor: [server-only Supabase setup and two-browser acceptance guide](docs/SUPABASE_LOCAL_SETUP.md).** The repository includes a safe `app/.env.example` template; `app/.env.local` is intentionally ignored and must be created on the machine running the server. The correct names are `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` with **no `VITE_` prefix**. Professor Kandel already has GitHub access and needs no credentials to inspect the assignment. To try live cross-browser events, use a team-hosted Node demonstration or configure server variables locally through a separate authorized channel. Never commit project keys to enable grading.
+
 **Shared data requires server setup:** If you configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in the Node server environment, the app uses the shared event catalog. Otherwise it explicitly warns that posted events live **in the current browser only**. The database adapter and SQL migration are committed, but real cross-browser operation must still be verified against a configured project. The fallback is appropriate for local tests, not a proof of public sharing.
 
 The supplied Discover and Schedule design is integrated into the real application; its controllers use the same catalog as posting.
