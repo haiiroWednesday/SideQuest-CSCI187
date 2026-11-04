@@ -10,7 +10,7 @@
 | **Chen-style ER diagram** | [M2_STORAGE_ER.drawio](diagrams/M2_STORAGE_ER.drawio), one page | [SideQuest_M2_STORAGE_ER.drawio](https://drive.google.com/file/d/1gIQn3a0d6uCOkaqzQsg2r29I_IUkml-e/view) |
 | **Both diagrams in one editable file** | [M2_IMPLEMENTATION.drawio](diagrams/M2_IMPLEMENTATION.drawio), three pages | [Combined Draw.io file](https://drive.google.com/file/d/1wQLEXbd-ihUsXFL3SV3qvAgtvtPovKgZ/view) |
 
-[Open the shared M2 folder](https://drive.google.com/drive/folders/1Nr67cdT8tEKPWBe9j3LNm6Wzw6alGgPc). Open any `.drawio` file using [diagrams.net](https://app.diagrams.net/), **File → Open From**. GitHub may show XML; download the source and open it in diagrams.net for graphical editing. Previous `M2_CRC.svg` and `M2_STORAGE.svg` snapshots represent the superseded overview and must not be used for M2 diagram review.
+[Open the shared M2 folder](https://drive.google.com/drive/folders/1Nr67cdT8tEKPWBe9j3LNm6Wzw6alGgPc). Open any `.drawio` file using [diagrams.net](https://app.diagrams.net/), **File → Open From**. GitHub may show XML; download the source and open it in diagrams.net for graphical editing. Older `M2_CRC.svg` and `M2_STORAGE.svg` snapshots were removed because they represented the superseded overview. Use the professor-format editable `.drawio` files above for M2 review.
 
 **Instructor access:** GitHub user `jkandel-scu` has verified **write** collaborator access to the private repository, so the professor can inspect the files directly on `master`. The Drive copies grant access to signed-in SCU-domain accounts; they are not anonymous public links. Updating these files does not itself establish that Camino received a submission.
 

@@ -29,6 +29,8 @@ Set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and optionally `PORT` in the **N
 
 ## Check
 
+**Stop any running Vite or Node app server first.** Playwright refuses to reuse a developer server on ports 5173, 5175, 5176 or 5177, because browser tests submit events and must never touch a live-configured catalog. A port conflict should stop the tests, not encourage disabling isolation.
+
 ```bash
 npm test
 npm run build

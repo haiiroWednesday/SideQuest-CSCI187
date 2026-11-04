@@ -66,6 +66,26 @@ describe('presentDiscover: the clock decides the labels', () => {
     expect(screen.days[0].events.map(e => e.id)).toEqual(['a-art', 'b-print'])
   })
 
+  it('sorts shuffled events chronologically across dates', () => {
+    const events = [
+      ev('2026-11-08', '09:00', '10:00', { id: 'sunday' }),
+      ev('2026-11-05', '19:00', '20:00', { id: 'thursday-evening' }),
+      ev('2026-11-06', '12:00', '13:00', { id: 'friday' }),
+      ev('2026-11-05', '14:00', '15:00', { id: 'thursday-afternoon' }),
+      ev('2026-11-05', '08:00', '09:00', { id: 'thursday-morning' }),
+    ]
+
+    const screen = presentDiscover({ events, now: at('2026-11-04', '09:00') })
+
+    expect(screen.days.flatMap(day => day.events.map(event => event.id))).toEqual([
+      'thursday-morning',
+      'thursday-afternoon',
+      'thursday-evening',
+      'friday',
+      'sunday',
+    ])
+  })
+
   it('reports missing host and description as null rather than inventing text', () => {
     const screen = presentDiscover({ events: [ev('2026-11-06', '10:00', '11:15', { hostName: '  ', description: '' })], now: at('2026-11-04', '09:00') })
     const stub = screen.days[0].events[0]
@@ -100,6 +120,20 @@ describe('presentDiscover: the clock decides the labels', () => {
     const none = presentDiscover({ events: list, now, freeWindow: { date: '2026-11-05', start: '09:00', end: '10:00' } })
     expect(none.freeWindow?.fitText).toBe('Nothing fits')
     expect(none.days).toEqual([])
+  })
+
+  it('explains every incomplete filter without claiming the results are filtered', () => {
+    const now = at('2026-11-04', '09:00')
+    const values = { date: '2026-11-04', start: '14:00', end: '16:00' }
+    for (let mask = 1; mask < 7; mask++) {
+      const freeWindow = { date: mask & 1 ? values.date : '', start: mask & 2 ? values.start : '', end: mask & 4 ? values.end : '' }
+      const result = presentDiscover({ events, now, freeWindow })
+      expect(result.freeWindow).toMatchObject({ active: false, error: null,
+        hint: 'Showing all upcoming events. Complete the date and both times to filter.' })
+      expect(result.count).toBe(6)
+    }
+    expect(presentDiscover({ events, now, freeWindow: { date: '', start: '', end: '' } }).freeWindow?.hint).toBeNull()
+    expect(presentDiscover({ events, now, freeWindow: values }).freeWindow?.hint).toBeNull()
   })
 
   it('keeps every event exactly once, in time order, under the right day, for 300 random catalogs', () => {
