@@ -4,11 +4,10 @@
 // what came back.
 import { useState, type FormEvent, type ReactNode } from 'react'
 import {
-  postEvent,
+  postEvent, CATALOG_LIMITS,
   type CampusEvent, type CatalogFieldErrors, type ConnectedCatalog, type EventDraft,
 } from '../controller/postEvent'
 import { displayDate, displayTime, initialEventWindow, todayLocal } from '../controller/findEvents'
-import { CATALOG_LIMITS } from '../model/eventCatalog'
 import { useCatalogEvents, type CatalogEvents } from './useCatalogEvents'
 
 type Props = {
