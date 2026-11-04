@@ -1,6 +1,7 @@
 // Sembiyan: user actions travel through the Controller and preserve the catalog.
 import { describe, expect, it } from 'vitest'
-import { createScheduleController } from '../src/controller/personalSchedule'
+import { createScheduleController, loadPlannedEvents } from '../src/controller/personalSchedule'
+import type { EventCatalogPort } from '../src/model/eventCatalog'
 import { PLANNED_IDS_KEY, type PlanStorage } from '../src/model/schedule'
 import { STORAGE_KEY, type CampusEvent } from '../src/model/events'
 
@@ -15,6 +16,19 @@ function setup(raw?: string) {
   const storage: PlanStorage = { getItem: key => data.get(key) ?? null, setItem: (key, value) => { data.set(key, value) } }
   return { data, storage, controller: createScheduleController(catalog, () => storage) }
 }
+
+it('resolves valid long M2 descriptions from the catalog instead of reporting unavailable', async () => {
+  const full = { ...catalog[0], hostName: 'SCU club', description: 'D'.repeat(2000) }
+  const api: EventCatalogPort = {
+    create: async () => { throw Error('read-only test') },
+    listUpcoming: async () => [full],
+    getById: async id => id === 'a' ? full : null,
+  }
+  const found = await loadPlannedEvents(api, ['a', 'missing'])
+  expect(found.events).toEqual([full])
+  expect(found.missingIds).toEqual(['missing'])
+  expect(found.failedIds).toEqual([])
+})
 
 describe('personal Schedule Controller', () => {
   it('adds, reloads and removes plans without changing original events', () => {
