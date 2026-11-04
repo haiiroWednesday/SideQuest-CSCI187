@@ -12,6 +12,29 @@ Users can create events with a title, location, date, and start/end times; view 
 
 The app uses **React, TypeScript, Vite, and Vitest**. The current implementation and merged tests are on the default **`master`** branch.
 
+## Personal Schedule slice of M2
+
+This feature branch connects full-fit availability results to **Plan to attend**
+and a separate **My Schedule** page. Plans store unique event IDs in this
+browser, survive refresh, appear chronologically, and can be removed without
+deleting the original event. Overlaps are allowed with an advisory warning;
+back-to-back events are allowed. The provisional capacity is 100 plans, pending
+whole-team confirmation.
+
+**Current data source:** events still come from the browser-local M1 list.
+The shared public EventCatalog is not integrated, so this is the Schedule slice
+of M2 rather than a verified cross-browser posting/discovery workflow. Read the
+[Schedule behavior and catalog handoff](docs/SEMBIYAN_SEARCH_SCHEDULE.md) for
+MVC responsibilities, persistence rules, and the future asynchronous lookup
+contract.
+
+After starting the app, create a future event, enter a free-time window that
+contains its entire duration, choose **Plan to attend**, and open **My Schedule**.
+Refresh to check the saved plan, then choose **Remove from plans**. The event
+remains in **Your created events**, which contains events you posted locally;
+**My Schedule** contains only events you chose to attend. Confirm that distinction
+in a short student walkthrough before calling the UI integrated.
+
 ## Run locally
 
 Install [Node.js](https://nodejs.org/) 24 (Node 22.12+ supported) and Git, then:
