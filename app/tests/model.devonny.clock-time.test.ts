@@ -1,6 +1,5 @@
 // Test author: Devonny
 // Proves: valid HH:MM times convert correctly, while malformed times are rejected.
-// (AI-Assisted)
 
 import { expect, it } from 'vitest'
 import { toMinutes } from '../src/model/events'

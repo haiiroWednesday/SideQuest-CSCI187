@@ -1,4 +1,4 @@
-// Shared controller regression tests (AI-assisted starter examples).
+// Shared controller regression tests.
 import { describe, expect, it } from 'vitest'
 import { createEvent, findEvents } from '../src/controller/findEvents'
 import type { EventDraft } from '../src/model/events'

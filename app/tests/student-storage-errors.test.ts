@@ -1,4 +1,4 @@
-// Test owner: Daven — chose and verified this case (AI-assisted draft).
+// Test owner: Daven — chose and verified this case.
 // Proves: a saved list mixing valid and corrupt events keeps only the valid ones, in order, without crashing.
 import { expect, it } from 'vitest'
 import { readStoredEvents, STORAGE_KEY, type CampusEvent } from '../src/model/events'

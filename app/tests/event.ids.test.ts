@@ -1,4 +1,4 @@
-// Test owner: Sembiyan Arunkumar (AI-assisted draft).
+// Test owner: Sembiyan Arunkumar.
 // Checks that empty and duplicate IDs are rejected without
 // changing existing events, while a new ID succeeds.
 
