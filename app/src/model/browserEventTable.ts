@@ -1,7 +1,7 @@
 // BROWSER-ONLY ADAPTER: persist a local catalog when shared storage is absent.
 // Other devices cannot see these records, so the UI must disclose this mode.
 // This key is separate from the archived M1 event-storage key.
-import type { EventRow, EventTable, NewEventRow } from './eventCatalog'
+import { toSqlTime, type EventRow, type EventTable, type NewEventRow } from './eventCatalog'
 
 export const LOCAL_CATALOG_KEY = 'sidequest.local-catalog.v1'
 
@@ -26,8 +26,6 @@ function readRows(storage: CatalogStorage): EventRow[] {
   return parsed
 }
 
-const withSeconds = (time: string) => (time.length === 5 ? `${time}:00` : time)
-
 export function createBrowserEventTable(
   storage: CatalogStorage,
   newId: () => string = () => crypto.randomUUID(),
@@ -38,7 +36,7 @@ export function createBrowserEventTable(
       const rows = readRows(storage)
       const id = newId()
       if (rows.some(existing => existing.id === id)) throw new Error(`Duplicate event ID ${id}`)
-      const stored: EventRow = { ...row, id, start_time: withSeconds(row.start_time), end_time: withSeconds(row.end_time) }
+      const stored: EventRow = { ...row, id, start_time: toSqlTime(row.start_time), end_time: toSqlTime(row.end_time) }
       storage.setItem(LOCAL_CATALOG_KEY, JSON.stringify([...rows, stored]))
       return stored
     },

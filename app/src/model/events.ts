@@ -157,15 +157,15 @@ export function fitsFully(event: CampusEvent, freeDate: string, freeStart: strin
 export function isCampusEvent(value: unknown): value is CampusEvent {
   if (typeof value !== 'object' || value === null) return false
   // Saved JSON must pass runtime checks before becoming an event.
-  const item = value as Partial<CampusEvent>
+  const item = value as Partial<LegacyCampusEvent>
+  const start = typeof item.start === 'string' ? toMinutes(item.start) : null
+  const end = typeof item.end === 'string' ? toMinutes(item.end) : null
   return typeof item.id === 'string' && item.id.trim().length > 0 &&
     typeof item.title === 'string' && item.title.trim().length > 0 && item.title.trim().length <= MAX_EVENT_TITLE_LENGTH &&
     (item.description === undefined || (typeof item.description === 'string' && item.description.length <= MAX_EVENT_DESCRIPTION_LENGTH)) &&
     typeof item.location === 'string' && item.location.trim().length > 0 && item.location.trim().length <= MAX_EVENT_LOCATION_LENGTH &&
     typeof item.date === 'string' && isValidDate(item.date) &&
-    typeof item.start === 'string' && typeof item.end === 'string' &&
-    toMinutes(item.start) !== null && toMinutes(item.end) !== null &&
-    (toMinutes(item.start) as number) < (toMinutes(item.end) as number)
+    start !== null && end !== null && start < end
 }
 
 // localStorage is a browser-only prototype store; other computers do NOT share its events.

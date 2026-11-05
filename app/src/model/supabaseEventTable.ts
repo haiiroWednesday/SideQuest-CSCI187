@@ -6,7 +6,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { createEventCatalog, type EventCatalogPort, type EventRow, type EventTable } from './eventCatalog'
 
-const COLUMNS = 'id,title,host_name,description,location,event_date,start_time,end_time'
+const EVENT_COLUMNS = 'id,title,host_name,description,location,event_date,start_time,end_time'
 
 export function createSupabaseEventTable(client: SupabaseClient): EventTable {
   const events = () => client.from('events')
@@ -14,18 +14,18 @@ export function createSupabaseEventTable(client: SupabaseClient): EventTable {
     async insert(row) {
       // The database fills in id and created_at. Anonymous callers may only
       // INSERT the seven columns listed in toEventRow.
-      const { data, error } = await events().insert(row).select(COLUMNS).single()
+      const { data, error } = await events().insert(row).select(EVENT_COLUMNS).single()
       if (error) throw error
       return data as EventRow
     },
     async selectFromDate(date) {
-      const { data, error } = await events().select(COLUMNS).gte('event_date', date)
+      const { data, error } = await events().select(EVENT_COLUMNS).gte('event_date', date)
         .order('event_date').order('start_time').order('id')
       if (error) throw error
       return (data ?? []) as EventRow[]
     },
     async selectById(id) {
-      const { data, error } = await events().select(COLUMNS).eq('id', id).maybeSingle()
+      const { data, error } = await events().select(EVENT_COLUMNS).eq('id', id).maybeSingle()
       if (error) throw error
       return (data as EventRow | null) ?? null
     },

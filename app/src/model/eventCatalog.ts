@@ -186,6 +186,11 @@ export type EventRow = {
 
 export type NewEventRow = Omit<EventRow, 'id'>
 
+// Browser and in-memory adapters match the SQL TIME format on reads.
+export function toSqlTime(time: string): string {
+  return time.length === 5 ? `${time}:00` : time
+}
+
 export interface EventTable {
   insert(row: NewEventRow): Promise<EventRow>
   // Rows whose event_date is on or after `date`. The catalog sorts them and
