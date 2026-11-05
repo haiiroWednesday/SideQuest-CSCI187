@@ -108,9 +108,12 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
   )
 }
 
-// Long titles get a smaller size in the details card, so the full title fits without taking over the card.
+// Smaller title styles keep full long titles readable without crowding the details card.
+const LONG_DETAIL_TITLE_CHARACTERS = 40
+const EXTRA_LONG_DETAIL_TITLE_CHARACTERS = 80
 function titleSizeClass(title: string): string | undefined {
-  return title.length > 80 ? 'sq-title-xlong' : title.length > 40 ? 'sq-title-long' : undefined
+  return title.length > EXTRA_LONG_DETAIL_TITLE_CHARACTERS ? 'sq-title-xlong'
+    : title.length > LONG_DETAIL_TITLE_CHARACTERS ? 'sq-title-long' : undefined
 }
 
 export function DayBubble({ dow, dayNumber, monthTag }: { dow: string; dayNumber: number; monthTag: string | null }) {

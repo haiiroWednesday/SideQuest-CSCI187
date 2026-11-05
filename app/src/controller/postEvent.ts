@@ -1,6 +1,6 @@
-// CONTROLLER: event posting (owner: Daven). The View hands this a draft. This
-// file applies the posting rules, then asks the EventCatalogPort to store the
-// event. It never touches storage directly. Every adapter goes through the port.
+// CONTROLLER: event posting (owner: Daven). The View supplies a draft; this
+// module prepares feedback and delegates canonical validation and persistence
+// to the EventCatalogPort. Storage stays behind the Model adapter.
 import {
   createEventCatalog, EventCatalogError, firstFieldError, postingDraftErrors,
   type CampusEvent, type CatalogFieldErrors, type EventCatalogPort, type EventDraft,

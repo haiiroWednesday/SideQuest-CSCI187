@@ -5,10 +5,9 @@
 // posting code should depend ONLY on EventCatalogPort, never on database
 // column names or on a specific adapter.
 //
-// ⚠️ Not the same as the M1 CampusEvent in ./events.ts. That older type has
-// no hostName, keeps description optional, and backs the browser-only
-// `sidequest.created-events.v1` list. The posting PR migrates the form and
-// tests to this contract; until then both types exist side by side.
+// The archived M1 CampusEvent in ./events.ts has no hostName and allows an
+// optional description. It is retained for historical tests and local data
+// compatibility; the production posting form uses this M2 catalog contract.
 import { isValidDate, toMinutes } from './events.ts'
 
 export type CampusEvent = {
@@ -84,9 +83,9 @@ export function trimDraft(draft: EventDraft): EventDraft {
   }
 }
 
-// Storage rules that hold for every caller, matching the database's CHECK
-// constraints. Posting-form rules such as "not in the past" live in the
-// posting controller (controller/postEvent.ts).
+// Validate field shape and field lengths for every caller, matching the
+// database CHECK constraints. The separate catalogPostingErrors() adds the
+// campus-time rule; createEventCatalog() enforces both before every insert.
 //
 // Note: JavaScript counts an emoji as 2 characters, while Postgres counts it as 1.
 // The app is therefore slightly stricter than the database, never looser.

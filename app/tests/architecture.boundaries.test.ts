@@ -10,7 +10,7 @@ const models = import.meta.glob<string>('../src/model/**/*.ts', { query: '?raw',
 const parse = (path: string, content: string) => ts.createSourceFile(path, content, ts.ScriptTarget.Latest, true, path.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS)
 const imports = (source: ts.SourceFile) => source.statements.flatMap(node => (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier) ? [node.moduleSpecifier.text] : [])
 
-describe('professor feedback: MVC boundaries', () => {
+describe('MVC boundaries: Views, Controllers and Models', () => {
   it('browser tests cannot reuse a developer server connected to live Supabase', () => {
     expect(playwrightConfig.match(/reuseExistingServer:\s*false/g)).toHaveLength(4)
     expect(playwrightConfig).not.toMatch(/reuseExistingServer:\s*(?:true|!process\.env\.CI)/)

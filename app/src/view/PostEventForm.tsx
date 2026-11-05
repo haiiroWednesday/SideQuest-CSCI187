@@ -4,7 +4,7 @@
 // what came back.
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import {
-  loadPostedEvents, postEvent,
+  loadPostedEvents, postEvent, postingDraftErrors,
   CATALOG_LIMITS, campusNow, initialCampusWindow, type CampusEvent, type CatalogFieldErrors, type ConnectedCatalog, type EventDraft,
 } from '../controller/postEvent'
 import { displayDate, displayTime } from '../controller/findEvents'
@@ -17,6 +17,7 @@ export function PostEventForm({ connection, now = () => new Date(), onPosted, sh
     title: '', hostName: '', description: '', location: '', ...initialCampusWindow(now()),
   }))
   const [fieldErrors, setFieldErrors] = useState<CatalogFieldErrors>({})
+  const [validatedFields, setValidatedFields] = useState<Partial<Record<keyof EventDraft, boolean>>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -39,10 +40,26 @@ export function PostEventForm({ connection, now = () => new Date(), onPosted, sh
     return () => { generation.current++ }
   }, [refresh, showPostedEvents])
 
+  // Once a field has been checked, update its error while the user corrects it.
+  // Recheck earlier errors too: changing START can make an END error disappear.
   const update = (field: keyof EventDraft, value: string) => {
-    setDraft(current => ({ ...current, [field]: value }))
-    // Clear that field's error as soon as the user edits it.
-    setFieldErrors(current => ({ ...current, [field]: undefined }))
+    const nextDraft = { ...draft, [field]: value }
+    setDraft(nextDraft)
+    const errors = postingDraftErrors(nextDraft, now())
+    setFieldErrors(previous => {
+      const nextErrors = { ...previous }
+      for (const checkedField of Object.keys({ ...validatedFields, ...previous }) as (keyof EventDraft)[]) {
+        if (validatedFields[checkedField] || previous[checkedField]) nextErrors[checkedField] = errors[checkedField]
+      }
+      return nextErrors
+    })
+    setFormError(null)
+  }
+
+  const validateOnBlur = (field: keyof EventDraft) => {
+    setValidatedFields(previous => ({ ...previous, [field]: true }))
+    const errors = postingDraftErrors(draft, now())
+    setFieldErrors(previous => ({ ...previous, [field]: errors[field] }))
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -55,6 +72,7 @@ export function PostEventForm({ connection, now = () => new Date(), onPosted, sh
     setSubmitting(false)
     if (result.status === 'invalid') {
       setFieldErrors(result.fieldErrors)
+      setValidatedFields({ title: true, hostName: true, description: true, location: true, date: true, start: true, end: true })
       setFormError(result.error)
       return
     }
@@ -64,6 +82,7 @@ export function PostEventForm({ connection, now = () => new Date(), onPosted, sh
       return
     }
     setFieldErrors({})
+    setValidatedFields({})
     setNotice(result.message)
     // Keep host name, date and times to make posting a similar event quicker.
     setDraft(current => ({ ...current, title: '', description: '', location: '' }))
@@ -89,42 +108,42 @@ export function PostEventForm({ connection, now = () => new Date(), onPosted, sh
         <div className="field">
           <label htmlFor="post-title"><span>EVENT NAME</span></label>
           <input id="post-title" type="text" value={draft.title} required maxLength={CATALOG_LIMITS.title} {...errorProps('title')}
-            placeholder="e.g. Art Workshop" onChange={(e) => update('title', e.target.value)} />
+            placeholder="e.g. Art Workshop" onChange={(e) => update('title', e.target.value)} onBlur={() => validateOnBlur('title')} />
           {fieldError('title')}
         </div>
         <div className="field">
           <label htmlFor="post-hostName"><span>HOST NAME</span></label>
           <input id="post-hostName" type="text" value={draft.hostName} required maxLength={CATALOG_LIMITS.hostName} {...errorProps('hostName')}
-            placeholder="e.g. SCU Photography Club" onChange={(e) => update('hostName', e.target.value)} />
+            placeholder="e.g. SCU Photography Club" onChange={(e) => update('hostName', e.target.value)} onBlur={() => validateOnBlur('hostName')} />
           {fieldError('hostName')}
         </div>
         <div className="field">
           <label htmlFor="post-description"><span>DESCRIPTION</span></label>
           <textarea id="post-description" value={draft.description} required maxLength={CATALOG_LIMITS.description} rows={3} {...errorProps('description')}
-            placeholder="What makes this event special?" onChange={(e) => update('description', e.target.value)} />
+            placeholder="What makes this event special?" onChange={(e) => update('description', e.target.value)} onBlur={() => validateOnBlur('description')} />
           {fieldError('description')}
         </div>
         <div className="field">
           <label htmlFor="post-location"><span>LOCATION</span></label>
           <input id="post-location" type="text" value={draft.location} required maxLength={CATALOG_LIMITS.location} {...errorProps('location')}
-            placeholder="e.g. Student Center" onChange={(e) => update('location', e.target.value)} />
+            placeholder="e.g. Student Center" onChange={(e) => update('location', e.target.value)} onBlur={() => validateOnBlur('location')} />
           {fieldError('location')}
         </div>
         <div className="field">
           <label htmlFor="post-date"><span>DATE</span></label>
           <input id="post-date" type="date" value={draft.date} min={campusNow(now()).date} required {...errorProps('date')}
-            onChange={(e) => update('date', e.target.value)} />
+            onChange={(e) => update('date', e.target.value)} onBlur={() => validateOnBlur('date')} />
           {fieldError('date')}
         </div>
         <div className="time-row">
           <div className="field">
             <label htmlFor="post-start"><span>START</span></label>
-            <input id="post-start" type="time" value={draft.start} required {...errorProps('start')} onChange={(e) => update('start', e.target.value)} />
+            <input id="post-start" type="time" value={draft.start} required {...errorProps('start')} onChange={(e) => update('start', e.target.value)} onBlur={() => validateOnBlur('start')} />
             {fieldError('start')}
           </div>
           <div className="field">
             <label htmlFor="post-end"><span>END</span></label>
-            <input id="post-end" type="time" value={draft.end} required {...errorProps('end')} onChange={(e) => update('end', e.target.value)} />
+            <input id="post-end" type="time" value={draft.end} required {...errorProps('end')} onChange={(e) => update('end', e.target.value)} onBlur={() => validateOnBlur('end')} />
             {fieldError('end')}
           </div>
         </div>

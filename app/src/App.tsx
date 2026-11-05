@@ -51,7 +51,7 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
   // My Schedule already shows its own lasting states (unreadable plans, details
   // that failed to load, the plan limit), so those are not repeated there.
   const toasts: ToastItem[] = []
-  const r = plans.revision
+  const feedbackRevision = plans.revision
   if (!connection.shared) toasts.push({ key: 'connection', tone: 'info', testId: 'catalog-not-shared',
     text: 'Not connected to the shared catalog. Posts are saved in this browser only.' })
   // An overlap warning already says the plan was added, so it replaces the success message.
@@ -59,13 +59,13 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
   // After planning from Discover, offer a quiet way to My Schedule. It is a link in the toast, never a redirect.
   const added = page !== 'schedule' && Boolean(plans.message?.startsWith('Added'))
   const toSchedule = { label: 'See My Schedule', href: routes.schedule }
-  if (plans.message && !showWarning) toasts.push({ key: `message-${r}`, tone: 'success', text: plans.message, action: added ? toSchedule : undefined })
-  if (showWarning && plans.warning) toasts.push({ key: `warning-${r}`, tone: 'warning', text: plans.warning, action: { label: 'Check My Schedule', href: routes.schedule } })
-  if (plans.error && !(page === 'schedule' && plans.schedule.blocked)) toasts.push({ key: `error-${r}`, tone: 'error', text: plans.error,
+  if (plans.message && !showWarning) toasts.push({ key: `message-${feedbackRevision}`, tone: 'success', text: plans.message, action: added ? toSchedule : undefined })
+  if (showWarning && plans.warning) toasts.push({ key: `warning-${feedbackRevision}`, tone: 'warning', text: plans.warning, action: { label: 'Check My Schedule', href: routes.schedule } })
+  if (plans.error && !(page === 'schedule' && plans.schedule.blocked)) toasts.push({ key: `error-${feedbackRevision}`, tone: 'error', text: plans.error,
     action: plans.schedule.blocked ? { label: 'Recover valid plans', onClick: plans.recover } : undefined })
-  else if (page !== 'schedule' && plans.lookupError) toasts.push({ key: `lookup-${r}`, tone: 'error', text: plans.lookupError,
+  else if (page !== 'schedule' && plans.lookupError) toasts.push({ key: `lookup-${feedbackRevision}`, tone: 'error', text: plans.lookupError,
     action: { label: 'Try again', onClick: () => { void plans.refresh() } } })
-  if (page !== 'schedule' && plans.schedule.capacityMessage) toasts.push({ key: `capacity-${r}`, tone: 'info', text: plans.schedule.capacityMessage })
+  if (page !== 'schedule' && plans.schedule.capacityMessage) toasts.push({ key: `capacity-${feedbackRevision}`, tone: 'info', text: plans.schedule.capacityMessage })
 
   const content = page === 'schedule' ? (
         <ScheduleTrailView screen={schedule} routes={routes}

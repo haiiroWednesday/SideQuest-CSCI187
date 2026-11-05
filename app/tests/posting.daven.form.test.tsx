@@ -91,6 +91,53 @@ describe('PostEventForm', () => {
     expect(rows.size).toBe(0)
   })
 
+  it('shows field errors after blur and keeps them until the value becomes valid', async () => {
+    const user = userEvent.setup()
+    const rows = new Map<string, EventRow>()
+    render(<PostEventForm connection={{ catalog: createEventCatalog(createInMemoryEventTable(rows)), shared: true }} />)
+
+    const title = form().getByLabelText('EVENT NAME')
+    await user.type(title, '  ')
+    fireEvent.blur(title)
+    expect(title.getAttribute('aria-invalid')).toBe('true')
+    expect(form().getByText('Please enter the event title.')).toBeTruthy()
+
+    // Typing more spaces does not conceal an existing validation error.
+    await user.type(title, ' ')
+    expect(title.getAttribute('aria-invalid')).toBe('true')
+    await user.type(title, 'Photography workshop')
+    expect(title.getAttribute('aria-invalid')).toBeNull()
+    expect(form().queryByText('Please enter the event title.')).toBeNull()
+    expect(rows.size).toBe(0)
+  })
+
+  it('revalidates an END error when START is corrected', async () => {
+    const rows = new Map<string, EventRow>()
+    render(<PostEventForm connection={{ catalog: createEventCatalog(createInMemoryEventTable(rows)), shared: true }} />)
+
+    const start = form().getByLabelText('START')
+    const end = form().getByLabelText('END')
+    fireEvent.change(start, { target: { value: '17:00' } })
+    fireEvent.change(end, { target: { value: '16:00' } })
+    fireEvent.blur(end)
+    expect(end.getAttribute('aria-invalid')).toBe('true')
+    fireEvent.change(start, { target: { value: '15:00' } })
+    expect(end.getAttribute('aria-invalid')).toBeNull()
+    expect(rows.size).toBe(0)
+  })
+
+  it('checks an invalid date on blur without creating a post', async () => {
+    const rows = new Map<string, EventRow>()
+    render(<PostEventForm connection={{ catalog: createEventCatalog(createInMemoryEventTable(rows)), shared: true }} />)
+    const date = form().getByLabelText('DATE')
+    fireEvent.change(date, { target: { value: '2030-11-08' } })
+    fireEvent.blur(date)
+    expect(date.getAttribute('aria-invalid')).toBeNull()
+    fireEvent.change(date, { target: { value: '2020-11-08' } })
+    expect(date.getAttribute('aria-invalid')).toBe('true')
+    expect(rows.size).toBe(0)
+  })
+
   it('shows an honest error on server failure and keeps what the user typed', async () => {
     const user = userEvent.setup()
     const down: EventCatalogPort = {

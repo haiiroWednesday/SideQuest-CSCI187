@@ -1,4 +1,4 @@
-// Regression tests for the professor's M1 walking-skeleton and MVC feedback.
+// Historical M1 regression tests for posting, event display and MVC boundaries.
 import { describe, expect, it } from 'vitest'
 import {
   createEvent, displayDate, displayTime, loadEvents, persistEvents,
@@ -15,7 +15,7 @@ const draft: EventDraft = {
 // later. The argument order is year, zero-based month, day, hour, minute.
 const localNow = new Date(2026, 9, 28, 20, 58) // Oct 28, 8:58 pm in the runner's local timezone
 
-describe('M1 professor feedback: no past event dates', () => {
+describe('M1 regressions: no past event dates', () => {
   it('rejects yesterday without changing the existing array', () => {
     const existing: CampusEvent[] = []
     const result = createEvent(existing, { ...draft, date: '2026-10-27' }, 'old', localNow)
@@ -46,7 +46,7 @@ describe('M1 professor feedback: no past event dates', () => {
   })
 })
 
-describe('M1 professor feedback: descriptive event records', () => {
+describe('M1 regressions: descriptive event records', () => {
   it('trims, stores, and restores the submitted description', () => {
     const created = createEvent([], draft, 'choir-1', localNow)
     expect(created.error).toBeNull()
@@ -89,7 +89,7 @@ describe('M1 professor feedback: descriptive event records', () => {
   })
 })
 
-describe('M1 professor feedback: consistent visible dates and times', () => {
+describe('M1 regressions: consistent visible dates and times', () => {
   it('uses US calendar dates and 12-hour clocks through the Controller', () => {
     expect(displayDate('2026-10-27')).toBe('10/27/2026')
     expect(displayDate('2026-01-05')).toBe('1/5/2026')

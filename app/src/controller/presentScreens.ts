@@ -7,7 +7,7 @@ import { campusNow } from '../model/eventCatalog'
 import { calendarDay, eventDuration, eventPhase, minutesUntilStart, overlapSpan } from '../model/eventTiming'
 import { displayDate, displayTime, findEvents } from './findEvents'
 
-/** M2 events carry a hostName; M1 events in this branch may not. */
+/** Keep archived M1 screen fixtures, which lack hostName, readable. */
 export type ScreenEvent = CampusEvent & { hostName?: string }
 export type FreeWindow = { date: string; start: string; end: string }
 
