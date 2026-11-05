@@ -13,7 +13,7 @@ import './toasts.css'
 import './event-details.css'
 import logoUrl from './assets/sidequest-logo-red.svg'
 import drawingUrl from './assets/mission-arcade-trail.svg'
-import { EventDetailContent } from './EventDetailContent'
+import { EventDetailContent, type SelectedDetailState } from './EventDetailContent'
 import { FreeWindowForm } from './FreeWindowForm'
 
 export type { FreeWindow } from '../controller/presentScreens'
@@ -121,11 +121,7 @@ export function DayBubble({ dow, dayNumber, monthTag }: { dow: string; dayNumber
   )
 }
 
-export type SelectedDetailState =
-  | { id: string; status: 'loading' }
-  | { id: string; status: 'missing' }
-  | { id: string; status: 'error'; message: string }
-  | { id: string; status: 'ready'; stub: StubModel }
+export type { SelectedDetailState } from './EventDetailContent'
 
 export type DiscoverViewProps = {
   screen: DiscoverScreen
