@@ -46,10 +46,10 @@ Before posting anything, **Daven or the team should**:
 From `app/`, with `npm run dev` running in a **separate terminal**, and `app/.env.local` configured using the **server-only** `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` names:
 
 ```bash
-node scripts/review-scu-events.mjs --apply --confirm-public-posting
+node scripts/review-scu-events.mjs --limit=5 --apply --confirm-public-posting
 ```
 
-Publication is allowed only to a localhost/127.0.0.1 development endpoint, and refuses to write if `GET /api/catalog` does not confirm shared mode or if it cannot read the current `/api/events`. It skips existing events with the same normalized title, date and start time, posting the seven approved fields through the normal API. It does **not** print secrets. Repeated imports should be reviewed for title changes and semantically equivalent duplicates that differ in wording.
+For a first review, use **--limit=5** to post only the first five still-future records in source order. After verifying them, run a larger limit or remove the option; the duplicate check skips exact previously posted entries.\n\nPublication is allowed only to a localhost/127.0.0.1 development endpoint, and refuses to write if `GET /api/catalog` does not confirm shared mode or if it cannot read the current `/api/events`. It skips existing events with the same normalized title, date and start time, posting the seven approved fields through the normal API. It does **not** print secrets. Repeated imports should be reviewed for title changes and semantically equivalent duplicates that differ in wording.
 
 **No scheduled synchronization.** Real imported records currently have no source ID, origin type, updated-at or cancellation status columns. A reliable multi-source importer needs Model/ER/SQL changes and an explicit dedupe/update strategy. Propose that for M2 Part 2 before touching the team's production schema. Consider source event ID + provider, original URL, last verified timestamp, organizer label and an admin-only cancellation/update workflow.
 
