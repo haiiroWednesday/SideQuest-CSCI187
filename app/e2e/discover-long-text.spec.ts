@@ -52,7 +52,10 @@ test('the selected card stays still on hover and looks different from the others
   const choir = stubFor(page, 'Choir')
   await choir.click()
   await expect(choir).toHaveAttribute('aria-pressed', 'true')
-  await expect.poll(() => choir.evaluate(el => new DOMMatrix(getComputedStyle(el).transform).m42)).toBe(0)
+  // Wait for the selected card's actual CSS transition, without assuming its resting offset is zero.
+  await choir.evaluate(async el => {
+    await Promise.all(el.getAnimations().map(animation => animation.finished.catch(() => undefined)))
+  })
 
   // Compare the card's own movement, so page scrolling cannot affect the result.
   const shift = (title: string) => stubFor(page, title).evaluate(el => new DOMMatrix(getComputedStyle(el).transform).m42)
