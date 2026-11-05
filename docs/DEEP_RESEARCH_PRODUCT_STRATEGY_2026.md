@@ -330,6 +330,26 @@ The initial competitor set understated the market. Current self-descriptions sho
 
 
 
+### Where SideQuest wins (4 November)
+
+A second check covered the apps the interviewees named, plus SCU's own channels, Qlusion and Meetup. Each one answers a different question. None of them answers "what fits the time I actually have, with the people I want."
+
+| App | What it's for | What it leaves out |
+| --- | --- | --- |
+| [SCU calendar](https://events.scu.edu/campus-calendar/all) and the [SCU Events app](https://apps.apple.com/us/app/id6677027333) | Official events. The Events app is a guide to big weekends such as Welcome Weekend and Grand Reunion | Club and student events, your schedule, friends |
+| [Qlusion](https://scu.edu/cioccacenter/qlusion) | Campus calendar and ticketing for departments and clubs, from SCU's Ciocca Center | Little public detail. Nothing found about free time or friends |
+| [Meetup](https://www.engadget.com/mobile/meetups-new-mobile-app-is-designed-to-make-it-easier-to-meet-people-irl-150000920.html) | Interest groups of mostly strangers. RSVP lists show an age and gender breakdown | Existing friends, your schedule |
+| [Luma](https://help.luma.com/p/luma-ios-app) (Interview 2) | Hosting and RSVPs, following calendars, QR check-in, chatting with people you attended with | Whether an event fits your day |
+| Instagram, flyers, screenshots (Interview 2) | Where students hear about things | No time check, and ideas get lost in camera rolls |
+| Snapchat, Discord, texting (Interview 1) | Talking it over. [Snap Map](https://www.socialmediatoday.com/news/snap-adds-new-discovery-tools-to-snap-map-highlighting-happening-events/519792) shows where friends are | Deciding takes a long time, the complaint in Interview 1 |
+| Google Calendar (Interview 2) | Busy blocks | Informal plans, and anything about events |
+| Google, AI search, Maps, Yelp (Interviews 1 and 2) | Places, hours, reviews, travel | Campus events, friends, your free window |
+| Howbout, Partiful (above) | Picking a time for a plan already chosen | Picking events for a time you already have |
+
+**The advantage, in one line:** everyone else tells you what's happening, and SideQuest tells you what fits. The full-fit rule already shipped in M2 is the core of it. **Don't compete on** ticketing (Qlusion, Luma), meeting strangers (Meetup), chat (Discord, Snapchat) or maps (Google). Link out to them instead.
+
+**Caveat:** this compares what each product advertises, not hands-on tests, and Qlusion's public pages say very little.
+
 ## The outside research that deepens the design
 
 1. [Togedule (CSCW 2025)](https://research.ibm.com/publications/togedule-scheduling-meetings-with-large-language-models-and-adaptive-representations-of-group-availability): adaptive choice presentation + LLMs; controlled experiments with total **N=66** found reduced attendee cognitive load and improved organizer speed/decision quality. **Use dynamic prompts that ask only for the unresolved constraints**; don't force a full survey.
@@ -412,6 +432,98 @@ Apply **hard constraints first**; identify **unknowns second**; rank by preferen
 - **Future shared groups require real authorization** or carefully scoped invitation tokens. The current unverified `hostName` is never an account or access-control key.
 - **Expect one migration rather than zero changes:** later `EventOccurrence` with timezone/recurrence and plan status requires an explicit adapter/migration from same-day `date/start/end` and `Schedule` IDs. Avoid falsely promising “no rewrite whatsoever.”
 
+## Going for all nine extra credits (team decision, 4 November)
+
+The team wants every category in the [bonus rubric](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit?usp=sharing), which adds up to the 5-point cap. This section replaces the older order and the "Security: deferred" advice further down. The eligibility rules still apply: core work done first, a class grade of at least 76% at the start of Week 9, team agreement, points awarded per student, a presentation, and every key kept on the server.
+
+**One idea ties it together.** SideQuest's advantage is that it starts from your free time, not from the event list (see [the competitor check](#where-sidequest-wins-4-november)). Each credit below either feeds that "what fits" engine with better data or shares its answer with friends. That keeps the extras from becoming a trophy shelf.
+
+### The nine credits, with what we build and what proves it
+
+| # | Credit | Points | What we build | Evidence for the grader | Proposed owner | Needs first |
+| --- | --- | ---: | --- | --- | --- | --- |
+| 1 | Automated end-to-end testing | 0.50 | Keep the Playwright suite in CI (18 tests today). Add a two-browser test where A posts and B sees it with no reload, a sign-in test, and a load test on `/api/events` that records response times | Green CI runs with the Playwright report and a load-test summary attached | Cynthia, everyone adds specs | Nothing |
+| 2 | Accessibility | 0.25 | A written keyboard-only and screen-reader walkthrough of Discover, Post and My Schedule. Automated axe checks in Playwright. Contrast fixes | The audit in `docs/`, axe passing in CI, a short screen-reader clip | Devonny with Cynthia | Nothing |
+| 3 | Publishing | 0.25 | The Node server hosted on Render, with every key as a server environment variable and a rate limit on posting | A public URL in the README that works in a fresh browser | Daven | Supabase live check |
+| 4 | Advanced libraries | 0.25 | React 19 is already used throughout. Document where it matters: hooks, state, component structure | A section in the README and reflection | Cynthia | Nothing |
+| 5 | Real-time WebSocket | 1.00 | The server listens to Supabase changes and pushes them to browsers over a WebSocket, so no key reaches the browser. First feature: a "new events" pill on Discover. Later: friends' plans appear live | The two-browser Playwright test, plus reconnect and duplicate-message tests | Daven (server), Cynthia (UI) | Publishing |
+| 6 | Security | 0.50 | Sign in with Google through Supabase Auth, kept in a server session. Roles: an event's owner can edit and delete it, and a group's host can invite and remove members. Database row rules enforce both | A demo of a non-owner being refused, and tests for each role | Daven, Sembiyan reviews | Team agrees accounts are now in scope |
+| 7 | External systems | 0.75 | Google Calendar, using the same Google sign-in. Read busy times to fill your free windows automatically, and "Also add to Google Calendar" when planning | The free-time search filled from a real calendar, with a busy event correctly excluded | Sembiyan (availability), Daven (OAuth) | Security |
+| 8 | AI | 0.50 | Paste a flyer screenshot and get a filled Post form to confirm field by field. Plain-English search such as "something chill after 3 for two hours", turned into a normal search that the fit engine then checks | Side-by-side: the AI draft, the confirmed post, and the same validation rules applied | Devonny, Cynthia on the review screen | Publishing (server key) |
+| 9 | Advanced architecture | 1.00 | Ports and adapters (below), with the diagram and the justification in the M2 reflection | The diagram, the reflection paragraph, and two adapters swapped for the same port in tests | Whole team, Cynthia drafts the diagram | Grows with 5 to 8 |
+
+**Adding accounts changes the agreed M2 scope.** The M2 contract says no accounts, logins or user table. Going for Security means the team updates `REQUIREMENTS.md` and `SPECIFICATIONS.md` for the final project, and replaces the edit-code idea for "My posts" (#7 in the peer feedback table) with real ownership. Agree this in writing before anyone starts.
+
+### Order of work
+
+1. **Sure points first (1.25):** publishing, the libraries write-up, the accessibility audit with axe in CI, and the load test.
+2. **Real-time (1.00):** live new events, tested with two browsers.
+3. **Sign-in and roles (0.50), then Google Calendar (0.75):** one Google sign-in serves both.
+4. **AI (0.50):** the flyer reader first, then plain-English search.
+5. **Architecture (1.00):** formalize each port as its adapter lands, then write it up. By the end, the adapters are the proof.
+
+Each step should end with its evidence captured, not only working code.
+
+### Which product ideas each credit unlocks
+
+| Idea from the design boards | Uses |
+| --- | --- |
+| What fits in the gap, Almost fits | The core fit engine. Google Calendar fills the window, and travel times could follow |
+| Fog over Thursday | Real-time, Google Calendar |
+| Down, if… and I'll go if you go | Security, real-time |
+| Friends on the ticket, your circles, pop-up groups | Security (groups and visibility), real-time |
+| Ideas that ripen | AI (flyer to idea), external data |
+| Event photos as stamps | Security (ownership), storage |
+
+### Advanced architecture: ports and adapters
+
+```mermaid
+flowchart LR
+  subgraph Adapters_in["Driving adapters"]
+    UI["React views"]
+    WS["WebSocket client"]
+  end
+  subgraph Core["SideQuest core: what fits your free time"]
+    D["Event · Plan · FitEvaluation · Intention"]
+    UC["Use cases: find events, plan, post, share"]
+  end
+  subgraph Ports["Ports"]
+    P1["CatalogPort"]
+    P2["SchedulePort"]
+    P3["AvailabilityPort"]
+    P4["LiveUpdatesPort"]
+    P5["AssistantPort"]
+    P6["IdentityPort"]
+  end
+  subgraph Adapters_out["Driven adapters"]
+    A1["Supabase table · in-memory · browser fallback"]
+    A2["Device storage · account storage"]
+    A3["Google Calendar · manual windows"]
+    A4["Supabase Realtime via server WebSocket"]
+    A5["AI model on the server"]
+    A6["Google sign-in via Supabase Auth"]
+  end
+  UI --> UC
+  WS --> UC
+  UC --> D
+  UC --> P1 & P2 & P3 & P4 & P5 & P6
+  P1 --- A1
+  P2 --- A2
+  P3 --- A3
+  P4 --- A4
+  P5 --- A5
+  P6 --- A6
+```
+
+**Draft justification for the M2 reflection.** MVC organizes an app around its screens. SideQuest's growth is not in screens. It is in sources: student posts, the SCU calendar, flyer screenshots, Google Calendar, live updates and accounts. Ports and adapters put the fit rules in a core that knows nothing about Supabase, Google or React, and plug each source in through a port. The M2 code already started this way: `EventCatalogPort` has a Supabase table, an in-memory table and a browser fallback behind it, and the same tests run against them. The final project extends that pattern instead of replacing it. In practice this means three things. Every new integration is one adapter plus its tests. The fit engine stays easy to test with fakes. And swapping a data source never touches the views. The core is also the product's advantage, so the architecture protects the part worth protecting.
+
+### Risks to watch
+
+- **Google sign-in in testing mode** only works for test users added in the Google Cloud console. Add every teammate and the grader before the demo.
+- **AI** must never post on its own. Every field is confirmed by the person, then checked by the same Model rules as a typed post. Keep the key on the server and cap usage.
+- **Publishing anonymous posting** invites spam. Rate limits come before the public URL, and sign-in for posting removes most of the risk.
+- **Points per student:** each teammate should own and present at least one credit.
+
 ## Extra credit: evidence-based plan, actual rubric maximum 5
 
 Original: [Final Project Extra Credit Opportunities](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit?usp=sharing). Core project first; class grade ≥76% beginning of Week 9; good standing; team agreement; individual awards; final presentation can extend up to 5 minutes; **keys kept server-side** per instructor.
@@ -423,7 +535,7 @@ Original: [Final Project Extra Credit Opportunities](https://docs.google.com/doc
 | External integration/device | **0.75** | Mode-aware real route/travel data, Mapbox or Google Routes, error/unknown handling; demonstrate personal constraint | **High user value**. [Google route matrix](https://developers.google.com/maps/documentation/routes/compute_route_matrix) supports transit; [Mapbox Directions](https://docs.mapbox.com/api/navigation/directions/) focuses on walking/cycling/driving, so provider choice affects interview 2's transit needs |
 | Automated browser E2E in CI | **0.50** | [Playwright separate browser contexts](https://playwright.dev/docs/browser-contexts): A posts, B sees, one device plans, other unchanged; [GitHub CI](https://playwright.dev/docs/ci), report attached | **High confidence / low architecture risk** |
 | AI API using app data | **0.50** | Ground explanations/conditional alternatives in actual catalog and confirmed constraints; compare result with deterministic baseline; server-only key | **High eventual fit**, but requires enough real data and clear checks |
-| Security | **0.50** | Modern auth/authorization/roles if needed for real shared plans or event ownership | **Deferred.** Login contradicts no-account M2 and is unsafe to rush solely for points |
+| Security | **0.50** | Modern auth/authorization/roles if needed for real shared plans or event ownership | **Now planned** with Google sign-in and roles. See [Going for all nine](#going-for-all-nine-extra-credits-team-decision-4-november) |
 | Accessibility | **0.25** | Manual keyboard + screen reader review, focus, contrast, labels, useful errors | Core-quality win; demonstrate |
 | Publishing | **0.25** | Stable public working deployment, no local-only backend; abuse protection for anonymous posts | Core-quality win; demonstrate |
 | Advanced external library | **0.25** | Substantial real React usage, not merely installed | Already likely relevant; instructor decides |
