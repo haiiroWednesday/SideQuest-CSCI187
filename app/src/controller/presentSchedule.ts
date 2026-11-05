@@ -63,7 +63,9 @@ export function presentSchedule(input: ScheduleInput, now: Date = new Date()): S
   const first = upcoming[0]
   if (first) {
     const day = describeDay(first.date, now)
-    const until = minutesUntilStart(sorted.find(entry => entry.event.id === first.id)!.event, now)
+    // Use the source record for duration calculations, not formatted display strings.
+    const firstEvent = sorted.find(entry => entry.event.id === first.id)?.event
+    const until = firstEvent ? minutesUntilStart(firstEvent, now) : 0
     nextUp = first.live?.kind === 'now'
       ? { stub: first, kind: 'now', when: first.live.text }
       : day.isToday

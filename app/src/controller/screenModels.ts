@@ -97,7 +97,7 @@ export function spanText(minutes: number): string {
 export function describeDay(date: string, now: Date): DayModel {
   const today = campusNow(now).date
   const { year, month, day, weekday } = partsOf(date)
-  const t = partsOf(today)
+  const todayParts = partsOf(today)
   const gap = dayGap(date, today)
   const dow = WEEKDAYS[weekday] ?? ''
   const tag = gap === 0 ? 'TODAY'
@@ -112,7 +112,7 @@ export function describeDay(date: string, now: Date): DayModel {
     isToday: gap === 0,
     dow,
     dayNumber: day,
-    monthTag: month !== t.month || year !== t.year ? MONTHS[month - 1] ?? null : null,
+    monthTag: month !== todayParts.month || year !== todayParts.year ? MONTHS[month - 1] ?? null : null,
   }
 }
 

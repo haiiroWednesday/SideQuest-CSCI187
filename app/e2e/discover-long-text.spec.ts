@@ -52,14 +52,13 @@ test('the selected card stays still on hover and looks different from the others
   const choir = stubFor(page, 'Choir')
   await choir.click()
   await expect(choir).toHaveAttribute('aria-pressed', 'true')
-  await page.waitForTimeout(300) // let the selected style finish settling
+  await expect.poll(() => choir.evaluate(el => new DOMMatrix(getComputedStyle(el).transform).m42)).toBe(0)
 
   // Compare the card's own movement, so page scrolling cannot affect the result.
   const shift = (title: string) => stubFor(page, title).evaluate(el => new DOMMatrix(getComputedStyle(el).transform).m42)
   const before = await shift('Choir')
   await choir.hover()
-  await page.waitForTimeout(250)
-  expect(await shift('Choir')).toBe(before)
+  await expect.poll(() => shift('Choir')).toBe(before)
 
   // The picked card's time stub turns solid red; an unpicked card keeps the pale stub.
   const stubColor = (title: string) => stubFor(page, title).locator('.sq-stub-time').evaluate(el => getComputedStyle(el).backgroundColor)
@@ -70,8 +69,7 @@ test('the selected card stays still on hover and looks different from the others
   await page.mouse.move(0, 0)
   expect(await shift(LONG_TITLE)).toBe(0)
   await other.hover()
-  await page.waitForTimeout(250)
-  expect(await shift(LONG_TITLE)).toBeLessThan(0)
+  await expect.poll(() => shift(LONG_TITLE)).toBeLessThan(0)
 })
 
 test('on a phone, the long details still open in the sheet and the Plan button can be reached', async ({ page }) => {
