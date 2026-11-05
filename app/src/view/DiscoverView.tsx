@@ -108,6 +108,11 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
   )
 }
 
+// Long titles get a smaller size in the details card, so the full title fits without taking over the card.
+function titleSizeClass(title: string): string | undefined {
+  return title.length > 80 ? 'sq-title-xlong' : title.length > 40 ? 'sq-title-long' : undefined
+}
+
 export function DayBubble({ dow, dayNumber, monthTag }: { dow: string; dayNumber: number; monthTag: string | null }) {
   return (
     <div className="sq-bubble" aria-hidden="true">
@@ -291,7 +296,7 @@ export function DiscoverView({
           </section>
           {ready && <aside ref={sheet} className={`sq-sticker${sheetOpen ? ' sq-open' : ''}`} hidden={phone && !sheetOpen} role={modal ? 'dialog' : undefined} aria-modal={modal || undefined} aria-labelledby="sq-detail-title">
             {selected ? (
-              <div className="sq-sticker-card" key={selected.id}>
+              <div className="sq-sticker-card sq-ticket-scroll" key={selected.id}>
                 <button type="button" className="sq-sheet-close" aria-label="Close details" onClick={closeSheet}>×</button>
                 {verified?.status === 'loading' ? (
                   <div className="sq-detail-verification" role="status">
@@ -323,7 +328,8 @@ export function DiscoverView({
                     <small>{selected.month}</small>
                   </div>
                 </div>
-                <h2 id="sq-detail-title">{selected.title}</h2>
+                <div className="sq-sticker-body">
+                <h2 id="sq-detail-title" className={titleSizeClass(selected.title)}>{selected.title}</h2>
                 <dl className="sq-facts">
                   <dt>Host</dt>
                   <dd className={selected.host ? undefined : 'sq-unset'}>{selected.host ?? 'Host not provided'}</dd>
@@ -331,6 +337,7 @@ export function DiscoverView({
                   <dt>Date</dt><dd>{selected.dateText}</dd>
                 </dl>
                 <p className="sq-sticker-desc">{selected.description ?? 'No description was provided.'}</p>
+                </div>
                 {onPlan && (
                   <button className="sq-plan-button" type="button" disabled={selected.planned || screen.planningBlocked} onClick={() => onPlan(selected.id)}>
                     {selected.planned ? 'In My Schedule' : '+ Plan to attend'}
