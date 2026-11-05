@@ -149,6 +149,11 @@ function toStub(event: ScreenEvent, now: Date, planned: ReadonlySet<string>, fit
   }
 }
 
+/** Present a freshly verified Event with the same display contract as Discover. */
+export function presentBrowseDetail(event: ScreenEvent, plannedIds: readonly string[] = [], now: Date = new Date()): StubModel {
+  return toStub(event, now, new Set(plannedIds), null)
+}
+
 function byTime(a: CampusEvent, b: CampusEvent): number {
   return a.date.localeCompare(b.date) || a.start.localeCompare(b.start) || a.end.localeCompare(b.end) || a.id.localeCompare(b.id)
 }
