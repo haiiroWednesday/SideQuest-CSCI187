@@ -1,6 +1,6 @@
 // VIEW: draw the Discover screen the Controller prepared. No storage, matching,
 // clock reads, date or time comparisons, or Model imports belong here.
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   presentDiscover, type DiscoverScreen, type FreeWindow, type ScreenEvent, type StubModel,
 } from '../controller/presentScreens'
@@ -15,6 +15,7 @@ import logoUrl from './assets/sidequest-logo-red.svg'
 import drawingUrl from './assets/mission-arcade-trail.svg'
 import { EventDetailContent, type SelectedDetailState } from './EventDetailContent'
 import { FreeWindowForm } from './FreeWindowForm'
+import { useMobileDetailFocus, usePhoneViewport } from './useMobileDetailFocus'
 
 export type { FreeWindow } from '../controller/presentScreens'
 export type DiscoverEvent = ScreenEvent
@@ -144,37 +145,8 @@ export function DiscoverView({
   const [sheetOpen, setSheetOpen] = useState(false)
   const sheet = useRef<HTMLElement>(null)
   const trigger = useRef<HTMLElement | null>(null)
-  const [phone, setPhone] = useState(() => typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches)
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') return
-    const query = window.matchMedia('(max-width: 760px)')
-    const change = () => setPhone(query.matches)
-    query.addEventListener('change', change)
-    return () => query.removeEventListener('change', change)
-  }, [])
-  const closeSheet = () => setSheetOpen(false)
-  useEffect(() => {
-    if (!phone || !sheetOpen || !sheet.current) return
-    const panel = sheet.current
-    const originalOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    panel.querySelector<HTMLElement>('button:not(:disabled), a[href]')?.focus()
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { event.preventDefault(); closeSheet(); return }
-      if (event.key !== 'Tab') return
-      const controls = [...panel.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), [tabindex="0"]')]
-      const first = controls[0], last = controls[controls.length - 1]
-      if (!first) return
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
-    }
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.body.style.overflow = originalOverflow
-      document.removeEventListener('keydown', onKey)
-      if (trigger.current?.isConnected) trigger.current.focus()
-    }
-  }, [phone, sheetOpen])
+  const phone = usePhoneViewport()
+  const closeSheet = useCallback(() => setSheetOpen(false), [])
   const modal = phone && sheetOpen
   const stubs = screen.days.flatMap(day => day.events)
   // Keep the student's pick while it is still listed; otherwise fall back to the first event.
@@ -186,16 +158,10 @@ export function DiscoverView({
   useEffect(() => {
     if (screen.status !== 'ready' || screen.count === 0) setSheetOpen(false)
   }, [screen.status, screen.count])
-  // Planning can disable the focused button while the sheet stays open.
-  // Keep keyboard focus on an enabled control inside the dialog.
-  useEffect(() => {
-    const panel = sheet.current
-    if (!modal || !panel) return
-    const active = document.activeElement
-    if (!panel.contains(active) || (active instanceof HTMLButtonElement && active.disabled)) {
-      panel.querySelector<HTMLElement>('button:not(:disabled), a[href]')?.focus()
-    }
-  }, [modal, selected?.id, selected?.planned, screen.planningBlocked])
+  useMobileDetailFocus({
+    phone, sheetOpen, panelRef: sheet, returnFocusRef: trigger, onClose: closeSheet,
+    selectedId: selected?.id, selectedPlanned: selected?.planned, planningBlocked: screen.planningBlocked,
+  })
   const ready = screen.status === 'ready'
   const free = screen.freeWindow
 
