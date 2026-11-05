@@ -8,7 +8,7 @@ export type ToastItem = {
   key: string
   tone: ToastTone
   text: string
-  action?: { label: string; onClick: () => void }
+  action?: { label: string; onClick?: () => void; href?: string }
   testId?: string
 }
 
@@ -43,7 +43,8 @@ function Toast({ toast, onClose }: { toast: ToastItem; onClose: () => void }) {
     <div className={`sq-toast sq-toast-${toast.tone}${leaving ? ' sq-toast-leaving' : ''}`} role={role} data-testid={toast.testId}>
       <span className="sq-toast-mark" aria-hidden="true">{toast.tone === 'success' ? '✓' : toast.tone === 'info' ? 'i' : '!'}</span>
       <p className="sq-toast-text">{toast.text}</p>
-      {toast.action && <button type="button" className="sq-toast-action" onClick={toast.action.onClick}>{toast.action.label}</button>}
+      {toast.action?.href ? <a className="sq-toast-action" href={toast.action.href}>{toast.action.label}</a>
+        : toast.action && <button type="button" className="sq-toast-action" onClick={toast.action.onClick}>{toast.action.label}</button>}
       <button type="button" className="sq-toast-close" aria-label="Dismiss message" onClick={leave}>×</button>
       {life !== null && (
         <span className="sq-toast-timer" aria-hidden="true" style={{ animationDuration: `${life}ms` }}

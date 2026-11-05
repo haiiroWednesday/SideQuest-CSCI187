@@ -56,8 +56,11 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
     text: 'Not connected to the shared catalog. Posts are saved in this browser only.' })
   // An overlap warning already says the plan was added, so it replaces the success message.
   const showWarning = page !== 'schedule' && Boolean(plans.warning)
-  if (plans.message && !showWarning) toasts.push({ key: `message-${r}`, tone: 'success', text: plans.message })
-  if (showWarning && plans.warning) toasts.push({ key: `warning-${r}`, tone: 'warning', text: plans.warning })
+  // After planning from Discover, offer a quiet way to My Schedule. It is a link in the toast, never a redirect.
+  const added = page !== 'schedule' && Boolean(plans.message?.startsWith('Added'))
+  const toSchedule = { label: 'See My Schedule', href: routes.schedule }
+  if (plans.message && !showWarning) toasts.push({ key: `message-${r}`, tone: 'success', text: plans.message, action: added ? toSchedule : undefined })
+  if (showWarning && plans.warning) toasts.push({ key: `warning-${r}`, tone: 'warning', text: plans.warning, action: { label: 'Check My Schedule', href: routes.schedule } })
   if (plans.error && !(page === 'schedule' && plans.schedule.blocked)) toasts.push({ key: `error-${r}`, tone: 'error', text: plans.error,
     action: plans.schedule.blocked ? { label: 'Recover valid plans', onClick: plans.recover } : undefined })
   else if (page !== 'schedule' && plans.lookupError) toasts.push({ key: `lookup-${r}`, tone: 'error', text: plans.lookupError,

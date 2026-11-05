@@ -111,6 +111,15 @@ describe('shared Schedule resolution', () => {
 })
 
 describe('production wiring and request order', () => {
+  it('after planning, the toast offers a link to My Schedule without leaving Discover', async () => {
+    render(<App catalog={{ catalog: port(), shared: true }} now={now} />)
+    await screen.findByRole('button', { name: 'View details for Ceramics' })
+    fireEvent.click(screen.getByRole('button', { name: '+ Plan to attend' }))
+    const link = await screen.findByRole('link', { name: 'See My Schedule' })
+    expect(link.getAttribute('href')).toBe('#schedule')
+    expect(location.hash).toBe('#discover')
+    expect(screen.getByRole('status').textContent).toContain('Added “Ceramics” to your plans.')
+  })
   it('loads shared events when the localStorage getter throws, and disables planning safely', async () => {
     vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => { throw Error('blocked') })
     // Catalog selection itself must not touch localStorage, even with Supabase configured.
