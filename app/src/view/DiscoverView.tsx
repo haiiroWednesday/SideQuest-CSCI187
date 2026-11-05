@@ -320,7 +320,7 @@ export function DiscoverView({
                   <div className="sq-sticker-time">
                     {selected.live && <span className={`sq-nx sq-live-${selected.live.kind}`}>{selected.live.text}</span>}
                     <b>{selected.start.time}</b><i>{selected.start.ampm}</i>
-                    <span>until {selected.endText} · {selected.durationText}</span>
+                    <span className="sq-sticker-until">until {selected.endText}<em>{selected.durationText}</em></span>
                   </div>
                   <div className="sq-sticker-day" aria-hidden="true">
                     <small>{selected.dow}</small>

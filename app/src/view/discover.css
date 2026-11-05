@@ -332,9 +332,12 @@
 .sq-sticker-card { position: relative; background: var(--sq-ticket-bg); border: 2px solid var(--sq-red-deep); border-radius: 30px; padding: 28px 30px 30px; box-shadow: 10px 12px 0 var(--sq-red-deep); animation: sq-stick .25s ease; }
 @keyframes sq-stick { from { transform: translateY(6px) rotate(-.6deg); } to { transform: none; } }
 .sq-sticker-top { display: flex; gap: 22px; align-items: flex-end; padding-bottom: 18px; border-bottom: 2px dashed var(--sq-rule-strong); }
-.sq-sticker-time b { font: 400 96px/.9 var(--font-display); letter-spacing: -2px; font-variant-numeric: lining-nums; }
-.sq-sticker-time i { font: italic 400 40px var(--font-display); color: var(--sq-red); margin-left: 3px; }
+/* The time is a little smaller and the until line a little larger, so the end time and length read easily. */
+.sq-sticker-time b { font: 400 76px/.9 var(--font-display); letter-spacing: -1.5px; font-variant-numeric: lining-nums; }
+.sq-sticker-time i { font: italic 400 32px var(--font-display); color: var(--sq-red); margin-left: 3px; }
 .sq-sticker-time span { display: block; margin-top: 10px; font: 500 18px var(--font-sans); color: var(--sq-muted); }
+.sq-sticker-time .sq-sticker-until { margin-top: 12px; font: 600 21px/1.25 var(--font-sans); color: var(--sq-ink); }
+.sq-sticker-until em { display: block; font-style: normal; font-weight: 500; color: var(--sq-muted); }
 .sq-sticker-day { margin-left: auto; display: grid; justify-items: center; line-height: 1; color: var(--sq-muted); }
 .sq-sticker-day small { font: 800 12px var(--font-sans); letter-spacing: 1.8px; }
 .sq-sticker-day b { font: 400 44px/.9 var(--font-display); margin: 6px 0 4px; color: var(--sq-ink); }
@@ -411,7 +414,9 @@
   .sq-sticker { position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; top: auto; max-height: 88vh; overflow-y: auto; transform: translateY(105%); transition: transform .28s ease; }
   .sq-sticker.sq-open { transform: none; }
   .sq-sticker-card { border-radius: 26px 26px 0 0; border-bottom: 0; box-shadow: 0 -8px 30px rgba(48, 36, 33, .22); padding: 40px 20px 28px; }
-  .sq-sticker-time b { font-size: 72px; }
+  .sq-sticker-time b { font-size: 58px; }
+  .sq-sticker-time i { font-size: 26px; }
+  .sq-sticker-time .sq-sticker-until { font-size: 19px; }
   .sq-sticker h2 { font-size: 38px; }
   .sq-sheet-close { display: block; position: absolute; top: 6px; right: 8px; width: 48px; height: 48px; border: 0; background: none; font: 400 34px/1 var(--font-sans); color: var(--sq-muted); cursor: pointer; }
   .sq-scrim { display: block; position: fixed; inset: 0; z-index: 35; background: rgba(48, 36, 33, .38); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
@@ -585,7 +590,8 @@
   .sq-stub-time b { font-size: 32px; } .sq-stub-time b i { font-size: 20px; }
   .sq-stub-body { padding: 14px 14px 14px 18px; }
   .sq-stub-body strong { font-size: 26px; padding-right: 18px; }
-  .sq-sticker-time b { font-size: 76px; }
+  .sq-sticker-time b { font-size: 60px; }
+  .sq-sticker-time i { font-size: 26px; }
   .sq-sticker h2 { font-size: 40px; }
 }
 

@@ -49,6 +49,15 @@ describe('Discover View: draws the Controller screen', () => {
     expect(within(ticket()).getByText('Student Literary Society')).toBeTruthy()
   })
 
+  it('shows the end time and the length on separate lines in the details ticket', () => {
+    render(draw(events))
+    const until = within(screen.getByRole('complementary')).getByText(/^until 3:30pm/)
+    expect(until.className).toBe('sq-sticker-until')
+    const length = within(until).getByText('1 hr')
+    expect(length.tagName).toBe('EM')
+    expect(until.textContent).not.toContain('·')
+  })
+
   it('renders missing host/description honestly, and keeps plan controls hidden until integrated', () => {
     render(draw([{ ...events[0], hostName: undefined, description: undefined }]))
     expect(screen.getAllByText('Host not provided').length).toBeGreaterThan(0)

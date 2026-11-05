@@ -68,7 +68,7 @@ export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes
                   <div className="sq-sticker-top">
                     <div className="sq-sticker-time">
                       <b>{next.stub.start.time}</b><i>{next.stub.start.ampm}</i>
-                      <span>until {next.stub.endText} · {next.stub.durationText}</span>
+                      <span className="sq-sticker-until">until {next.stub.endText}<em>{next.stub.durationText}</em></span>
                     </div>
                     <div className="sq-sticker-day" aria-hidden="true">
                       <small>{next.stub.dow}</small><b>{next.stub.dayNumber}</b><small>{next.stub.month}</small>
