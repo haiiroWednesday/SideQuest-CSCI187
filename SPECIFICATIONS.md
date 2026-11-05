@@ -11,7 +11,7 @@
 ## S1 — Shared event data and posting (R1)
 **Current public M2 event contract**: `CampusEvent` with `id`, `title`, `hostName`, `description`, `location`, `date`, `start`, `end`. IDs are store-generated UUIDs; date is `YYYY-MM-DD` and start/end `HH:mm` Santa Clara wall time. The event must begin before it ends on the same day.
 
-- `app/src/view/PostEventForm.tsx`: form and visible field-level errors; it calls the Controller. Field length limits are supplied through the Controller.
+- `app/src/view/PostEventForm.tsx` exposes the posting workflow; View components render the fields, errors, and optional posted-events list. Controllers provide validation results and field limits. Splitting the View into smaller components does not change the posting contract.
 - `app/src/controller/postEvent.ts`: mediates posting, handles results, errors, and the choice between configured shared catalog and explicitly labeled local fallback.
 - `app/src/model/eventCatalog.ts`: canonical event contract, field checks, campus-time posting restriction, conversions, sorting, lookup and `EventCatalogPort`. **Model-level validation must reject historical new posts even when called without the form.**
 - `app/src/model/supabaseEventTable.ts`: remote storage adapter, never imported by Views; `app/src/model/browserEventTable.ts`: browser-only fallback. `app/src/model/inMemoryEventTable.ts` is a test fixture.
@@ -29,7 +29,7 @@ getById(id: string): Promise<CampusEvent | null>
 
 `listUpcoming` returns non-ended events ordered by date/start/id. `getById` supports older stored events outside upcoming search, so local plans remain meaningful. Rejected promises represent network/storage failures; a successful `null` lookup means missing record. This distinction must be preserved by every consumer.
 
-`app/src/view/useEventCatalog.ts` loads the current catalog snapshot, ignores obsolete responses and exposes refresh. `controller/presentScreens.ts` prepares Discover/Schedule text and flags from Model rules. The supplied Discover and Schedule views are integrated into the production app. Do not label test fixtures or browser fallback as a live campus-wide feed.
+`app/src/view/useEventCatalog.ts` exposes catalog loading and refresh while rejecting obsolete responses. `controller/presentScreens.ts` is the stable presenter API for Discover and Schedule; its presentation logic may be organized into smaller modules without changing the View contract. Those presenters prepare screen labels, counts and flags from Model rules. Never describe browser fallback or test fixtures as a live campus-wide feed.
 
 ## S3 — Full-fit availability search (R3)
 `App.tsx` obtains its Discover screen from `controller/presentScreens.ts`, which calls `findEvents` in `controller/findEvents.ts` to search upcoming catalog events. The reusable full-fit rule in `model/events.ts` accepts exactly:
@@ -58,8 +58,8 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 
 | Component or class | Responsibilities | Collaborators |
 | --- | --- | --- |
-| **View:** App, PostEventForm, DiscoverView, ScheduleTrailView, useEventCatalog, useSharedSchedule | Render forms/cards, collect input, present Controller feedback, manage temporary display state | **Controllers only** for domain data/actions |
-| **Controller:** postEvent, findEvents, personalSchedule, sharedSchedule, presentScreens | Coordinate commands and reads, prepare screen text, map Model errors to user feedback, keep View insulated from persistence | View and Model |
+| **View:** App, posting/browsing/Schedule components, catalog and schedule hooks | Render form inputs and cards, collect interaction, show Controller feedback, manage temporary display state and accessible focus | **Controllers only** for domain data/actions |
+| **Controller:** postEvent, findEvents, personalSchedule, sharedSchedule, presentScreens presenter API | Coordinate commands and reads, prepare screen text, map Model errors to user feedback, keep Views insulated from persistence | View and Model |
 | **Model:** EventCatalog, Event, Schedule, table adapters | Domain validation, full-fit calculation, data and ID ownership, persistence, ordering and overlap rules | Controllers and repository adapters |
 
 **Current conceptual design:** [P4 class/CRC](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit). The accepted P4 diagram is preserved unchanged. See the M2 implementation diagrams for the current code mapping.
