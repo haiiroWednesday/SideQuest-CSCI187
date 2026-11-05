@@ -494,84 +494,14 @@
 
 /* Application composition and recovery controls. */
 [hidden] { display: none !important; }
-.sq-post-panel { max-width: 780px; margin: 0 auto; }
-.sq-post-panel h1 { margin: 6px 0 12px; font: 400 84px/.95 var(--font-display); letter-spacing: -1px; }
-.sq-post-panel h1 em { color: var(--sq-red); }
-.sq-post-panel > p { margin: 0 0 30px; font: 500 19px/1.5 var(--font-sans); color: var(--sq-muted); }
-/* the form is a ticket card with the same red edge as the event details */
-.sq-post-panel .event-form { display: block; padding: 34px 40px 38px; background: var(--sq-ticket-bg); border: 1.5px solid var(--sq-rule-strong); border-radius: 26px; box-shadow: 9px 9px 0 var(--sq-red-deep); }
-.sq-post-fieldset { display: flex; flex-direction: column; gap: 22px; border: 0; padding: 0; margin: 0; min-width: 0; }
-.sq-post-panel .field { display: grid; gap: 8px; }
-.sq-post-panel .event-form label { display: block; }
-.sq-post-panel .event-form label span { font: 700 13px/1 var(--font-sans); letter-spacing: .12em; color: var(--sq-red); }
-.sq-post-panel .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.sq-post-panel .event-form :is(input, textarea) { box-sizing: border-box; width: 100%; min-height: 56px; padding: 14px 16px; border: 1.5px solid var(--sq-rule-strong); border-radius: 14px;
-  font: 500 19px/1.35 var(--font-sans); background: #fffdf8; color: var(--sq-ink); transition: border-color .15s ease, box-shadow .15s ease; }
-.sq-post-panel textarea { min-height: 120px; resize: vertical; }
-.sq-post-panel :is(input, textarea)::placeholder { color: #9a8f86; font-weight: 400; }
-.sq-post-panel .event-form :is(input, textarea):focus { outline: none; border-color: var(--sq-red); box-shadow: 0 0 0 4px var(--sq-row-selected); }
-.sq-post-panel [aria-invalid="true"] { border-color: var(--sq-red); }
-.sq-post-panel small { font: 600 14px/1.4 var(--font-sans); }
-.sq-post-panel :is(.error, .field-error) { color: var(--sq-red-deep); }
-.sq-post-panel .primary-button:focus-visible { outline: 3px solid var(--sq-red-deep); outline-offset: 3px; }
-.sq-post-panel .primary-button { width: 100%; min-height: 62px; margin-top: 8px; border: 0; border-radius: 999px; padding: 16px; background: var(--sq-red); color: var(--sq-on-red);
-  font: 700 20px var(--font-sans); cursor: pointer; box-shadow: 0 4px 0 var(--sq-red-deep); transition: transform .12s ease, box-shadow .12s ease, background .12s ease; }
-.sq-post-panel .primary-button:hover:not(:disabled) { background: var(--sq-red-deep); transform: translateY(-1px); }
-.sq-post-panel .primary-button:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--sq-red-deep); }
-.sq-post-panel .primary-button:disabled { opacity: .6; cursor: progress; }
-.sq-post-panel :is(.success, .error[role="alert"]) { margin: 22px 0 0; padding: 14px 18px; border-radius: 16px; font: 600 17px/1.45 var(--font-sans); }
-.sq-post-panel .success { background: var(--sq-sticky); color: var(--sq-ink); }
-.sq-post-panel .error[role="alert"] { background: #fbe6e2; }
-/* leaving the page sits well below the form, past a dashed rule */
-.sq-post-panel > .sq-text-link { display: block; width: fit-content; margin: 64px auto 0; padding-top: 22px; font: 600 18px var(--font-sans); text-decoration: none; color: var(--sq-red); }
-.sq-post-panel > .sq-text-link::before { content: ""; display: block; width: min(780px, 80vw); height: 0; margin: -22px 0 22px 50%; transform: translateX(-50%); border-top: 1.5px dashed var(--sq-rule-strong); }
-.sq-post-panel > .sq-text-link:hover { text-decoration: underline; text-underline-offset: 4px; }
-@media (max-width: 760px) {
-  .sq-post-panel .event-form { padding: 24px 18px 26px; border-radius: 22px; box-shadow: 6px 6px 0 var(--sq-red-deep); }
-  .sq-post-panel > p { font-size: 17px; }
-  .sq-post-panel .event-form :is(input, textarea) { font-size: 17px; min-height: 52px; padding: 12px 14px; }
-  .sq-post-panel .time-row { gap: 10px; }
-}
-@media (prefers-reduced-motion: reduce) { .sq-live-now::before { animation: none; } }
-
 .sq-pill-overlap { flex-shrink: 0; border-radius: 12px; overflow-wrap: anywhere; }
 
 .sq-discover-page a.sq-plan-link { color: var(--sq-on-red); }
-
-/* ---------- Toasts: temporary action feedback, bottom right (above the tab bar on phones) ---------- */
-.sq-toasts { box-sizing: border-box; font-family: var(--font-sans); color: var(--sq-ink); -webkit-font-smoothing: antialiased; position: fixed; z-index: 60; right: 24px; bottom: 24px; width: min(420px, calc(100% - 32px)); display: grid; gap: 10px; pointer-events: none; }
-.sq-toast, .sq-toast * { box-sizing: border-box; }
-.sq-toast { pointer-events: auto; position: relative; overflow: hidden; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; column-gap: 12px; row-gap: 8px;
-  padding: 13px 10px 15px 14px; background: var(--sq-ticket-bg); color: var(--sq-ink); border: 1.5px solid var(--sq-rule-strong); border-radius: 18px;
-  box-shadow: 0 3px 0 var(--sq-ticket-under), 0 16px 32px rgba(48, 36, 33, .16); animation: sq-toast-in .3s cubic-bezier(.2, .8, .2, 1) both; }
-.sq-toast-leaving { animation: sq-toast-out .22s ease-in both; }
-.sq-toast-mark { grid-row: 1; align-self: start; margin-top: -2px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font: 700 15px/1 var(--font-sans); background: var(--sq-gold); color: var(--sq-ink); }
-.sq-toast-info .sq-toast-mark { background: var(--sq-row-selected); color: var(--sq-red-deep); font: italic 400 21px/1 var(--font-display); }
-.sq-toast-warning .sq-toast-mark, .sq-toast-error .sq-toast-mark { background: var(--sq-red); color: var(--sq-on-red); }
-.sq-toast-error { border-color: var(--sq-red); }
-.sq-toast-text { margin: 0; font: 500 16px/1.4 var(--font-sans); }
-.sq-toast-action { grid-column: 2; grid-row: 2; justify-self: start; min-height: 36px; padding: 6px 14px; border: 0; border-radius: 999px; background: var(--sq-red); color: var(--sq-on-red); font: 700 14px var(--font-sans); cursor: pointer; white-space: nowrap; }
-.sq-toast-action:hover { background: var(--sq-red-deep); }
-.sq-toast-close { grid-column: 3; grid-row: 1; width: 34px; height: 34px; border: 0; border-radius: 50%; background: transparent; color: var(--sq-muted); font: 400 24px/1 var(--font-sans); cursor: pointer; }
-.sq-toast-close:hover { background: var(--sq-row-hover); color: var(--sq-ink); }
-.sq-toast-timer { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--sq-gold); transform-origin: left center; animation: sq-toast-timer linear forwards; }
-.sq-toast-info .sq-toast-timer { background: var(--sq-rule-strong); }
-.sq-toast-warning .sq-toast-timer { background: var(--sq-red); }
-.sq-toast:hover .sq-toast-timer, .sq-toast:focus-within .sq-toast-timer { animation-play-state: paused; }
-@keyframes sq-toast-in { from { opacity: 0; transform: translateY(16px) scale(.97); } }
-@keyframes sq-toast-out { to { opacity: 0; transform: translateY(10px) scale(.97); } }
-@keyframes sq-toast-timer { from { transform: scaleX(1); } to { transform: scaleX(0); } }
-@media (max-width: 760px) {
-  .sq-toasts { left: 12px; right: 12px; width: auto; bottom: calc(100px + env(safe-area-inset-bottom)); }
-  .sq-toast-text { font-size: 15px; }
-}
-@media (prefers-reduced-motion: reduce) { .sq-toast, .sq-toast-leaving { animation-name: none; } }
 
 /* ---------- Zoom and mid widths: sizes step down by layout width, never by vw ---------- */
 @media (max-width: 1160px) and (min-width: 761px) {
   .sq-hero h1 { font-size: 76px; }
   .sq-campus-drawing { height: 204px; }
-  .sq-post-panel h1 { font-size: 72px; }
 }
 @media (max-width: 1024px) and (min-width: 761px) {
   .sq-hero h1 { font-size: 64px; }
@@ -595,78 +525,3 @@
   .sq-sticker h2 { font-size: 40px; }
 }
 
-/* ---------- Event details: a paper ticket taped to the page, matching the stubs ---------- */
-.sq-sticker-card { border: 1.5px solid var(--sq-rule-strong); border-radius: 24px; padding: 0 30px 30px;
-  box-shadow: 0 3px 0 var(--sq-ticket-under), 0 22px 44px rgba(48, 36, 33, .14); transform: rotate(-.7deg); }
-.sq-sticker-card::before { content: ""; position: absolute; z-index: 2; top: -18px; left: 50%; width: 132px; height: 46px; margin-left: -66px;
-  background: url('./assets/tape.svg') center / 100% 100% no-repeat; transform: rotate(-3deg); pointer-events: none; }
-/* the stub: tinted like the trail tickets, cut off by a perforation with punched notches */
-.sq-sticker-top { position: relative; margin: 0 -30px 0; padding: 30px 30px 22px; background: var(--sq-row-selected); border-radius: 22px 22px 0 0;
-  border-bottom: 2px dashed var(--sq-rule-strong); align-items: center; }
-.sq-sticker-top::before, .sq-sticker-top::after { content: ""; position: absolute; bottom: -14px; width: 26px; height: 26px; border-radius: 50%;
-  background: var(--sq-paper); border: 1.5px solid var(--sq-rule-strong); }
-.sq-sticker-top::before { left: -14px; clip-path: inset(0 0 0 50%); }
-.sq-sticker-top::after { right: -14px; clip-path: inset(0 50% 0 0); }
-.sq-sticker-time .sq-nx { display: flex; width: fit-content; max-width: 100%; white-space: nowrap; margin: 0 0 14px; color: var(--sq-on-red); font: 800 13px var(--font-sans); letter-spacing: 1.6px; }
-.sq-sticker-time .sq-nx.sq-live-soon { color: var(--sq-red); letter-spacing: .3px; }
-.sq-sticker-time .sq-nx i { margin: 0; font: inherit; font-style: normal; letter-spacing: .3px; color: #f7c14e; }
-.sq-sticker-time b { color: var(--sq-red); }
-.sq-sticker-time i { color: var(--sq-red); }
-.sq-sticker-time span { color: var(--sq-ink); font-weight: 600; }
-/* the date as a postmark stamp */
-.sq-sticker-day { flex: none; width: 92px; height: 92px; border-radius: 50%; border: 2px dashed var(--sq-red); color: var(--sq-red);
-  align-content: center; transform: rotate(9deg); background: rgba(255, 250, 242, .6); }
-.sq-sticker-day b { color: var(--sq-red); font-size: 40px; margin: 3px 0 2px; }
-.sq-sticker-day small { font-size: 11.5px; }
-.sq-sticker h2 { margin-top: 26px; }
-/* Host, Where and Date: bold labels, roomier values */
-.sq-facts { gap: 12px 20px; margin-bottom: 22px; }
-.sq-facts dt { font: 800 13.5px/1.6 var(--font-sans); letter-spacing: .14em; text-transform: uppercase; color: var(--sq-red); }
-.sq-facts dd { font: 600 22px/1.35 var(--font-sans); }
-.sq-sticker-desc { font-size: 20px; }
-.sq-sticker .sq-detail-verification { padding-top: 34px; }
-@media (max-width: 1024px) and (min-width: 761px) {
-  .sq-sticker-card { padding: 0 22px 24px; }
-  .sq-sticker-top { margin: 0 -22px; padding: 28px 22px 20px; }
-  .sq-sticker-day { width: 78px; height: 78px; } .sq-sticker-day b { font-size: 32px; }
-}
-@media (max-width: 760px) {
-  .sq-sticker-card { transform: none; padding: 0 20px 28px; }
-  .sq-sticker-card::before { top: -14px; width: 112px; height: 38px; margin-left: -56px; }
-  .sq-sticker-top { margin: 0 -20px; padding: 40px 20px 20px; border-radius: 24px 24px 0 0; }
-  .sq-sticker-top::before, .sq-sticker-top::after { display: none; }
-  .sq-sticker-day { width: 78px; height: 78px; } .sq-sticker-day b { font-size: 32px; }
-  .sq-facts dd { font-size: 19px; }
-  .sq-sticker-desc { font-size: 18px; }
-  .sq-sticker-static .sq-sticker-card { border: 1.5px solid var(--sq-rule-strong); box-shadow: 0 3px 0 var(--sq-ticket-under), 0 16px 32px rgba(48, 36, 33, .12); padding: 0 20px 24px; }
-  .sq-sticker-static .sq-sticker-top::before, .sq-sticker-static .sq-sticker-top::after { display: block; }
-  .sq-sticker-static .sq-sticker-top { padding-top: 30px; }
-}
-@media (prefers-reduced-motion: reduce) { .sq-sticker-card { transform: none; } }
-
-/* ---------- Long text: trail cards shorten, the details card shows everything ---------- */
-/* break-word only splits a string that cannot fit on a line, so normal words like Workshop stay whole */
-.sq-stub-body strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; overflow-wrap: break-word; }
-.sq-by { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; overflow-wrap: break-word; }
-.sq-sticker h2.sq-title-long { font-size: 38px; }
-.sq-sticker h2.sq-title-xlong { font-size: 30px; line-height: 1.08; }
-.sq-sticker-desc { overflow-wrap: anywhere; }
-/* beside the trail, the details card never grows past the screen: the stub and Plan button stay, the middle scrolls */
-@media (min-width: 761px) {
-  .sq-sticker-card.sq-ticket-scroll { display: flex; flex-direction: column; max-height: calc(100vh - 64px); }
-  .sq-ticket-scroll > .sq-sticker-top, .sq-ticket-scroll > .sq-plan-button { flex: none; }
-  /* the last lines fade out, so a long card reads as scrollable instead of cut off */
-  .sq-sticker-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 -30px; padding: 0 30px 26px;
-    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent); }
-  .sq-ticket-scroll > .sq-plan-button { margin-top: 6px; }
-}
-@media (max-width: 760px) {
-  .sq-stub-selected { cursor: pointer; }
-  .sq-sticker h2.sq-title-long { font-size: 32px; }
-  .sq-sticker h2.sq-title-xlong { font-size: 27px; }
-}
-
-/* two tickets per row only when the trail itself is wide enough for whole words; this follows the trail's
-   width (not the window's), so it holds at any zoom level and next to the details card */
-.sq-trail { container-type: inline-size; container-name: trail; }
-@container trail (max-width: 700px) { .sq-stubs { grid-template-columns: minmax(0, 1fr); } }
