@@ -4,13 +4,17 @@
 
 ## Open the correct files
 
-| Required deliverable | GitHub source on `master` | Editable team Drive copy |
-| --- | --- | --- |
-| **CRC / UML responsibility diagram** | [M2_CRC.drawio](diagrams/M2_CRC.drawio), two pages | [SideQuest_M2_CRC.drawio](https://drive.google.com/file/d/1EQOXQXHnbeXry1-HULe60I2nKLw_gMR-/view) |
-| **Chen-style ER diagram** | [M2_STORAGE_ER.drawio](diagrams/M2_STORAGE_ER.drawio), one page | [SideQuest_M2_STORAGE_ER.drawio](https://drive.google.com/file/d/1gIQn3a0d6uCOkaqzQsg2r29I_IUkml-e/view) |
-| **Both diagrams in one editable file** | [M2_IMPLEMENTATION.drawio](diagrams/M2_IMPLEMENTATION.drawio), three pages | [Combined Draw.io file](https://drive.google.com/file/d/1wQLEXbd-ihUsXFL3SV3qvAgtvtPovKgZ/view) |
+| Required deliverable | Open visually in diagrams.net (GitHub access) | GitHub source / download | Editable team Drive copy |
+| --- | --- | --- | --- |
+| **CRC / UML responsibility diagram** (two pages) | [**Open CRC in diagram editor**](https://app.diagrams.net/#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_CRC.drawio) | [M2_CRC.drawio](diagrams/M2_CRC.drawio) | [SideQuest_M2_CRC.drawio](https://drive.google.com/file/d/1EQOXQXHnbeXry1-HULe60I2nKLw_gMR-/view) |
+| **Chen-style ER diagram** (one page) | [**Open ER in diagram editor**](https://app.diagrams.net/#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_STORAGE_ER.drawio) | [M2_STORAGE_ER.drawio](diagrams/M2_STORAGE_ER.drawio) | [SideQuest_M2_STORAGE_ER.drawio](https://drive.google.com/file/d/1gIQn3a0d6uCOkaqzQsg2r29I_IUkml-e/view) |
+| **Both diagrams together** (three pages) | [**Open combined diagram**](https://app.diagrams.net/#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_IMPLEMENTATION.drawio) | [M2_IMPLEMENTATION.drawio](diagrams/M2_IMPLEMENTATION.drawio) | [Combined Draw.io file](https://drive.google.com/file/d/1wQLEXbd-ihUsXFL3SV3qvAgtvtPovKgZ/view) |
 
-[Open the shared M2 folder](https://drive.google.com/drive/folders/1Nr67cdT8tEKPWBe9j3LNm6Wzw6alGgPc). Open any `.drawio` file using [diagrams.net](https://app.diagrams.net/), **File → Open From**. GitHub may show XML; download the source and open it in diagrams.net for graphical editing. Older `M2_CRC.svg` and `M2_STORAGE.svg` snapshots were removed because they represented the superseded overview. Use the professor-format editable `.drawio` files above for M2 review.
+**Why GitHub looks strange:** GitHub's source and **Raw** links show the diagram's XML (`<mxfile>`, `<mxGraphModel>`, `<mxCell>`), not a graphical view. That XML is the editable `.drawio` format.
+
+**Opening the graphical diagram:** the first column of links opens [diagrams.net](https://app.diagrams.net/) with the correct `master` file selected through its GitHub integration. Because this repository is private, the editor may ask you to sign in and authorize GitHub access before the diagram appears. **Fallback without third-party GitHub authorization:** use the GitHub source link while signed in, click **Download raw file**, and at diagrams.net choose **File → Open From → Device** to open the downloaded file. You can also use the [shared M2 Drive folder](https://drive.google.com/drive/folders/1Nr67cdT8tEKPWBe9j3LNm6Wzw6alGgPc) if your Google account has access, then open a copy with diagrams.net. Viewing does not require saving any edits.
+
+Older `M2_CRC.svg` and `M2_STORAGE.svg` snapshots were removed because they represented the superseded overview. Use the course-format editable `.drawio` files above for M2 review.
 
 **Instructor access:** GitHub user `jkandel-scu` has verified **write** collaborator access to the private repository, so the professor can inspect the files directly on `master`. The Drive copies grant access to signed-in SCU-domain accounts; they are not anonymous public links. Updating these files does not itself establish that Camino received a submission.
 

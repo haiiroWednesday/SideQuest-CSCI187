@@ -4,11 +4,13 @@ A student-built Santa Clara University event finder: **post an event → browse 
 
 ## Professor Kandel: M2 Part 1 diagrams (current editable submissions)
 
-**Updated November 4, 2026.** Open these **course-format Draw.io files**, rather than the older architecture-summary previews:
+**Updated November 4, 2026.** **Choose “Open visually in diagrams.net” to see the actual diagrams** rather than a GitHub XML/source-code page. The links use diagrams.net’s GitHub integration; for our **private repository**, first-time visitors may need to sign in to GitHub and authorize diagrams.net to access this repo.
 
-- **[M2 CRC diagram (.drawio)](docs/diagrams/M2_CRC.drawio)**: P4-style EventCatalog / Event / Schedule responsibility cards, UML relationships, and a second-page rationale, reconciled with the M2 code.
-- **[M2 ER diagram (.drawio)](docs/diagrams/M2_STORAGE_ER.drawio)**: P5-style rectangles, attribute ovals and a relationship diamond, with all nine columns from the `public.events` SQL migration. Device-local planned IDs are explicitly outside SQL.
-- **[Combined editable Draw.io file](docs/diagrams/M2_IMPLEMENTATION.drawio)** and **[diagram/code evidence guide](docs/M2_IMPLEMENTATION_DIAGRAMS.md)**. Copies are in the [M2 team Drive folder](https://drive.google.com/drive/folders/1Nr67cdT8tEKPWBe9j3LNm6Wzw6alGgPc).
+- **M2 CRC (two pages):** [**Open visually in diagrams.net**](https://app.diagrams.net/#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_CRC.drawio) · [GitHub `.drawio` source / download](docs/diagrams/M2_CRC.drawio). P4-style EventCatalog / Event / Schedule responsibility cards, UML relationships and a second-page rationale.
+- **M2 ER (one page):** [**Open visually in diagrams.net**](https://app.diagrams.net/#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_STORAGE_ER.drawio) · [GitHub `.drawio` source / download](docs/diagrams/M2_STORAGE_ER.drawio). P5-style Chen rectangles, attribute ovals and relationship diamond, with the nine columns from the `public.events` migration; local plan IDs stay outside SQL.
+- **Combined diagram (three pages):** [**Open visually in diagrams.net**](https://app.diagrams.net/#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_IMPLEMENTATION.drawio) · [GitHub `.drawio` source / download](docs/diagrams/M2_IMPLEMENTATION.drawio). See also the [diagram/code evidence guide](docs/M2_IMPLEMENTATION_DIAGRAMS.md) and the [M2 team Drive folder](https://drive.google.com/drive/folders/1Nr67cdT8tEKPWBe9j3LNm6Wzw6alGgPc).
+
+**If the visual links ask for GitHub authorization or cannot open:** visit the GitHub source link while signed in, select **Download raw file** (download icon), then open the downloaded `.drawio` file at [app.diagrams.net](https://app.diagrams.net/) using **File → Open From → Device**. Alternatively, use the [individual team Drive copies](docs/M2_IMPLEMENTATION_DIAGRAMS.md#open-the-correct-files) with diagrams.net. GitHub’s **Raw** button may display XML such as `<mxfile>` and `<mxCell>`; that is normal diagram data, **not** a graphical preview or an indication of a broken file.
 
 GitHub collaborator access for `jkandel-scu` was verified as **write**. These links are on `master`. The approved P4 and P5 originals have not been altered. These diagrams cover **M2 Part 1's implemented MVP**; M2 Part 2 separately asks for full-final-project planning diagrams. The repository update does not confirm a Camino submission.
 
