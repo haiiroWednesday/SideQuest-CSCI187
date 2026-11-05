@@ -1,4 +1,4 @@
-// TEST FIXTURE: a disposable EventTable for isolated unit and browser tests.
+// TEST FIXTURE: an in-memory EventTable for tests; records disappear when its backing Map is discarded.
 // Assign IDs and return HH:mm:ss times to match the SQL adapter's contract.
 import { toSqlTime, type EventRow, type EventTable, type NewEventRow } from './eventCatalog'
 
