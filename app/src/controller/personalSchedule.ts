@@ -1,17 +1,16 @@
 // CONTROLLER: the View requests every plan read/change here, never in the Model.
 import { readCatalogWithDeadline } from './catalogReads'
-import type { CampusEvent } from '../model/events'
 import type { EventCatalogPort } from '../model/eventCatalog'
 import {
   addPlannedId, readPlannedIds, removePlannedId, resolvePlannedEvents,
   savePlannedIds, scheduleConflicts, PLANNED_IDS_KEY,
   MAX_PLANNED_EVENTS, SCHEDULE_LIMIT_MESSAGE, isScheduleEvent,
-  type PlannedIdsState, type PlanStorage,
+  type PlannedIdsState, type PlanStorage, type ScheduleEvent,
 } from '../model/schedule'
 
 export type ScheduleView = {
   ids: string[]
-  entries: { event: CampusEvent; conflict: CampusEvent | null }[]
+  entries: { event: ScheduleEvent; conflict: ScheduleEvent | null }[]
   missingIds: string[]
   blocked: boolean
   capacityMessage: string | null
@@ -46,7 +45,7 @@ export async function loadPlannedEvents(catalog: EventCatalogPort, ids: readonly
 // Plan writes stay synchronous and local. This snapshot is only used to
 // present details and check overlaps; no event objects are persisted in plans.
 export function createScheduleController(
-  catalog: readonly CampusEvent[],
+  catalog: readonly ScheduleEvent[],
   getStorage: () => PlanStorage = () => window.localStorage,
 ) {
   function present(state: PlannedIdsState): ScheduleView {

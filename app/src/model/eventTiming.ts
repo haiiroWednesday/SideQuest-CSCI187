@@ -1,8 +1,11 @@
 // Domain timing uses the campus clock, independent of the viewer's timezone.
 import { campusNow, isUpcoming } from './eventCatalog'
-import { toMinutes, type CampusEvent } from './events'
+import { toMinutes, type LegacyCampusEvent } from './events'
 
-export function eventPhase(event: CampusEvent, now: Date): 'future' | 'live' | 'ended' {
+// Timing depends only on fields shared by historical and current events.
+export type TimedEvent = Pick<LegacyCampusEvent, 'id' | 'date' | 'start' | 'end'>
+
+export function eventPhase(event: TimedEvent, now: Date): 'future' | 'live' | 'ended' {
   if (!isUpcoming(event, now)) return 'ended'
   const campus = campusNow(now)
   return event.date === campus.date && event.start <= campus.time ? 'live' : 'future'
@@ -16,7 +19,7 @@ export function eventDuration(event: CampusEvent): number {
   return (toMinutes(event.end) ?? 0) - (toMinutes(event.start) ?? 0)
 }
 
-export function overlapSpan(a: CampusEvent, b: CampusEvent): { from: number; to: number } | null {
+export function overlapSpan(a: TimedEvent, b: TimedEvent): { from: number; to: number } | null {
   if (a.id === b.id || a.date !== b.date) return null
   const startA = toMinutes(a.start), endA = toMinutes(a.end)
   const startB = toMinutes(b.start), endB = toMinutes(b.end)

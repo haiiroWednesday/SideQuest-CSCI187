@@ -2,13 +2,13 @@
 // exactly what the Discover and My Schedule views draw. Views receive these
 // screen objects and never compare dates or times, read the clock, or import
 // the Model. Every function takes `now` so tests can move the clock.
-import { type CampusEvent } from '../model/events'
+import type { LegacyCampusEvent } from '../model/events'
 import { campusNow } from '../model/eventCatalog'
 import { calendarDay, eventDuration, eventPhase, minutesUntilStart } from '../model/eventTiming'
 import { displayDate, displayTime } from './findEvents'
 
 /** Keep archived M1 screen fixtures, which lack hostName, readable. */
-export type ScreenEvent = CampusEvent & { hostName?: string }
+export type ScreenEvent = LegacyCampusEvent & { hostName?: string }
 export type FreeWindow = { date: string; start: string; end: string }
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
@@ -116,7 +116,7 @@ export function describeDay(date: string, now: Date): DayModel {
   }
 }
 
-function liveNote(event: CampusEvent, now: Date): StubModel['live'] {
+function liveNote(event: ScreenEvent, now: Date): StubModel['live'] {
   if (event.date !== campusNow(now).date) return null
   const phase = eventPhase(event, now)
   if (phase === 'live') return { kind: 'now', text: `Happening now · until ${displayTime(event.end)}` }
@@ -154,7 +154,7 @@ export function presentBrowseDetail(event: ScreenEvent, plannedIds: readonly str
   return toStub(event, now, new Set(plannedIds), null)
 }
 
-export function byTime(a: CampusEvent, b: CampusEvent): number {
+export function byTime(a: ScreenEvent, b: ScreenEvent): number {
   return a.date.localeCompare(b.date) || a.start.localeCompare(b.start) || a.end.localeCompare(b.end) || a.id.localeCompare(b.id)
 }
 
