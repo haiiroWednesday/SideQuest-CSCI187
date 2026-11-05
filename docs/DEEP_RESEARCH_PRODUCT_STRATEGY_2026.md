@@ -623,7 +623,7 @@ Peers tested the integrated UI after Daven connected the shared Supabase catalog
 | 5 | Use real SCU events instead of test posts | Yes for the demo, posted by hand. Automated import only through a confirmed feed | Demo: now. Import: final project, if possible | Daven, whole team |
 | 6 | My Schedule as a timeline, with card height matching event length | Yes. It makes overlaps visible instead of described | Final project, or late M2 if time allows | Cynthia, Sembiyan reviews |
 | 7 | Tell my posts apart from others'; edit and delete my own | Yes, through a private edit code instead of accounts | Final project | Daven (data, server), Devonny (details actions), Cynthia (visuals) |
-| 8 | Images on events, framed as a postcard stamp | Yes, only after #7 exists | Final project | Daven (storage), Cynthia (frame) |
+| 8 | Images on events, framed as a postcard stamp | Yes, only after #7 exists. Design picked: four stamp frames chosen by photo shape, sitting in the ticket stub | Final project | Daven (storage), Cynthia (frame) |
 | 9 | Discover scrolling left to right to fit more events | No. Use denser columns instead | Not planned | Cynthia |
 | 10 | Bigger cards | Ask testers what "bigger" meant before changing anything | Next test session | Cynthia, Devonny |
 
@@ -647,14 +647,39 @@ The MVP has no accounts, and the database rightly blocks anonymous edits and del
 1. Posting returns a random **edit code**. This browser keeps it beside the event ID, like My Schedule keeps planned IDs.
 2. The database stores only a hash of the code.
 3. Edit and delete go through the server, which checks the code against the hash. Direct anonymous updates stay blocked.
-4. Events whose code this browser holds get a **Posted by you** ticket style, plus **Edit** and **Delete** in the details card. Edit reuses the Post form, filled in.
+4. Events whose code this browser holds get a **Mine** ribbon on their ticket, plus **Edit** and **Delete** in the details card. Edit reuses the Post form, filled in.
 
 **Limits:** the code lives on one device, so clearing the browser or switching devices loses edit rights, unless the app shows the code once so the poster can save it. Other students' Schedules already show a deleted event as "no longer available". This needs a schema change, new server endpoints and the M2 Part 2 CRC/ER updates.
 
 ### Event images as postcard stamps (#8)
-The image sits in the details ticket as a **postage stamp**: a perforated, scalloped edge, a thin white border and a slight tilt. The red date postmark overlaps the stamp's corner, like a cancelled stamp. Trail tickets stay text-only to keep the list dense. Events without an image show no empty frame.
+Design sketches from 4 November. These are drawings only, and no app code has changed. Sketches are in [`docs/design/photo-stamps/`](design/photo-stamps/).
 
-Accept JPEG, PNG or WebP up to 2 MB, resized on the server, with **alt text required**. Store in Supabase Storage through the server, never with a browser key. Anonymous public uploads need a removal path, so images wait for #7.
+**Four frames, picked by the photo's shape.** Nobody has to crop. The app compares the photo's width and height with each frame and picks the one that trims the least. The photo then fills the frame from the center.
+
+| Frame | Shape | Usually fits | Look |
+| --- | --- | --- | --- |
+| Classic | Tall 4:5 | Phone photos held upright, printed Letter flyers | White border, perforated edge |
+| Commemorative | Wide 3:2 | Phone photos held sideways | Thin red inner line and a caption band for the place name |
+| Sticker | Square 1:1 | Square posts | Wavy die-cut edge, like a peel-off stamp |
+| Airmail | Poster 2:3 | Flyers and screenshots | Red and blue striped border |
+
+With four frames, the trim is small for common photos: about 3% for a Letter flyer, 6% for an upright phone photo, 11% for a sideways one, 16% for a story-size 9:16 flyer and nothing for a square. A panorama loses about half in any frame, so it may need a crop step later. With only tall and wide, squares would lose 20% and story flyers 30%, which is why four frames won.
+
+<img src="design/photo-stamps/1-four-frames.png" alt="The four stamp frames: classic tall, commemorative wide, sticker square and airmail poster" width="760">
+
+<img src="design/photo-stamps/2-what-each-frame-cuts.png" alt="Chart of how much of six common photo shapes each frame set trims" width="760">
+
+**The stamp stays inside the ticket.** It sits in the stub, to the right of the time, and the stub grows to the stamp's height. Nothing sticks out past the ticket's edge, and the stamp never covers the time, title, facts or Plan button. In the sketches a photo adds 16 to 58px to the ticket's height, and the airmail frame adds the most. The ticket's existing date postmark shrinks and sits on the stamp's top corner, so it only touches the rim. No cancellation lines cross the photo.
+
+**Smaller time, bigger "until" line**, on every details ticket, with or without a photo, so the time column has room beside a stamp and every ticket matches. The time gets about 20% smaller at each screen size (the sketches go from 76px to 60px). The "until" line gets about 3px bigger, and the length moves to its own line in muted text.
+
+<img src="design/photo-stamps/3-frames-in-the-stub.png" alt="All four frames inside the details ticket stub, at laptop and phone widths" width="760">
+
+<img src="design/photo-stamps/4-time-before-after.png" alt="The ticket stub before and after: smaller time, bigger until line" width="480">
+
+Trail tickets stay text-only to keep the list dense. A small stamp in the stub's corner is sketched in case testers miss photos there. Events without an image show no empty frame.
+
+**Building it later:** store the image's width and height with the event. The presenter picks the frame from those numbers, and the View only draws the frame it is given. Accept JPEG, PNG or WebP up to 2 MB, resized on the server, with **alt text required**. Store in Supabase Storage through the server, never with a browser key. Anonymous public uploads need a removal path, so images wait for #7.
 
 ### Why Discover stays vertical (#9)
 Most people never scroll sideways, so events past the right edge go unseen. Sideways scrolling is awkward with a keyboard, a screen reader and many trackpads, and on phones it fights the back-swipe gesture. The vertical day trail is also the core of SideQuest's look. To show more events per screen: tickets already go two per row when the trail is wide enough. Next could be three per row on very wide screens, a compact ticket with a narrower time stub, and day headers that stick while scrolling.
