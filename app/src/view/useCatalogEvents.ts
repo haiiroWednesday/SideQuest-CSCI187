@@ -6,21 +6,21 @@ export function useCatalogEvents(catalog: EventCatalogPort, enabled = true) {
   const [state, setState] = useState<{
     events: CampusEvent[]; error: string | null; loading: boolean; revision: number
   }>({ events: [], error: null, loading: true, revision: 0 })
-  const request = useRef(0)
+  const generation = useRef(0)
   const refresh = useCallback(async () => {
-    const current = ++request.current
+    const request = ++generation.current
     setState(previous => ({ ...previous, error: null, loading: true }))
     const result = await loadPostedEvents(catalog)
     // An initial read must not overwrite a newer refresh after a post.
-    if (request.current === current) {
-      setState({ ...result, loading: false, revision: current })
+    if (generation.current === request) {
+      setState({ ...result, loading: false, revision: request })
     }
   }, [catalog])
 
   useEffect(() => {
     if (!enabled) return
     void refresh()
-    return () => { request.current++ }
+    return () => { generation.current++ }
   }, [enabled, refresh])
 
   return { ...state, refresh }

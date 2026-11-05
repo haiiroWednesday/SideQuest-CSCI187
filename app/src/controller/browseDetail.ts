@@ -1,6 +1,5 @@
-// CONTROLLER: re-check the chosen catalog record by its stable ID.
-// Devonny's browsing branch established this behavior; we reuse the current
-// M2 EventCatalogPort instead of copying her old M1-compatible interface.
+// CONTROLLER: re-check a selected event using its stable catalog ID.
+// Reject stale, mismatched or malformed responses before enabling planning.
 import {
   EventCatalogError, isCatalogEvent, type CampusEvent, type EventCatalogPort,
 } from '../model/eventCatalog'

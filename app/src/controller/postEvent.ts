@@ -1,6 +1,5 @@
-// CONTROLLER: event posting (owner: Daven). The View supplies a draft; this
-// module prepares feedback and delegates canonical validation and persistence
-// to the EventCatalogPort. Storage stays behind the Model adapter.
+// CONTROLLER: prepare posting feedback and delegate validation and storage
+// to the shared EventCatalogPort. The View never writes directly to storage.
 import {
   createEventCatalog, EventCatalogError, firstFieldError, postingDraftErrors,
   type CampusEvent, type CatalogFieldErrors, type EventCatalogPort, type EventDraft,

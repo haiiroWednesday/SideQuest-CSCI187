@@ -1,13 +1,6 @@
-// ADAPTER (fallback): an EventTable kept in THIS browser's localStorage.
-//
-// ⚠️ NOT the shared public catalog. Other browsers and devices never see these
-// events. The app uses it only when Supabase is not configured (CI, or a
-// teammate without app/.env.local), and the UI then shows a visible
-// "not shared" notice. Never demo it as shared persistence.
-//
-// It uses its own key. The legacy M1 `sidequest.created-events.v1` list
-// (model/events.ts) is a different record format and must not double as the
-// catalog (playbook: "Two different meanings of save").
+// BROWSER-ONLY ADAPTER: persist a local catalog when shared storage is absent.
+// Other devices cannot see these records, so the UI must disclose this mode.
+// This key is separate from the archived M1 event-storage key.
 import type { EventRow, EventTable, NewEventRow } from './eventCatalog'
 
 export const LOCAL_CATALOG_KEY = 'sidequest.local-catalog.v1'

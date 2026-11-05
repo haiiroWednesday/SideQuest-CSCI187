@@ -1,7 +1,7 @@
 // HTTP Controller. Shared validation and persistence remain in Model.
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { EventCatalogError, DRAFT_FIELD_ORDER, type EventCatalogPort, type EventDraft } from '../src/model/eventCatalog.ts'
-import { readCatalogWithDeadline, CatalogReadTimeoutError } from '../src/controller/catalogReads.ts'
+import { EventCatalogError, DRAFT_FIELD_ORDER, type EventCatalogPort, type EventDraft } from '../src/model/eventCatalog'
+import { readCatalogWithDeadline, CatalogReadTimeoutError } from '../src/controller/catalogReads'
 
 export const MAX_POST_BYTES = 16_384
 export const POSTS_PER_MINUTE = 20

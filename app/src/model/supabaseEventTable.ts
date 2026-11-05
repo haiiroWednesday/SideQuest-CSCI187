@@ -1,14 +1,10 @@
 /// <reference types="vite/client" />
-// SERVER-ONLY ADAPTER: the real shared EventCatalog storage, a Supabase Postgres
-// `public.events` table (schema: supabase/migrations/*_create_events.sql).
-//
-// 🔐 Only the PUBLISHABLE key ever belongs here. It is public by design and
-// is retained server-side for this course and relies on the RLS policies and grants in the migration. Never put a
-// service-role or secret key in Vite code, .env files sent to the browser, or Git.
-// Only the Node API imports this configured adapter. Browser code uses the
-// same-origin HTTP port and receives no Supabase URL, key or auth headers.
+// SERVER-ONLY ADAPTER: map the shared catalog to Supabase public.events.
+// Use a publishable or legacy anonymous key, limited by SQL grants and RLS.
+// Never expose privileged keys or Supabase configuration in the browser bundle.
+// Browser requests use the same-origin HTTP catalog API.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { createEventCatalog, type EventCatalogPort, type EventRow, type EventTable } from './eventCatalog.ts'
+import { createEventCatalog, type EventCatalogPort, type EventRow, type EventTable } from './eventCatalog'
 
 const COLUMNS = 'id,title,host_name,description,location,event_date,start_time,end_time'
 

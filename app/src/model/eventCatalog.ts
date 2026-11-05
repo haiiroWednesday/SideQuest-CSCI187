@@ -1,14 +1,7 @@
-// MODEL: the shared public EventCatalog (M2 contract, owner: Daven).
-//
-// The types and the EventCatalogPort below copy the "Shared Event data
-// contract" in docs/MVP_TEAM_PLAYBOOK.md word for word. Browse, Schedule and
-// posting code should depend ONLY on EventCatalogPort, never on database
-// column names or on a specific adapter.
-//
-// The archived M1 CampusEvent in ./events.ts has no hostName and allows an
-// optional description. It is retained for historical tests and local data
-// compatibility; the production posting form uses this M2 catalog contract.
-import { isValidDate, toMinutes } from './events.ts'
+// MODEL: shared M2 event contract, validation and storage-independent catalog.
+// Consumers depend on EventCatalogPort; adapters translate database rows.
+// Historical M1 event data remains in events.ts for existing browser records.
+import { isValidDate, toMinutes } from './events'
 
 export type CampusEvent = {
   id: string

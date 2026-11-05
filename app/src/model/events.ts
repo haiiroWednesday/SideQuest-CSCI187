@@ -1,6 +1,5 @@
-// MODEL: Event data, time rules, and storage. No built-in fictional events.
-// The event's TypeScript type lists the fields we expect. The optional
-// description lets older saved events without that field continue to work.
+// MODEL: historical M1 browser-local events, validation and storage recovery.
+// Optional descriptions and local-clock rules preserve existing saved records.
 export type LegacyCampusEvent = {
   id: string
   title: string
@@ -11,8 +10,7 @@ export type LegacyCampusEvent = {
   end: string
 }
 
-// A draft is an event before the app assigns its unique ID.
-// Omit removes the ID field from the draft's TypeScript type.
+// Historical drafts receive IDs when successfully stored.
 export type LegacyEventDraft = Omit<LegacyCampusEvent, 'id'>
 
 // Preserve old export names for M1 fixtures and historical browser storage.
@@ -56,7 +54,7 @@ export function isValidDate(date: string): boolean {
 }
 
 
-// DOMAIN RULES: independent of React, HTML form controls, storage and the Controller.
+// Domain rules remain independent of UI components and storage adapters.
 export type EventSearchWindow = { date: string; start: string; end: string }
 export type EventDraftValidation = { event: CampusEvent | null; error: string | null }
 
@@ -124,8 +122,7 @@ export function matchingEvents(events: CampusEvent[], window: EventSearchWindow)
 }
 
 export type RemovedEvent = { event: CampusEvent; index: number }
-// 🗑️ Return a new list and a receipt for Undo. Keeping the original
-// list untouched avoids surprising changes elsewhere in the app.
+// Return an undo receipt without mutating the original event list.
 export function removeEventFromList(events: CampusEvent[], id: string): { events: CampusEvent[]; removed: RemovedEvent | null } {
   const index = events.findIndex(event => event.id === id)
   if (index === -1) return { events, removed: null }
@@ -140,8 +137,7 @@ export function restoreEventInList(events: CampusEvent[], removed: RemovedEvent)
   return restored
 }
 
-// 🕰️ A saved event can be in the past even if it was valid when created.
-// The created-event list labels it instead of automatically deleting it.
+// A once-valid saved event may become past; preserve it for history.
 export function isPastEventDate(event: CampusEvent, now: Date = new Date()): boolean {
   const date = todayLocalISO(now)
   const minute = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0')
@@ -160,8 +156,7 @@ export function fitsFully(event: CampusEvent, freeDate: string, freeStart: strin
 
 export function isCampusEvent(value: unknown): value is CampusEvent {
   if (typeof value !== 'object' || value === null) return false
-  // 'as Partial' helps TypeScript inspect possible fields; it does NOT
-  // validate unknown JSON. All the checks below still have to run.
+  // Saved JSON must pass runtime checks before becoming an event.
   const item = value as Partial<CampusEvent>
   return typeof item.id === 'string' && item.id.trim().length > 0 &&
     typeof item.title === 'string' && item.title.trim().length > 0 && item.title.trim().length <= MAX_EVENT_TITLE_LENGTH &&

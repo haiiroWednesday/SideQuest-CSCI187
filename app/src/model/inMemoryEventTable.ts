@@ -1,10 +1,5 @@
-// 🧪 TEST FIXTURE: an in-memory EventTable. It is NOT shared persistence.
-// Every browser tab gets its own empty copy, and everything is lost on reload.
-// Use it in unit tests and in UI work before Supabase is configured. Never
-// present it as the public catalog in the demo.
-//
-// It behaves like the Postgres table: the store assigns UUIDs, and reads
-// return copies with HH:mm:ss times, the way Postgres returns `time` values.
+// TEST FIXTURE: a disposable EventTable for isolated unit and browser tests.
+// Assign IDs and return HH:mm:ss times to match the SQL adapter's contract.
 import type { EventRow, EventTable, NewEventRow } from './eventCatalog'
 
 export type InMemoryEventTable = EventTable & {
