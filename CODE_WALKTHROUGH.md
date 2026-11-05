@@ -270,9 +270,9 @@ A passing run is good evidence, but a test can still pass for the wrong reason. 
 
 ## 11. Commenting conventions for our team
 
-### Visual cues in comments
+### Comments that explain decisions
 
-We use a few topic-specific emojis to make unfamiliar code easier to scan: 🔑 for unique IDs, 📅 for dates, ⏰ for time checks, 💾 for browser storage, 🧯 for corrupted data, 🧩 for keeping existing state intact, 🔎 for searches, and 🌐 for actual browser tests. These are signposts for a useful explanation, not decorations for every line.
+Use short, plain-language comments for constraints, safeguards, error handling, and consequences that are not obvious from the code. Keep production and test comments consistent. Meaningful symbols in user-facing controls or Unicode test data are different from decorative characters in comments.
 
 A good comment answers one of these questions:
 
@@ -285,7 +285,7 @@ Prefer a short note above a difficult function or a surprising decision. Avoid c
 
 ### Before you move to M2
 
-Read [`docs/MVP_TEAM_PLAYBOOK.md`](docs/MVP_TEAM_PLAYBOOK.md) for the **agreed M2 requirements**. The current M1 app creates and searches browser-local events. A public EventCatalog and personal Schedule are separate planned work; writing documentation about them does not implement them.
+Read [`docs/MVP_TEAM_PLAYBOOK.md`](docs/MVP_TEAM_PLAYBOOK.md) for the **agreed M2 requirements**. The M1 walking skeleton used browser-local events. The M2 application adds a shared EventCatalog path and device-local Schedule, with browser-only catalog fallback when the server is not configured. Review the current requirements and implementation before assuming a planned feature is available.
 
 ---
 
