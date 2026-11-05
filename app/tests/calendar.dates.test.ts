@@ -1,4 +1,4 @@
-// Test owner: Sembiyan Arunkumar (AI-assisted draft).
+// Test owner: Sembiyan Arunkumar.
 // Checks leap-year rules and the required YYYY-MM-DD format.
 
 import { expect, it } from 'vitest'

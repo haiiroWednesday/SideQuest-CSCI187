@@ -1,4 +1,4 @@
-// Shared model regression tests (AI-assisted starter examples).
+// Shared model regression tests.
 import { describe, expect, it } from 'vitest'
 import { fitsFully, isValidDate, toMinutes, type CampusEvent } from '../src/model/events'
 
