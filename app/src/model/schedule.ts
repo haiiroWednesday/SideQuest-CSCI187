@@ -94,15 +94,15 @@ export function resolvePlannedEvents(ids: readonly string[], catalog: readonly S
 }
 
 // Half-open intervals: 10:00-11:00 and 11:00-12:00 do not overlap.
-export function eventsOverlap(a: CampusEvent, b: CampusEvent): boolean {
+export function eventsOverlap(a: ScheduleEvent, b: ScheduleEvent): boolean {
   return overlapSpan(a, b) !== null
 }
 
 // One representative conflicting event per plan keeps a busy schedule's output
 // linear in size. Sorting + a sweep also avoids comparing every possible pair.
 export function scheduleConflicts(events: readonly ScheduleEvent[]): Map<string, ScheduleEvent> {
-  const conflicts = new Map<string, CampusEvent>()
-  let furthest: CampusEvent | undefined
+  const conflicts = new Map<string, ScheduleEvent>()
+  let furthest: ScheduleEvent | undefined
   for (const event of [...events].sort(compareEventTime)) {
     if (!furthest || event.date !== furthest.date) {
       furthest = event

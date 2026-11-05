@@ -11,11 +11,11 @@ export function eventPhase(event: TimedEvent, now: Date): 'future' | 'live' | 'e
   return event.date === campus.date && event.start <= campus.time ? 'live' : 'future'
 }
 
-export function minutesUntilStart(event: CampusEvent, now: Date): number {
+export function minutesUntilStart(event: TimedEvent, now: Date): number {
   return (toMinutes(event.start) ?? 0) - (toMinutes(campusNow(now).time) ?? 0)
 }
 
-export function eventDuration(event: CampusEvent): number {
+export function eventDuration(event: TimedEvent): number {
   return (toMinutes(event.end) ?? 0) - (toMinutes(event.start) ?? 0)
 }
 
