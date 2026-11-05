@@ -52,7 +52,7 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 - All Supabase keys, including the publishable key, remain server-side. `model/httpEventCatalog.ts` uses same-origin requests with no database credentials. `server/api.ts` calls the Model adapter; the browser bundle is scanned for credential markers during build. No real keys belong in Git.
 - The existence of a migration file is not proof of deployment. Verify real permissions and two-browser reads/writes in a configured Supabase project before claiming the public catalog works in production.
 - Local storage failures show honest feedback; no success claim after a failed write. Corrupt saved data is not silently replaced. A previously saved plan ID survives a remote lookup error.
-- Real public deployment needs a review of anonymous-write abuse and the instructor's applicable key handling/extra-credit criteria.
+- Real public deployment requires a review of anonymous-write abuse and the server-side credential policy.
 
 ## MVC / CRC responsibility summary
 
@@ -62,7 +62,7 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 | **Controller:** postEvent, findEvents, personalSchedule, sharedSchedule, presentScreens | Coordinate commands and reads, prepare screen text, map Model errors to user feedback, keep View insulated from persistence | View and Model |
 | **Model:** EventCatalog, Event, Schedule, table adapters | Domain validation, full-fit calculation, data and ID ownership, persistence, ordering and overlap rules | Controllers and repository adapters |
 
-**Current conceptual design:** [P4 class/CRC](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit). The team reports that Professor Kandel subsequently confirmed the existing P4 diagram is acceptable. Do not silently change its aggregation/composition symbols based on older speculative review notes.
+**Current conceptual design:** [P4 class/CRC](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit). The accepted P4 diagram is preserved unchanged. See the M2 implementation diagrams for the current code mapping.
 
 **Coursework ER reference:** [Selected P5 draw.io](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view). It models a broader conceptual design. **The implemented M2 SQL has one Event table, with planned IDs in the browser;** the P5 diagram's USER/AVAILABILITY_WINDOW entities are not current M2 database tables. The M2 updated ER submission must explain that distinction and match the implemented storage.
 
@@ -71,11 +71,11 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 2. Second browser, same Supabase project: event posted in A appears in B; plans remain device-local and removing a plan doesn't delete public data.
 3. Boundary/negative cases: already-past posts, valid long descriptions 500/501/2000/2001, invalid times and dates, duplicate plans, 100/101 plan limit, overlapping and back-to-back events, unknown plan IDs, network timeouts and denied/corrupted storage.
 4. Architecture review: Views import only Controller APIs for domain operations; Models never import React or Views; database operations stay in Models.
-5. Verify code, current CRC/ER, README and tests against [Professor Kandel's M2 Part 1 instructions](https://docs.google.com/document/d/1_LlAb9mtASfutgVjKdjjt7Esh7g0ab6J4FmCzREJDEU/edit), not just a green test count. See [lecture 01–16 audit](docs/COURSE_LECTURES_01_TO_16_COMPLIANCE_AUDIT.md).
+5. Verify code, current CRC/ER, README and tests against the [M2 Part 1 acceptance requirements](https://docs.google.com/document/d/1_LlAb9mtASfutgVjKdjjt7Esh7g0ab6J4FmCzREJDEU/edit), including actual shared-data behavior. See the [lecture 01–16 audit](docs/COURSE_LECTURES_01_TO_16_COMPLIANCE_AUDIT.md).
 
 ## Current implementation diagrams and Node API
 
-**Updated professor-format M2 diagrams:** [CRC (.drawio)](docs/diagrams/M2_CRC.drawio), [ER (.drawio)](docs/diagrams/M2_STORAGE_ER.drawio), and [combined editable file](docs/diagrams/M2_IMPLEMENTATION.drawio). [Code-to-diagram evidence](docs/M2_IMPLEMENTATION_DIAGRAMS.md). These use the earlier P4/P5 visual conventions while representing the actual M2 Model: one `public.events` SQL table, with browser-local planned IDs outside SQL. The original P4 and P5 files remain untouched.
+**Current M2 implementation diagrams:** [CRC (.drawio)](docs/diagrams/M2_CRC.drawio), [ER (.drawio)](docs/diagrams/M2_STORAGE_ER.drawio), and [combined editable file](docs/diagrams/M2_IMPLEMENTATION.drawio). [Code-to-diagram evidence](docs/M2_IMPLEMENTATION_DIAGRAMS.md). These use the earlier P4/P5 visual conventions while representing the actual M2 Model: one `public.events` SQL table, with browser-local planned IDs outside SQL. The original P4 and P5 files remain untouched.
 
 The production Node server serves the built UI and API. GET `/api/catalog` returns only the shared-storage flag; GET `/api/events` lists upcoming records or looks up `?id=...`; POST `/api/events` accepts only the seven EventDraft fields. Public PUT/PATCH/DELETE are rejected. Read deadlines are 10 seconds. The server's upstream fetch aborts at 15 seconds. An uncertain insert is not automatically retried; users are told to check Discover before another submission.
 

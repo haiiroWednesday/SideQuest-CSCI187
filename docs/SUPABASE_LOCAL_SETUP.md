@@ -1,6 +1,6 @@
 # SideQuest M2: local Supabase setup and live acceptance check
 
-**For developers, teammates and Professor Kandel.** Updated November 4, 2026. This document is committed to GitHub and will appear in VS Code after a pull. The **individual machine's `app/.env.local` must remain untracked**.
+**For contributors configuring or checking the shared catalog.** Updated November 4, 2026. This document is committed to GitHub and will appear in VS Code after a pull. The **individual machine's `app/.env.local` must remain untracked**.
 
 ## What is already in the code
 
@@ -51,10 +51,10 @@ Open the URL printed by Vite, typically `http://localhost:5173/`. After changing
 
 Record the actual date, testers, environment, event ID (not credentials), expected versus observed results and any blockers in [M2 integration verification](M2_INTEGRATION_VERIFICATION.md), under **Live shared-catalog acceptance**. Until someone completes the test, its status is **NOT VERIFIED**.
 
-## What Professor Kandel needs
+## Repository access and live-demo requirements
 
-The professor's GitHub account `jkandel-scu` has verified collaborator access to the private repository. The professor can inspect and grade source code, tests, the current [CRC](diagrams/M2_CRC.drawio), [ER](diagrams/M2_STORAGE_ER.drawio), README, requirements and specifications **without creating a local environment file**.
+Authorized repository collaborators can inspect the code, tests, current [CRC](diagrams/M2_CRC.drawio), [ER](diagrams/M2_STORAGE_ER.drawio), README, requirements and specifications without configuring the database.
 
-To experience **live shared events**, the team should ideally give the professor a working hosted Node app URL with its database credentials configured only on the host and with deployment protections reviewed. If there is no hosted demo, the professor would need to run the Node/Vite development server locally and obtain the approved publishable key/URL from the team through an appropriate non-public channel. Do not make the professor provision the team's Supabase project or use privileged credentials.
+For a live shared-catalog demonstration, provide a working hosted Node app with server-side credentials and reviewed deployment protections. Alternatively, run the Node/Vite development server with authorized project variables supplied through a secure channel. No reviewer should need to create the project's database or use privileged credentials.
 
-The current professor-facing M2 Part 1 code and diagram links are in [the root README](../README.md). A local setup guide or code pushed to GitHub is **not proof of live shared-backend readiness** or a Camino submission.
+Refer to the [root README](../README.md) for code and diagram links. A local setup guide and a committed migration are not proof that the live shared catalog has been configured, tested or deployed.

@@ -1,12 +1,12 @@
 # CSCI 187 SideQuest — Lecture 01–16 compliance audit
 
-**Updated November 4, 2026 · Audited against Professor Kandel's 16 original Google Slides decks, P3/P4, and M2 Part 1/2 assignment documents.**
+**Updated November 4, 2026 · Cross-checked against the 16 CSCI 187 lecture decks, P3/P4 artifacts and M2 assignments.**
 
 **Source of truth:** [current M2 requirements](../REQUIREMENTS.md), [current technical specifications](../SPECIFICATIONS.md), [MVP implementation playbook](MVP_TEAM_PLAYBOOK.md). The original [November 1 snapshot in PR #13](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/13) is historical and predates major M2 merges.
 
 **Latest integration milestones:** [#12 M1 corrections](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12), [#15 personal Schedule](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/15), [#18 catalog adapter](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/18), [#19 posting](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/19), [#20 catalog/Search/Schedule integration](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/20), [#21 combined UI/server release](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/21), and [#22 release hardening](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/22). This audit does not itself establish that Supabase is deployed or that a Camino submission was filed.
 
-| Lecture | Professor's relevant principle | Evidence in current code | Residual action / disposition |
+| Lecture | Course principle | Evidence in current code | Residual action / disposition |
 | --- | --- | --- | --- |
 | [01 Intro](https://docs.google.com/presentation/d/1gzLr77IUsy7clMvwcUEguIo9evbcRZa7Awgnixy_Opw/edit) | End-to-end engineering, requirements, design, testing and teamwork; AI output needs verification | Iterative PRs, current M2 documentation and CI | Verify submitted course artifacts and explain decisions, not just agent-authored code |
 | [02 Interviews](https://docs.google.com/presentation/d/1IQ89Km5Ctgtq1Whd7FvxUOFebJH8y_n85f83VMmgPvg/edit) | Interviews discover user problems; avoid leading users | Original two SCU interview notes are linked in the product research | Two interviews are limited evidence; use a real student walkthrough for MVP review |
@@ -25,11 +25,11 @@
 | [15 SQL/ER activity](https://docs.google.com/presentation/d/1AolDZKcFPbnN-n6_p8UtwOnrRQLHMsWklM3Zj6nprgg/edit) | SQL operations in Model only; ER describes actual data relationships | Supabase SQL used through Model adapter, never a React view; RLS read/insert policies in migration | Independently verify migration applied, anonymous SELECT/INSERT and denied UPDATE/DELETE; review public-write abuse and server-side key instruction |
 | [16 Code review](https://docs.google.com/presentation/d/1gKGQi7yyhd0Ec8iMf2A0aO04cwP9_elCbgZXGdTxUKo/edit) | Review design, correctness, tests, usability, integration, and AI errors; approve net-improving PRs even if not perfect | PR reviews identified date bypass, 500/2,000 validator mismatch, storage issues, stale request race | Keep findings traceable to repairs/tests and have teammates review the actual current branch; do not present a passing suite as complete proof |
 
-## Professor-reviewed scope and diagram history
+## Scope and accepted diagram history
 
-1. Original P3 was broader: partial attendance, time explanations, walking time, costs, rules and sharing. The team reports professor approval of a smaller P4-based MVP: **anonymous posting, shared browsing, full-fit search and device-local Schedule**. The approval was reported by the team, not independently verified in a separate written instructor artifact.
-2. Professor Kandel confirmed the existing P4 diagram is correct. **P4 is approved and resolved.**
-3. The selected P5 coursework ER includes USER and AVAILABILITY_WINDOW. Those are **not current M2 database tables**. Professor Kandel's M2 Part 1 requires updated CRC and ER that match the actual MVP. The implemented persistence is a shared events table and browser-local plan IDs, so the final submitted drawing needs explicit explanation of the difference.
+1. Original P3 was broader: partial attendance, time explanations, walking time, costs, rules and sharing. The team reports approval of a smaller P4-based MVP: **anonymous posting, shared browsing, full-fit search and device-local Schedule**. The approval was reported by the team, not independently verified in a separate written instructor artifact.
+2. The existing P4 diagram was subsequently accepted; it is preserved unchanged.
+3. The selected P5 coursework ER includes USER and AVAILABILITY_WINDOW. Those are **not current M2 database tables**. The M2 Part 1 assignment requires updated CRC and ER that match the actual MVP. The implemented persistence is a shared events table and browser-local plan IDs, so the final submitted drawing needs explicit explanation of the difference.
 4. Assignment and lecture deadline text differ. Confirm the applicable deadline and actual submission in the current course portal; repository checks do not establish either.
 
 ## Outstanding release gates

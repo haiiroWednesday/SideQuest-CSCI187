@@ -11,8 +11,8 @@ Updated November 4, 2026. This release combines the current master release-audit
 - All database keys now stay on the **Node server**, including publishable keys. The browser calls only same-origin APIs and receives a connection flag. `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` replace the old browser-prefixed configuration. The build scans client output for credential markers.
 - The API accepts only the seven draft fields, rejects client-owned IDs and public edit/delete, bounds body size, checks browser origins, and limits repeated submissions. The hosting edge still needs durable production abuse controls.
 - Root README/REQUIREMENTS/SPECIFICATIONS describe the current MVP. Historical M1 documents and UI baselines are explicitly labeled. Newer master UI regressions are retained in separate baseline fixtures alongside independent tests of the replacement production UI.
-- Current professor-format [M2 CRC (open visually)](https://app.diagrams.net/?mode=github#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_CRC.drawio), [M2 ER (open visually)](https://app.diagrams.net/?mode=github#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_STORAGE_ER.drawio), [combined Draw.io (open visually)](https://app.diagrams.net/?mode=github#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_IMPLEMENTATION.drawio) and [code-to-diagram explanation](M2_IMPLEMENTATION_DIAGRAMS.md) represent the MVP. GitHub `.drawio` source pages show XML; graphical links use the diagrams.net GitHub editor and require authorization to this private repository. The superseded SVG snapshots were removed.
-- **P4 is professor-approved and resolved.** Repository documentation consistently records the approval. The accepted P4 diagram is unchanged.
+- Current editable [M2 CRC (open visually)](https://app.diagrams.net/?mode=github#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_CRC.drawio), [M2 ER (open visually)](https://app.diagrams.net/?mode=github#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_STORAGE_ER.drawio), [combined Draw.io (open visually)](https://app.diagrams.net/?mode=github#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_IMPLEMENTATION.drawio) and [code-to-diagram explanation](M2_IMPLEMENTATION_DIAGRAMS.md) represent the MVP. GitHub `.drawio` source pages show XML; graphical links use the diagrams.net GitHub editor and require authorization to this private repository. The superseded SVG snapshots were removed.
+- The accepted P4 diagram is preserved unchanged.
 
 ## Verification
 
@@ -31,7 +31,7 @@ Local Chromium was extracted from a temporary @sparticuz/chromium package outsid
 - Partial free-time input explains that events remain unfiltered. Complete no-match filters offer **Show all events**.
 - Added chronological sorting, event-expiration and server-isolation regression checks.
 - The README, M2 specifications, historical walkthrough and course audit now refer to the integrated release.
-- **Do not claim the new changes passed tests or live shared database verification until those specific checks actually run.** Refer to the exact CI commit and the pending acceptance checklist below.
+- **Exact-commit CI:** React CI for `5226f398920d096c8a59410ddc8c7e0d0c1a8a58` passed 338 Vitest tests, 18 Playwright checks, TypeScript/build, and isolated PostgreSQL permissions checks. [Run details](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions/runs/41963193978). These checks do not replace the pending live-database acceptance test.
 
 ## Live shared-catalog acceptance (NOT VERIFIED)
 
@@ -50,7 +50,7 @@ Use the [VS Code server-only Supabase setup and two-browser checklist](SUPABASE_
 | Teammate removes any temporary test event through authorized Supabase dashboard access | To be recorded | PENDING |
 | Failures, fixes and reviewer acknowledgement | To be recorded; no result assumed | PENDING |
 
-**Professor:** `jkandel-scu` has verified private-repository collaborator access. The professor does not need `app/.env.local` just to inspect code, tests and diagrams. Live shared-data demonstration requires a configured Node environment or a separately hosted app; the team should provide the means to review it, rather than asking the professor to create or manage the project database.
+**Repository access:** Authorized collaborators can inspect source, tests and diagrams without `app/.env.local`. A live shared-data demonstration requires a configured Node environment or hosted app, supplied through the team's normal setup process.
 
 ## External validation boundary
 
@@ -58,7 +58,7 @@ No live migration, deployment, real key publication or database mutation was per
 
 The live acceptance check remains: configure the server, post in Browser A, discover/plan/reload in independent Browser B, remove B's local plan, and confirm A can still read the event. Check the live anonymous grants/RLS using an authorized database session. Do not represent the explicitly labeled local fallback as shared storage.
 
-The professor's repository account `jkandel-scu` was verified to have write access. Course-portal submission, individual reflections and an actual human usability walkthrough cannot be established by repository tests and are not fabricated here.
+Course-portal submission, individual reflections and a human usability walkthrough require separate evidence; automated repository tests do not establish these outcomes.
 
 ## Run the release
 

@@ -27,7 +27,7 @@ Open the localhost URL printed by Vite, typically `http://localhost:5173/`. `npm
 | Model | [`app/src/model/events.ts`](app/src/model/events.ts) | Define an event, enforce rules, match events to free time, and read/write stored event data |
 | Presentation helpers | [`app/src/presentation/formatEvents.ts`](app/src/presentation/formatEvents.ts) | Turn machine-readable dates/times into labels people can read |
 
-The professor's MVC lesson is important here: **business rules belong in the Model**. For example, rejecting a past event must work even when there is no visible form. The Controller calls Model rules, while the View calls Controller functions. Formatting is a separate helper because it changes how values look, rather than whether an event is valid.
+The MVC separation is important here: **business rules belong in the Model**. For example, rejecting a past event must work even when there is no visible form. The Controller calls Model rules, while the View calls Controller functions. Formatting is a separate helper because it changes how values look, rather than whether an event is valid.
 
 Think of the request path this way:
 

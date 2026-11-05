@@ -1,6 +1,6 @@
 # SideQuest — Current M2 MVP User Requirements
 
-**Current implementation contract, updated November 4, 2026.** This supersedes the M1-focused root requirements. Historical M1 requirements remain in [docs/M1_HISTORICAL_REQUIREMENTS.md](docs/M1_HISTORICAL_REQUIREMENTS.md). Follow the professor-reviewed narrower P4-based MVP scope; the wider P3 research vision remains a future plan.
+**Current implementation contract, updated November 4, 2026.** This supersedes the M1-focused root requirements. Historical M1 requirements remain in [docs/M1_HISTORICAL_REQUIREMENTS.md](docs/M1_HISTORICAL_REQUIREMENTS.md). This document describes the adopted P4-based MVP scope; the wider P3 research vision remains a future plan.
 
 ## R1 — Post a campus event
 - A student should be able to submit an event with a title, host display name, description, location, day, start and end time.
@@ -50,9 +50,8 @@
 - **Event times:** same-day Santa Clara campus wall time; overnight events are deferred.
 - **Shared storage:** the repository includes a Supabase adapter, SQL schema and browser fallback; the browser uses a same-origin Node API. A successful local build does not establish that the live Supabase instance is configured or independently verified.
 - **Provisional choice:** maximum 100 saved local plans, subject to explicit team confirmation.
-- **Safety boundary:** anonymous public insertion is a class-prototype choice and needs deployment/security review, including the instructor's server-side API-key rules where applicable.
+- **Safety boundary:** anonymous public insertion is a class-prototype choice and needs deployment/security review, including the project's server-side API-key policy.
 
-## Required M2 evidence
-Professor Kandel's [M2 Part 1 assignment](https://docs.google.com/document/d/1_LlAb9mtASfutgVjKdjjt7Esh7g0ab6J4FmCzREJDEU/edit) requires this file, [SPECIFICATIONS.md](SPECIFICATIONS.md), code, tests, updated CRC and ER diagrams, and a README describing the **MVP rather than M1**. See [the full-course compliance audit](docs/COURSE_LECTURES_01_TO_16_COMPLIANCE_AUDIT.md) and [MVP build playbook](docs/MVP_TEAM_PLAYBOOK.md). The team reports that the professor reviewed and accepted narrowing the earlier P3 goals; this file records that reported decision without claiming independent documentary proof of the approval.
+## Supporting documents
 
-**Updated M2 Part 1 professor-facing diagrams:** [CRC (.drawio)](docs/diagrams/M2_CRC.drawio) and [ER (.drawio)](docs/diagrams/M2_STORAGE_ER.drawio), also linked prominently in [README](README.md). Both are based on current MVP code and preserve the approved P4/P5 originals. See [diagram changes and code evidence](docs/M2_IMPLEMENTATION_DIAGRAMS.md).
+See [technical specifications](SPECIFICATIONS.md), [setup instructions](README.md), [architecture diagrams](docs/M2_IMPLEMENTATION_DIAGRAMS.md), and [integration evidence](docs/M2_INTEGRATION_VERIFICATION.md). The accepted P4 CRC remains unchanged. The MVP scope intentionally excludes the wider group-planning and partial-attendance concepts from P3.

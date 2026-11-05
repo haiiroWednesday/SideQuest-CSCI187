@@ -1,6 +1,6 @@
 # Devonny browsing handoff | November 4, 2026
 
-**For Cynthia and Devonny to review before any merge.** This is an isolated integration branch based on `master`; it is not a PR and does not change the team release.
+**Historical integration record (November 4).** This document records a review of Devonny's browsing work before it was integrated into the current M2 release. Its branch-specific instructions below describe that earlier state and are retained as historical evidence.
 
 ## Source and credit
 

@@ -46,7 +46,7 @@
 - Posting restrictions belong in the EventCatalog **Model** as well as UI feedback; direct `catalog.create()` calls cannot bypass the rule.
 - The historical PR #13 was based on an M1-only app and is not safe to merge wholesale. Port remaining useful fixes onto current `master`, rerun CI, and prevent regression of #18–#20.
 - PR #16 (Claude team-access documentation) is merged; setting up workspace membership, API keys and actual spending controls is a separate account action, not an effect of Git commits.
-- Professor Kandel's M2 Part 1 requires current MVP README, requirements, specs, CRC/ER, code and tests. Do not submit obsolete M1 documents as if they describe the current MVP.
+- M2 Part 1 requires current MVP README, requirements, specs, CRC/ER, code and tests. Do not submit obsolete M1 documents as if they describe the current MVP.
 
 ## Safe development protocol
 
@@ -60,4 +60,4 @@
 
 **Default:** If a prompt conflicts with the agreed implementation contract or another teammate's file ownership, stop and explain the conflict. Do not invent features.
 
-**P4 is professor-approved and resolved.** Keep the accepted diagram unchanged. Current M2 source diagrams are [CRC](docs/diagrams/M2_CRC.drawio) and [ER](docs/diagrams/M2_STORAGE_ER.drawio), with a [combined file](docs/diagrams/M2_IMPLEMENTATION.drawio). Use the current [README](README.md), [specifications](SPECIFICATIONS.md) and [M2 verification](docs/M2_INTEGRATION_VERIFICATION.md), not historical M1 walkthroughs. Do not reuse a local server when running Playwright: browser tests POST events and a developer server may have real Supabase credentials.
+**The P4 diagram is accepted.** Keep it unchanged. Current M2 source diagrams are [CRC](docs/diagrams/M2_CRC.drawio) and [ER](docs/diagrams/M2_STORAGE_ER.drawio), with a [combined file](docs/diagrams/M2_IMPLEMENTATION.drawio). Use the current [README](README.md), [specifications](SPECIFICATIONS.md) and [M2 verification](docs/M2_INTEGRATION_VERIFICATION.md), not historical M1 walkthroughs. Do not reuse a local server when running Playwright: browser tests POST events and a developer server may have real Supabase credentials.

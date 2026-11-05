@@ -1,6 +1,6 @@
 # SideQuest M2 Part 1: Updated CRC and ER diagrams
 
-**Current editable diagrams, November 4, 2026.** These are the M2 Part 1 diagrams for Professor Kandel. They use the **same visual notations as our earlier P4 CRC and P5 ER coursework** and are updated from the implemented MVP code. The earlier generated architecture-summary boxes were incorrect as submission diagrams and have been replaced.
+**Current editable diagrams, November 4, 2026.** These M2 diagrams use the visual conventions of the accepted P4 CRC and the P5 ER, updated to match the implemented MVP. Earlier overview-only drawings were superseded.
 
 ## Open the correct files
 
@@ -14,7 +14,7 @@
 
 [Open the shared M2 folder](https://drive.google.com/drive/folders/1Nr67cdT8tEKPWBe9j3LNm6Wzw6alGgPc). The old `M2_CRC.svg` and `M2_STORAGE.svg` snapshots were removed because they represented the superseded overview; use the editor links above for the current course-format drawings.
 
-**Instructor access:** GitHub user `jkandel-scu` has verified **write** collaborator access to the private repository, so the professor can inspect the files directly on `master`. The Drive copies grant access to signed-in SCU-domain accounts; they are not anonymous public links. Updating these files does not itself establish that Camino received a submission.
+**Access:** GitHub collaborators can inspect files on `master`; SCU Drive copies require an account with access. These are separate copies, not synchronized edits. Repository changes do not establish course-portal submission status.
 
 ## CRC: what changed and why
 
@@ -42,7 +42,7 @@ SQL migration includes bounded anonymous INSERT, anonymous SELECT, and no anonym
 
 - **M2 Part 1:** [original assignment](https://docs.google.com/document/d/1_LlAb9mtASfutgVjKdjjt7Esh7g0ab6J4FmCzREJDEU/edit) calls for **updated CRC and ER** alongside code, tests, README, REQUIREMENTS and SPECIFICATIONS. This repository now links both corrected editable files from those grading documents.
 - **P4 and P5 historical submissions:** [approved P4 CRC](https://drive.google.com/file/d/1xiZGXQeScuJx14yKNUcwj1XtWTfOb-l4/view) and [selected P5 conceptual ER](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view) remain untouched. Their broader designs must not be misreported as implemented SQL.
-- **M2 Part 2 (November 9):** [final project plan assignment](https://docs.google.com/document/d/1qIx_8k4ZOGWPrISXNYXf-sOifYsXk3SWoPVkoOBP3es/edit) separately asks for **full-final-project CRC/ER diagrams**, which must reflect a team-approved final feature scope. These current MVP diagrams do not by themselves complete that future-planning requirement.
+- **M2 Part 2 (November 11):** [final project plan assignment](https://docs.google.com/document/d/1qIx_8k4ZOGWPrISXNYXf-sOifYsXk3SWoPVkoOBP3es/edit) separately asks for **full-final-project CRC/ER diagrams**, which must reflect a team-approved final feature scope. These current MVP diagrams do not by themselves complete that future-planning requirement.
 - **Human checks:** confirm Camino M2 Part 1 submission; review diagram accuracy with teammates; verify hosted database permissions and posting across two independent browsers.
 
-See the [repository README](../README.md), [requirements](../REQUIREMENTS.md), [specifications](../SPECIFICATIONS.md), and [M2 handoff on review branch #24](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/24) for related code/tests and outstanding acceptance.
+See the [repository README](../README.md), [requirements](../REQUIREMENTS.md), [specifications](../SPECIFICATIONS.md), and [integration verification](M2_INTEGRATION_VERIFICATION.md) for related code/tests and outstanding acceptance. PR #24 was closed after its functional changes had already been incorporated through PR #26.

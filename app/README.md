@@ -12,7 +12,7 @@ Fill `.env.local` with `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` for the tea
 
 **VS Code / teammate setup:** After cloning or pulling, `app/.env.example` is the tracked template. The real `app/.env.local` only appears on **your own machine after you create it**; Git intentionally cannot deliver teammates' local credentials. The exact procedure, server check, common errors, and separate-browser verification are in [M2 Supabase local setup](../docs/SUPABASE_LOCAL_SETUP.md). `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` from older teammate instructions will not configure the current M2 server. If `/api/catalog` says `{"shared":true}`, the adapter was constructed, but live database connectivity and RLS still require a real read/post test.
 
-**Professor-facing boundary:** Professor Kandel can review the repository and diagrams with the verified GitHub account without creating an environment file. A live shared-data demo requires a properly configured Node server or a working hosted app; do not commit credentials to make grading easier.
+**Access boundary:** Authorized repository collaborators can review the source and diagrams without an environment file. A live shared-data demonstration requires a configured Node server or deployed app. Never commit credentials for convenience.
 
 The Vite development server mounts the same API handler as production. It returns only `{ shared: true/false }` to the browser. If the server is not configured, the app visibly uses the browser-only fallback. Network failures do not silently switch a shared catalog to local storage.
 
@@ -48,6 +48,6 @@ The API reuses Model validation, accepts only the seven draft fields, limits JSO
 
 Use two independent browsers against the configured live instance to verify public persistence and denied mutations. A local fixture cannot certify live grants or RLS.
 
-## Course documents
+## Related documentation
 
-The root [requirements](../REQUIREMENTS.md), [specifications](../SPECIFICATIONS.md) and [M2 diagrams](../docs/M2_IMPLEMENTATION_DIAGRAMS.md) describe this release. Archived M1 tests/documents are historical. **P4 is professor-approved and resolved.**
+The root [requirements](../REQUIREMENTS.md), [specifications](../SPECIFICATIONS.md) and [M2 diagrams](../docs/M2_IMPLEMENTATION_DIAGRAMS.md) describe this release. Archived M1 tests/documents are historical. The accepted P4 diagram remains unchanged.
