@@ -1,5 +1,5 @@
-// CONTROLLER: support the historical M1 event flow through Model rules.
-// Active M2 public catalog operations use postEvent.ts and presentDiscover.ts.
+// CONTROLLER: expose free-window matching to both M2 Discover and M1 fixtures.
+// Historical M1 posting/storage helpers remain for compatibility.
 import {
   todayLocalISO, validateEventDraft, validateSearchWindow, matchingEvents,
   removeEventFromList, restoreEventInList, isPastEventDate,

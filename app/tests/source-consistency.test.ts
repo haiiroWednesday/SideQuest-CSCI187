@@ -37,6 +37,23 @@ describe('shared production conventions', () => {
     expect(violations).toEqual([])
   })
 
+  it('places imports before module declarations', () => {
+    const violations: string[] = []
+    for (const [path, content] of Object.entries(productionSources)) {
+      const kind = path.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+      const source = ts.createSourceFile(path, content, ts.ScriptTarget.Latest, true, kind)
+      let declarationsStarted = false
+      for (const statement of source.statements) {
+        if (ts.isImportDeclaration(statement)) {
+          if (declarationsStarted) violations.push(path)
+        } else {
+          declarationsStarted = true
+        }
+      }
+    }
+    expect(violations).toEqual([])
+  })
+
   it('keeps implementation comments about behavior rather than contributors or grading', () => {
     const violations: string[] = []
     for (const [path, source] of Object.entries(productionSources)) {

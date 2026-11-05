@@ -1,11 +1,11 @@
 // MODEL: device-local plan identities, ordering, overlap rules and persistence.
 // No React or Controller imports. Catalog events are never changed by a plan.
+import { CATALOG_LIMITS } from './eventCatalog'
+import { overlapSpan } from './eventTiming'
 import { isValidDate, toMinutes, type LegacyCampusEvent } from './events'
 
 // Saved plans resolve current catalog records and archived browser-local records.
 export type ScheduleEvent = LegacyCampusEvent & { hostName?: string }
-import { overlapSpan } from './eventTiming'
-import { CATALOG_LIMITS } from './eventCatalog'
 
 
 // Schedule accepts catalog events using the M2 field limits. Legacy M1

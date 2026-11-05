@@ -1,5 +1,5 @@
-// VIEW: ask the Controller for data/actions; render its results without storage
-// access, event sorting, time comparisons, or direct Model imports.
+// LEGACY M1 VIEW: preserve the earlier personal-schedule UI for regression tests.
+// The active M2 application uses ScheduleTrailView and useSharedSchedule.
 import { useEffect, useMemo, useState } from 'react'
 import { createScheduleController, loadPlannedEvents, type ScheduleResult } from '../controller/personalSchedule'
 import type { EventCatalogPort } from '../controller/postEvent'

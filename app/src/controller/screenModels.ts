@@ -1,7 +1,5 @@
-// CONTROLLER: turn catalog events, planned IDs and the device clock into
-// exactly what the Discover and My Schedule views draw. Views receive these
-// screen objects and never compare dates or times, read the clock, or import
-// the Model. Every function takes `now` so tests can move the clock.
+// CONTROLLER: share typed presentation models and event/date formatters.
+// Clock-sensitive presenters accept injected time for deterministic tests.
 import type { LegacyCampusEvent } from '../model/events'
 import { campusNow } from '../model/eventCatalog'
 import { calendarDay, eventDuration, eventPhase, minutesUntilStart } from '../model/eventTiming'

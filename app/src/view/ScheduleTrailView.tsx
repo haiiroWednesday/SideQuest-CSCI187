@@ -96,7 +96,7 @@ export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes
                   <ol className="sq-stubs">
                     {day.events.map(stub => (
                       <li key={stub.id}>
-                        <EventStub stub={stub} dim={false}>
+                        <EventStub stub={stub}>
                           {stub.overlap && <span className="sq-pill sq-pill-overlap">{stub.overlap.text}</span>}
                           {remove(stub.id, stub.title)}
                         </EventStub>
