@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { connectBrowserEventCatalog, type ConnectedCatalog } from './controller/postEvent'
 import { DiscoverView, SideQuestHeader, useDiscoverScreen } from './view/DiscoverView'
 import { ScheduleTrailView, useScheduleScreen } from './view/ScheduleTrailView'
-import { PostEventForm } from './view/PostEventForm'
+import { EmbeddedPostEventForm } from './view/PostEventForm'
 import { ToastStack, type ToastItem } from './view/Toasts'
 import { useEventCatalog } from './view/useEventCatalog'
 import { useBrowseDetail } from './view/useBrowseDetail'
@@ -78,8 +78,8 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
             <section className="sq-post-panel" aria-labelledby="post-heading">
               <h1 id="post-heading">Post an <em>event.</em></h1>
               <p>Share a campus activity. Dates and times use California time.{!connection.shared && ' Posts are saved in this browser only.'}</p>
-              <PostEventForm connection={connection} now={now} showPostedEvents={false}
-                showConnectionNotice={false} onPosted={() => { void events.refresh() }} />
+              <EmbeddedPostEventForm connection={connection} now={now}
+                onPosted={() => { void events.refresh() }} />
               <a className="sq-text-link" href="#discover">Back to Discover →</a>
             </section>
           </main>

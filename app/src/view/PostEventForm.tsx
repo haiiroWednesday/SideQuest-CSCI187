@@ -1,7 +1,5 @@
-// VIEW: the "Post an event" form and the list of posted events.
-// Rules live in controller/postEvent.ts, and storage lives behind the
-// EventCatalogPort. This component only holds what the user is typing and
-// what came back.
+// VIEW: compose the post editor and catalog list without behavior flags.
+// Posting validation and storage operations remain behind Controller ports.
 import { useState, type FormEvent } from 'react'
 import {
   postEvent, postingDraftErrors, initialCampusWindow,
@@ -10,9 +8,32 @@ import {
 import { PostedEventsList } from './PostedEventsList'
 import { PostEventFields } from './PostEventFields'
 
-type Props = { connection: ConnectedCatalog; now?: () => Date; onPosted?: (event: CampusEvent) => void; showPostedEvents?: boolean; showConnectionNotice?: boolean }
+type Props = { connection: ConnectedCatalog; now?: () => Date; onPosted?: (event: CampusEvent) => void }
 
-export function PostEventForm({ connection, now = () => new Date(), onPosted, showPostedEvents = true, showConnectionNotice = true }: Props) {
+// Full posting view: compose an editor, a connection notice, and the catalog list.
+export function PostEventForm({ connection, now, onPosted }: Props) {
+  const [revision, setRevision] = useState(0)
+  const handlePosted = (event: CampusEvent) => {
+    setRevision(current => current + 1)
+    onPosted?.(event)
+  }
+  return (
+    <>
+      {!connection.shared && <p className="storage-alert" data-testid="catalog-not-shared">
+        Shared catalog not connected. Posts are saved in this browser only, and other people can't see them.
+      </p>}
+      <PostEventEditor connection={connection} now={now} onPosted={handlePosted} />
+      <PostedEventsList catalog={connection.catalog} shared={connection.shared} revision={revision} />
+    </>
+  )
+}
+
+// Embedded editor: the surrounding page already presents source status and its event list.
+export function EmbeddedPostEventForm(props: Props) {
+  return <PostEventEditor {...props} />
+}
+
+function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props) {
   const { catalog, shared } = connection
   const [draft, setDraft] = useState<EventDraft>(() => ({
     title: '', hostName: '', description: '', location: '', ...initialCampusWindow(now()),
@@ -22,13 +43,6 @@ export function PostEventForm({ connection, now = () => new Date(), onPosted, sh
   const [formError, setFormError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [posted, setPosted] = useState<{ events: CampusEvent[]; error: string | null; loading: boolean }>(
-    { events: [], error: null, loading: true },
-  )
-
-  // Updating this key re-reads the catalog without holding a second data-fetch concern in the form.
-  const [postedRevision, setPostedRevision] = useState(0)
-
   const update = (field: keyof EventDraft, value: string) => {
     const nextDraft = { ...draft, [field]: value }
     setDraft(nextDraft)
@@ -74,19 +88,13 @@ export function PostEventForm({ connection, now = () => new Date(), onPosted, sh
     // Keep host name, date and times to make posting a similar event quicker.
     setDraft(current => ({ ...current, title: '', description: '', location: '' }))
     onPosted?.(result.event)
-    if (showPostedEvents) setPostedRevision(current => current + 1)
   }
 
   return (
     <>
-      {showConnectionNotice && !shared && <p className="storage-alert" data-testid="catalog-not-shared">
-        Shared catalog not connected. Posts are saved in this browser only, and other people can't see them.
-      </p>}
       <PostEventFields draft={draft} fieldErrors={fieldErrors} submitting={submitting} now={now} onSubmit={handleSubmit} onChange={update} onBlur={validateOnBlur} />
       {formError && <p className="error" role="alert">{formError}</p>}
       {notice && <p className="success" role="status">{notice}</p>}
-
-      {showPostedEvents && <PostedEventsList catalog={catalog} shared={shared} revision={postedRevision} />}
     </>
   )
 }
