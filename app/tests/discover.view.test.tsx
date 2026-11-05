@@ -1,10 +1,13 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { DiscoverView, type DiscoverEvent, type DiscoverViewProps } from '../src/view/DiscoverView'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { DiscoverView, type DiscoverEvent, type DiscoverViewProps, useDiscoverScreen } from '../src/view/DiscoverView'
 import { presentDiscover } from '../src/controller/presentScreens'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
 
 // The view only draws what the Controller prepares, so every render goes through presentDiscover
 // with a fixed clock: Thursday 11/7/2030 at 9:00am.
@@ -12,6 +15,8 @@ const NOW = new Date('2030-11-07T09:00:00-08:00')
 type Input = Omit<Parameters<typeof presentDiscover>[0], 'events' | 'now'>
 const draw = (events: DiscoverEvent[], input: Input = {}, props: Omit<DiscoverViewProps, 'screen'> = {}, now = NOW) =>
   <DiscoverView screen={presentDiscover({ events, now, ...input })} {...props} />
+const MountedDiscover = ({ events }: { events: DiscoverEvent[] }) =>
+  <DiscoverView screen={useDiscoverScreen({ events })} />
 
 const events: DiscoverEvent[] = [
   {
@@ -116,6 +121,26 @@ describe('Discover View: draws the Controller screen', () => {
     expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual(['TOMORROWSaturday, 11/9/2030'])
   })
 
+  it('removes an event that expires while Discover remains mounted', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2030-11-07T09:59:45-08:00'))
+    const expiring = {
+      ...events[0],
+      id: 'expiring-ceramics',
+      title: 'Ends at ten',
+      start: '09:00',
+      end: '10:00',
+    }
+
+    render(<MountedDiscover events={[expiring]} />)
+    expect(screen.getByRole('button', { name: 'View details for Ends at ten' })).toBeTruthy()
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000) })
+
+    expect(screen.queryByRole('button', { name: 'View details for Ends at ten' })).toBeNull()
+    expect(screen.getByText('No events to show yet.')).toBeTruthy()
+  })
+
   it('marks planned events, how long each runs, and what is happening right now', () => {
     render(draw(events, { plannedIds: ['poetry-2'] }, { onPlan: vi.fn() }, new Date('2030-11-07T14:40:00-08:00')))
     const poetry = screen.getByRole('button', { name: 'View details for Poetry Reading' })
@@ -151,6 +176,21 @@ describe('Discover View: draws the Controller screen', () => {
     rerender(draw(events, { freeWindow: { ...window, end: '13:00' } }, { onFreeWindowChange: onChange }))
     expect(screen.getByRole('alert').textContent).toContain('end time later')
     expect(screen.getByRole('button', { name: 'View details for Poetry Reading' }).className).not.toContain('sq-stub-dim')
+  })
+
+  it('explains partial filters accessibly and restores the catalog after no matches', () => {
+    const onChange = vi.fn()
+    const { rerender } = render(draw(events, { freeWindow: { date: '2030-11-07', start: '', end: '' } }, { onFreeWindowChange: onChange }))
+    const hint = screen.getByText('Showing all upcoming events. Complete the date and both times to filter.')
+    expect(screen.getByLabelText('Free on').getAttribute('aria-describedby')).toBe(hint.id)
+    expect(screen.getByRole('button', { name: 'View details for Poetry Reading' })).toBeTruthy()
+    rerender(draw(events, { freeWindow: { date: '2030-11-07', start: '01:00', end: '02:00' } }, { onFreeWindowChange: onChange }))
+    expect(screen.getByText('No events fit this window.')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'View details for Poetry Reading' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Show all events' }))
+    expect(onChange).toHaveBeenLastCalledWith({ date: '', start: '', end: '' })
+    rerender(draw(events, { freeWindow: onChange.mock.calls.at(-1)![0] }, { onFreeWindowChange: onChange }))
+    expect(screen.getByRole('button', { name: 'View details for Poetry Reading' })).toBeTruthy()
   })
 
   it('opens the details sheet when a stub is picked and closes it again', () => {

@@ -1,6 +1,7 @@
 // Course architecture regression: production Views use Controllers to reach
 // Model/persistence; Model files never depend on React, Views or Controllers.
 import appSource from '../src/App.tsx?raw'
+import playwrightConfig from '../playwright.config.ts?raw'
 import ts from 'typescript'
 import { describe, expect, it } from 'vitest'
 
@@ -10,6 +11,10 @@ const parse = (path: string, content: string) => ts.createSourceFile(path, conte
 const imports = (source: ts.SourceFile) => source.statements.flatMap(node => (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier) ? [node.moduleSpecifier.text] : [])
 
 describe('professor feedback: MVC boundaries', () => {
+  it('browser tests cannot reuse a developer server connected to live Supabase', () => {
+    expect(playwrightConfig.match(/reuseExistingServer:\s*false/g)).toHaveLength(4)
+    expect(playwrightConfig).not.toMatch(/reuseExistingServer:\s*(?:true|!process\.env\.CI)/)
+  })
   it('production View files do not import Model modules or access browser persistence', () => {
     expect(Object.keys(views).length).toBeGreaterThan(1)
     const violations: string[] = []

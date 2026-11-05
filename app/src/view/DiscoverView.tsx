@@ -204,6 +204,7 @@ export function DiscoverView({
       <input
         type={type}
         value={free?.values[key] ?? ''}
+        aria-describedby={free?.error ? 'sq-free-error' : free?.hint ? 'sq-free-hint' : undefined}
         onChange={event => free && onFreeWindowChange?.({ ...free.values, [key]: event.target.value })}
       />
     </label>
@@ -231,7 +232,8 @@ export function DiscoverView({
                 ✕ Clear
               </button>
             )}
-            {free.error && <p className="sq-free-error" role="alert">{free.error}</p>}
+            {free.hint && <p id="sq-free-hint" className="sq-free-hint" role="status">{free.hint}</p>}
+            {free.error && <p id="sq-free-error" className="sq-free-error" role="alert">{free.error}</p>}
           </form>
         )}
 
@@ -249,6 +251,8 @@ export function DiscoverView({
             ) : screen.status === 'empty' || (screen.status === 'ready' && screen.count === 0) ? (
               <div className="sq-message sq-message-empty">
                 <h3>{free?.active ? 'No events fit this window.' : 'No events to show yet.'}</h3>
+                {free?.active && onFreeWindowChange && <button type="button" className="sq-text-button"
+                  onClick={() => onFreeWindowChange({ date: '', start: '', end: '' })}>Show all events</button>}
                 {routes?.post && <a className="sq-text-link" href={routes.post}>Post an event</a>}
               </div>
             ) : (

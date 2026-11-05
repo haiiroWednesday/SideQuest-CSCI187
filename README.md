@@ -2,6 +2,16 @@
 
 A student-built Santa Clara University event finder: **post an event → browse upcoming events → find full-fit availability → plan to attend → revisit or remove the plan.**
 
+## Professor Kandel: M2 Part 1 diagrams (current editable submissions)
+
+**Updated November 4, 2026.** Open these **course-format Draw.io files**, rather than the older architecture-summary previews:
+
+- **[M2 CRC diagram (.drawio)](docs/diagrams/M2_CRC.drawio)**: P4-style EventCatalog / Event / Schedule responsibility cards, UML relationships, and a second-page rationale, reconciled with the M2 code.
+- **[M2 ER diagram (.drawio)](docs/diagrams/M2_STORAGE_ER.drawio)**: P5-style rectangles, attribute ovals and a relationship diamond, with all nine columns from the `public.events` SQL migration. Device-local planned IDs are explicitly outside SQL.
+- **[Combined editable Draw.io file](docs/diagrams/M2_IMPLEMENTATION.drawio)** and **[diagram/code evidence guide](docs/M2_IMPLEMENTATION_DIAGRAMS.md)**. Copies are in the [M2 team Drive folder](https://drive.google.com/drive/folders/1Nr67cdT8tEKPWBe9j3LNm6Wzw6alGgPc).
+
+GitHub collaborator access for `jkandel-scu` was verified as **write**. These links are on `master`. The approved P4 and P5 originals have not been altered. These diagrams cover **M2 Part 1's implemented MVP**; M2 Part 2 separately asks for full-final-project planning diagrams. The repository update does not confirm a Camino submission.
+
 ## Current M2 MVP
 
 This M2 release combines current master’s integration/audit fixes with the supplied Discover and Schedule views. It includes:
@@ -11,13 +21,15 @@ This M2 release combines current master’s integration/audit fixes with the sup
 - **My Schedule:** the user's plan IDs persist in this browser, remain sorted, warn about overlapping times and survive refresh. Removing a plan never deletes a public event.
 - **Graceful states:** error messages, retry/loading, malformed-storage handling, and separate missing-event versus network-error states.
 
+**VS Code and instructor: [server-only Supabase setup and two-browser acceptance guide](docs/SUPABASE_LOCAL_SETUP.md).** The repository includes a safe `app/.env.example` template; `app/.env.local` is intentionally ignored and must be created on the machine running the server. The correct names are `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` with **no `VITE_` prefix**. Professor Kandel already has GitHub access and needs no credentials to inspect the assignment. To try live cross-browser events, use a team-hosted Node demonstration or configure server variables locally through a separate authorized channel. Never commit project keys to enable grading.
+
 **Shared data requires server setup:** If you configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in the Node server environment, the app uses the shared event catalog. Otherwise it explicitly warns that posted events live **in the current browser only**. The database adapter and SQL migration are committed, but real cross-browser operation must still be verified against a configured project. The fallback is appropriate for local tests, not a proof of public sharing.
 
-The supplied Discover and Schedule design is integrated into the real application; its controllers use the same catalog as posting.
+The supplied Discover and Schedule design is integrated into the real application; its controllers use the same catalog as posting. Partial availability windows explain that filtering has not started; a complete search with no matches offers **Show all events**.
 
-## Install and run
+## Install and run the M2 MVP
 
-Requires [Node.js](https://nodejs.org/) 22.12+ (24 recommended) and Git.
+Requires [Node.js](https://nodejs.org/) 22.12+ (24 recommended), Git, and a recent browser. Run these commands from the repository root in VS Code or a terminal. **Supabase credentials are unnecessary for the browser-only demonstration or the automated tests.** Without server configuration, posts are explicitly labeled as saved on this computer only.
 
 ```bash
 git clone https://github.com/haiiroWednesday/SideQuest-CSCI187.git
@@ -26,17 +38,22 @@ npm ci
 npm run dev
 ```
 
-Open the local address reported by Vite, usually `http://localhost:5173/`. If you already cloned the repository, protect any uncommitted edits (`git status`), switch to `master`, and run `git pull --ff-only origin master` and then `npm ci` from `app/`.
+Open the local address printed by Vite, usually `http://localhost:5173/`. Try **Post an event → Discover → fill a complete date/start/end free-time window → Plan to attend → My Schedule → Remove from plans**. Until the shared database is configured, posted events are intentionally local and cannot be seen on another computer.
+
+**Already cloned the project?** First protect uncommitted changes (`git status`). From the repository root run `git fetch origin`, `git switch master`, `git pull --ff-only origin master`, then `cd app && npm ci && npm run dev`. If you are already in `app/`, avoid another `cd app`.
 
 **Shared database setup:** Daven's [app setup and Supabase guide](app/README.md) explains the reviewed SQL migration `supabase/migrations/20261103000000_create_events.sql`, a Supabase project, and `app/.env.example` to `app/.env.local`. Don't commit `.env.local`, service-role/secret API keys, or a teammate's Claude token. Database provisioning and the verification of read/insert permissions require authorized team access.
 
-## Production server
+## Production Node server
+
+From **`SideQuest-CSCI187/app/`** (the directory used above):
 
 ```bash
-cd app
 npm run build
 npm start
 ```
+
+If starting from the repository root, run `cd app` **once** before these commands. The built Node server normally serves `http://localhost:3000/`. Unlike Vite development, `npm start` reads server variables from its **process environment** and does not automatically load `app/.env.local`.
 
 The Node server serves both `dist/` and the same-origin `/api/events` endpoint. Configure server-only `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`; never prefix keys with a browser-public environment prefix. The client receives only a `shared` flag. No database URL, key or auth header is sent to the browser. `npm run build` checks the browser output for database credential markers.
 
@@ -44,7 +61,7 @@ The default port is 3000; set `PORT` for hosting. A static-file-only deployment 
 
 ## Verify code and browser behavior
 
-From `app/`:
+From `app/`, **stop a running `npm run dev` or `npm start` first** (Ctrl+C):
 
 ```bash
 npm test
@@ -52,6 +69,8 @@ npm run build
 npx playwright install chromium
 npm run test:e2e
 ```
+
+The browser suite starts isolated fixture servers and refuses to reuse an already-running localhost server. If ports 5173, 5175, 5176 or 5177 are occupied, stop the conflicting process before rerunning. **Never remove this isolation just to make a test pass.** The automated tests do not access the team's live Supabase project.
 
 [SideQuest React CI](.github/workflows/react-ci.yml) runs the React tests/build and Chromium checks in GitHub Actions on pushes/PRs. The separate root C++ course template retains its own CI but is not the React application.
 
@@ -79,8 +98,10 @@ The historical M1-created-event list is retained locally for compatibility, dist
 - [Team setup and Claude coding-agent guide](TEAM_SETUP_GUIDE.md) covers Git, VS Code, team-access permissions and optional coding assistants.
 - [M1 historical requirements](docs/M1_HISTORICAL_REQUIREMENTS.md) and [M1 specifications](docs/M1_HISTORICAL_SPECIFICATIONS.md) preserve the original walking-skeleton record.
 - [Product research and future roadmap](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md) is reference material, not authorization to expand M2 scope.
-- [Current M2 implementation CRC and storage/ER diagrams](docs/diagrams/M2_IMPLEMENTATION.drawio) with [readable explanation](docs/M2_IMPLEMENTATION_DIAGRAMS.md).
+- **Editable M2 files:** [CRC](docs/diagrams/M2_CRC.drawio), [ER](docs/diagrams/M2_STORAGE_ER.drawio), [combined](docs/diagrams/M2_IMPLEMENTATION.drawio), and [code-to-diagram guide](docs/M2_IMPLEMENTATION_DIAGRAMS.md).
 - [P4 conceptual CRC/architecture](https://docs.google.com/document/d/11MKHb3f40Yl81Rx__Mna2lRFf5ooZZUD22QEUnmpiO4/edit) and [selected P5 coursework ER draw.io](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view). The P5 conceptual drawing contains ideas beyond the implemented one-table M2 SQL. Updated MVP diagrams must match the actual system.
+
+**Instructor access:** The private GitHub repository grants `jkandel-scu` collaborator **write** permission (verified November 4, 2026). The two diagram files above are committed on `master`; the professor can open them using that GitHub account. Team Drive copies are restricted to SCU-domain access rather than public anonymous access. The original P4 and P5 coursework diagrams were not changed.
 
 Use the [M2 Part 1 instructions](https://docs.google.com/document/d/1_LlAb9mtASfutgVjKdjjt7Esh7g0ab6J4FmCzREJDEU/edit) and the current course portal for submission details. Assignment and lecture deadline text differ; repository contents cannot establish the actual submission status or an extension.
 

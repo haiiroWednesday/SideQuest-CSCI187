@@ -15,8 +15,9 @@ export default defineConfig({
     } : undefined,
     trace: 'retain-on-failure',
   },
-  // 🚀 Start SideQuest's Vite server before browser tests. On a local
-  // computer Playwright may reuse a server that's already running.
+  // Start isolated test servers. Never reuse an existing developer server:
+  // it might be connected to the team's live Supabase project and these tests
+  // POST events. A port conflict must stop the test suite.
   webServer: [{
     command: 'node e2e/fixtures/catalog-backend.mjs',
     url: 'http://127.0.0.1:5176/__fixture/state',
@@ -25,7 +26,7 @@ export default defineConfig({
   }, {
     command: 'npm run dev -- --host 127.0.0.1 --port 5173 --strictPort',
     url: 'http://127.0.0.1:5173',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 60_000,
     env: { SUPABASE_URL: '', SUPABASE_PUBLISHABLE_KEY: '' },
   }, {

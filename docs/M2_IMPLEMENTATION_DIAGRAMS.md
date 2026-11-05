@@ -1,25 +1,46 @@
-# Current M2 implementation diagrams
+# SideQuest M2 Part 1: Updated CRC and ER diagrams
 
-These supplement the professor-approved P4 without changing its accepted symbols or ownership decisions. They describe the combined implementation for M2 rather than the broader P5 future design.
+**Current editable diagrams, November 4, 2026.** These are the M2 Part 1 diagrams for Professor Kandel. They use the **same visual notations as our earlier P4 CRC and P5 ER coursework** and are updated from the implemented MVP code. The earlier generated architecture-summary boxes were incorrect as submission diagrams and have been replaced.
 
-Open [M2_IMPLEMENTATION.drawio](diagrams/M2_IMPLEMENTATION.drawio) in diagrams.net. It contains two editable pages. GitHub can display the SVG previews below directly.
+## Open the correct files
 
-## Responsibilities / CRC mapping
+| Required deliverable | GitHub source on `master` | Editable team Drive copy |
+| --- | --- | --- |
+| **CRC / UML responsibility diagram** | [M2_CRC.drawio](diagrams/M2_CRC.drawio), two pages | [SideQuest_M2_CRC.drawio](https://drive.google.com/file/d/1EQOXQXHnbeXry1-HULe60I2nKLw_gMR-/view) |
+| **Chen-style ER diagram** | [M2_STORAGE_ER.drawio](diagrams/M2_STORAGE_ER.drawio), one page | [SideQuest_M2_STORAGE_ER.drawio](https://drive.google.com/file/d/1gIQn3a0d6uCOkaqzQsg2r29I_IUkml-e/view) |
+| **Both diagrams in one editable file** | [M2_IMPLEMENTATION.drawio](diagrams/M2_IMPLEMENTATION.drawio), three pages | [Combined Draw.io file](https://drive.google.com/file/d/1wQLEXbd-ihUsXFL3SV3qvAgtvtPovKgZ/view) |
 
-![Current M2 responsibilities](diagrams/M2_CRC.svg)
+[Open the shared M2 folder](https://drive.google.com/drive/folders/1Nr67cdT8tEKPWBe9j3LNm6Wzw6alGgPc). Open any `.drawio` file using [diagrams.net](https://app.diagrams.net/), **File → Open From**. GitHub may show XML; download the source and open it in diagrams.net for graphical editing. Older `M2_CRC.svg` and `M2_STORAGE.svg` snapshots were removed because they represented the superseded overview. Use the professor-format editable `.drawio` files above for M2 review.
 
-Event, EventCatalog and Schedule remain the domain concepts from the accepted P4. TypeScript records and Model functions implement their responsibilities. Feature Controllers mediate their operations. The server HTTP Controller is a transport boundary; it adds no account or new domain entity.
+**Instructor access:** GitHub user `jkandel-scu` has verified **write** collaborator access to the private repository, so the professor can inspect the files directly on `master`. The Drive copies grant access to signed-in SCU-domain accounts; they are not anonymous public links. Updating these files does not itself establish that Camino received a submission.
 
-`DiscoverView`, `PostEventForm` and `ScheduleTrailView` render Controller output and report user actions. `postEvent`, `findEvents`, `personalSchedule`, `sharedSchedule` and `presentScreens` coordinate operations. Models own field/posting validity, full-fit matching, clock/interval rules, local ID integrity, overlaps and persistence. The browser HTTP port calls the Node API; only its Model adapter talks to Supabase.
+## CRC: what changed and why
 
-## Implemented storage / ER
+The CRC page retains the P4-style **EventCatalog, Event, Schedule** responsibility cards and three UML links, with a second page explaining those links. The card text now matches M2, including:
 
-![Current M2 storage](diagrams/M2_STORAGE.svg)
+- **EventCatalog:** create validated public Events, list upcoming Events, retrieve any Event by UUID, and delegate persistence to an EventTable adapter.
+- **Event:** ID, title, host, description, location and California campus date/times; required-field limits, non-past posting, same-day ordering, and entire-event free-time fit.
+- **Schedule:** stores unique planned Event IDs in the **current browser**, with a provisional 100-ID cap; resolves details by catalog lookup, sorts events, warns of overlaps, and preserves IDs during failed lookups.
 
-The implemented SQL schema has one entity, `public.events`. Its fields, key, same-day constraint and anonymous permissions match the existing migration. There are no USER, persistent AVAILABILITY_WINDOW or SQL planned-attendance tables.
+The hollow diamonds express independent Event lifetime: deleting a local plan does not delete its public Event. The dashed dependency represents catalog lookup; the production **sharedSchedule Controller** mediates that call. These are conceptual CRC responsibilities implemented through TypeScript types/functions/ports, rather than three literal instantiated classes. See `app/src/model/eventCatalog.ts`, `events.ts`, `schedule.ts` and `app/src/controller/sharedSchedule.ts`.
 
-The current browser stores a unique list of planned Event IDs under `sidequest.planned-event-ids.v1`. That list is outside SQL and references public events by ID. It is not an enforced database foreign key: a reference may outlive the corresponding record or fail to load temporarily. Only successful null lookups count as missing; failed requests preserve the ID and offer retry. Removing a personal reference leaves the public event intact.
+## ER: what changed and why
 
-The free-time window is temporary form state, not a saved database record. The earlier P5 drawing remains an archived broader conceptual coursework artifact. Use this current M2 storage page when explaining what is actually implemented.
+The ER page uses the **P5 Chen notation**: a rectangular EVENT entity, oval SQL attributes, an emphasized PK oval, and a dashed client lookup relationship. It matches the checked migration at `supabase/migrations/20261103000000_create_events.sql`:
 
-**P4 status: approved and resolved. No P4 changes are requested.**
+| Shared SQL entity | Attributes |
+| --- | --- |
+| `public.events` | `id` (UUID primary key), `title`, `host_name`, `description`, `location`, `event_date`, `start_time`, `end_time`, `created_at` |
+
+This is currently **one SQL entity**, so there is no SQL attendance relationship or inter-table foreign key to invent. The device-local JSON ID list (`sidequest.planned-event-ids.v1`) is shown **separately and explicitly outside SQL**; its dashed ID lookup is a client-side reference, not an enforced FK. Search availability is temporary View state. The earlier P5's USER and AVAILABILITY_WINDOW entities are not current database tables; `host_name` is self-reported, and users have no accounts.
+
+SQL migration includes bounded anonymous INSERT, anonymous SELECT, and no anonymous UPDATE/DELETE. The migration is committed, but **live Supabase deployment and an independent two-browser sharing test are still unverified**.
+
+## Scope and remaining checks
+
+- **M2 Part 1:** [original assignment](https://docs.google.com/document/d/1_LlAb9mtASfutgVjKdjjt7Esh7g0ab6J4FmCzREJDEU/edit) calls for **updated CRC and ER** alongside code, tests, README, REQUIREMENTS and SPECIFICATIONS. This repository now links both corrected editable files from those grading documents.
+- **P4 and P5 historical submissions:** [approved P4 CRC](https://drive.google.com/file/d/1xiZGXQeScuJx14yKNUcwj1XtWTfOb-l4/view) and [selected P5 conceptual ER](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view) remain untouched. Their broader designs must not be misreported as implemented SQL.
+- **M2 Part 2 (November 9):** [final project plan assignment](https://docs.google.com/document/d/1qIx_8k4ZOGWPrISXNYXf-sOifYsXk3SWoPVkoOBP3es/edit) separately asks for **full-final-project CRC/ER diagrams**, which must reflect a team-approved final feature scope. These current MVP diagrams do not by themselves complete that future-planning requirement.
+- **Human checks:** confirm Camino M2 Part 1 submission; review diagram accuracy with teammates; verify hosted database permissions and posting across two independent browsers.
+
+See the [repository README](../README.md), [requirements](../REQUIREMENTS.md), [specifications](../SPECIFICATIONS.md), and [M2 handoff on review branch #24](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/24) for related code/tests and outstanding acceptance.

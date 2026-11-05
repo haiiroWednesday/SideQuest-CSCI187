@@ -1,6 +1,6 @@
-# SideQuest Code Walkthrough (M1 beginner guide)
+# SideQuest Code Walkthrough (historical M1 teaching example)
 
-**Start here if you are new to TypeScript or React.** This guide describes the code currently on `master`. It explains the M1 walking skeleton that exists today, with links to the actual functions and tests. It does **not** mean the separate M2 shared EventCatalog or personal Schedule is implemented.
+> **Historical guide, not the current M2 implementation.** This document preserves the former M1 browser-only example. The actual M2 release **does implement** a shared EventCatalog adapter, Discover/full-fit search, and a device-local My Schedule. For current implementation and grading, start with the [root README](README.md), [technical specifications](SPECIFICATIONS.md), [M2 diagrams/code map](docs/M2_IMPLEMENTATION_DIAGRAMS.md), and [integration verification](docs/M2_INTEGRATION_VERIFICATION.md). Historical UI examples are preserved under `app/tests/fixtures/`; they are not used by the live application.
 
 > **Quick reading path:** Run the app, read the four-file map, follow the event-creation example, then visit the storage and testing sections. Keep this guide open beside VS Code. For M2 architecture and agreed scope, use [the MVP team playbook](docs/MVP_TEAM_PLAYBOOK.md).
 
@@ -16,9 +16,9 @@ npm run dev
 
 Open the localhost URL printed by Vite, typically `http://localhost:5173/`. `npm ci` installs dependencies using the committed lockfile. `npm run dev` starts the development server. The original C++ coursework starter in the repository root is separate from this React application.
 
-Try the actual M1 feature: create an event with a future start time, choose a date and free-time range, see whether the event fits entirely, refresh to check saving, and remove it. The events belong only to **this browser's local storage**. Another user or computer cannot see them.
+**Historical M1 exercise:** the original version created and removed locally stored records. The old UI is preserved in `app/tests/fixtures/LegacyApp.tsx`. The current running application instead provides **Post an event → Discover → My Schedule** and can access server-backed public events when configured. Personal plan IDs remain device-local.
 
-## 2. Four-file map: who does what?
+## 2. Four-file map for historical M1 code (not current production)
 
 | Layer | Start with | Job in plain English |
 | --- | --- | --- |

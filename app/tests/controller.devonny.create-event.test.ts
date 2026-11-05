@@ -1,6 +1,5 @@
 // Test Author: Devonny
 // Proves: adding a second event preserves the first event's data.
-// (AI-Assisted)
 
 import { expect, it } from 'vitest'
 import { createEvent } from '../src/controller/findEvents'

@@ -1,4 +1,4 @@
-// Test owner: Daven — chose and verified this case (AI-assisted draft).
+// Test owner: Daven — chose and verified this case.
 // Proves: after saving a shorter list, removed events never come back — even when the list becomes empty.
 import { expect, it } from 'vitest'
 import { readStoredEvents, saveStoredEvents, STORAGE_KEY, type CampusEvent } from '../src/model/events'

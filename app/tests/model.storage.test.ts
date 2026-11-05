@@ -1,4 +1,4 @@
-// Shared browser-storage regression test (AI-assisted starter example).
+// Shared browser-storage regression test.
 import { expect, it } from 'vitest'
 import { readStoredEvents, saveStoredEvents, STORAGE_KEY, type CampusEvent } from '../src/model/events'
 

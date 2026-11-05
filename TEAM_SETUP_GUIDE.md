@@ -31,6 +31,10 @@ Open the **Local** URL printed by Vite (often `http://localhost:5173/`).
 
 If cloning the private repository fails, confirm that your GitHub account has accepted the collaborator invitation. If `npm ci` fails, inspect the actual dependency error instead of overriding peer-dependency checks.
 
+## M2 shared Supabase setup in VS Code (server-only)
+
+After cloning or pulling, the checked-in template `app/.env.example` is visible in VS Code. Make **your own** ignored `app/.env.local` in a terminal opened at `app/` with `cp .env.example .env.local`, then fill it locally with approved team values named `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. **Do not use the older `VITE_SUPABASE_*` variables**, commit keys, or send screenshots of local configuration. Restart `npm run dev` after setting them. The full instructions, real two-browser test, and what the professor needs are in [M2 local Supabase setup](docs/SUPABASE_LOCAL_SETUP.md). The professor can inspect GitHub without configuring the team database; a working live demo needs a configured server.
+
 ## Update an existing clone
 
 **Do not clone again** if you already have a local copy. From the repository folder:

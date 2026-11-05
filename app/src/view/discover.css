@@ -266,6 +266,7 @@
 .sq-free-clear { border: 0; background: none; color: var(--sq-muted); font: 600 16px var(--font-sans); padding: 10px 6px; cursor: pointer; }
 .sq-free-clear:hover { color: var(--sq-ink); }
 .sq-free-error { flex-basis: 100%; margin: 2px 0 0; color: var(--sq-red); font: 600 17px var(--font-sans); }
+.sq-free-hint { flex-basis: 100%; margin: 2px 0 0; color: var(--sq-muted); font: 500 15px/1.4 var(--font-sans); }
 
 /* ---------- The trail: days as stops, events as ticket stubs ---------- */
 .sq-board { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 44px; margin-top: 22px; align-items: start; }
