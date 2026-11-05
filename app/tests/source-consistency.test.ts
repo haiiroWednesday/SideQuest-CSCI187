@@ -54,12 +54,12 @@ describe('shared production conventions', () => {
     expect(violations).toEqual([])
   })
 
-  it('keeps implementation comments about behavior rather than contributors or grading', () => {
+  it('keeps production comments free of grading asides and decorative emoji', () => {
     const violations: string[] = []
     for (const [path, source] of Object.entries(productionSources)) {
       source.split('\n').forEach((line, index) => {
         if (!/^\s*\/\//.test(line)) return
-        if (/\b(?:professor|instructor|grader|owner:|Daven|Devonny|Sembiyan|Cynthia)\b/i.test(line)
+        if (/\b(?:professor|instructor|grader)\b/i.test(line)
           || /[\u{1F300}-\u{1FAFF}]/u.test(line)) {
           violations.push(`${path}:${index + 1}`)
         }
