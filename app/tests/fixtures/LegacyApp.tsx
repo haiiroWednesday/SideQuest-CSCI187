@@ -47,7 +47,7 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
     // The browser notifies other tabs when storage changes. We read the
     // latest data here without writing it back and causing another update.
     const onStorage = (event: StorageEvent) => {
-      // 🪟 Ignore changes from other storage areas/keys. A null key can
+      // Ignore changes from other storage areas/keys. A null key can
       // mean the other tab cleared storage, which also needs a refresh.
       if (event.storageArea !== window.localStorage || (event.key !== null && event.key !== 'sidequest.created-events.v1')) return
       let current: { events: CampusEvent[]; blocked: boolean }
@@ -60,7 +60,7 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
       setNotice('Your event list was updated in another tab.')
     }
     window.addEventListener('storage', onStorage)
-    // 🧹 React runs this cleanup when the component unmounts, preventing
+    // React runs this cleanup when the component unmounts, preventing
     // duplicate listeners from accumulating as the page changes.
     return () => window.removeEventListener('storage', onStorage)
   }, [])
@@ -74,7 +74,7 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
         const latest = loadEventsChecked(window.localStorage)
         // A second tab may change the list before the storage event arrives.
         // Refuse stale writes rather than overwrite the other tab's events.
-        // 🔐 JSON.stringify compares the list's CONTENT rather than array
+        // JSON.stringify compares the list's CONTENT rather than array
         // identity (two different arrays can hold the same event data).
         // This is a best-effort check, not an atomic database transaction.
         if (latest.blocked || JSON.stringify(latest.events) !== JSON.stringify(events)) {
@@ -203,7 +203,7 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
         </section>
       </section>
 
-      {/* 📢 aria-live="polite" lets screen readers announce search updates
+      {/* aria-live="polite" lets screen readers announce search updates
           without interrupting what the person is already doing. */}
       <ScheduleFeedback plans={plans} />
       <section className="results" aria-live="polite">
@@ -211,7 +211,7 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
           <h2>Made for your window</h2>
           <span className="counter">{matches.length} {matches.length === 1 ? 'event' : 'events'}</span>
         </div>
-        {/* 🔎 Three display cases: invalid search, zero matches, or a list
+        {/* Three display cases: invalid search, zero matches, or a list
             of event cards. The ? : operator chooses between them. */}
         {searchError ? (
           <div className="empty">Correct your available date or time to see matching events.</div>
@@ -242,7 +242,7 @@ export default function App({ catalog }: { catalog?: ConnectedCatalog } = {}) {
         )}
       </section>
 
-      {/* 📚 This library shows ALL created events, even when the search
+      {/* This library shows ALL created events, even when the search
           above shows only the events that fit the current time window. */}
       <section className="library" aria-labelledby="saved-heading">
         <div className="section-title"><h2 id="saved-heading">Your created events</h2><span className="counter">{events.length} total</span></div>

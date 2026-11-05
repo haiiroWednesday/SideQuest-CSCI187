@@ -4,7 +4,7 @@ import { expect, it } from 'vitest'
 import { readStoredEvents, saveStoredEvents, STORAGE_KEY, type CampusEvent } from '../src/model/events'
 
 it('keeps removed events removed after each save, down to an empty list', () => {
-  // 💾 This Map acts like a tiny fake localStorage. We can test saving
+  // This Map acts like a tiny fake localStorage. We can test saving
   // and reading without launching a browser or touching real user data.
   const memory = new Map<string, string>()
   const storage = {
