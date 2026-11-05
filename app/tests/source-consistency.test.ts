@@ -22,11 +22,14 @@ function staticModules(path: string, content: string): string[] {
 }
 
 describe('shared production conventions', () => {
+  it('discovers the live app and API sources', () => {
+    expect(Object.keys(productionSources).length).toBeGreaterThan(30)
+  })
   it('uses extensionless relative TypeScript imports consistently', () => {
     const violations: string[] = []
     for (const [path, source] of Object.entries(productionSources)) {
       for (const modulePath of staticModules(path, source)) {
-        if (modulePath.startsWith('.') && /\\.(ts|tsx)$/.test(modulePath)) {
+        if (modulePath.startsWith('.') && /\.(ts|tsx)$/.test(modulePath)) {
           violations.push(`${path}: ${modulePath}`)
         }
       }
@@ -38,9 +41,9 @@ describe('shared production conventions', () => {
     const violations: string[] = []
     for (const [path, source] of Object.entries(productionSources)) {
       source.split('\n').forEach((line, index) => {
-        if (!/^\\s*\\/\\//.test(line)) return
-        if (/\\b(?:professor|instructor|grader|owner:|Daven|Devonny|Sembiyan|Cynthia)\\b/i.test(line)
-          || /\\p{Extended_Pictographic}/u.test(line)) {
+        if (!/^\s*\/\//.test(line)) return
+        if (/\b(?:professor|instructor|grader|owner:|Daven|Devonny|Sembiyan|Cynthia)\b/i.test(line)
+          || /\p{Extended_Pictographic}/u.test(line)) {
           violations.push(`${path}:${index + 1}`)
         }
       })
