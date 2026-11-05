@@ -4,7 +4,7 @@
 import { expect, it } from 'vitest'
 import { createEvent } from '../src/controller/findEvents'
 
-// 🧩 Create one event, then use its returned list when creating another.
+// Create one event, then use its returned list when creating another.
 // This checks that a new event can be added without losing the first.
 it('preserves the first event when a second event is created', () => {
     // The last argument fixes today's date for the test. In JavaScript,

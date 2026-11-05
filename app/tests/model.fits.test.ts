@@ -17,7 +17,7 @@ describe('Model: time and calendar matching', () => {
   it('rejects an event on a different day even when its times fit', () => {
     expect(fitsFully(event, '2026-10-20', '14:00', '16:00')).toBe(false)
   })
-  // ✅ Starting exactly when free time begins and ending exactly when it
+  // Starting exactly when free time begins and ending exactly when it
   // ends is allowed; the interval boundaries are inclusive.
   it('accepts an event exactly matching the window', () => {
     expect(fitsFully(event, '2026-10-19', '14:30', '15:30')).toBe(true)

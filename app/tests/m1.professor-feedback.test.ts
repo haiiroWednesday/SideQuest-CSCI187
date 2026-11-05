@@ -11,7 +11,7 @@ const draft: EventDraft = {
   title: ' Campus Choir ', description: '  Learn new arrangements with friends.  ',
   location: ' Music Hall ', date: '2026-10-29', start: '14:30', end: '15:30',
 }
-// 🧪 A frozen test clock keeps past/future checks predictable even years
+// A frozen test clock keeps past/future checks predictable even years
 // later. The argument order is year, zero-based month, day, hour, minute.
 const localNow = new Date(2026, 9, 28, 20, 58) // Oct 28, 8:58 pm in the runner's local timezone
 
@@ -69,7 +69,7 @@ describe('M1 regressions: descriptive event records', () => {
     expect(removeEvent(loadEvents(storage), 'choir-1')).toEqual([])
   })
 
-  // 🧳 Older browser records won't have our new description field.
+  // Older browser records won't have our new description field.
   // This test makes sure upgrading SideQuest does not reject those events.
   it('supports older M1 events without descriptions', () => {
     const { description: _unused, ...olderDraft } = draft
@@ -113,7 +113,7 @@ describe('Default event form time window', () => {
 })
 
 describe('M1 persistence robustness and input limits', () => {
-  // 🛟 Reading broken saved data should report a problem, not erase the
+  // Reading broken saved data should report a problem, not erase the
   // original string. Only an explicit user recovery action may replace it.
   it('does not overwrite a corrupted stored value on read', () => {
     let raw = '{bad json'

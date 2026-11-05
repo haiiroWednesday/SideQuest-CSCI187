@@ -19,7 +19,7 @@ describe('Controller: event creation → search', () => {
     expect(findEvents(created.events, '2026-10-19', '14:00', '16:00').matches.map((event) => event.id))
       .toEqual(['art-1'])
   })
-  // ⛔ The end must be after the start. A rejected request must leave
+  // The end must be after the start. A rejected request must leave
   // the list unchanged instead of inserting a broken event.
   it('rejects an event with reversed times without adding it', () => {
     const created = createEvent([], { ...draft, start: '17:00', end: '16:00' }, 'broken', new Date(2026, 9, 1))
