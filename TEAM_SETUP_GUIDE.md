@@ -33,7 +33,7 @@ If cloning the private repository fails, confirm that your GitHub account has ac
 
 ## M2 shared Supabase setup in VS Code (server-only)
 
-After cloning or pulling, the checked-in template `app/.env.example` is visible in VS Code. Make **your own** ignored `app/.env.local` in a terminal opened at `app/` with `cp .env.example .env.local`, then fill it locally with approved team values named `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. **Do not use the older `VITE_SUPABASE_*` variables**, commit keys, or send screenshots of local configuration. Restart `npm run dev` after setting them. The full instructions, real two-browser test, and what the professor needs are in [M2 local Supabase setup](docs/SUPABASE_LOCAL_SETUP.md). The professor can inspect GitHub without configuring the team database; a working live demo needs a configured server.
+After cloning or pulling, the checked-in template `app/.env.example` is visible in VS Code. Make **your own** ignored `app/.env.local` in a terminal opened at `app/` with `cp .env.example .env.local`, then fill it locally with approved team values named `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. **Do not use the older `VITE_SUPABASE_*` variables**, commit keys, or send screenshots of local configuration. Restart `npm run dev` after setting them. See [M2 local Supabase setup](docs/SUPABASE_LOCAL_SETUP.md) for full instructions and the real two-browser acceptance test. Authorized collaborators can inspect GitHub without configuring the database; a live shared-data demonstration requires a configured server.
 
 ## Update an existing clone
 
@@ -76,6 +76,20 @@ npm run test:e2e
 ```
 
 Our [React GitHub Actions workflow](.github/workflows/react-ci.yml) runs equivalent checks online. Student test examples and CI experiments are documented in [test appendix in the MVP playbook](docs/MVP_TEAM_PLAYBOOK.md#appendix--detailed-unit-testing-examples).
+
+## Shared coding conventions
+
+Use the same conventions in every contribution, regardless of which teammate owns the feature:
+
+- **Structure:** Keep domain validation, event matching, time rules and storage adapters in `app/src/model/`. Controllers coordinate actions and convert failures into usable feedback; React Views render state and forward user actions.
+- **Contracts:** Use the M2 `CampusEvent` and `EventDraft` contract from `model/eventCatalog.ts` for public records. Use `LegacyCampusEvent` from `model/events.ts` only for historical M1 compatibility and `ScheduleEvent` for saved-plan resolution. Translate SQL snake_case columns at the storage boundary.
+- **Names and formatting:** Use descriptive camelCase variables, PascalCase components and types, two-space indentation, single-quoted imports and extensionless relative TypeScript paths. Prefer small, clearly named functions and option objects over several positional flags.
+- **Behavior:** Treat campus dates/times as `America/Los_Angeles` in the M2 catalog. Keep planned event IDs device-local. Never present browser-only catalog data as shared. Preserve the distinction between missing records and failed requests.
+- **Async work:** Prevent stale catalog and detail responses from replacing newer results, and clean up event listeners and timers when components unmount.
+- **Comments and credit:** Explain constraints, invariants and non-obvious decisions. Avoid tutorials about ordinary syntax, decorative emoji and comments addressed to an instructor. Keep individual contributions visible through commits, PR descriptions and genuine review records.
+- **Reviews:** Run `npm test`, `npm run build` and `npm run test:e2e` from `app/`. Verify every significant UI change on a narrow screen and with keyboard controls. Never claim that fixture-based tests prove live Supabase acceptance.
+
+Apply these standards to files you change. Historical fixtures and existing saved-event formats remain intact unless a migration is deliberately reviewed and tested.
 
 ## Troubleshooting
 

@@ -12,7 +12,7 @@
 - [Current editable P5 ER draw.io](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view): USER, EVENT, AVAILABILITY_WINDOW and PLANS TO ATTEND for **P5 coursework**. This is **not** the M2 implementation schema, even though it is the selected P5 drawing.
 - [README](README.md) and [TEAM_SETUP_GUIDE](TEAM_SETUP_GUIDE.md): how to run and test the actual app.
 - [Current M2 requirements](REQUIREMENTS.md) and [M2 specifications](SPECIFICATIONS.md) are authoritative for implemented features; archived M1 documents under `docs/M1_HISTORICAL_*.md` are assignment history.
-- [Lecture 01–16 compliance audit](docs/COURSE_LECTURES_01_TO_16_COMPLIANCE_AUDIT.md) maps the professor's slides to actual code, defects and remaining release checks.
+- [Lecture 01–16 compliance audit](docs/COURSE_LECTURES_01_TO_16_COMPLIANCE_AUDIT.md) maps course lectures to actual code, defects and remaining release checks.
 
 ## M1 feedback integration notice
 
@@ -47,6 +47,10 @@
 - The historical PR #13 was based on an M1-only app and is not safe to merge wholesale. Port remaining useful fixes onto current `master`, rerun CI, and prevent regression of #18–#20.
 - PR #16 (Claude team-access documentation) is merged; setting up workspace membership, API keys and actual spending controls is a separate account action, not an effect of Git commits.
 - M2 Part 1 requires current MVP README, requirements, specs, CRC/ER, code and tests. Do not submit obsolete M1 documents as if they describe the current MVP.
+
+## Consistent implementation across teammates
+
+Follow the [shared coding conventions](TEAM_SETUP_GUIDE.md#shared-coding-conventions). Preserve the Model–Controller–View separation and the M2 EventCatalogPort contract. Use explicit M2 versus legacy event types, named constants, extensionless imports, two-space indentation, and comments about decisions rather than authors. Protect asynchronous reads against stale responses. Keep contributor credit in Git and PR reviews. Do not introduce new domain rules or source formats without tests and team approval.
 
 ## Safe development protocol
 
