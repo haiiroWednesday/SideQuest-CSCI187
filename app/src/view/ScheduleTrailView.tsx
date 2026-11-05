@@ -64,9 +64,9 @@ export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes
             {next ? (
               <aside className="sq-sticker sq-sticker-static" aria-labelledby="sq-next-title">
                 <div className="sq-sticker-card">
+                  <span className={`sq-nx sq-nx-${next.kind}`}>NEXT UP <i>{next.when}</i></span>
                   <div className="sq-sticker-top">
                     <div className="sq-sticker-time">
-                      <span className={`sq-nx sq-nx-${next.kind}`}>NEXT UP <i>{next.when}</i></span>
                       <b>{next.stub.start.time}</b><i>{next.stub.start.ampm}</i>
                       <span>until {next.stub.endText} · {next.stub.durationText}</span>
                     </div>
