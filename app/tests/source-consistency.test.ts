@@ -9,6 +9,11 @@ const productionSources = import.meta.glob<string>(
   { query: '?raw', import: 'default', eager: true },
 )
 
+const testSources = import.meta.glob<string>(
+  ['../tests/**/*.{ts,tsx}', '../e2e/**/*.{ts,mjs}'],
+  { query: '?raw', import: 'default', eager: true },
+)
+
 function staticModules(path: string, content: string): string[] {
   const kind = path.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
   const source = ts.createSourceFile(path, content, ts.ScriptTarget.Latest, true, kind)
@@ -61,6 +66,19 @@ describe('shared production conventions', () => {
         if (!/^\s*\/\//.test(line)) return
         if (/\b(?:professor|instructor|grader)\b/i.test(line)
           || /[\u{1F300}-\u{1FAFF}]/u.test(line)) {
+          violations.push(`${path}:${index + 1}`)
+        }
+      })
+    }
+    expect(violations).toEqual([])
+  })
+
+  it('keeps test and fixture comments free of decorative emoji', () => {
+    const violations: string[] = []
+    for (const [path, source] of Object.entries(testSources)) {
+      source.split('\n').forEach((line, index) => {
+        if (!/^\s*(?:\/\/|\/\*|\{\/\*)/.test(line)) return
+        if (/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/u.test(line)) {
           violations.push(`${path}:${index + 1}`)
         }
       })
