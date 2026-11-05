@@ -4,7 +4,7 @@
  *
  * From app/: node scripts/review-scu-events.mjs
  * Publishing is an explicit owner-approved action:
- *   node scripts/review-scu-events.mjs --apply --confirm-public-posting
+ *   node scripts/review-scu-events.mjs --limit=5 --apply --confirm-public-posting
  *
  * Reads the same-origin catalog server, checks existing records for duplicates,
  * and POSTs only records with a real future start/end interval. Re-running will
@@ -86,8 +86,12 @@ async function api(target, route, options) {
 
 async function main() {
   const args = process.argv.slice(2)
-  if (args.some(arg => !['--apply', '--confirm-public-posting'].includes(arg)) || new Set(args).size !== args.length) {
-    throw Error('Usage: node scripts/review-scu-events.mjs [--apply --confirm-public-posting]')
+  const limitArgs = args.filter(arg => arg.startsWith('--limit='))
+  const flags = args.filter(arg => !arg.startsWith('--limit='))
+  const limited = limitArgs.length ? Number(limitArgs[0].slice('--limit='.length)) : null
+  if (limitArgs.length > 1 || (limited !== null && (!Number.isInteger(limited) || limited < 1 || limited > 20)) ||
+      flags.some(arg => !['--apply', '--confirm-public-posting'].includes(arg)) || new Set(flags).size !== flags.length) {
+    throw Error('Usage: node scripts/review-scu-events.mjs [--limit=1..20] [--apply --confirm-public-posting]')
   }
   const apply = args.includes('--apply')
   if (apply !== args.includes('--confirm-public-posting')) {
@@ -97,11 +101,12 @@ async function main() {
   const now = californiaNow()
   const future = events.filter(item => item.date > now.date || (item.date === now.date && item.start > now.time))
   const skippedPast = events.length - future.length
-  console.log(`Review batch: ${events.length} records; ${future.length} future; ${skippedPast} past or already started (California time).`)
-  for (const item of future) console.log(`  ${item.reviewId} | ${item.date} ${item.start}–${item.end} | ${item.title} | ${item.sourceUrl}`)
+  const chosen = limited === null ? future : future.slice(0, limited)
+  console.log(`Review batch: ${events.length} records; ${future.length} future; ${chosen.length} selected; ${skippedPast} past or already started (California time).`)
+  for (const item of chosen) console.log(`  ${item.reviewId} | ${item.date} ${item.start}–${item.end} | ${item.title} | ${item.sourceUrl}`)
   if (!apply) {
     console.log('\nDRY RUN: No API requests and no database writes. Check every source, venue and registration rule with the team before applying.')
-    console.log('After team approval, run: node scripts/review-scu-events.mjs --apply --confirm-public-posting')
+    console.log('After team approval, try a pilot: node scripts/review-scu-events.mjs --limit=5 --apply --confirm-public-posting')
     return
   }
   const target = new URL(process.env.SIDEQUEST_IMPORT_TARGET || 'http://127.0.0.1:5173')
@@ -114,7 +119,7 @@ async function main() {
   if (!Array.isArray(existing)) throw Error('Could not confirm existing server event list; no writes attempted.')
   const seen = new Set(existing.map(fingerprint))
   let created = 0, duplicates = 0
-  for (const item of future) {
+  for (const item of chosen) {
     const draft = draftOf(item)
     const key = fingerprint(draft)
     if (seen.has(key)) { duplicates++; console.log(`SKIP duplicate: ${item.reviewId} ${item.title}`); continue }
