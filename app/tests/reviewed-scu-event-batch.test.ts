@@ -40,6 +40,12 @@ describe('curated SCU source batch: no unverified publication', () => {
     expect(output).toContain('Review batch: 19 records')
   })
 
+  it('shows a smaller pilot batch without posting anything', () => {
+    const output = execFileSync(process.execPath, [program, '--limit=5'], { encoding: 'utf8', timeout: 10_000 })
+    expect(output).toContain('5 selected')
+    expect(output).toContain('DRY RUN: No API requests and no database writes')
+  })
+
   it('refuses accidental publication without two explicit arguments', () => {
     const result = spawnSync(process.execPath, [program, '--apply'], { encoding: 'utf8', timeout: 10_000 })
     expect(result.status).toBe(1)
