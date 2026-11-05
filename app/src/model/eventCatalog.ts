@@ -199,8 +199,7 @@ export interface EventTable {
   selectById(id: string): Promise<EventRow | null>
 }
 
-// All camelCase ↔ snake_case translation happens in these two functions
-// and nowhere else. See playbook "Connecting React to the catalog", step 3.
+// Translate between application fields and database columns at this boundary.
 export function toEventRow(draft: EventDraft): NewEventRow {
   return {
     title: draft.title,
