@@ -1,5 +1,6 @@
 // BROWSER-ONLY ADAPTER: persist a local catalog when shared storage is absent.
-// Other devices cannot see these records, so the UI must disclose this mode.
+// Local storage persists on this browser only; it does not sync between browser profiles or devices.
+// Demonstrate a shared catalog using the configured server, not this fallback.
 // This key is separate from the archived M1 event-storage key.
 import { toSqlTime, type EventRow, type EventTable, type NewEventRow } from './eventCatalog'
 
