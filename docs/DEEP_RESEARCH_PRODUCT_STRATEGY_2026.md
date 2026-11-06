@@ -6,7 +6,7 @@
 
 **P5 coursework context (28 October):** the [selected P5 ER drawing](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view) contains USER, EVENT and AVAILABILITY_WINDOW and is explained [directly in the MVP Playbook](MVP_TEAM_PLAYBOOK.md#p5-coursework-er-diagram--current-drawio-and-mermaid). That **coursework diagram is separate from the smaller M2 implementation**; user accounts, saved availability and cost fields are not shipped merely because they appear in P5.
 
-**Jump to:** [research atlas](#visual-research-atlas-and-full-design-implications) · [raw interviews](#original-interview-evidence-two-people-not-representative-statistics) · [competition](#a-more-honest-competitor-landscape) · [HCI findings](#the-outside-research-that-deepens-the-design) · [prototype](#a-product-design-worth-prototyping-hypotheses-not-shipped-features) · [future-proof architecture](#architecture-extensions-without-trashing-m2) · [extra credit](#extra-credit-evidence-based-plan-actual-rubric-maximum-5) · [usability studies](#concrete-validation-experiments) · [peer feedback, 4 Nov](#peer-feedback-after-the-live-catalog-test-4-november)
+**Jump to:** [research atlas](#visual-research-atlas-and-full-design-implications) · [raw interviews](#original-interview-evidence-two-people-not-representative-statistics) · [competition](#a-more-honest-competitor-landscape) · [HCI findings](#the-outside-research-that-deepens-the-design) · [prototype](#a-product-design-worth-prototyping-hypotheses-not-shipped-features) · [future-proof architecture](#architecture-extensions-without-trashing-m2) · [extra credit](#extra-credit-evidence-based-plan-actual-rubric-maximum-5) · [usability studies](#concrete-validation-experiments) · [peer feedback, 4 Nov](#peer-feedback-after-the-live-catalog-test-4-november) · [design exploration, 5 Nov](#design-exploration-since-the-extra-credit-plan-4-to-5-november)
 
 
 
@@ -330,6 +330,26 @@ The initial competitor set understated the market. Current self-descriptions sho
 
 
 
+### Where SideQuest wins (4 November)
+
+A second check covered the apps the interviewees named, plus SCU's own channels, Qlusion and Meetup. Each one answers a different question. None of them answers "what fits the time I actually have, with the people I want."
+
+| App | What it's for | What it leaves out |
+| --- | --- | --- |
+| [SCU calendar](https://events.scu.edu/campus-calendar/all) and the [SCU Events app](https://apps.apple.com/us/app/id6677027333) | Official events. The Events app is a guide to big weekends such as Welcome Weekend and Grand Reunion | Club and student events, your schedule, friends |
+| [Qlusion](https://scu.edu/cioccacenter/qlusion) | Campus calendar and ticketing for departments and clubs, from SCU's Ciocca Center | Little public detail. Nothing found about free time or friends |
+| [Meetup](https://www.engadget.com/mobile/meetups-new-mobile-app-is-designed-to-make-it-easier-to-meet-people-irl-150000920.html) | Interest groups of mostly strangers. RSVP lists show an age and gender breakdown | Existing friends, your schedule |
+| [Luma](https://help.luma.com/p/luma-ios-app) (Interview 2) | Hosting and RSVPs, following calendars, QR check-in, chatting with people you attended with | Whether an event fits your day |
+| Instagram, flyers, screenshots (Interview 2) | Where students hear about things | No time check, and ideas get lost in camera rolls |
+| Snapchat, Discord, texting (Interview 1) | Talking it over. [Snap Map](https://www.socialmediatoday.com/news/snap-adds-new-discovery-tools-to-snap-map-highlighting-happening-events/519792) shows where friends are | Deciding takes a long time, the complaint in Interview 1 |
+| Google Calendar (Interview 2) | Busy blocks | Informal plans, and anything about events |
+| Google, AI search, Maps, Yelp (Interviews 1 and 2) | Places, hours, reviews, travel | Campus events, friends, your free window |
+| Howbout, Partiful (above) | Picking a time for a plan already chosen | Picking events for a time you already have |
+
+**The advantage, in one line:** everyone else tells you what's happening, and SideQuest tells you what fits. The full-fit rule already shipped in M2 is the core of it. **Don't compete on** ticketing (Qlusion, Luma), meeting strangers (Meetup), chat (Discord, Snapchat) or maps (Google). Link out to them instead.
+
+**Caveat:** this compares what each product advertises, not hands-on tests, and Qlusion's public pages say very little.
+
 ## The outside research that deepens the design
 
 1. [Togedule (CSCW 2025)](https://research.ibm.com/publications/togedule-scheduling-meetings-with-large-language-models-and-adaptive-representations-of-group-availability): adaptive choice presentation + LLMs; controlled experiments with total **N=66** found reduced attendee cognitive load and improved organizer speed/decision quality. **Use dynamic prompts that ask only for the unresolved constraints**; don't force a full survey.
@@ -412,6 +432,104 @@ Apply **hard constraints first**; identify **unknowns second**; rank by preferen
 - **Future shared groups require real authorization** or carefully scoped invitation tokens. The current unverified `hostName` is never an account or access-control key.
 - **Expect one migration rather than zero changes:** later `EventOccurrence` with timezone/recurrence and plan status requires an explicit adapter/migration from same-day `date/start/end` and `Schedule` IDs. Avoid falsely promising “no rewrite whatsoever.”
 
+## Going for all nine extra credits (team decision, 4 November)
+
+The team wants every category in the [bonus rubric](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit?usp=sharing), which adds up to the 5-point cap. This section replaces the older order and the "Security: deferred" advice further down. The eligibility rules still apply: core work done first, a class grade of at least 76% at the start of Week 9, team agreement, points awarded per student, a presentation, and every key kept on the server.
+
+**One idea ties it together.** SideQuest's advantage is that it starts from your free time, not from the event list (see [the competitor check](#where-sidequest-wins-4-november)). Each credit below either feeds that "what fits" engine with better data or shares its answer with friends. That keeps the extras from becoming a trophy shelf.
+
+### The nine credits, with what we build and what proves it
+
+| # | Credit | Points | What we build | Evidence for the grader | Proposed owner | Needs first |
+| --- | --- | ---: | --- | --- | --- | --- |
+| 1 | Automated end-to-end testing | 0.50 | Keep the Playwright suite in CI (18 tests today). Add a two-browser test where A posts and B sees it with no reload, a sign-in test, and a load test on `/api/events` that records response times | Green CI runs with the Playwright report and a load-test summary attached | Cynthia, everyone adds specs | Nothing |
+| 2 | Accessibility | 0.25 | A written keyboard-only and screen-reader walkthrough of Discover, Post and My Schedule. Automated axe checks in Playwright. Contrast fixes | The audit in `docs/`, axe passing in CI, a short screen-reader clip | Devonny with Cynthia | Nothing |
+| 3 | Publishing | 0.25 | The Node server hosted on Render, with every key as a server environment variable and a rate limit on posting | A public URL in the README that works in a fresh browser | Daven | Supabase live check |
+| 4 | Advanced libraries | 0.25 | React 19 is already used throughout. Document where it matters: hooks, state, component structure | A section in the README and reflection | Cynthia | Nothing |
+| 5 | Real-time WebSocket | 1.00 | The server listens to Supabase changes and pushes them to browsers over a WebSocket, so no key reaches the browser. First feature: a "new events" pill on Discover. Later: friends' plans appear live | The two-browser Playwright test, plus reconnect and duplicate-message tests | Daven (server), Cynthia (UI) | Publishing |
+| 6 | Security | 0.50 | Sign in with Google through Supabase Auth, kept in a server session. Roles: an event's owner can edit and delete it, and a group's host can invite and remove members. Database row rules enforce both | A demo of a non-owner being refused, and tests for each role | Daven, Sembiyan reviews | Team agrees accounts are now in scope |
+| 7 | External systems | 0.75 | Google Calendar, using the same Google sign-in. Read busy times to fill your free windows automatically, and "Also add to Google Calendar" when planning | The free-time search filled from a real calendar, with a busy event correctly excluded | Sembiyan (availability), Daven (OAuth) | Security |
+| 8 | AI | 0.50 | Paste a flyer screenshot and get a filled Post form to confirm field by field. Plain-English search such as "something chill after 3 for two hours", turned into a normal search that the fit engine then checks | Side-by-side: the AI draft, the confirmed post, and the same validation rules applied | Devonny, Cynthia on the review screen | Publishing (server key) |
+| 9 | Advanced architecture | 1.00 | Ports and adapters (below), with the diagram and the justification in the M2 reflection | The diagram, the reflection paragraph, and two adapters swapped for the same port in tests | Whole team, Cynthia drafts the diagram | Grows with 5 to 8 |
+
+**Adding accounts changes the agreed M2 scope.** The M2 contract says no accounts, logins or user table. Going for Security means the team updates `REQUIREMENTS.md` and `SPECIFICATIONS.md` for the final project, and replaces the edit-code idea for "My posts" (#7 in the peer feedback table) with real ownership. Agree this in writing before anyone starts.
+
+### Order of work
+
+1. **Sure points first (1.25):** publishing, the libraries write-up, the accessibility audit with axe in CI, and the load test.
+2. **Real-time (1.00):** live new events, tested with two browsers.
+3. **Sign-in and roles (0.50), then Google Calendar (0.75):** one Google sign-in serves both.
+4. **AI (0.50):** the flyer reader first, then plain-English search.
+5. **Architecture (1.00):** formalize each port as its adapter lands, then write it up. By the end, the adapters are the proof.
+
+Each step should end with its evidence captured, not only working code.
+
+### Which product ideas each credit unlocks
+
+| Idea from the design boards | Uses |
+| --- | --- |
+| What fits in the gap, Almost fits | The core fit engine. Google Calendar fills the window, and travel times could follow |
+| Fog over Thursday | Real-time, Google Calendar |
+| Down, if… and I'll go if you go | Security, real-time |
+| Friends on the ticket, your circles, pop-up groups | Security (groups and visibility), real-time |
+| Ideas that ripen | AI (flyer to idea), external data |
+| Event photos as stamps | Security (ownership), storage |
+| Gold "events waiting" counts, one question, Sunday check-in | Google Calendar (fewer questions once classes are known) |
+| Pencil and pen, "Still on?", Also add to Google Calendar | External systems, real-time |
+| Friends answer by link, worst-off ranking, maybes with deadlines | Real-time (answers arrive live), Security once accounts exist |
+| Voice mode | AI (same draft endpoint as the flyer reader), Accessibility as an extra beyond WCAG |
+| Will it happen? odds, who you're waiting on | Real-time |
+| Fit lab, why it fits worked out | The core fit engine, no new data |
+
+### Advanced architecture: ports and adapters
+
+```mermaid
+flowchart LR
+  subgraph Adapters_in["Driving adapters"]
+    UI["React views"]
+    WS["WebSocket client"]
+  end
+  subgraph Core["SideQuest core: what fits your free time"]
+    D["Event · Plan · FitEvaluation · Intention"]
+    UC["Use cases: find events, plan, post, share"]
+  end
+  subgraph Ports["Ports"]
+    P1["CatalogPort"]
+    P2["SchedulePort"]
+    P3["AvailabilityPort"]
+    P4["LiveUpdatesPort"]
+    P5["AssistantPort"]
+    P6["IdentityPort"]
+  end
+  subgraph Adapters_out["Driven adapters"]
+    A1["Supabase table · in-memory · browser fallback"]
+    A2["Device storage · account storage"]
+    A3["Google Calendar · manual windows"]
+    A4["Supabase Realtime via server WebSocket"]
+    A5["AI model on the server"]
+    A6["Google sign-in via Supabase Auth"]
+  end
+  UI --> UC
+  WS --> UC
+  UC --> D
+  UC --> P1 & P2 & P3 & P4 & P5 & P6
+  P1 --- A1
+  P2 --- A2
+  P3 --- A3
+  P4 --- A4
+  P5 --- A5
+  P6 --- A6
+```
+
+**Draft justification for the M2 reflection.** MVC organizes an app around its screens. SideQuest's growth is not in screens. It is in sources: student posts, the SCU calendar, flyer screenshots, Google Calendar, live updates and accounts. Ports and adapters put the fit rules in a core that knows nothing about Supabase, Google or React, and plug each source in through a port. The M2 code already started this way: `EventCatalogPort` has a Supabase table, an in-memory table and a browser fallback behind it, and the same tests run against them. The final project extends that pattern instead of replacing it. In practice this means three things. Every new integration is one adapter plus its tests. The fit engine stays easy to test with fakes. And swapping a data source never touches the views. The core is also the product's advantage, so the architecture protects the part worth protecting.
+
+### Risks to watch
+
+- **Google sign-in in testing mode** only works for test users added in the Google Cloud console. Add every teammate and the grader before the demo.
+- **AI** must never post on its own. Every field is confirmed by the person, then checked by the same Model rules as a typed post. Keep the key on the server and cap usage.
+- **Publishing anonymous posting** invites spam. Rate limits come before the public URL, and sign-in for posting removes most of the risk.
+- **Points per student:** each teammate should own and present at least one credit.
+
 ## Extra credit: evidence-based plan, actual rubric maximum 5
 
 Original: [Final Project Extra Credit Opportunities](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit?usp=sharing). Core project first; class grade ≥76% beginning of Week 9; good standing; team agreement; individual awards; final presentation can extend up to 5 minutes; **keys kept server-side** per instructor.
@@ -423,7 +541,7 @@ Original: [Final Project Extra Credit Opportunities](https://docs.google.com/doc
 | External integration/device | **0.75** | Mode-aware real route/travel data, Mapbox or Google Routes, error/unknown handling; demonstrate personal constraint | **High user value**. [Google route matrix](https://developers.google.com/maps/documentation/routes/compute_route_matrix) supports transit; [Mapbox Directions](https://docs.mapbox.com/api/navigation/directions/) focuses on walking/cycling/driving, so provider choice affects interview 2's transit needs |
 | Automated browser E2E in CI | **0.50** | [Playwright separate browser contexts](https://playwright.dev/docs/browser-contexts): A posts, B sees, one device plans, other unchanged; [GitHub CI](https://playwright.dev/docs/ci), report attached | **High confidence / low architecture risk** |
 | AI API using app data | **0.50** | Ground explanations/conditional alternatives in actual catalog and confirmed constraints; compare result with deterministic baseline; server-only key | **High eventual fit**, but requires enough real data and clear checks |
-| Security | **0.50** | Modern auth/authorization/roles if needed for real shared plans or event ownership | **Deferred.** Login contradicts no-account M2 and is unsafe to rush solely for points |
+| Security | **0.50** | Modern auth/authorization/roles if needed for real shared plans or event ownership | **Now planned** with Google sign-in and roles. See [Going for all nine](#going-for-all-nine-extra-credits-team-decision-4-november) |
 | Accessibility | **0.25** | Manual keyboard + screen reader review, focus, contrast, labels, useful errors | Core-quality win; demonstrate |
 | Publishing | **0.25** | Stable public working deployment, no local-only backend; abuse protection for anonymous posts | Core-quality win; demonstrate |
 | Advanced external library | **0.25** | Substantial real React usage, not merely installed | Already likely relevant; instructor decides |
@@ -686,6 +804,128 @@ Most people never scroll sideways, so events past the right edge go unseen. Side
 
 ### "Bigger cards" (#10)
 This pulls against fitting more events on screen, so first ask what testers meant: bigger text, a bigger time, or a bigger click area. Since 4 November, tickets go one per row whenever the trail is narrower than 700px, which already made them wider on most laptops. Show testers the current version first.
+
+## Design exploration since the extra-credit plan (4 to 5 November)
+
+Everything below is design work, drawn as screens and not yet built. It answers the hardest question the interviews raised: **Google Calendar knows a student's classes but not the rest of their life, so how does SideQuest learn the rest without asking anyone to type their week in?** It also collects every UI idea drawn so far, so the team can pick from one place.
+
+All images are in [`docs/design/exploration-2026-11/`](design/exploration-2026-11/). Cynthia also keeps a review page (a Claude artifact) with all 136 screens, where each one is marked Keep, Maybe or Toss with a note. Ask her to share it.
+
+### The calendar gap: what we decided
+
+1. **Blank is "not sure yet," never "free."** Empty calendar time is drawn as fog. Discover still works on day one: an event in unknown time says **"Fits if you're free 4–5:30"** with the exact hours, so the list is useful before any setup. This builds on [Figure D's four states](#figure-d--four-availability-states-not-a-binary-calendar).
+2. **Read busy or free from Google, never titles.** The connect sheet says so right above the button. Each block shows where it came from: G for Google, a pencil mark for something the student said, a check for a confirmed free time.
+3. **Ask one question, only when it decides something.** Each foggy stretch carries a gold count of the events waiting on it ("4 events are waiting on Thursday 3–6"). Answering pays off immediately, and a second optional tap ("Every Thursday?") fills the slot for the semester.
+4. **Learn from taps students make anyway, and confirm before using them.** Hiding an event can carry one tap of "Bad time," which saves the time, not the event. Three passes on the same slot produce one suggestion with its evidence listed ("You passed on Pottery, Trivia and Study Jam here"). A friend's "If… I finish work" becomes their availability for the next poll. Nothing is blocked silently.
+5. **An optional ten-second Sunday check-in.** At most four cards, only for stretches where next week's events pile up, answered Free, Busy or Depends, or all at once with "Same as last week." Skipping it costs nothing.
+6. **Classes in one go, if wanted.** Google Calendar connect or a one-time class schedule import sits in Settings. Neither is required. (Whether SCU's student system exports a usable file is not checked yet.)
+7. **Pencil and pen.** Plans start in pencil (drawn as a sketch) and become pen (printed) after one "Still on?" two days before. Pen plans can also go to Google Calendar.
+8. **Friends answer without the app.** The planner sends 2 or 3 options by link. Friends answer Works, If… or Can't in a browser, and a "maybe" carries a deadline. Options are ranked by the **worst-off friend** (least misery), so the most-voted option can still lose if it strands someone.
+9. **Travel per person, with a private limit.** Each friend picks how they're getting there and the longest trip they'd make for this outing. The planner sees only "fits" or "too far," never the number. A "pick up Ari?" card goes into the friend's normal group chat.
+10. **Plan repair.** When a plan breaks, the group picks up to two things to protect (same people, same day, same plan, keep it easy), sees swaps that keep them, and the dropped idea waits in Someday.
+
+### Storyboard 1: a week with Maya (34 screens)
+
+One student's week, Sunday to the weekend after, told with real phone and laptop screens.
+
+| Act | What it shows | Image |
+| --- | --- | --- |
+| Sunday | Connect calendar with the promise, fog for blank time, drag to block club practice, type "I work Saturdays 9 to 1" for an AI draft to check | [week-1](design/exploration-2026-11/week-1-sunday-tell-it-your-week.jpg) |
+| Monday | Discover starts from today's free gap. Faded tickets explain why they don't fit, including "almost fits, leave at 6." One question clears Thursday | [week-2](design/exploration-2026-11/week-2-monday-discover-from-free-time.jpg) |
+| Tuesday | "Why it fits" with fresh facts, pencil vs pen in My Schedule, "Still on?" notification, laptop week with sources | [week-3](design/exploration-2026-11/week-3-tuesday-pencil-and-pen.jpg) |
+| Wednesday | Pick 2 or 3 options, Kai answers in his browser, answers ranked by worst-off, a maybe with a deadline | [week-4](design/exploration-2026-11/week-4-wednesday-ask-friends-no-app.jpg) |
+| Thursday | Travel mode and private limit, per-friend travel, ride ask in the group chat | [week-5](design/exploration-2026-11/week-5-thursday-getting-there.jpg) |
+| Friday | Priya can't come, pick what to protect, two swaps, friends see the change as before and after, Someday shows what each idea waits for | [week-6](design/exploration-2026-11/week-6-friday-when-the-plan-breaks.jpg) |
+| The night | "Leave by" nudge, running late in one tap, a "who's here" list with no map, the next-morning photo stamp | [week-7](design/exploration-2026-11/week-7-the-night-itself.jpg) |
+| After | Share a flyer from Photos, AI reads it and marks what it isn't sure of, the idea speaks up when it fits, plain-English search | [week-8](design/exploration-2026-11/week-8-ideas-that-wait.jpg) |
+
+### Storyboard 2: zero setup (12 screens)
+
+Jordan never types his week. Three acts: [useful before any setup](design/exploration-2026-11/zero-1-useful-before-setup.jpg), [it learns from taps he makes anyway](design/exploration-2026-11/zero-2-learns-from-taps.jpg), and [ten seconds on Sunday, if he feels like it](design/exploration-2026-11/zero-3-ten-second-sunday.jpg). The tally on the last screen is the point: typed 0, taps this month 23.
+
+### Voice mode and accessibility
+
+**Wispr Flow was considered and set aside as a dependency.** Its developer API is "only available by exclusive access" after the Flow team approves an organization (enterprise@wisprflow.ai), with usage-based billing and no public price. Too risky for a quarter deadline. Students who already use the Wispr app can dictate into any text box anyway.
+
+**Voice mode is an optional extra.** It asks the same questions as the gold count badges, out loud ([board](design/exploration-2026-11/style-2-voice-mode.jpg)):
+
+- Push to talk only, and audio is never saved. Only the cards the student says yes to are kept.
+- It keeps times, never reasons. "Busy, I see my therapist" is saved as busy, the reason is crossed out on screen, and the app says "Saved as busy. I don't keep why."
+- It goes past the calendar: someday ideas, a weeknight travel limit, low-energy days.
+- Every question can also be answered by tapping, and every spoken line also appears as text.
+- When VoiceOver is on, SideQuest stays quiet and VoiceOver reads the question, so two voices never collide.
+- Built on the browser's speech recognition and speech synthesis (Chrome and Safari, not Firefox) behind a **speech port**, with Wispr as a possible second adapter. The step that turns speech into a draft card reuses the flyer reader's server endpoint, so it adds to the AI credit with no new infrastructure.
+
+**The accessibility credit itself rests on WCAG basics:** real labels on every control, keyboard-only use, contrast, image descriptions, a sensible screen-reader order. Matching visible labels to accessible names (WCAG 2.5.3) also makes the whole app usable with the voice control built into phones and laptops ("tap Post"). Two checks before shipping the new visual direction: contrast in the gold and dark rooms, and switching off motion under `prefers-reduced-motion`.
+
+### Visual direction: each tab is a room
+
+Testers and Cynthia found every tab looked the same: one cream page, one list of stubs. The fix keeps the type, the red and the ticket shape everywhere, and gives each tab its own room ([board](design/exploration-2026-11/style-1-four-rooms.jpg)):
+
+| Tab | Room | Hero object | Signature motion |
+| --- | --- | --- | --- |
+| Discover | Paper | A huge date, today's free time as a gold ticket band, one featured event with a drawn picture | The featured ticket slides in like a ticket from a printer |
+| My Schedule | Night ink | A ticket book: pen plans bright and stamped IN PEN, pencil plans as outlines, past photo stamps in the corner | The stamp thunks down when a plan goes to pen |
+| Post | Print-shop gold | The event as a taped-up poster, posting is pressing a round stamp | The poster peels off and flies to the trail |
+| Someday | Sage | A jar of paper slips, the ready one pops out the top | Slips settle when added, the ready one wiggles once |
+
+Event pictures are original drawings (clay, games, sketch, improv, books, market) so the app never depends on clubs supplying photos. The tab bar floats, and the active tab is notched like a ticket stub.
+
+### Options to choose from (rounds 2 and 3)
+
+Every option has a phone and a laptop version. The team should pick one or two per tab.
+
+**Round 2** ([Discover](design/exploration-2026-11/round2-1-discover.jpg) · [My Schedule](design/exploration-2026-11/round2-2-my-schedule.jpg) · [Post](design/exploration-2026-11/round2-3-post.jpg) · [Someday](design/exploration-2026-11/round2-4-someday.jpg) · [Voice](design/exploration-2026-11/round2-5-voice.jpg) · [Tab bar](design/exploration-2026-11/round2-6-tab-bar.jpg))
+
+| Tab | Options |
+| --- | --- |
+| Discover | D1 ticket counter, D2 departures board (FITS, IF FREE, ENDS LATE), D3 today as a timeline, D4 one card at a time, D5 poster wall, D6 campus trail map, D7 the daily paper, D8 clock dial, D9 how much time do you have? |
+| My Schedule | S1 ticket book at night, S2 wallet passes, S3 week of dots, S4 fridge month with photo stamps, S5 planner page, S6 boarding pass with countdown, S7 scrapbook, S8 Pencil · Pen · Done columns, S9 countdown |
+| Post | P1 print shop, P2 snap or drop a flyer, P3 fill in the sentence, P4 pick a cover, P5 just say it, P6 run it again, P7 start from a kind of event, P8 poster builder |
+| Someday | J1 jar, J2 corkboard, J3 night sky, J4 garden, J5 semester list, J6 shelf of jars per crew, J7 wish map, J8 draw a card, J9 almost ripe (time, people, open) |
+| Voice | V1 plum and calm, V2 on air, V3 chat transcript, V4 lock screen, V5 small bar over Discover, V6 big captions, V7 index cards, V8 breathing orb |
+| Tab bar | T1 ticket stub, T2 big Post stamp, T3 pen underline, T4 room swatches, T5 top switch, T6 stamps, T7 icons only, T8 floating Post |
+
+**Round 3: lessons from Fanout** ([Discover](design/exploration-2026-11/round3-1-discover.jpg) · [My Schedule](design/exploration-2026-11/round3-2-my-schedule.jpg) · [Post](design/exploration-2026-11/round3-3-post.jpg) · [Someday](design/exploration-2026-11/round3-4-someday.jpg))
+
+[Fanout](https://fanout.sh/) is a learning site for engineers whose launch was praised mostly for its interface. What transfers to SideQuest: explain with one small worked example and real numbers, labs where you move one control and watch the result, dense indexes with counts, maps of how things connect, roadmaps with progress, one pick a day, and privacy you can see (tools that run on the device and export an image).
+
+| Tab | Options |
+| --- | --- |
+| Discover | F1 why it fits, worked out (150 free − 60 event − 12 walking = 78 spare), F2 fit lab (drag your free window), F3 tonight's index with counted filters, F4 one pick a day, F5 interest map, F6 worth the trip? (distance vs liking, best-option line), F7 compare two, F8 flyer jargon decoder ("GBM"), F9 next on the trail |
+| My Schedule | M1 day dial with overlaps flagged, M2 will it happen? (each friend's answer as a chance: 40% all four, 87% at least three), M3 quarter plan in chapters, M4 what plans really cost (travel and buffer included), M5 share your week as an image, M6 log with heatmap, M7 who you're waiting on, M8 a battery per day, M9 before-you-go checklist |
+| Post | K1 when should it be? (students free at each start time, counts only), K2 three questions (first 10 minutes, who it's for, what to bring), K3 readiness scan, K4 multi-week series, K5 three previews (Discover, lock screen, link), K6 paste anything, K7 what worked (turnout, counts only), K8 spots and waitlist, K9 co-host with overlapping clubs |
+| Someday | Y1 what if… (tap "Ari is free Saturday," see what becomes ready), Y2 index with time, people, open dots, Y3 one idea a day, Y4 ideas linked by shared needs, Y5 big goal split into side quests, Y6 saved from anywhere, Y7 by season, Y8 a crew's shared list, Y9 ideas fade instead of piling up |
+
+### Older boards, kept for reference
+
+These came before the storyboards and several are already linked from the [extra-credit table](#which-product-ideas-each-credit-unlocks).
+
+| Board | Idea | Image |
+| --- | --- | --- |
+| Ideas | The hour that shrank: time-use data on how little time students spend hanging out | [older-ideas-0](design/exploration-2026-11/older-ideas-0-the-hour-that-shrank.jpg) |
+| Ideas | What fits in the gap: free time as a pocket that events, travel included, must slip into | [older-ideas-1](design/exploration-2026-11/older-ideas-1-what-fits-in-the-gap.jpg) |
+| Ideas | Fog over Thursday: four friends' week, ask the one question that clears the most fog | [older-ideas-2](design/exploration-2026-11/older-ideas-2-fog-over-thursday.jpg) |
+| Ideas | Down, if…: a maybe carries what would make it a yes, and only that person hears again | [older-ideas-3](design/exploration-2026-11/older-ideas-3-down-if.jpg) |
+| Ideas | Save the part that mattered: plan repair by protecting up to two things | [older-ideas-4](design/exploration-2026-11/older-ideas-4-save-the-part.jpg) |
+| Ideas | Ideas that ripen: a jar fills as its conditions come true, a ? never counts as yes | [older-ideas-5](design/exploration-2026-11/older-ideas-5-ideas-that-ripen.jpg) |
+| Ideas | Nobody left on the curb: rank options by the worst-off friend | [older-ideas-6](design/exploration-2026-11/older-ideas-6-nobody-left-out.jpg) |
+| Ideas | A passport for ordinary Tuesdays: a stamp journal, and who you made time for | [older-ideas-7](design/exploration-2026-11/older-ideas-7-passport.jpg) |
+| Ideas | Which to build first: distance from competitors vs effort | [older-ideas-8](design/exploration-2026-11/older-ideas-8-which-to-build-first.jpg) |
+| Friends | What survives from the September mockups, with verdicts | [older-friends-0](design/exploration-2026-11/older-friends-0-what-survives.jpg) |
+| Friends | Friends on the ticket: your people as stickers, everyone else as a tally | [older-friends-1](design/exploration-2026-11/older-friends-1-friends-on-the-ticket.jpg) |
+| Friends | Your circles decide who sees a plan | [older-friends-2](design/exploration-2026-11/older-friends-2-circles.jpg) |
+| Friends | Pop-up groups that close after the plan | [older-friends-3](design/exploration-2026-11/older-friends-3-pop-up-groups.jpg) |
+| Friends | I'll go if you go: a sealed match, nobody knows unless both tap | [older-friends-4](design/exploration-2026-11/older-friends-4-ill-go-if-you-go.jpg) |
+| Friends | Almost fits: let the seam out and watch events drop in | [older-friends-5](design/exploration-2026-11/older-friends-5-almost-fits.jpg) |
+| Friends | A fork in the road: which ideas need accounts and which don't | [older-friends-6](design/exploration-2026-11/older-friends-6-fork-in-the-road.jpg) |
+
+### What this asks of the team
+
+- **Pick per tab** from rounds 2 and 3 (Cynthia's review page records Keep, Maybe and Toss per screen).
+- **Decide whether "not sure yet" replaces "free"** as the default for blank time. It changes Discover's copy and the fit engine's output from two states to three.
+- **Confirm voice mode stays optional** and that the accessibility audit (WCAG basics, axe in CI) is the evidence for that credit.
+- Nothing here changes the M2 contract until the team agrees to it in `REQUIREMENTS.md` and `SPECIFICATIONS.md`.
 
 ## Final-project demonstration ladder
 
