@@ -24,3 +24,11 @@ Ink only, no colour. `flowers.py` draws the flowers from real petal shapes: rose
 python3 docs/design/hero-drawing/garden.py garden.svg
 python3 docs/design/hero-drawing/church.py church.svg
 ```
+
+## Flat outlined object scenes
+
+The style from Cynthia's reference (one even outline, flat fills, a soft circle behind, bursts, dots, a looping line), with objects only. `flat4.py` draws seven: free time in a jar, Saturday opening like a door, the hourglass garden, a paper boat on the week, the clock snail, an island in a teacup, and the invite. Output is in `flat/`.
+
+```
+python3 docs/design/hero-drawing/flat4.py docs/design/hero-drawing/flat
+```
