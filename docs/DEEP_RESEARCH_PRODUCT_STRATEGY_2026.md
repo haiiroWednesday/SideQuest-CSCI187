@@ -809,7 +809,7 @@ This pulls against fitting more events on screen, so first ask what testers mean
 
 Everything below is design work, drawn as screens and not yet built. It answers the hardest question the interviews raised: **Google Calendar knows a student's classes but not the rest of their life, so how does SideQuest learn the rest without asking anyone to type their week in?** It also collects every UI idea drawn so far, so the team can pick from one place.
 
-All images are in [`docs/design/exploration-2026-11/`](design/exploration-2026-11/). Cynthia also keeps a review page (a Claude artifact) with all 136 screens, where each one is marked Keep, Maybe or Toss with a note. Ask her to share it.
+All images are in [`docs/design/exploration-2026-11/`](design/exploration-2026-11/). Cynthia also keeps a review page (a Claude artifact) with all 173 screens, where each one is marked Keep, Maybe or Toss with a note. Ask her to share it.
 
 ### The calendar gap: what we decided
 
@@ -896,6 +896,17 @@ Every option has a phone and a laptop version. The team should pick one or two p
 | My Schedule | M1 day dial with overlaps flagged, M2 will it happen? (each friend's answer as a chance: 40% all four, 87% at least three), M3 quarter plan in chapters, M4 what plans really cost (travel and buffer included), M5 share your week as an image, M6 log with heatmap, M7 who you're waiting on, M8 a battery per day, M9 before-you-go checklist |
 | Post | K1 when should it be? (students free at each start time, counts only), K2 three questions (first 10 minutes, who it's for, what to bring), K3 readiness scan, K4 multi-week series, K5 three previews (Discover, lock screen, link), K6 paste anything, K7 what worked (turnout, counts only), K8 spots and waitlist, K9 co-host with overlapping clubs |
 | Someday | Y1 what if… (tap "Ari is free Saturday," see what becomes ready), Y2 index with time, people, open dots, Y3 one idea a day, Y4 ideas linked by shared needs, Y5 big goal split into side quests, Y6 saved from anywhere, Y7 by season, Y8 a crew's shared list, Y9 ideas fade instead of piling up |
+
+**Round 4: from Cynthia's reference boards** ([Discover](design/exploration-2026-11/round4-1-discover.jpg) · [My Schedule](design/exploration-2026-11/round4-2-my-schedule.jpg) · [Post](design/exploration-2026-11/round4-3-post.jpg) · [Someday, onboarding, widgets](design/exploration-2026-11/round4-4-someday-onboarding-widgets.jpg))
+
+Drawn from MoodGallery (emotion blobs, "every emotion becomes art"), Figma Make's liquid glass editor, Laws of UX cards, Pinterest retro-window and sticker pins, Godly's layered cards, Dribbble's tilted book covers, Refero's blue-pen and Comet onboarding, Mozi's "see where you overlap," and Headspace on Mobbin. A new element runs through it: small geometric characters (round, star, triangle, cloud) that stand for kinds of events and for feelings.
+
+| Tab | Options |
+| --- | --- |
+| Discover | A1 event globe (shake for one), A2 shapes, not photos, A3 retro desktop (tonight.exe), A4 scroll into tonight (3D layers), A5 poster shelf, A6 blue pen notebook, A7 free-time lens (liquid glass + sliders + Random), A8 see where you overlap, A9 sunny guide, A10 feeling first |
+| My Schedule | B1 your week, painted, B2 streak, B3 The Jordan Weekly, B4 leave-by card, B5 your shelf of book spines, B6 calendar.exe, B7 how it felt, B8 sticker diary, B9 ambient clock |
+| Post | C1 poster editor with control panel, C2 sticker pack, C3 new_event.exe wizard, C4 blocks like a design system, C5 what are you hosting?, C6 doodle a flyer, C7 poster in layers, C8 what's the vibe?, C9 countdown story |
+| Someday, onboarding, widgets | E1 hey friend, E2 the hour that's yours, E3 a place for your free time, E4 widgets, E5 someday machine, E6 a quarter of doodles, E7 someday.zip, E8 every plan becomes art, E9 empty states |
 
 ### Older boards, kept for reference
 
