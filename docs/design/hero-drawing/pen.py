@@ -6,7 +6,8 @@ class Pen:
         self.r = random.Random(seed)
         self.ink = ink
         self.out = []          # list of (path_d, fill, opacity)
-        self.under = []        # flat colour shapes printed under the ink
+        self.under = []
+        self.minpts = 0        # set higher for drawings full of tiny curves (flowers)
 
     # smooth 1D noise from a few random sines
     def noise(self):
@@ -25,7 +26,8 @@ class Pen:
         tot = L[-1]
         if tot < 0.3:
             return
-        n = max(3, int(tot / 2.8))
+        n = max(3, int(tot / 3.2)) if tot > 12 else max(2, int(tot / 2.2))
+        if self.minpts: n = max(n, min(len(pts) - 1, self.minpts))
         res, j = [], 0
         for i in range(n + 1):
             s = tot * i / n
@@ -94,21 +96,32 @@ class Pen:
         self.curve(f, n=n, w=w, **k)
 
     def fill(self, pts, col, off=(1.6, 1.4), op=1):
+        import math
         """flat colour under the ink, nudged off-register like a two-colour print"""
         r = self.r
-        q = [(x + off[0] + r.uniform(-.4, .4), y + off[1] + r.uniform(-.4, .4)) for x, y in pts]
-        self.under.append(('M' + ' '.join(f'{x:.1f} {y:.1f}' for x, y in q) + 'Z', col, op))
+        if len(pts) > 16:
+            k = math.ceil(len(pts) / 16); pts = pts[::k]
+        jit = .4 if off != (0, 0) else 0
+        q = [(x + off[0] + r.uniform(-jit, jit), y + off[1] + r.uniform(-jit, jit)) for x, y in pts]
+        if sum(q[i][0] * q[i - 1][1] - q[i - 1][0] * q[i][1] for i in range(len(q))) < 0:
+            q = q[::-1]
+        self.out.append(('M' + ' '.join(f'{x:.1f} {y:.1f}'.replace('.0 ', ' ') for x, y in q) + 'Z', col, op))
 
     def ellipse_pts(self, cx, cy, rx, ry, n=48, a0=0, a1=6.2832):
         import math
         return [(cx + rx * math.cos(a0 + (a1 - a0) * i / n), cy + ry * math.sin(a0 + (a1 - a0) * i / n)) for i in range(n + 1)]
 
     def body(self):
-        groups = {}
-        for d, c, o in self.out:
-            groups.setdefault((c, round(o, 2)), []).append(d)
-        under = ''.join(f'<path fill="{c}"{"" if o == 1 else f" opacity={chr(34)}{o}{chr(34)}"} d="{d}"/>' for d, c, o in self.under)
-        return under + ''.join(f'<path fill="{c}"{"" if o == 1 else f" opacity={chr(34)}{o}{chr(34)}"} d="{"".join(ds)}"/>' for (c, o), ds in groups.items())
+        """merge consecutive paths that share colour and opacity, keeping draw order"""
+        outp, last, buf = [], None, []
+        for d, c, o in self.out + [(None, None, None)]:
+            key = (c, round(o, 2) if o is not None else None)
+            if key != last and buf:
+                op = last[1]
+                outp.append(f'<path fill="{last[0]}"{"" if op == 1 else f" opacity={chr(34)}{op}{chr(34)}"} d="{"".join(buf)}"/>'); buf = []
+            last = key
+            if d: buf.append(d)
+        return ''.join(outp)
 
     def svg(self, w, h, extra=''):
         return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" width="{w}" height="{h}">{self.body()}{extra}</svg>'

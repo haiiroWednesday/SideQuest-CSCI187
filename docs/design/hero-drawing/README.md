@@ -15,3 +15,12 @@ python3 docs/design/hero-drawing/scene.py app/src/view/assets/mission-arcade-tra
 ```
 python3 docs/design/hero-drawing/graphics.py docs/design/hero-drawing/graphics
 ```
+
+## Mission Gardens, the church, and flower studies
+
+Ink only, no colour. `flowers.py` draws the flowers from real petal shapes: roses with a spiral heart and petals that roll back at the rim, wax begonias with two round and two narrow tepals, and wisteria clusters of pea-shaped florets. `garden.py` is the rose walk under the wisteria pergola, `church.py` is the Mission church seen from the fountain, and `study.py` shows the flowers large. The SVGs are heavy (5 to 10 MB), so `garden/` keeps 3x WebP renders.
+
+```
+python3 docs/design/hero-drawing/garden.py garden.svg
+python3 docs/design/hero-drawing/church.py church.svg
+```
