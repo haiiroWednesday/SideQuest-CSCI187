@@ -809,7 +809,7 @@ This pulls against fitting more events on screen, so first ask what testers mean
 
 Everything below is design work, drawn as screens and not yet built. It answers the hardest question the interviews raised: **Google Calendar knows a student's classes but not the rest of their life, so how does SideQuest learn the rest without asking anyone to type their week in?** It also collects every UI idea drawn so far, so the team can pick from one place.
 
-All images are in [`docs/design/exploration-2026-11/`](design/exploration-2026-11/). Cynthia also keeps a review page (a Claude artifact) with all 200 screens, where each one is marked Keep, Maybe or Toss with a note. Ask her to share it.
+All images are in [`docs/design/exploration-2026-11/`](design/exploration-2026-11/). Cynthia also keeps a review page (a Claude artifact) with all 227 screens, where each one is marked Keep, Maybe or Toss with a note. Ask her to share it.
 
 ### The calendar gap: what we decided
 
@@ -917,6 +917,16 @@ The layouts come from a pastel event app and a health dashboard Cynthia shared: 
 | Discover | G1 things to do in the time you have, G2 plans with friends folder, G3 how busy it gets, G4 today in tiles, G5 free time used, G6 shape filters, G7 free time chart, G8 swipe a shape, G9 today's picks |
 | My Schedule | H1 this week as pills, H2 plan details, H3 week in numbers, H4 days as folder tabs, H5 your Saturday, H6 weekly ring, H7 plans as shapes, H8 November with blobs, H9 the ＋ menu |
 | Post, Someday and the rest | I1 post in four steps, I2 pick a shape, I3 when are students free?, I4 club dashboard, I5 someday just for you, I6 the crew's someday, I7 widgets, I8 first screen, I9 the link friends open |
+
+**Round 6: claws, dials and big numbers** ([Discover](design/exploration-2026-11/round6-1-discover.jpg) · [more](design/exploration-2026-11/round6-1b-discover.jpg) · [My Schedule](design/exploration-2026-11/round6-2-my-schedule.jpg) · [more](design/exploration-2026-11/round6-2b-my-schedule.jpg) · [Post and Someday](design/exploration-2026-11/round6-3-post-someday.jpg) · [more](design/exploration-2026-11/round6-3b-post-someday.jpg))
+
+From Cynthia's second reference set: a CRM field-mapping board, the Lemonday drink-shop app (claw machine, category rail, option sheet), the VanMoof bike app, sports stat screens with huge numbers, a countdown-led NFT page, a sticker rewards screen and a flat habit tracker. Every screen stays in paper, ink, red, gold and sage with serif titles.
+
+| Tab | Options |
+| --- | --- |
+| Discover | L1 your free hours matched (lines from free blocks to events), L2 grab a plan (claw machine), L3 tonight as a menu, L4 plan sheet (time, who, reminder, spots), L5 the event as the hero, L6 how social tonight? (level slider), L7 starts soonest (countdown), L8 tonight by the numbers, L9 turn the dial |
+| My Schedule | N1 week checks and streak, N2 your week in bars, N3 Thursday on one line, N4 this quarter counted with badges, N5 collect stamps from clubs, N6 level up (Newcomer, Regular, Local), N7 week 9 as a product shot, N8 the quarter in numbers, N9 your quarter pass |
+| Post, Someday and the rest | R1 splash with the claw, R2 first screen in flat shapes, R3 we read your flyer and you check it, R4 post options sheet, R5 a club event in numbers, R6 Someday as a menu, R7 Someday is getting closer, R8 home screen widgets, R9 the link friends open |
 
 ### Older boards, kept for reference
 
