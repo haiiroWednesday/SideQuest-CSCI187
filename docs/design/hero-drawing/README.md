@@ -7,3 +7,11 @@ python3 docs/design/hero-drawing/scene.py app/src/view/assets/mission-arcade-tra
 ```
 
 `pen.py` draws every line as a tapered, slightly wobbly ink stroke. `scene.py` lays out the mission arcade, the bell tower and three Mexican fan palms (Washingtonia robusta) like the ones on campus: ringed trunks that flare at the base, a short skirt of dry leaves, and fan leaves whose segments split and hang at the tips. The red dashed trail and the X are kept from the first version. The random seed is fixed, so the output is the same every run.
+
+## Spot drawings
+
+`graphics.py` uses the same pen for twelve spot drawings (empty state, claw machine, bike, categories, market, bell, club stamps). They sit in `graphics/` and are not wired into the app yet.
+
+```
+python3 docs/design/hero-drawing/graphics.py docs/design/hero-drawing/graphics
+```

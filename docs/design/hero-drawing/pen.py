@@ -6,6 +6,7 @@ class Pen:
         self.r = random.Random(seed)
         self.ink = ink
         self.out = []          # list of (path_d, fill, opacity)
+        self.under = []        # flat colour shapes printed under the ink
 
     # smooth 1D noise from a few random sines
     def noise(self):
@@ -92,9 +93,22 @@ class Pen:
                     u ** 3 * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t ** 3 * p3[1])
         self.curve(f, n=n, w=w, **k)
 
-    def svg(self, w, h, extra=''):
+    def fill(self, pts, col, off=(1.6, 1.4), op=1):
+        """flat colour under the ink, nudged off-register like a two-colour print"""
+        r = self.r
+        q = [(x + off[0] + r.uniform(-.4, .4), y + off[1] + r.uniform(-.4, .4)) for x, y in pts]
+        self.under.append(('M' + ' '.join(f'{x:.1f} {y:.1f}' for x, y in q) + 'Z', col, op))
+
+    def ellipse_pts(self, cx, cy, rx, ry, n=48, a0=0, a1=6.2832):
+        import math
+        return [(cx + rx * math.cos(a0 + (a1 - a0) * i / n), cy + ry * math.sin(a0 + (a1 - a0) * i / n)) for i in range(n + 1)]
+
+    def body(self):
         groups = {}
         for d, c, o in self.out:
             groups.setdefault((c, round(o, 2)), []).append(d)
-        body = ''.join(f'<path fill="{c}"{"" if o == 1 else f" opacity={chr(34)}{o}{chr(34)}"} d="{"".join(ds)}"/>' for (c, o), ds in groups.items())
-        return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" width="{w}" height="{h}">{extra}{body}</svg>'
+        under = ''.join(f'<path fill="{c}"{"" if o == 1 else f" opacity={chr(34)}{o}{chr(34)}"} d="{d}"/>' for d, c, o in self.under)
+        return under + ''.join(f'<path fill="{c}"{"" if o == 1 else f" opacity={chr(34)}{o}{chr(34)}"} d="{"".join(ds)}"/>' for (c, o), ds in groups.items())
+
+    def svg(self, w, h, extra=''):
+        return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" width="{w}" height="{h}">{self.body()}{extra}</svg>'
