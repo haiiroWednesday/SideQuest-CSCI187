@@ -809,7 +809,7 @@ This pulls against fitting more events on screen, so first ask what testers mean
 
 Everything below is design work, drawn as screens and not yet built. It answers the hardest question the interviews raised: **Google Calendar knows a student's classes but not the rest of their life, so how does SideQuest learn the rest without asking anyone to type their week in?** It also collects every UI idea drawn so far, so the team can pick from one place.
 
-All images are in [`docs/design/exploration-2026-11/`](design/exploration-2026-11/). Cynthia also keeps a review page (a Claude artifact) with all 173 screens, where each one is marked Keep, Maybe or Toss with a note. Ask her to share it.
+All images are in [`docs/design/exploration-2026-11/`](design/exploration-2026-11/). Cynthia also keeps a review page (a Claude artifact) with all 200 screens, where each one is marked Keep, Maybe or Toss with a note. Ask her to share it.
 
 ### The calendar gap: what we decided
 
@@ -907,6 +907,16 @@ Drawn from MoodGallery (emotion blobs, "every emotion becomes art"), Figma Make'
 | My Schedule | B1 your week, painted, B2 streak, B3 The Jordan Weekly, B4 leave-by card, B5 your shelf of book spines, B6 calendar.exe, B7 how it felt, B8 sticker diary, B9 ambient clock |
 | Post | C1 poster editor with control panel, C2 sticker pack, C3 new_event.exe wizard, C4 blocks like a design system, C5 what are you hosting?, C6 doodle a flyer, C7 poster in layers, C8 what's the vibe?, C9 countdown story |
 | Someday, onboarding, widgets | E1 hey friend, E2 the hour that's yours, E3 a place for your free time, E4 widgets, E5 someday machine, E6 a quarter of doodles, E7 someday.zip, E8 every plan becomes art, E9 empty states |
+
+**Round 5: tiles and shapes, in our colors** ([Discover](design/exploration-2026-11/round5-1-discover.jpg) · [Discover, continued](design/exploration-2026-11/round5-1b-discover.jpg) · [My Schedule](design/exploration-2026-11/round5-2-my-schedule.jpg) · [Post, Someday and the rest](design/exploration-2026-11/round5-3-post-someday.jpg))
+
+The layouts come from a pastel event app and a health dashboard Cynthia shared: big tiles, tilted shape cards, folder tabs, a floating pill tab bar and a red ＋ button. The colors stay ours. Tiles use paper, sticky gold, stub pink, sage tint and pale blue, titles stay in Instrument Serif with a red italic second line, and the only strong color is SideQuest red.
+
+| Tab | Options |
+| --- | --- |
+| Discover | G1 things to do in the time you have, G2 plans with friends folder, G3 how busy it gets, G4 today in tiles, G5 free time used, G6 shape filters, G7 free time chart, G8 swipe a shape, G9 today's picks |
+| My Schedule | H1 this week as pills, H2 plan details, H3 week in numbers, H4 days as folder tabs, H5 your Saturday, H6 weekly ring, H7 plans as shapes, H8 November with blobs, H9 the ＋ menu |
+| Post, Someday and the rest | I1 post in four steps, I2 pick a shape, I3 when are students free?, I4 club dashboard, I5 someday just for you, I6 the crew's someday, I7 widgets, I8 first screen, I9 the link friends open |
 
 ### Older boards, kept for reference
 
