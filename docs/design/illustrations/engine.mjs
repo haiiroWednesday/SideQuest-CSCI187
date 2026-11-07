@@ -78,7 +78,7 @@ export class Art {
   grain(L, amt) { const x = L.x; x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'destination-out'; x.globalAlpha = amt; x.fillStyle = x.createPattern(this.tooth(), 'repeat'); x.fillRect(0, 0, this.W * this.S, this.H * this.S); x.restore(); }
 
   // ---- colour: a watercolour wash, or a flat fill in the flat style
-  wash(poly, color, o = {}) {
+  wash(poly, color, o = {}) { if (this.plate) return;
     const { alpha = .5, seed = 1, pool = .6, layers = 22, spread = 1, lift = null, edge = .5, gran = .18, clip = null, hues = null } = o;
     const r = rng(this.seed * 1000 + seed), b = bounds(poly), L = this.layer(), x = L.x;
     if (clip) { x.save(); path(x, clip); x.clip(); }
@@ -103,7 +103,7 @@ export class Art {
     this.composite(L, 'multiply', 1);
   }
   // opaque paint (for things that must cover what is behind: paper, sail, foam)
-  cover(poly, color, alpha = 1) { const c = this._B ? this._B.x : this.ctx; c.save(); c.globalAlpha = alpha; c.fillStyle = color; path(c, poly); c.fill(); c.restore(); }
+  cover(poly, color, alpha = 1, tag = null) { if (this.plate) { if (color !== PAL.paper) return; color = tag === this.plate ? '#000' : '#fff'; alpha = 1; } const c = this._B ? this._B.x : this.ctx; c.save(); c.globalAlpha = alpha; c.fillStyle = color; path(c, poly); c.fill(); c.restore(); }
 
   // ---- line: a pressure ribbon from perfect-freehand
   ribbon(x, pts, o) {
@@ -115,7 +115,7 @@ export class Art {
   }
   // a mark in the current medium. ink: one confident flexible-nib stroke. pencil: two light passes
   // with tooth. flat: an even, rounded line.
-  pen(pts, o = {}) {
+  pen(pts, o = {}) { if (this.plate) return;
     const { w = 2, seed = 1, wob = .6, alpha = 1, color } = o, s = this.style;
     const dense = pts.length > 40 ? pts : smooth(pts, false, 10), L = this.layer();
     if (s === 'flat') { this.ribbon(L.x, dense, { ...o, w: w * 1.15, thin: .12, press: () => 1, color: color || this.inkC, alpha }); if (o.fade) this.fadeTo(L); this.composite(L, 'source-over'); return; }
@@ -135,7 +135,7 @@ export class Art {
   _flush() { if (!this._B) return false; this.end(); return true; }
   end() { const L = this._B, fade = this._Bf; this._B = null; if (!L) return; if (fade) this.fadeTo(L); this.grain(L, .12); this.composite(L, 'source-over'); }
   // ruled tone: long hand-drawn parallel lines across a region, broken here and there, clipped to it
-  rule(region, o = {}) { const reb = this._flush(); const { angle = .8, gap = 4, w = .6, seed = 5, alpha = .8, wob = .5, breaks = .15, dens = null, color, fade = false } = o, r = rng(this.seed * 91 + seed), b = bounds(region);
+  rule(region, o = {}) { if (this.plate) return; const reb = this._flush(); const { angle = .8, gap = 4, w = .6, seed = 5, alpha = .8, wob = .5, breaks = .15, dens = null, color, fade = false } = o, r = rng(this.seed * 91 + seed), b = bounds(region);
     const L = this.layer(), x = L.x, ca = Math.cos(angle), sa = Math.sin(angle), cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2, R = Math.hypot(b.x1 - b.x0, b.y1 - b.y0) / 2 + 4;
     for (let d = -R; d <= R; d += gap * (.85 + r() * .3)) { const pts = []; for (let t = -R; t <= R; t += 6) pts.push([cx + ca * t - sa * d, cy + sa * t + ca * d]);
       let run = []; for (const p of pts) { const keep = inside(region, p[0], p[1]) && (!dens || r() < dens(p[0], p[1])) && r() > breaks * .12; if (keep) run.push(p); else { if (run.length > 1) this.ribbon(x, drift(run, wob, seed + d), { w, thin: .5, taper: [3, 3], color: color || this.inkC, alpha, press: (t) => .55 + .45 * Math.sin(Math.PI * t) }); run = []; } }
@@ -143,13 +143,13 @@ export class Art {
     x.save(); x.globalCompositeOperation = 'destination-in'; x.setTransform(this.S, 0, 0, this.S, 0, 0); path(x, region); x.fillStyle = '#000'; x.fill(); x.restore();
     if (fade) this.fadeTo(L); this.grain(L, .12); this.composite(L, 'multiply'); if (reb) this.begin(this._Bf); }
   // stipple: ink dots, density from a function
-  stipple(region, o = {}) { const reb = this._flush(); const { n = 400, rad = .6, seed = 7, dens = null, alpha = .8, fade = false } = o, r = rng(this.seed * 53 + seed), b = bounds(region), L = this.layer(), x = L.x; x.fillStyle = o.color || this.inkC;
+  stipple(region, o = {}) { if (this.plate) return; const reb = this._flush(); const { n = 400, rad = .6, seed = 7, dens = null, alpha = .8, fade = false } = o, r = rng(this.seed * 53 + seed), b = bounds(region), L = this.layer(), x = L.x; x.fillStyle = o.color || this.inkC;
     for (let i = 0; i < n; i++) { const px = b.x0 + r() * (b.x1 - b.x0), py = b.y0 + r() * (b.y1 - b.y0); if (!inside(region, px, py) || (dens && r() > dens(px, py))) continue; x.globalAlpha = alpha * (.6 + r() * .4); x.beginPath(); x.ellipse(px, py, rad * (.6 + r() * .8), rad * (.5 + r() * .6), r() * 3, 0, 7); x.fill(); }
     if (fade) this.fadeTo(L); this.composite(L, 'multiply'); if (reb) this.begin(this._Bf); }
   // light lifted out: paper-coloured marks (highlights on glass, foam on water)
-  lift(pts, o = {}) { const L = this.layer(); this.ribbon(L.x, pts.length > 40 ? pts : smooth(pts, false, 10), { w: 3, thin: .55, ...o, color: o.color || '#fffaf2' }); if (o.fade) this.fadeTo(L); this.composite(L, 'source-over', o.alpha ?? .95); }
+  lift(pts, o = {}) { if (this.plate) return; const L = this.layer(); this.ribbon(L.x, pts.length > 40 ? pts : smooth(pts, false, 10), { w: 3, thin: .55, ...o, color: o.color || '#fffaf2' }); if (o.fade) this.fadeTo(L); this.composite(L, 'source-over', o.alpha ?? .95); }
   // tone by marks: short strokes inside a region, following a direction field
-  hatch(region, o = {}) { const reb = this._flush();
+  hatch(region, o = {}) { if (this.plate) return; const reb = this._flush();
     const { angle = -.9, gap = 5, len = 14, w = .9, seed = 3, alpha = .7, field = null, dens = null, color } = o, r = rng(this.seed * 77 + seed), b = bounds(region);
     if (this.style === 'flat') return;
     const L = this.layer(), x = L.x, col = color || (this.style === 'pencil' ? '#5a4945' : this.inkC);
@@ -163,10 +163,10 @@ export class Art {
     if (this.style === 'pencil') this.grain(L, .45);
     this.composite(L, 'multiply'); if (reb) this.begin(this._Bf);
   }
-  spatter(n, box, seed = 9, avoid = null) { if (this.style !== 'ink') return; const r = rng(seed), c = this.ctx; c.save(); c.fillStyle = this.inkC;
+  spatter(n, box, seed = 9, avoid = null) { if (this.plate) return; if (this.style !== 'ink') return; const r = rng(seed), c = this.ctx; c.save(); c.fillStyle = this.inkC;
     for (let i = 0; i < n; i++) { const x = box[0] + r() * (box[2] - box[0]), y = box[1] + r() * (box[3] - box[1]); if (avoid && avoid(x, y)) continue; const big = r() < .2, rr = big ? 1.6 + r() * 1.4 : .5 + r() * .7; c.globalAlpha = .55 + r() * .4; c.beginPath(); c.ellipse(x, y, rr, rr * (.7 + r() * .3), r() * 3, 0, 7); c.fill(); } c.restore(); }
-  glow(x, y, r, color, a = .8) { const c = this.ctx, g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, color + 'ff'); g.addColorStop(.25, color + 'cc'); g.addColorStop(.6, color + '44'); g.addColorStop(1, color + '00'); c.save(); c.globalAlpha = a; c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.restore(); }
-  finish() { // the sheet over everything: cold-press tooth, very light
+  glow(x, y, r, color, a = .8) { if (this.plate) return; const c = this.ctx, g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, color + 'ff'); g.addColorStop(.25, color + 'cc'); g.addColorStop(.6, color + '44'); g.addColorStop(1, color + '00'); c.save(); c.globalAlpha = a; c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.restore(); }
+  finish() { if (this.plate) return; // the sheet over everything: cold-press tooth, very light
     if (this.style === 'flat') return;
     const c = this.ctx; c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'multiply'; c.globalAlpha = this.style === 'pencil' ? .07 : .05; c.fillStyle = c.createPattern(this.tooth(), 'repeat'); c.fillRect(0, 0, this.W * this.S, this.H * this.S); c.restore(); }
 }

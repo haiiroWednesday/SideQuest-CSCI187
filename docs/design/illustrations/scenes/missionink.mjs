@@ -12,7 +12,7 @@ const archPoly = (cx, top, w, bottom, n = 20) => [[cx - w / 2, bottom], ...ellip
 const spiral = (cx, cy, r0, r1, turns, a0 = 0, n = 40, sq = 1) => Array.from({ length: n }, (_, i) => { const t = i / (n - 1), a = a0 + t * turns * Math.PI * 2, rr = r0 + (r1 - r0) * t; return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * sq]; });
 const sx = (pts, cx, k) => pts.map(([x, y]) => [cx + (x - cx) * k, y]);
 
-export function draw(A) {
+export function draw(A, o = {}) {
   let SD = 1; const sd = () => SD++;
   const r = rng(77);
   const ln = (pts, w = 1, o = {}) => A.pen(lin(pts, false, 3), { w, seed: sd(), ...o });
@@ -378,6 +378,7 @@ export function draw(A) {
   for (let k = 0; k < 8; k++) dot(FX + (r() - .5) * 40, 476 + r() * 20, .5);
   A.end();
 
+  if (o.hero) { A.finish(); return; }
   // ================= THE PERGOLA: weathered timber, checked and knotted
   const grain = (a, b, n, spread, seed, knotAt = null) => { const q = rng(seed); for (let k = 0; k < n; k++) { const off = (k / (n - 1) - .5) * spread, dir = [b[0] - a[0], b[1] - a[1]], l = Math.hypot(dir[0], dir[1]), nx = -dir[1] / l, ny = dir[0] / l;
       const pts = []; for (let t = 0; t <= 1.0001; t += 1 / 40) { let o2 = off; if (knotAt) { const d = (t - knotAt[0]) * l; o2 += knotAt[1] * Math.exp(-(d * d) / 300) * Math.sign(off - knotAt[2] + .001) * Math.max(0, 1 - Math.abs(off - knotAt[2]) / (spread * .6)); }

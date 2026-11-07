@@ -41,3 +41,15 @@ node render.cjs jar ink 2 jar.png      # scene, style (ink | pencil | flat), sca
 - `stipple(region, {n, dens})` dots in the plaster texture.
 
 Render it with `node render.cjs missionink ink 2 out.png` (about four minutes at 2x).
+
+## Separate layers (round 7)
+
+Every drawing now ships as its own asset, split into layers in `layers/`:
+
+- `<name>-ink.png` is the line, on transparent. Use it as a CSS mask and set any colour behind it: dark ink on paper, cream on dark red or at night.
+- `<name>-petal.png`, `-leaf.png`, `-center.png`, `-tile.png`, `-tile2.png`, `-clay.png` are flat colour plates, also masks. They sit a pixel or two off the line, like a two-colour print.
+- `<name>-color.webp` is a ready-made preview on paper.
+
+The hero (`hero`) is the church and fountain alone, in the detailed ink kit. The wisteria (`wisteria`, `strand`), roses (`roses`, `rose1`, `bud`) and tiles (`tile-*`) use the brush kit in `scenes/brushkit.mjs`: a looser hand whose line swells and thins with pressure and lifts off partway round each shape.
+
+Export a scene's layers with `python3 export.py <scene> <scale> petal,leaf,...`. The tiles scene lists its own crops.

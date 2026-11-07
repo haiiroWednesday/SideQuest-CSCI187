@@ -4,6 +4,7 @@ import { Art } from './engine.mjs';
 const q = new URLSearchParams(location.search);
 const m = await import('./scenes/' + q.get('scene') + '.mjs');
 const [W, H] = m.size, A = new Art(document.getElementById('c'), W, H, +(q.get('s') || 2), q.get('style') || 'ink', +(q.get('seed') || 1));
+if (q.get('plate')) { A.plate = q.get('plate'); A.ctx.fillStyle = '#fff'; A.ctx.fillRect(0, 0, W, H); }
 const t0 = performance.now(); m.draw(A); window.ms = performance.now() - t0;
 window.png = A.cv.toDataURL('image/png'); window.done = true;
 </script>
