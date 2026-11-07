@@ -32,3 +32,23 @@ The style from Cynthia's reference (one even outline, flat fills, a soft circle 
 ```
 python3 docs/design/hero-drawing/flat4.py docs/design/hero-drawing/flat
 ```
+
+## Where the illustrations go, and when they get a caption
+
+`placement.py` mocks each drawing in the screen it belongs to (phone and laptop); renders are in `placement/`.
+
+| Screen | Drawing | Caption? |
+| --- | --- | --- |
+| Discover hero | ink arcade (phone), ink church (laptop) | No. Decoration behind the headline, `alt=""` |
+| Event cards with no photo | ink spot drawing for the category | No. The card title is the caption |
+| Onboarding, step 1 | island in a teacup (door and jar for steps 2 and 3) | The headline is the caption: step count, two-line serif title, one sentence, one button |
+| Discover, nothing fits | free time in a jar | Yes: names the exact window, offers "Widen" and "Save the hour" |
+| My Schedule, nothing planned | Saturday opens like a door | Yes: says which day is free, one button |
+| Loading (only after 1 s) | clock snail | One italic line, no button |
+| Waiting on friends | message in a bottle | Yes: who and which plan, "Nudge" or "Go without them" |
+| Offline | kite in a palm | Yes: says saved plans still work, "Try again" |
+| Plan added (bottom sheet) | the invite, small | Yes, text leads |
+| Event posted (clubs) | paper boat | Yes: who will see it first |
+| Sunday recap | hourglass garden | Yes: counts hours spent, never missed |
+
+Rules: flat outlined drawings are for moments and states, ink drawings are for places. Text that changes (times, names, places) never lives inside a drawing; the tag on the jar and the card in the invite should be left blank or filled from data.
