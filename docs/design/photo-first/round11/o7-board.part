@@ -1,0 +1,19 @@
+
+// ---------- board ----------
+let kept2 = []; try { kept2 = JSON.parse(localStorage.getItem('sq-kept7') || '[]') } catch (e) { }
+document.querySelector('.board').classList.add('wide2')
+const NOPTS = SEC7.reduce((n, s) => n + s.o.length, 0)
+$('#board').innerHTML = `
+  <div style="font:800 13px var(--sans);letter-spacing:.16em;color:var(--red)">SIDEQUEST · OPTIONS BOARD · ROUND 7 · PHOTO FIRST, BUILT ON WHAT YOU KEPT</div>
+  <h1>${NOPTS} redone, <em>with real photos.</em></h1>
+  <p class="lede">Every option starts from a screen you kept and puts a real photo inside it.</p>
+  <div class="keptbar">Kept: <b id="keptlist">none yet</b></div>
+  ${SEC7.map((s, si) => `<section class="osec" id="sec${si + 1}"><span class="daytag">${s.o.length} OPTIONS</span><h2>${s.h}</h2><p class="say">${s.say}</p>
+    <div class="pgrid">${s.o.map(([id, nm, d]) => `<div class="pair" id="p-${id}">${O7[id][0]}<div class="right">${O7[id][1]}<div class="ocap"><span class="lt">${id}</span><b class="nm">${nm}</b><p>${d}</p><button class="keep" data-id="${id}">☆ Keep</button></div></div></div>`).join('')}</div></section>`).join('')}`
+const paint2 = () => { document.querySelectorAll('.keep').forEach(b => { const on = kept2.includes(b.dataset.id); b.classList.toggle('on', on); b.textContent = on ? '★ Kept' : '☆ Keep' }); $('#keptlist').textContent = kept2.length ? kept2.join(', ') : 'none yet' }
+document.querySelectorAll('.keep').forEach(b => b.onclick = () => { const id = b.dataset.id; kept2 = kept2.includes(id) ? kept2.filter(x => x !== id) : [...kept2, id]; try { localStorage.setItem('sq-kept7', JSON.stringify(kept2)) } catch (e) { } paint2() })
+paint2()
+document.body.dataset.ready = '1'
+</script>
+</body>
+</html>
