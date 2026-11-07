@@ -73,15 +73,15 @@ The root C++/Qt starter example and its separate [CI workflow](.github/workflows
 
 ## Architecture diagrams
 
-These editable diagrams describe the **implemented M2 MVP**. Choose **Open visually** to view the drawing in [diagrams.net](https://app.diagrams.net/). GitHub's regular `.drawio` source link displays XML.
+**Click the GitHub preview to see the diagrams immediately.** These previews render within GitHub and do not depend on diagrams.net authentication or its GitHub integration. The course-format `.drawio` sources remain available for editing and submission.
 
-| Diagram | Graphical editor | Source file | SCU Drive editor |
+| Diagram | View on GitHub (recommended) | Editable source | SCU Drive copy |
 | --- | --- | --- | --- |
-| CRC / UML (2 pages) | [Open visually](https://app.diagrams.net/?mode=github#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_CRC.drawio) | [M2_CRC.drawio](docs/diagrams/M2_CRC.drawio) | [Drive copy](https://app.diagrams.net/?mode=google#G1EQOXQXHnbeXry1-HULe60I2nKLw_gMR-) |
-| ER / Chen (1 page) | [Open visually](https://app.diagrams.net/?mode=github#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_STORAGE_ER.drawio) | [M2_STORAGE_ER.drawio](docs/diagrams/M2_STORAGE_ER.drawio) | [Drive copy](https://app.diagrams.net/?mode=google#G1gIQn3a0d6uCOkaqzQsg2r29I_IUkml-e) |
-| Combined (3 pages) | [Open visually](https://app.diagrams.net/?mode=github#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_IMPLEMENTATION.drawio) | [M2_IMPLEMENTATION.drawio](docs/diagrams/M2_IMPLEMENTATION.drawio) | [Drive copy](https://app.diagrams.net/?mode=google#G1wQLEXbd-ihUsXFL3SV3qvAgtvtPovKgZ) |
+| CRC / UML responsibilities (2-page original) | **[View CRC diagram](docs/diagrams/M2_CRC_PREVIEW.md)** | [M2_CRC.drawio](docs/diagrams/M2_CRC.drawio) | [Drive editor](https://app.diagrams.net/?mode=google#G1EQOXQXHnbeXry1-HULe60I2nKLw_gMR-) |
+| ER / Chen (1-page original) | **[View ER diagram](docs/diagrams/M2_ER_PREVIEW.md)** | [M2_STORAGE_ER.drawio](docs/diagrams/M2_STORAGE_ER.drawio) | [Drive editor](https://app.diagrams.net/?mode=google#G1gIQn3a0d6uCOkaqzQsg2r29I_IUkml-e) |
+| Combined original (3 pages) | [View CRC](docs/diagrams/M2_CRC_PREVIEW.md) and [view ER](docs/diagrams/M2_ER_PREVIEW.md) | [M2_IMPLEMENTATION.drawio](docs/diagrams/M2_IMPLEMENTATION.drawio) | [Drive editor](https://app.diagrams.net/?mode=google#G1wQLEXbd-ihUsXFL3SV3qvAgtvtPovKgZ) |
 
-The repository is private. The GitHub editor may require authorization. Use the SCU Drive copy with an authorized SCU account, or select **Download raw file** on GitHub and choose **File → Open From → Device** in diagrams.net. GitHub and Drive copies do not synchronize.
+**Editing the original diagrams:** GitHub displays `.drawio` files as source XML. Download the desired file from its GitHub page (Raw / Download raw file), then open [diagrams.net](https://app.diagrams.net/) and choose **File → Open From → Device**. This avoids the private-repository GitHub authorization timeout. The GitHub-native preview shows the modeled relationships and fields; the downloadable source preserves the full course-format arrangement, notes, and pages. GitHub and Drive copies do not synchronize automatically.
 
 See the [diagram-to-code guide](docs/M2_IMPLEMENTATION_DIAGRAMS.md) for responsibilities and SQL field correspondence. The original approved P4 diagram is preserved unchanged.
 
