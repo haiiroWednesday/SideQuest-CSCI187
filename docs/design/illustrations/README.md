@@ -59,3 +59,9 @@ Export a scene's layers with `python3 export.py <scene> <scale> petal,leaf,...`.
 In every screen the hero uses the same treatment as main's `.sq-campus-drawing`: about 62% opacity (72% in cream on dark grounds), a radial gold glow behind it (`rgba(232,170,36,.16)`), and a mask that fades it from transparent at the left edge to full at 34%, back out past 88% on the right, and out along the bottom from 58% down. `heroFx()` in `round7-build.py` is the reference.
 
 The wisteria is drawn in the light cluster mode (`cluster(..., { simple: true })`): big florets, about half of them marked, the colour layer carrying the shape.
+
+## The printed hand
+
+`scenes/printkit.mjs` is a third way of drawing, after the block-print and collage references: shapes are pressed, not outlined. Each ink is a flat colour with mottled, speckled dropout and a little more ink at the rim; inks overprint each other like a riso. Branches are dry-brush strokes made of separate bristles that break and run out. Torn paper scraps sit behind; a few spatters around.
+
+Printed graphics, each a transparent PNG in `printed/`: `pwisteria`, `proses`, `pfountain` (the roses over the tiled fountain), `pcup`, `pdome` (Ricard), `pbell`. Render one with `node render.cjs <scene> print 2 out.png`.

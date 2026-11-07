@@ -5,6 +5,7 @@ const q = new URLSearchParams(location.search);
 const m = await import('./scenes/' + q.get('scene') + '.mjs');
 const [W, H] = m.size, A = new Art(document.getElementById('c'), W, H, +(q.get('s') || 2), q.get('style') || 'ink', +(q.get('seed') || 1));
 if (q.get('plate')) { A.plate = q.get('plate'); A.ctx.fillStyle = '#fff'; A.ctx.fillRect(0, 0, W, H); }
+if (q.get('style') === 'print') { A.ctx.save(); A.ctx.setTransform(1, 0, 0, 1, 0, 0); A.ctx.clearRect(0, 0, A.cv.width, A.cv.height); A.ctx.restore(); }
 const t0 = performance.now(); m.draw(A); window.ms = performance.now() - t0;
 window.png = A.cv.toDataURL('image/png'); window.done = true;
 </script>
