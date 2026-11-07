@@ -53,3 +53,9 @@ Every drawing now ships as its own asset, split into layers in `layers/`:
 The hero (`hero`) is the church and fountain alone, in the detailed ink kit. The wisteria (`wisteria`, `strand`), roses (`roses`, `rose1`, `bud`) and tiles (`tile-*`) use the brush kit in `scenes/brushkit.mjs`: a looser hand whose line swells and thins with pressure and lifts off partway round each shape.
 
 Export a scene's layers with `python3 export.py <scene> <scale> petal,leaf,...`. The tiles scene lists its own crops.
+
+### Hero treatment
+
+In every screen the hero uses the same treatment as main's `.sq-campus-drawing`: about 62% opacity (72% in cream on dark grounds), a radial gold glow behind it (`rgba(232,170,36,.16)`), and a mask that fades it from transparent at the left edge to full at 34%, back out past 88% on the right, and out along the bottom from 58% down. `heroFx()` in `round7-build.py` is the reference.
+
+The wisteria is drawn in the light cluster mode (`cluster(..., { simple: true })`): big florets, about half of them marked, the colour layer carrying the shape.

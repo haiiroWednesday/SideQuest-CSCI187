@@ -48,6 +48,14 @@ def art(key, x, y, w, plates=None, ink=INK, op=1, flip=False, rot=0, extra='', r
   inner = ''.join(f'<i class="m-{key}-{l}" style="background:{dflt(l) if isinstance(pl, list) else pl[l]};transform:translate({reg}px,{reg * .6}px)"></i>' for l in (pl if isinstance(pl, list) else pl.keys()))
   inner += f'<i class="m-{key}-ink" style="background:{ink}"></i>' if ink else ''
   return f'<div class="art {cls}" style="left:{x}px;top:{y}px;width:{w}px;height:{hh:.1f}px;opacity:{op};{"transform:" + " ".join(tr) + ";" if tr else ""}{extra}">{inner}</div>'
+# the hero as main shows it: a watermark at about 62% with a warm gold glow behind it, fading out on
+# the left (toward the words), at the right edge and along the bottom
+def heroFx(x, y, w, ink=INK, op=None, glow=True, **kw):
+  h = w / 2; dark = ink != INK; o = op if op is not None and op < .9 else (.72 if dark else .62)
+  g = f'<div class="ab" style="left:{x + w * .08:.0f}px;top:{y - h * .12:.0f}px;width:{w * .9:.0f}px;height:{h * 1.1:.0f}px;background:radial-gradient(closest-side,rgba(232,170,36,{.12 if dark else .16}),rgba(232,170,36,0));pointer-events:none"></div>' if glow else ''
+  m = 'linear-gradient(to right,transparent 0%,#000 34%,#000 88%,transparent 100%),linear-gradient(to bottom,#000 58%,transparent 96%)'
+  return g + f'<div class="ab" style="left:{x}px;top:{y}px;width:{w}px;height:{h}px;opacity:{o};-webkit-mask-image:{m};-webkit-mask-composite:source-in;mask-image:{m};mask-composite:intersect;pointer-events:none">' + art('hero', 0, 0, w, ink=ink) + '</div>'
+
 def strip(key, x, y, w, h, plates=None, ink=INK, extra=''):
   return art(key, x, y, w, plates, ink, cls='rx', h=h, extra=extra)
 # a single quatrefoil, cut from the strip at a different place each time, so no two cells match
@@ -90,16 +98,16 @@ items = []
 def add(i, group, name, cap, ph, mc): items.append({'id': f'X{i}', 'board': 'Round 7: roses, wisteria and tile', 'group': group, 'name': name, 'cap': cap, 'devs': [ph, mc], 'kinds': ['phone', 'mac']})
 
 # ---------------------------------------------------------------- X1 Under the wisteria
-ph = (art('wis', 128, 34, 230) +
+ph = (art('wis', 136, 36, 210) +
   ab(20, 70, '<div class="k">Friday · 2:10 pm</div><div class="h1" style="font-size:31px;margin-top:8px;width:140px">You’re free until <em>4:40</em>.</div>') +
-  art('hero', -40, 178, 360, op=.95) +
+  heroFx(-40, 178, 360, op=.95) +
   strip('mosaic', 16, 356, 248, 7) +
   ab(20, 372, '<div class="k" style="color:var(--ink)">Fits that gap</div>') +
   card(16, 392, 248, 74, ev('Ceramics drop-in', '2:30–4:00', 'Art Building 110 · 4 min walk', 'FITS · 10 MIN SPARE')) +
   card(16, 474, 248, 62, ev('Rose garden sketch', '3:00–4:15', 'Mission Gardens', 'FITS'), 'opacity:.9') + tabbar())
-mc = (nav() + art('wis', 470, 56, 540) +
+mc = (nav() + art('wis', 520, 56, 470) +
   ab(60, 120, '<div class="k">Friday · 2:10 pm</div><div class="h1" style="font-size:66px;margin-top:14px;width:380px">You’re free until <em>4:40</em>.</div><div class="p" style="font-size:15px;margin-top:16px;width:330px">Two and a half hours. Here’s what fits it, nearest first.</div><div class="row" style="margin-top:22px"><span class="b" style="font-size:14px;padding:12px 20px">See all 6 that fit</span><span class="b g" style="font-size:14px;padding:12px 20px">Find a time with friends</span></div>') +
-  art('hero', -50, 372, 600, op=.95) + strip('mosaic', 600, 352, 360, 9) +
+  heroFx(-50, 372, 600, op=.95) + strip('mosaic', 600, 352, 360, 9) +
   ab(600, 376, '<div class="k" style="color:var(--ink)">Fits that gap</div>') +
   card(600, 400, 360, 92, ev('Ceramics drop-in', '2:30–4:00', 'Art Building 110 · 4 min walk', 'FITS · 10 MIN SPARE', 1.2)) +
   card(600, 502, 360, 92, ev('Rose garden sketch', '3:00–4:15', 'Mission Gardens · bring a pencil', 'FITS', 1.2)))
@@ -108,12 +116,12 @@ add(1, 'Discover', 'Under the wisteria', 'The wisteria hangs into the top of the
 # ---------------------------------------------------------------- X2 Through the arch
 def arch(x, y, w, h, inner, bw=10):
   return f'<div class="ab" style="left:{x}px;top:{y}px;width:{w}px;height:{h}px;border-radius:{w / 2}px {w / 2}px 10px 10px;box-shadow:inset 0 0 0 {bw}px var(--stub),inset 0 0 0 {bw + 1.5}px var(--rule-strong);overflow:hidden;background:var(--ticket)">{inner}</div>'
-ph = (arch(26, 56, 228, 280, art('hero', -170, 120, 520, op=.95)) + art('strand', 30, 50, 70, extra='z-index:2', cls='sway') + art('strand', 196, 54, 54, flip=True, cls='sway', extra='animation-delay:-1.4s') +
+ph = (arch(26, 56, 228, 280, heroFx(-170, 120, 520, op=.95)) + art('strand', 30, 50, 70, extra='z-index:2', cls='sway') + art('strand', 196, 54, 54, flip=True, cls='sway', extra='animation-delay:-1.4s') +
   strip('medal', 22, 334, 236, 20) +
   ab(22, 370, '<div class="k">The Mission Gardens</div><div class="h2" style="margin-top:6px">Three things here <em>today</em></div>') +
   ab(22, 430, '<div class="row" style="justify-content:space-between;border-top:1px solid var(--rule);padding:9px 0"><span class="t">Rose garden sketch</span><span class="num">3:00</span></div><div class="row" style="justify-content:space-between;border-top:1px solid var(--rule);padding:9px 0"><span class="t">Choir in the church</span><span class="num">5:30</span></div><div class="row" style="justify-content:space-between;border-top:1px solid var(--rule);padding:9px 0"><span class="t">Mass, open to all</span><span class="num">7:00</span></div>', 236) + tabbar())
 mc = (nav() + ab(60, 150, '<div class="k">Places on campus</div><div class="h1" style="font-size:62px;margin-top:14px;width:360px">Make the gap <em>count</em>.</div><div class="p" style="font-size:15px;margin-top:14px;width:330px">Pick a place you like. We’ll show what’s on there while you’re free.</div><div class="row" style="margin-top:24px;flex-wrap:wrap;width:360px"><span class="chip on" style="font-size:13px">Mission Gardens</span><span class="chip" style="font-size:13px">Observatory</span><span class="chip" style="font-size:13px">Benson</span><span class="chip" style="font-size:13px">Library</span></div>') +
-  arch(520, 84, 400, 470, art('hero', -330, 190, 920, op=.95)) + art('wis', 470, 60, 470, extra='z-index:2') +
+  arch(520, 84, 400, 470, heroFx(-330, 190, 920, op=.95)) + art('wis', 470, 60, 470, extra='z-index:2') +
   strip('medal', 512, 552, 416, 34) + art('roses', 860, 420, 200, rot=-62))
 add(2, 'Discover', 'Through the arch', 'The Mission seen through an arch, the way the arcade frames it. Wisteria strands hang over the arch and sway a little. The medallion tile is the sill. Under it, what is on at that place today.', phone(ph), mac(mc))
 
@@ -139,7 +147,7 @@ add(3, 'My week', 'Roses over the wall', 'From the drinking fountain by the rose
 # ---------------------------------------------------------------- X4 Post, without the scolding
 cream = {'petal': '#c9b6e6', 'leaf': '#b7c8a8'}
 mc = (f'<div class="ab" style="left:0;top:0;width:370px;height:625px;background:{REDD}"></div>' + nav('Post').replace('<span class="logo">', '<span class="logo" style="color:var(--paper)">') +
-  art('hero', -150, 360, 560, ink=CREAM, op=.9) + art('wis', 200, 60, 230, plates=cream, ink=CREAM) +
+  heroFx(-150, 360, 560, ink=CREAM, op=.9) + art('wis', 200, 60, 230, plates=cream, ink=CREAM) +
   ab(40, 130, f'<div class="k" style="color:{GOLD}">Post an event</div><div class="h1" style="font-size:52px;margin-top:12px;color:var(--paper);width:270px">Make something <em style="color:#f3d27c">happen</em>.</div><div class="p" style="color:#ead9cf;font-size:14px;margin-top:14px;width:280px">Students see it when it fits a gap in their day.</div>') +
   ab(420, 110, '<div class="lab">What is it</div><div class="field" style="width:300px">Ceramics drop-in</div><div class="lab" style="margin-top:22px">When</div><div class="row"><span class="chip" style="font-size:13px">Today</span><span class="chip on" style="font-size:13px">Sat, Nov 7</span><span class="chip" style="font-size:13px">Pick a day</span></div><div class="row" style="margin-top:12px;gap:12px"><div class="field" style="width:120px">2:30 pm</div><span class="p" style="font-size:18px">to</span><div class="field" style="width:120px;color:var(--faint)">4:00 pm</div></div><div class="p" style="margin-top:8px;font-size:12.5px;color:var(--sage-ink)">Add an end time and we’ll tell you who’s free for it.</div><div class="lab" style="margin-top:22px">Where</div><div class="field" style="width:300px">Arts Building 110</div>') +
   ab(760, 110, '<div class="lab">How it will look</div>') +
@@ -203,10 +211,10 @@ add(7, 'Find a time', 'Quatrefoil hours', 'Free time you share is laid out as qu
 # ---------------------------------------------------------------- X8 Evening, in cream line
 night = '#2a1f1d'
 ev_n = lambda t, w, d: f'<div style="padding:14px 0;border-top:1px solid rgba(246,231,207,.18)"><div class="row" style="justify-content:space-between"><span class="h3" style="color:var(--paper)">{t}</span><span class="num" style="color:{GOLD}">{w}</span></div><div class="p" style="color:#bfb1a6">{d}</div></div>'
-mc = (nav(c='var(--paper)') + art('hero', 330, 170, 760, ink=CREAM, op=.85) + art('roses', -60, 440, 400, ink=CREAM, plates={'petal': '#c4304a', 'leaf': '#6f8a72', 'center': GOLD}) +
+mc = (nav(c='var(--paper)') + heroFx(330, 170, 760, ink=CREAM, op=.85) + art('roses', -60, 440, 400, ink=CREAM, plates={'petal': '#c4304a', 'leaf': '#6f8a72', 'center': GOLD}) +
   ab(60, 120, f'<div class="k" style="color:{GOLD}">Friday evening</div><div class="h1" style="font-size:62px;margin-top:12px;color:var(--paper);width:400px">Open after <em style="color:#f3d27c">7:30</em>.</div>') +
   ab(60, 270, '<div style="width:330px">' + ev_n('Observatory open night', '8:00', 'Ricard · the big dome opens if it’s clear') + ev_n('Choir in the church', '7:45', 'Mission Church · free') + ev_n('Movie on the lawn', '8:30', 'Kennedy Mall · bring a blanket') + '</div>'), night)
-ph = (art('hero', -120, 290, 470, ink=CREAM, op=.85) + art('roses', -40, 420, 260, ink=CREAM, plates={'petal': '#c4304a', 'leaf': '#6f8a72', 'center': GOLD}) +
+ph = (heroFx(-120, 290, 470, ink=CREAM, op=.85) + art('roses', -40, 420, 260, ink=CREAM, plates={'petal': '#c4304a', 'leaf': '#6f8a72', 'center': GOLD}) +
   ab(20, 60, f'<div class="k" style="color:{GOLD}">Friday evening</div><div class="h2" style="color:var(--paper);font-size:32px;margin-top:8px">Open after <em style="color:#f3d27c">7:30</em>.</div>') +
   ab(20, 140, '<div style="width:240px">' + ev_n('Observatory night', '8:00', 'Ricard, if it’s clear') + ev_n('Choir', '7:45', 'Mission Church') + '</div>') + tabbar().replace('background:var(--ink)', 'background:#40312d'))
 add(8, 'Evening', 'Evening, in cream line', 'The same drawings at night. The church turns to cream line on near-black, and the roses keep their red. This is why every drawing is stored as layers: one asset works on paper, on dark red and at night.', phone(ph, night, '#f6e7cf'), mac(mc, night))
@@ -242,7 +250,8 @@ def show(key, w, plates=None, ink=INK, bg=PAPER, cls='', note=''):
   return f'<div class="artc r7" style="position:relative;background:{bg}"><div style="position:relative;width:{w}px;height:{h:.0f}px;margin:0 auto">{art(key, 0, 0, w, plates, ink, cls=cls)}</div></div>'
 def addA(i, name, cap, html): items.append({'id': f'U{i}', 'board': 'New drawings, as separate layers', 'group': 'Assets', 'name': name, 'cap': cap, 'devs': [html], 'kinds': ['art']})
 addA(1, 'The hero: church and fountain', 'Ink only, no pergola or wisteria, so it can sit under anything. Stored as one line layer that can be tinted: dark ink on paper, cream on dark red or at night.', show('hero', 530))
-addA(2, 'Wisteria, corner spray', 'Redrawn in the brush hand: rounder florets, fewer details, the line swelling and thinning. Three layers: line, flowers, leaves. Sits in any top corner.', show('wis', 530))
+addA(8, 'The hero as it sits in the app', 'The same treatment main uses today: about 62% strength, a warm gold glow behind, fading out on the left toward the headline, at the right edge and along the bottom. Every screen in round 7 uses it.', '<div class="artc r7" style="position:relative;height:300px">' + ab(24, 110, '<div class="h1" style="font-size:44px">You’re free<br>until <em style="color:var(--red)">4:40</em>.</div>') + heroFx(150, 40, 380) + '</div>')
+addA(2, 'Wisteria, corner spray', 'Kept light: six clusters with air between them, big soft florets with only about half of them marked, a few leaves. The colour layer carries the shape. Three layers: line, flowers, leaves.', show('wis', 530))
 addA(3, 'Wisteria strand and the bud', 'One strand for narrow places (it sways while loading). The bud pairs with the open rose.', '<div class="artc r7" style="position:relative;height:330px">' + art('strand', 60, 10, 160, cls='sway') + art('bud', 300, 20, 200) + '</div>')
 addA(4, 'Red climbing roses', 'From your first photo: loose red roses with gold centers on long thorny canes. Line, petals, leaves and centers are separate layers.', show('roses', 530))
 addA(5, 'One rose', 'For empty states and badges.', show('rose', 300))

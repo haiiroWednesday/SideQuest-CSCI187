@@ -28,16 +28,22 @@ export function brushkit(A, seed0 = 1) {
   // ---- wisteria, simplified: a cluster is a soft tapering bunch of bumps, a few little flower marks
   // inside opening downward, a couple of round buds at the tip
   const cluster = (x, y, L, seed, s = 1, o = {}) => { const q = rng(seed), sway = (q() - .45) * L * .18, al = o.alpha ?? 1;
-    const at = (t) => [x + sway * t * t, y + L * t], wd = (t) => ((1 - t) ** .8 * 15 + 4) * s * (.9 + Math.min(.6, L / 420));
+    const at = (t) => [x + sway * t * t, y + L * t], wd = (t) => (o.simple ? ((1 - t) ** 1.35 * 19 + 3) : ((1 - t) ** .8 * 15 + 4)) * s * (.9 + Math.min(.6, L / 420));
     // rows of round florets, staggered like scales, shrinking to the tip
     const rows = []; let t = 0, i = 0;
-    while (t < .97) { const w = wd(t), r = Math.max(3.6 * s, Math.min(15 * s, w * .66)) * (.85 + q() * .3), nb = Math.max(1, Math.round(w * 2 / (r * 1.7))), p = at(t), off = (i % 2 ? .5 : 0) * (nb > 1 ? 1 : 0);
+    while (t < .97) { const w = wd(t), r = Math.max(3.6 * s, Math.min((o.simple ? 13 : 15) * s, w * (o.simple ? .74 : .66))) * (.85 + q() * .3), nb = Math.max(1, Math.round(w * 2 / (r * 1.7))), p = at(t), off = (i % 2 ? .5 : 0) * (nb > 1 ? 1 : 0);
       const cs = []; for (let j = 0; j < nb; j++) { const u = nb === 1 ? 0 : (j + off * (j < nb - 1 ? 1 : -1) * .5) / (nb - 1) * 2 - 1; cs.push([p[0] + u * (w - r * .6) + (q() - .5) * 2, p[1] + (q() - .5) * 2, r]); }
       rows.push(cs); t += (r * 1.05) / L; i++; }
     const L0 = rows.map((cs) => cs[0]), R0 = rows.map((cs) => cs[cs.length - 1]), last = rows[rows.length - 1][0];
     const sil = smooth([...L0.flatMap(([cx, cy, r]) => [[cx - r, cy], [cx - r * .72, cy + r * .72]]), [last[0], last[1] + last[2] + 2], ...R0.slice().reverse().flatMap(([cx, cy, r]) => [[cx + r * .72, cy + r * .72], [cx + r, cy]]), [R0[0][0], R0[0][1] - R0[0][2]], [L0[0][0], L0[0][1] - L0[0][2]]], true, 4);
     brush([[x, y - 12 * s], [x + 1, y]], 1.5 * s, { alpha: al });
     knock(sil, 'petal');
+    if (o.simple) { // big florets, about half of them marked with a short arc; the edges give the outline, broken
+      for (const cs of rows) for (const [cx, cy, r] of cs) { if (q() < .45) continue; const a0 = .45 + q() * .3, a1 = Math.PI - .45 - q() * .3; brush(ellipse(cx, cy, r, r * .9, a0, a1, 10), 1.3 * s * Math.min(1, r / (8 * s)) + .3, { t0: 1.2, t1: 1.6, alpha: al }); }
+      for (const [cx, cy, r] of L0) if (q() < .8) brush(ellipse(cx, cy, r, r * .9, Math.PI * .6, Math.PI * 1.1, 6), 1.3 * s, { t0: 1, t1: 1.5, alpha: al });
+      for (const [cx, cy, r] of R0) if (q() < .8) brush(ellipse(cx, cy, r, r * .9, -.1, Math.PI * .4, 6), 1.6 * s, { t0: 1, t1: 1.5, alpha: al });
+      for (let k2 = 0; k2 < 2; k2++) { const r2 = (2.6 - k2 * .7) * s, b = ellipse(last[0] + (k2 ? 4 : -2) * s, last[1] + last[2] + (5 + k2 * 7) * s, r2, r2 * 1.15, 0, 7, 10); knock(b, 'petal'); brush(b, .9 * s, { closed: true, t0: 1, t1: 1, alpha: al }); }
+      return; }
     for (const cs of rows) for (const [cx, cy, r] of cs) { if (q() < .22 && cs.length > 1) continue; const a0 = .15 + q() * .35, a1 = Math.PI - .15 - q() * .35; brush(ellipse(cx, cy, r, r * .9, a0, a1, 10), 1.35 * s * Math.min(1, r / (7 * s)) + .3, { t0: 1.2, t1: 1.6, alpha: al });
       if (r > 6 * s && q() < .3) brush(ellipse(cx, cy - r * .1, r * .45, r * .35, .5, Math.PI - .5, 6), .7 * s, { t0: .8, t1: .8, alpha: al * .8 }); }
     for (const [cx, cy, r] of L0) brush(ellipse(cx, cy, r, r * .9, Math.PI * .55, Math.PI * 1.05, 6), 1.2 * s, { t0: 1, t1: 1.5, alpha: al });
