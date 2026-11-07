@@ -12,6 +12,7 @@ export type ToastItem = {
   testId?: string
 }
 
+const TOAST_EXIT_DURATION_MS = 220
 const LIFETIME_MS: Record<ToastTone, number | null> = { success: 4500, info: 6500, warning: 8000, error: null }
 const ROLE: Record<ToastTone, 'status' | 'alert' | 'note'> = { success: 'status', info: 'status', warning: 'alert', error: 'alert' }
 
@@ -34,7 +35,7 @@ function Toast({ toast, onClose }: { toast: ToastItem; onClose: () => void }) {
   const leave = () => {
     if (timer.current !== undefined) return
     setLeaving(true)
-    timer.current = window.setTimeout(onClose, 220)
+    timer.current = window.setTimeout(onClose, TOAST_EXIT_DURATION_MS)
   }
   useEffect(() => () => window.clearTimeout(timer.current), [])
   // A connection notice is information about the page, not news, so it is not announced.

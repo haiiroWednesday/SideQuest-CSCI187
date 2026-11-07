@@ -3,7 +3,7 @@ import { expect, it } from 'vitest'
 import { readStoredEvents, saveStoredEvents, STORAGE_KEY, type CampusEvent } from '../src/model/events'
 
 it('saves and restores an event from a browser-style storage object', () => {
-  // 💾 A Map mimics browser storage's getItem/setItem API, so this test
+  // A Map mimics browser storage's getItem/setItem API, so this test
   // can check JSON saving without running an actual browser.
   const items = new Map<string, string>()
   const storage = {

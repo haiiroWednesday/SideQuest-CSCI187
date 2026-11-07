@@ -6,7 +6,7 @@ import { loadPostedEvents, type EventCatalogPort } from '../src/controller/postE
 import { createSharedScheduleController, type SharedScheduleResult } from '../src/controller/sharedSchedule'
 import { PLANNED_IDS_KEY } from '../src/model/schedule'
 import { useSharedSchedule } from '../src/view/useSharedSchedule'
-import { PostEventForm } from '../src/view/PostEventForm'
+import { EmbeddedPostEventForm } from '../src/view/PostEventForm'
 import type { CampusEvent } from '../src/model/eventCatalog'
 
 const ID = '11111111-1111-4111-8111-111111111111'
@@ -116,7 +116,7 @@ describe('production save failures and asynchronous actions', () => {
   it('prevents a second submit and freezes editable fields while posting', async () => {
     const pending = deferred<CampusEvent>(), catalog = port()
     vi.mocked(catalog.create).mockImplementationOnce(() => pending.promise)
-    render(<PostEventForm connection={{ catalog, shared: true }} now={clock} showPostedEvents={false} />)
+    render(<EmbeddedPostEventForm connection={{ catalog, shared: true }} now={clock} />)
     for (const [name, value] of Object.entries({ 'EVENT NAME': 'Ceramics', 'HOST NAME': 'Art Club', DESCRIPTION: 'Clay workshop', LOCATION: 'Arts Building' })) fireEvent.change(screen.getByLabelText(name), { target: { value } })
     fireEvent.click(screen.getByRole('button', { name: '+ Post event' }))
     const posting = screen.getByRole('button', { name: 'Posting…' }) as HTMLButtonElement

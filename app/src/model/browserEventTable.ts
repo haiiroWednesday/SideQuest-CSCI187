@@ -1,14 +1,8 @@
-// ADAPTER (fallback): an EventTable kept in THIS browser's localStorage.
-//
-// ⚠️ NOT the shared public catalog. Other browsers and devices never see these
-// events. The app uses it only when Supabase is not configured (CI, or a
-// teammate without app/.env.local), and the UI then shows a visible
-// "not shared" notice. Never demo it as shared persistence.
-//
-// It uses its own key. The legacy M1 `sidequest.created-events.v1` list
-// (model/events.ts) is a different record format and must not double as the
-// catalog (playbook: "Two different meanings of save").
-import type { EventRow, EventTable, NewEventRow } from './eventCatalog'
+// BROWSER-ONLY ADAPTER: persist a local catalog when shared storage is absent.
+// Local storage persists on this browser only; it does not sync between browser profiles or devices.
+// Demonstrate a shared catalog using the configured server, not this fallback.
+// This key is separate from the archived M1 event-storage key.
+import { toSqlTime, type EventRow, type EventTable, type NewEventRow } from './eventCatalog'
 
 export const LOCAL_CATALOG_KEY = 'sidequest.local-catalog.v1'
 
@@ -33,8 +27,6 @@ function readRows(storage: CatalogStorage): EventRow[] {
   return parsed
 }
 
-const withSeconds = (time: string) => (time.length === 5 ? `${time}:00` : time)
-
 export function createBrowserEventTable(
   storage: CatalogStorage,
   newId: () => string = () => crypto.randomUUID(),
@@ -45,7 +37,7 @@ export function createBrowserEventTable(
       const rows = readRows(storage)
       const id = newId()
       if (rows.some(existing => existing.id === id)) throw new Error(`Duplicate event ID ${id}`)
-      const stored: EventRow = { ...row, id, start_time: withSeconds(row.start_time), end_time: withSeconds(row.end_time) }
+      const stored: EventRow = { ...row, id, start_time: toSqlTime(row.start_time), end_time: toSqlTime(row.end_time) }
       storage.setItem(LOCAL_CATALOG_KEY, JSON.stringify([...rows, stored]))
       return stored
     },

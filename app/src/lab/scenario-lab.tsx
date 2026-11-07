@@ -23,6 +23,7 @@ type FromFrame = { type: 'plan' | 'remove'; id: string } | { type: 'free'; windo
 
 const params = new URLSearchParams(location.search)
 const ROUTES = { discover: '#discover', schedule: '#schedule', post: '#post' }
+const FRAME_ORIGIN = window.location.origin
 
 function todayISO(): string { return campusNow().date }
 
@@ -58,12 +59,14 @@ function Frame() {
   const [state, setState] = useState<ToFrame | null>(() => (window.parent === window ? standalone() : null))
   useEffect(() => {
     if (window.parent === window) return
-    const on = (event: MessageEvent<ToFrame>) => { if (event.data?.discover) setState(event.data) }
+    const on = (event: MessageEvent<ToFrame>) => {
+      if (event.origin === FRAME_ORIGIN && event.source === window.parent && event.data?.discover) setState(event.data)
+    }
     window.addEventListener('message', on)
-    window.parent.postMessage({ type: 'ready' }, '*')
+    window.parent.postMessage({ type: 'ready' }, FRAME_ORIGIN)
     return () => window.removeEventListener('message', on)
   }, [])
-  const up = (message: FromFrame) => window.parent.postMessage(message, '*')
+  const up = (message: FromFrame) => window.parent.postMessage(message, FRAME_ORIGIN)
   if (!state) return null
   return state.kind === 'discover' ? (
     <DiscoverView screen={state.discover} routes={ROUTES} onPlan={id => up({ type: 'plan', id })} onFreeWindowChange={window => up({ type: 'free', window })} />
@@ -145,11 +148,12 @@ function Lab() {
   // Tell both frames what to draw whenever anything changes.
   const frames = [useRef<HTMLIFrameElement>(null), useRef<HTMLIFrameElement>(null)]
   const payload: ToFrame = { kind, discover, schedule }
-  useEffect(() => { frames.forEach(f => f.current?.contentWindow?.postMessage(payload, '*')) })
+  useEffect(() => { frames.forEach(f => f.current?.contentWindow?.postMessage(payload, FRAME_ORIGIN)) })
   useEffect(() => {
     const on = (event: MessageEvent<FromFrame | { type: 'ready' }>) => {
+      if (event.origin !== FRAME_ORIGIN || !frames.some(frame => frame.current?.contentWindow === event.source)) return
       const m = event.data
-      if (m?.type === 'ready') frames.forEach(f => f.current?.contentWindow?.postMessage(payload, '*'))
+      if (m?.type === 'ready') frames.forEach(f => f.current?.contentWindow?.postMessage(payload, FRAME_ORIGIN))
       else if (m?.type === 'plan') setPlanned(p => p.includes(m.id) ? p : [...p, m.id])
       else if (m?.type === 'remove') { setPlanned(p => p.filter(id => id !== m.id)); setMissing(p => p.filter(id => id !== m.id)) }
       else if (m?.type === 'free') setFree(m.window)

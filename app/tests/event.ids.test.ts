@@ -6,7 +6,7 @@ import { expect, it } from 'vitest'
 import { createEvent } from '../src/controller/findEvents'
 import type { EventDraft } from '../src/model/events'
 
-// 🔑 Fix the clock to October 1: an ID test must never pass just because
+// Fix the clock to October 1: an ID test must never pass just because
 // its October 26 event happens to be in the past on the day CI runs.
 const draft: EventDraft = {
   title: 'Speaker Event',
@@ -32,7 +32,7 @@ it('rejects an empty event ID', () => {
   ])
 })
 
-// 🔑 IDs, unlike event titles, must be unique. A specific ID error matters
+// IDs, unlike event titles, must be unique. A specific ID error matters
 // here: checking for any error could hide another validation problem.
 it('rejects an ID that another event already uses', () => {
   const events = [{ ...draft, id: 'event-1' }]

@@ -9,7 +9,7 @@ it('keeps only the valid events from a partly corrupted saved list', () => {
   const choir: CampusEvent = { id: 'choir', title: 'Choir', location: 'Hall',
     date: '2026-10-24', start: '16:00', end: '17:00' }
 
-  // 🧯 Simulate bad JSON records mixed with valid ones. The old reader
+  // Simulate bad JSON records mixed with valid ones. The old reader
   // should return the valid events and skip entries it cannot trust.
   const saved = [
     null, // not an object

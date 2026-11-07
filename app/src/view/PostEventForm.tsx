@@ -1,48 +1,66 @@
-// VIEW: the "Post an event" form and the list of posted events.
-// Rules live in controller/postEvent.ts, and storage lives behind the
-// EventCatalogPort. This component only holds what the user is typing and
-// what came back.
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+// VIEW: compose the post editor and catalog list without behavior flags.
+// Posting validation and storage operations remain behind Controller ports.
+import { useState, type FormEvent } from 'react'
 import {
-  loadPostedEvents, postEvent,
-  CATALOG_LIMITS, campusNow, initialCampusWindow, type CampusEvent, type CatalogFieldErrors, type ConnectedCatalog, type EventDraft,
+  postEvent, postingDraftErrors, initialCampusWindow,
+  type CampusEvent, type CatalogFieldErrors, type ConnectedCatalog, type EventDraft,
 } from '../controller/postEvent'
-import { displayDate, displayTime } from '../controller/findEvents'
+import { PostedEventsList } from './PostedEventsList'
+import { PostEventFields } from './PostEventFields'
 
-type Props = { connection: ConnectedCatalog; now?: () => Date; onPosted?: (event: CampusEvent) => void; showPostedEvents?: boolean; showConnectionNotice?: boolean }
+type Props = { connection: ConnectedCatalog; now?: () => Date; onPosted?: (event: CampusEvent) => void }
 
-export function PostEventForm({ connection, now = () => new Date(), onPosted, showPostedEvents = true, showConnectionNotice = true }: Props) {
+// Full posting view: compose an editor, a connection notice, and the catalog list.
+export function PostEventForm({ connection, now, onPosted }: Props) {
+  const [revision, setRevision] = useState(0)
+  const handlePosted = (event: CampusEvent) => {
+    setRevision(current => current + 1)
+    onPosted?.(event)
+  }
+  return (
+    <>
+      {!connection.shared && <p className="storage-alert" data-testid="catalog-not-shared">
+        Shared catalog not connected. Posts are saved in this browser only, and other people can't see them.
+      </p>}
+      <PostEventEditor connection={connection} now={now} onPosted={handlePosted} />
+      <PostedEventsList catalog={connection.catalog} shared={connection.shared} revision={revision} />
+    </>
+  )
+}
+
+// Embedded editor: the surrounding page already presents source status and its event list.
+export function EmbeddedPostEventForm(props: Props) {
+  return <PostEventEditor {...props} />
+}
+
+function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props) {
   const { catalog, shared } = connection
   const [draft, setDraft] = useState<EventDraft>(() => ({
     title: '', hostName: '', description: '', location: '', ...initialCampusWindow(now()),
   }))
   const [fieldErrors, setFieldErrors] = useState<CatalogFieldErrors>({})
+  const [validatedFields, setValidatedFields] = useState<Partial<Record<keyof EventDraft, boolean>>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [posted, setPosted] = useState<{ events: CampusEvent[]; error: string | null; loading: boolean }>(
-    { events: [], error: null, loading: true },
-  )
-
-  const generation = useRef(0)
-  const refresh = useCallback(async () => {
-    const request = ++generation.current
-    setPosted(current => ({ ...current, loading: true }))
-    const result = await loadPostedEvents(catalog)
-    if (request === generation.current) setPosted({ ...result, loading: false })
-  }, [catalog])
-
-  // Read the catalog when the page opens. This is what makes a posted event
-  // visible again after a refresh.
-  useEffect(() => {
-    if (showPostedEvents) void refresh()
-    return () => { generation.current++ }
-  }, [refresh, showPostedEvents])
-
   const update = (field: keyof EventDraft, value: string) => {
-    setDraft(current => ({ ...current, [field]: value }))
-    // Clear that field's error as soon as the user edits it.
-    setFieldErrors(current => ({ ...current, [field]: undefined }))
+    const nextDraft = { ...draft, [field]: value }
+    setDraft(nextDraft)
+    const errors = postingDraftErrors(nextDraft, now())
+    setFieldErrors(previous => {
+      const nextErrors = { ...previous }
+      for (const checkedField of Object.keys({ ...validatedFields, ...previous }) as (keyof EventDraft)[]) {
+        if (validatedFields[checkedField] || previous[checkedField]) nextErrors[checkedField] = errors[checkedField]
+      }
+      return nextErrors
+    })
+    setFormError(null)
+  }
+
+  const validateOnBlur = (field: keyof EventDraft) => {
+    setValidatedFields(previous => ({ ...previous, [field]: true }))
+    const errors = postingDraftErrors(draft, now())
+    setFieldErrors(previous => ({ ...previous, [field]: errors[field] }))
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -55,6 +73,7 @@ export function PostEventForm({ connection, now = () => new Date(), onPosted, sh
     setSubmitting(false)
     if (result.status === 'invalid') {
       setFieldErrors(result.fieldErrors)
+      setValidatedFields({ title: true, hostName: true, description: true, location: true, date: true, start: true, end: true })
       setFormError(result.error)
       return
     }
@@ -64,95 +83,18 @@ export function PostEventForm({ connection, now = () => new Date(), onPosted, sh
       return
     }
     setFieldErrors({})
+    setValidatedFields({})
     setNotice(result.message)
     // Keep host name, date and times to make posting a similar event quicker.
     setDraft(current => ({ ...current, title: '', description: '', location: '' }))
     onPosted?.(result.event)
-    if (showPostedEvents) await refresh()
   }
-
-  // Connect an input to its error message for screen readers.
-  const errorProps = (field: keyof EventDraft) => fieldErrors[field]
-    ? { 'aria-invalid': true as const, 'aria-describedby': `post-${field}-error` }
-    : {}
-  const fieldError = (field: keyof EventDraft) => fieldErrors[field] &&
-    <small className="field-error" id={`post-${field}-error`}>{fieldErrors[field]}</small>
 
   return (
     <>
-      {showConnectionNotice && !shared && <p className="storage-alert" data-testid="catalog-not-shared">
-        Shared catalog not connected. Posts are saved in this browser only, and other people can't see them.
-      </p>}
-      <form className="event-form" onSubmit={handleSubmit} noValidate aria-busy={submitting}><fieldset className="sq-post-fieldset" disabled={submitting}>
-        {/* Each label points at its control with htmlFor/id instead of wrapping it.
-            A wrapped textarea would include its typed text in its accessible name. */}
-        <div className="field">
-          <label htmlFor="post-title"><span>EVENT NAME</span></label>
-          <input id="post-title" type="text" value={draft.title} required maxLength={CATALOG_LIMITS.title} {...errorProps('title')}
-            placeholder="e.g. Art Workshop" onChange={(e) => update('title', e.target.value)} />
-          {fieldError('title')}
-        </div>
-        <div className="field">
-          <label htmlFor="post-hostName"><span>HOST NAME</span></label>
-          <input id="post-hostName" type="text" value={draft.hostName} required maxLength={CATALOG_LIMITS.hostName} {...errorProps('hostName')}
-            placeholder="e.g. SCU Photography Club" onChange={(e) => update('hostName', e.target.value)} />
-          {fieldError('hostName')}
-        </div>
-        <div className="field">
-          <label htmlFor="post-description"><span>DESCRIPTION</span></label>
-          <textarea id="post-description" value={draft.description} required maxLength={CATALOG_LIMITS.description} rows={3} {...errorProps('description')}
-            placeholder="What makes this event special?" onChange={(e) => update('description', e.target.value)} />
-          {fieldError('description')}
-        </div>
-        <div className="field">
-          <label htmlFor="post-location"><span>LOCATION</span></label>
-          <input id="post-location" type="text" value={draft.location} required maxLength={CATALOG_LIMITS.location} {...errorProps('location')}
-            placeholder="e.g. Student Center" onChange={(e) => update('location', e.target.value)} />
-          {fieldError('location')}
-        </div>
-        <div className="field">
-          <label htmlFor="post-date"><span>DATE</span></label>
-          <input id="post-date" type="date" value={draft.date} min={campusNow(now()).date} required {...errorProps('date')}
-            onChange={(e) => update('date', e.target.value)} />
-          {fieldError('date')}
-        </div>
-        <div className="time-row">
-          <div className="field">
-            <label htmlFor="post-start"><span>START</span></label>
-            <input id="post-start" type="time" value={draft.start} required {...errorProps('start')} onChange={(e) => update('start', e.target.value)} />
-            {fieldError('start')}
-          </div>
-          <div className="field">
-            <label htmlFor="post-end"><span>END</span></label>
-            <input id="post-end" type="time" value={draft.end} required {...errorProps('end')} onChange={(e) => update('end', e.target.value)} />
-            {fieldError('end')}
-          </div>
-        </div>
-        <button className="primary-button" type="submit" disabled={submitting}>
-          {submitting ? 'Posting…' : '+ Post event'}
-        </button>
-      </fieldset></form>
+      <PostEventFields draft={draft} fieldErrors={fieldErrors} submitting={submitting} now={now} onSubmit={handleSubmit} onChange={update} onBlur={validateOnBlur} />
       {formError && <p className="error" role="alert">{formError}</p>}
       {notice && <p className="success" role="status">{notice}</p>}
-
-      {showPostedEvents && <section className="posted-events" aria-labelledby="posted-heading">
-        <h3 id="posted-heading">Posted events <small>{shared ? 'shared catalog' : 'this browser only'}</small></h3>
-        {posted.loading && posted.events.length === 0 ? <p className="library-empty">Loading posted events…</p>
-          : posted.error ? <p className="error" role="alert">{posted.error}
-              <button type="button" className="undo-button" onClick={refresh}>Try again</button></p>
-          : posted.events.length === 0 ? <p className="library-empty">No upcoming events posted yet.</p>
-          : <ul className="saved-list">
-              {posted.events.map(item => (
-                <li key={item.id}>
-                  <div>
-                    <strong>{item.title}</strong>
-                    <span>Hosted by {item.hostName}</span>
-                    <span>{displayDate(item.date)} · {displayTime(item.start)}–{displayTime(item.end)} · {item.location}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>}
-      </section>}
     </>
   )
 }

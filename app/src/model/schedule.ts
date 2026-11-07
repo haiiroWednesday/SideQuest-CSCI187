@@ -1,15 +1,18 @@
 // MODEL: device-local plan identities, ordering, overlap rules and persistence.
 // No React or Controller imports. Catalog events are never changed by a plan.
-import { isValidDate, toMinutes, type CampusEvent } from './events'
-import { overlapSpan } from './eventTiming'
 import { CATALOG_LIMITS } from './eventCatalog'
+import { overlapSpan } from './eventTiming'
+import { isValidDate, toMinutes, type LegacyCampusEvent } from './events'
+
+// Saved plans resolve current catalog records and archived browser-local records.
+export type ScheduleEvent = LegacyCampusEvent & { hostName?: string }
 
 
 // Schedule accepts catalog events using the M2 field limits. Legacy M1
 // events lack hostName and may lack description; they remain readable.
 // Do not reuse the M1 isCampusEvent guard: its 500-character description
 // limit incorrectly rejects valid 501–2000-character public events.
-export function isScheduleEvent(value: unknown): value is CampusEvent {
+export function isScheduleEvent(value: unknown): value is ScheduleEvent {
   if (typeof value !== 'object' || value === null) return false
   const item = value as Record<string, unknown>
   const text = (key: string, max: number) =>
@@ -77,12 +80,12 @@ export function removePlannedId(ids: readonly string[], id: string): string[] {
   return ids.filter(plannedId => plannedId !== id)
 }
 
-export function compareEventTime(a: CampusEvent, b: CampusEvent): number {
+export function compareEventTime(a: ScheduleEvent, b: ScheduleEvent): number {
   return a.date.localeCompare(b.date) || a.start.localeCompare(b.start) ||
     a.end.localeCompare(b.end) || a.id.localeCompare(b.id)
 }
 
-export function resolvePlannedEvents(ids: readonly string[], catalog: readonly CampusEvent[]) {
+export function resolvePlannedEvents(ids: readonly string[], catalog: readonly ScheduleEvent[]) {
   const byId = new Map(catalog.filter(isScheduleEvent).map(event => [event.id, event]))
   return {
     events: ids.flatMap(id => byId.has(id) ? [byId.get(id)!] : []).sort(compareEventTime),
@@ -91,15 +94,15 @@ export function resolvePlannedEvents(ids: readonly string[], catalog: readonly C
 }
 
 // Half-open intervals: 10:00-11:00 and 11:00-12:00 do not overlap.
-export function eventsOverlap(a: CampusEvent, b: CampusEvent): boolean {
+export function eventsOverlap(a: ScheduleEvent, b: ScheduleEvent): boolean {
   return overlapSpan(a, b) !== null
 }
 
 // One representative conflicting event per plan keeps a busy schedule's output
 // linear in size. Sorting + a sweep also avoids comparing every possible pair.
-export function scheduleConflicts(events: readonly CampusEvent[]): Map<string, CampusEvent> {
-  const conflicts = new Map<string, CampusEvent>()
-  let furthest: CampusEvent | undefined
+export function scheduleConflicts(events: readonly ScheduleEvent[]): Map<string, ScheduleEvent> {
+  const conflicts = new Map<string, ScheduleEvent>()
+  let furthest: ScheduleEvent | undefined
   for (const event of [...events].sort(compareEventTime)) {
     if (!furthest || event.date !== furthest.date) {
       furthest = event

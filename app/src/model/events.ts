@@ -1,7 +1,6 @@
-// MODEL: Event data, time rules, and storage. No built-in fictional events.
-// The event's TypeScript type lists the fields we expect. The optional
-// description lets older saved events without that field continue to work.
-export type CampusEvent = {
+// MODEL: historical M1 browser-local events, validation and storage recovery.
+// Optional descriptions and local-clock rules preserve existing saved records.
+export type LegacyCampusEvent = {
   id: string
   title: string
   description?: string // optional for compatibility with events already saved in M1
@@ -11,9 +10,13 @@ export type CampusEvent = {
   end: string
 }
 
-// A draft is an event before the app assigns its unique ID.
-// Omit removes the ID field from the draft's TypeScript type.
-export type EventDraft = Omit<CampusEvent, 'id'>
+// Historical drafts receive IDs when successfully stored.
+export type LegacyEventDraft = Omit<LegacyCampusEvent, 'id'>
+
+// Preserve old export names for M1 fixtures and historical browser storage.
+// The active shared catalog uses CampusEvent/EventDraft from eventCatalog.ts.
+export type CampusEvent = LegacyCampusEvent
+export type EventDraft = LegacyEventDraft
 
 export const STORAGE_KEY = 'sidequest.created-events.v1'
 export const MAX_EVENT_TITLE_LENGTH = 100
@@ -31,8 +34,6 @@ export function todayLocalISO(now: Date = new Date()): string {
 
 // Turn a strict HH:MM time into minutes after midnight; null means invalid.
 export function toMinutes(time: string): number | null {
-  // ⏰ This regular expression allows hours 00–23 and minutes 00–59.
-  // ^ and $ require the entire string to match, not just part of it.
   const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(time)
   if (!match) return null
   return Number(match[1]) * 60 + Number(match[2])
@@ -41,8 +42,7 @@ export function toMinutes(time: string): number | null {
 // Check the date format and the real calendar day. JavaScript may roll
 // impossible dates into the next month, so compare the parsed parts back.
 export function isValidDate(date: string): boolean {
-  // 📅 \d{4} means four digits; \d{2} means exactly two digits.
-  // A matching pattern is only the first check: February 30 still looks valid.
+  // A syntactically valid date can still be impossible (for example, February 30).
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date)
   if (!match) return false
   const year = Number(match[1])
@@ -54,7 +54,7 @@ export function isValidDate(date: string): boolean {
 }
 
 
-// DOMAIN RULES: independent of React, HTML form controls, storage and the Controller.
+// Domain rules remain independent of UI components and storage adapters.
 export type EventSearchWindow = { date: string; start: string; end: string }
 export type EventDraftValidation = { event: CampusEvent | null; error: string | null }
 
@@ -65,8 +65,7 @@ export function validateEventDraft(
 ): EventDraftValidation {
   const title = draft.title.trim()
   const location = draft.location.trim()
-  // ?. only calls trim when description exists; ?? uses '' when absent.
-  // This lets old event drafts omit the optional description entirely.
+  // Historical saved drafts may have no description.
   const description = draft.description?.trim() ?? ''
   if (title.length > MAX_EVENT_TITLE_LENGTH || location.length > MAX_EVENT_LOCATION_LENGTH) {
     return { event: null, error: 'Event titles and locations must be 100 characters or fewer.' }
@@ -94,13 +93,11 @@ export function validateEventDraft(
   if (draft.date === todayLocalISO(now) && start < now.getHours() * 60 + now.getMinutes()) {
     return { event: null, error: 'This event has already started. Choose a future start time.' }
   }
-  // 🔑 .some(...) is true if ANY saved event has the same ID.
-  // Duplicate titles are fine, but duplicate IDs would confuse React's list.
+  // Duplicate titles are allowed; duplicate IDs would make records ambiguous.
   if (!id.trim() || existingEvents.some(event => event.id === id)) {
     return { event: null, error: 'Could not create a unique event. Please try again.' }
   }
-  // 🧩 The ... spread adds { description } only when it's nonempty.
-  // This keeps older events without descriptions compatible.
+  // Preserve the historical storage shape when description is blank.
   return {
     event: { id, title, ...(description ? { description } : {}), location, date: draft.date, start: draft.start, end: draft.end },
     error: null,
@@ -125,10 +122,8 @@ export function matchingEvents(events: CampusEvent[], window: EventSearchWindow)
 }
 
 export type RemovedEvent = { event: CampusEvent; index: number }
-// 🗑️ Return a new list and a receipt for Undo. Keeping the original
-// list untouched avoids surprising changes elsewhere in the app.
+// Return an undo receipt without mutating the original event list.
 export function removeEventFromList(events: CampusEvent[], id: string): { events: CampusEvent[]; removed: RemovedEvent | null } {
-  // findIndex gives the position to restore later; -1 means no match.
   const index = events.findIndex(event => event.id === id)
   if (index === -1) return { events, removed: null }
   return { events: events.filter(event => event.id !== id), removed: { event: events[index], index } }
@@ -137,14 +132,12 @@ export function removeEventFromList(events: CampusEvent[], id: string): { events
 export function restoreEventInList(events: CampusEvent[], removed: RemovedEvent): CampusEvent[] {
   if (events.some(event => event.id === removed.event.id)) return events
   const restored = events.slice()
-  // splice inserts the event into a COPY of the list at its old position.
-  // Math.min also handles a list that is shorter than it used to be.
+  // Restore the original position without changing the input array.
   restored.splice(Math.min(restored.length, removed.index), 0, removed.event)
   return restored
 }
 
-// 🕰️ A saved event can be in the past even if it was valid when created.
-// The created-event list labels it instead of automatically deleting it.
+// A once-valid saved event may become past; preserve it for history.
 export function isPastEventDate(event: CampusEvent, now: Date = new Date()): boolean {
   const date = todayLocalISO(now)
   const minute = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0')
@@ -163,17 +156,16 @@ export function fitsFully(event: CampusEvent, freeDate: string, freeStart: strin
 
 export function isCampusEvent(value: unknown): value is CampusEvent {
   if (typeof value !== 'object' || value === null) return false
-  // 'as Partial' helps TypeScript inspect possible fields; it does NOT
-  // validate unknown JSON. All the checks below still have to run.
-  const item = value as Partial<CampusEvent>
+  // Saved JSON must pass runtime checks before becoming an event.
+  const item = value as Partial<LegacyCampusEvent>
+  const start = typeof item.start === 'string' ? toMinutes(item.start) : null
+  const end = typeof item.end === 'string' ? toMinutes(item.end) : null
   return typeof item.id === 'string' && item.id.trim().length > 0 &&
     typeof item.title === 'string' && item.title.trim().length > 0 && item.title.trim().length <= MAX_EVENT_TITLE_LENGTH &&
     (item.description === undefined || (typeof item.description === 'string' && item.description.length <= MAX_EVENT_DESCRIPTION_LENGTH)) &&
     typeof item.location === 'string' && item.location.trim().length > 0 && item.location.trim().length <= MAX_EVENT_LOCATION_LENGTH &&
     typeof item.date === 'string' && isValidDate(item.date) &&
-    typeof item.start === 'string' && typeof item.end === 'string' &&
-    toMinutes(item.start) !== null && toMinutes(item.end) !== null &&
-    (toMinutes(item.start) as number) < (toMinutes(item.end) as number)
+    start !== null && end !== null && start < end
 }
 
 // localStorage is a browser-only prototype store; other computers do NOT share its events.
@@ -187,12 +179,10 @@ export function readStoredEventsChecked(storage: Pick<Storage, 'getItem'>): Stor
   try {
     const saved = storage.getItem(STORAGE_KEY)
     if (saved === null) return { events: [], blocked: false }
-    // JSON.parse turns saved text into data; it can also throw on broken JSON.
-    // We keep it typed as unknown until the event checks succeed.
+    // Saved JSON remains untrusted until every record passes validation.
     const parsed: unknown = JSON.parse(saved)
     if (!Array.isArray(parsed)) return { events: [], blocked: true }
-    // 🔑 A Set remembers IDs we already saw, so repeated saved records
-    // do not create duplicate events during recovery.
+    // Keep the first valid occurrence of a saved ID before recovery.
     const ids = new Set<string>()
     const events: CampusEvent[] = []
     for (const value of parsed) {

@@ -1,16 +1,12 @@
 /// <reference types="vite/client" />
-// SERVER-ONLY ADAPTER: the real shared EventCatalog storage, a Supabase Postgres
-// `public.events` table (schema: supabase/migrations/*_create_events.sql).
-//
-// 🔐 Only the PUBLISHABLE key ever belongs here. It is public by design and
-// is retained server-side for this course and relies on the RLS policies and grants in the migration. Never put a
-// service-role or secret key in Vite code, .env files sent to the browser, or Git.
-// Only the Node API imports this configured adapter. Browser code uses the
-// same-origin HTTP port and receives no Supabase URL, key or auth headers.
+// SERVER-ONLY ADAPTER: map the shared catalog to Supabase public.events.
+// Use a publishable or legacy anonymous key, limited by SQL grants and RLS.
+// Never expose privileged keys or Supabase configuration in the browser bundle.
+// Browser requests use the same-origin HTTP catalog API.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { createEventCatalog, type EventCatalogPort, type EventRow, type EventTable } from './eventCatalog.ts'
+import { createEventCatalog, type EventCatalogPort, type EventRow, type EventTable } from './eventCatalog'
 
-const COLUMNS = 'id,title,host_name,description,location,event_date,start_time,end_time'
+const EVENT_COLUMNS = 'id,title,host_name,description,location,event_date,start_time,end_time'
 
 export function createSupabaseEventTable(client: SupabaseClient): EventTable {
   const events = () => client.from('events')
@@ -18,18 +14,18 @@ export function createSupabaseEventTable(client: SupabaseClient): EventTable {
     async insert(row) {
       // The database fills in id and created_at. Anonymous callers may only
       // INSERT the seven columns listed in toEventRow.
-      const { data, error } = await events().insert(row).select(COLUMNS).single()
+      const { data, error } = await events().insert(row).select(EVENT_COLUMNS).single()
       if (error) throw error
       return data as EventRow
     },
     async selectFromDate(date) {
-      const { data, error } = await events().select(COLUMNS).gte('event_date', date)
+      const { data, error } = await events().select(EVENT_COLUMNS).gte('event_date', date)
         .order('event_date').order('start_time').order('id')
       if (error) throw error
       return (data ?? []) as EventRow[]
     },
     async selectById(id) {
-      const { data, error } = await events().select(COLUMNS).eq('id', id).maybeSingle()
+      const { data, error } = await events().select(EVENT_COLUMNS).eq('id', id).maybeSingle()
       if (error) throw error
       return (data as EventRow | null) ?? null
     },

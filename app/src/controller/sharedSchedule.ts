@@ -1,10 +1,9 @@
 // Resolve local plan identities through the agreed async port, including past events.
 import { readCatalogWithDeadline } from './catalogReads'
 import { createScheduleController, type ScheduleResult } from './personalSchedule'
-import { browserStorage, type EventCatalogPort } from './postEvent'
-import type { CampusEvent } from '../model/events'
-import { isCatalogEvent } from '../model/eventCatalog'
-import { PLANNED_IDS_KEY, type PlanStorage } from '../model/schedule'
+import { browserStorage } from './postEvent'
+import { isCatalogEvent, type EventCatalogPort } from '../model/eventCatalog'
+import { PLANNED_IDS_KEY, type PlanStorage, type ScheduleEvent } from '../model/schedule'
 
 export type SharedScheduleResult = ScheduleResult & {
   loading: boolean
@@ -16,7 +15,7 @@ export function createSharedScheduleController(
   catalog: EventCatalogPort,
   getStorage: () => PlanStorage = browserStorage,
 ) {
-  const core = (events: readonly CampusEvent[] = []) => createScheduleController(events, getStorage)
+  const core = (events: readonly ScheduleEvent[] = []) => createScheduleController(events, getStorage)
   const decorate = (result: ScheduleResult): SharedScheduleResult => ({
     ...result, loading: false, unresolvedIds: [], lookupError: null,
   })
@@ -24,10 +23,10 @@ export function createSharedScheduleController(
   async function resolve() {
     const snapshot = core().read()
     if (snapshot.schedule.blocked) {
-      return { events: [] as CampusEvent[], result: decorate({ ...snapshot, schedule: { ...snapshot.schedule, missingIds: [] } }) }
+      return { events: [] as ScheduleEvent[], result: decorate({ ...snapshot, schedule: { ...snapshot.schedule, missingIds: [] } }) }
     }
     const resolved = await Promise.allSettled(snapshot.schedule.ids.map(id => readCatalogWithDeadline(() => catalog.getById(id))))
-    const events: CampusEvent[] = []
+    const events: ScheduleEvent[] = []
     const missing = new Set<string>()
     const failed = new Set<string>()
     resolved.forEach((outcome, index) => {

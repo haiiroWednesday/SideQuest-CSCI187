@@ -1,15 +1,7 @@
-// MODEL: the shared public EventCatalog (M2 contract, owner: Daven).
-//
-// The types and the EventCatalogPort below copy the "Shared Event data
-// contract" in docs/MVP_TEAM_PLAYBOOK.md word for word. Browse, Schedule and
-// posting code should depend ONLY on EventCatalogPort, never on database
-// column names or on a specific adapter.
-//
-// ⚠️ Not the same as the M1 CampusEvent in ./events.ts. That older type has
-// no hostName, keeps description optional, and backs the browser-only
-// `sidequest.created-events.v1` list. The posting PR migrates the form and
-// tests to this contract; until then both types exist side by side.
-import { isValidDate, toMinutes } from './events.ts'
+// MODEL: shared M2 event contract, validation and storage-independent catalog.
+// Consumers depend on EventCatalogPort; adapters translate database rows.
+// Historical M1 event data remains in events.ts for existing browser records.
+import { isValidDate, toMinutes } from './events'
 
 export type CampusEvent = {
   id: string
@@ -84,9 +76,9 @@ export function trimDraft(draft: EventDraft): EventDraft {
   }
 }
 
-// Storage rules that hold for every caller, matching the database's CHECK
-// constraints. Posting-form rules such as "not in the past" live in the
-// posting controller (controller/postEvent.ts).
+// Validate field shape and field lengths for every caller, matching the
+// database CHECK constraints. The separate catalogPostingErrors() adds the
+// campus-time rule; createEventCatalog() enforces both before every insert.
 //
 // Note: JavaScript counts an emoji as 2 characters, while Postgres counts it as 1.
 // The app is therefore slightly stricter than the database, never looser.
@@ -194,6 +186,11 @@ export type EventRow = {
 
 export type NewEventRow = Omit<EventRow, 'id'>
 
+// Browser and in-memory adapters match the SQL TIME format on reads.
+export function toSqlTime(time: string): string {
+  return time.length === 5 ? `${time}:00` : time
+}
+
 export interface EventTable {
   insert(row: NewEventRow): Promise<EventRow>
   // Rows whose event_date is on or after `date`. The catalog sorts them and
@@ -202,8 +199,7 @@ export interface EventTable {
   selectById(id: string): Promise<EventRow | null>
 }
 
-// All camelCase ↔ snake_case translation happens in these two functions
-// and nowhere else. See playbook "Connecting React to the catalog", step 3.
+// Translate between application fields and database columns at this boundary.
 export function toEventRow(draft: EventDraft): NewEventRow {
   return {
     title: draft.title,

@@ -1,6 +1,6 @@
 // VIEW: draw the Discover screen the Controller prepared. No storage, matching,
 // clock reads, date or time comparisons, or Model imports belong here.
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   presentDiscover, type DiscoverScreen, type FreeWindow, type ScreenEvent, type StubModel,
 } from '../controller/presentScreens'
@@ -8,8 +8,14 @@ import '@fontsource/instrument-serif/400.css'
 import '@fontsource/instrument-serif/400-italic.css'
 import '@fontsource-variable/instrument-sans/wdth.css'
 import './discover.css'
+import './post.css'
+import './toasts.css'
+import './event-details.css'
 import logoUrl from './assets/sidequest-logo-red.svg'
 import drawingUrl from './assets/mission-arcade-trail.svg'
+import { EventDetailContent, type SelectedDetailState } from './EventDetailContent'
+import { FreeWindowForm } from './FreeWindowForm'
+import { useMobileDetailFocus, usePhoneViewport } from './useMobileDetailFocus'
 
 export type { FreeWindow } from '../controller/presentScreens'
 export type DiscoverEvent = ScreenEvent
@@ -108,11 +114,6 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
   )
 }
 
-// Long titles get a smaller size in the details card, so the full title fits without taking over the card.
-function titleSizeClass(title: string): string | undefined {
-  return title.length > 80 ? 'sq-title-xlong' : title.length > 40 ? 'sq-title-long' : undefined
-}
-
 export function DayBubble({ dow, dayNumber, monthTag }: { dow: string; dayNumber: number; monthTag: string | null }) {
   return (
     <div className="sq-bubble" aria-hidden="true">
@@ -121,11 +122,7 @@ export function DayBubble({ dow, dayNumber, monthTag }: { dow: string; dayNumber
   )
 }
 
-export type SelectedDetailState =
-  | { id: string; status: 'loading' }
-  | { id: string; status: 'missing' }
-  | { id: string; status: 'error'; message: string }
-  | { id: string; status: 'ready'; stub: StubModel }
+export type { SelectedDetailState } from './EventDetailContent'
 
 export type DiscoverViewProps = {
   screen: DiscoverScreen
@@ -148,37 +145,8 @@ export function DiscoverView({
   const [sheetOpen, setSheetOpen] = useState(false)
   const sheet = useRef<HTMLElement>(null)
   const trigger = useRef<HTMLElement | null>(null)
-  const [phone, setPhone] = useState(() => typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches)
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') return
-    const query = window.matchMedia('(max-width: 760px)')
-    const change = () => setPhone(query.matches)
-    query.addEventListener('change', change)
-    return () => query.removeEventListener('change', change)
-  }, [])
-  const closeSheet = () => setSheetOpen(false)
-  useEffect(() => {
-    if (!phone || !sheetOpen || !sheet.current) return
-    const panel = sheet.current
-    const originalOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    panel.querySelector<HTMLElement>('button:not(:disabled), a[href]')?.focus()
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { event.preventDefault(); closeSheet(); return }
-      if (event.key !== 'Tab') return
-      const controls = [...panel.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), [tabindex="0"]')]
-      const first = controls[0], last = controls[controls.length - 1]
-      if (!first) return
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
-    }
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.body.style.overflow = originalOverflow
-      document.removeEventListener('keydown', onKey)
-      if (trigger.current?.isConnected) trigger.current.focus()
-    }
-  }, [phone, sheetOpen])
+  const phone = usePhoneViewport()
+  const closeSheet = useCallback(() => setSheetOpen(false), [])
   const modal = phone && sheetOpen
   const stubs = screen.days.flatMap(day => day.events)
   // Keep the student's pick while it is still listed; otherwise fall back to the first event.
@@ -190,30 +158,13 @@ export function DiscoverView({
   useEffect(() => {
     if (screen.status !== 'ready' || screen.count === 0) setSheetOpen(false)
   }, [screen.status, screen.count])
-  // Planning can disable the focused button while the sheet stays open.
-  // Keep keyboard focus on an enabled control inside the dialog.
-  useEffect(() => {
-    const panel = sheet.current
-    if (!modal || !panel) return
-    const active = document.activeElement
-    if (!panel.contains(active) || (active instanceof HTMLButtonElement && active.disabled)) {
-      panel.querySelector<HTMLElement>('button:not(:disabled), a[href]')?.focus()
-    }
-  }, [modal, selected?.id, selected?.planned, screen.planningBlocked])
+  useMobileDetailFocus({
+    phone, sheetOpen, panelRef: sheet, returnFocusRef: trigger, onClose: closeSheet,
+    selectedId: selected?.id, selectedPlanned: selected?.planned, planningBlocked: screen.planningBlocked,
+  })
   const ready = screen.status === 'ready'
   const free = screen.freeWindow
 
-  const field = (key: keyof FreeWindow, label: string, type: 'date' | 'time') => (
-    <label className={`sq-free-field${free?.values[key] ? ' sq-set' : ''}`}>
-      <span>{label}</span>
-      <input
-        type={type}
-        value={free?.values[key] ?? ''}
-        aria-describedby={free?.error ? 'sq-free-error' : free?.hint ? 'sq-free-hint' : undefined}
-        onChange={event => free && onFreeWindowChange?.({ ...free.values, [key]: event.target.value })}
-      />
-    </label>
-  )
 
   return (
     <div className="sq-discover-page">
@@ -225,22 +176,7 @@ export function DiscoverView({
           <img className="sq-campus-drawing" src={drawingUrl} alt="" aria-hidden="true" />
         </section>
 
-        {free && onFreeWindowChange && (
-          <form inert={modal || undefined} className="sq-free" role="search" aria-label="When are you free?" onSubmit={event => event.preventDefault()}>
-            <span className="sq-free-label" aria-hidden="true">When are you free?</span>
-            {field('date', 'Free on', 'date')}
-            {field('start', 'from', 'time')}
-            {field('end', 'until', 'time')}
-            {free.fitText && ready && <span className={`sq-free-count${free.fitCount === 0 ? ' sq-none' : ''}`} role="status">{free.fitText}</span>}
-            {free.canClear && (
-              <button type="button" className="sq-free-clear" onClick={() => onFreeWindowChange({ date: '', start: '', end: '' })}>
-                ✕ Clear
-              </button>
-            )}
-            {free.hint && <p id="sq-free-hint" className="sq-free-hint" role="status">{free.hint}</p>}
-            {free.error && <p id="sq-free-error" className="sq-free-error" role="alert">{free.error}</p>}
-          </form>
-        )}
+        {free && onFreeWindowChange && <FreeWindowForm free={free} ready={ready} onWindowChange={onFreeWindowChange} disabledByDialog={modal} />}
 
         <div className="sq-board">
           <section inert={modal || undefined} className="sq-results" aria-labelledby="sq-events-heading">
@@ -295,63 +231,7 @@ export function DiscoverView({
             )}
           </section>
           {ready && <aside ref={sheet} className={`sq-sticker${sheetOpen ? ' sq-open' : ''}`} hidden={phone && !sheetOpen} role={modal ? 'dialog' : undefined} aria-modal={modal || undefined} aria-labelledby="sq-detail-title">
-            {selected ? (
-              <div className="sq-sticker-card sq-ticket-scroll" key={selected.id}>
-                <button type="button" className="sq-sheet-close" aria-label="Close details" onClick={closeSheet}>×</button>
-                {verified?.status === 'loading' ? (
-                  <div className="sq-detail-verification" role="status">
-                    <h2 id="sq-detail-title">{selected.title}</h2>
-                    <p>Checking the latest event details…</p>
-                  </div>
-                ) : verified?.status === 'missing' ? (
-                  <div className="sq-detail-verification" role="status">
-                    <h2 id="sq-detail-title">{selected.title}</h2>
-                    <p>This event is no longer available in the public catalog.</p>
-                  </div>
-                ) : verified?.status === 'error' ? (
-                  <div className="sq-detail-verification" role="alert">
-                    <h2 id="sq-detail-title">{selected.title}</h2>
-                    <p>{verified.message}</p>
-                    {onRetryDetail && <button type="button" className="sq-text-button" onClick={onRetryDetail}>Retry event details</button>}
-                  </div>
-                ) : (
-                <>
-                <div className="sq-sticker-top">
-                  <div className="sq-sticker-time">
-                    {selected.live && <span className={`sq-nx sq-live-${selected.live.kind}`}>{selected.live.text}</span>}
-                    <b>{selected.start.time}</b><i>{selected.start.ampm}</i>
-                    <span className="sq-sticker-until">until {selected.endText}<em>{selected.durationText}</em></span>
-                  </div>
-                  <div className="sq-sticker-day" aria-hidden="true">
-                    <small>{selected.dow}</small>
-                    <b>{selected.dayNumber}</b>
-                    <small>{selected.month}</small>
-                  </div>
-                </div>
-                <div className="sq-sticker-body">
-                <h2 id="sq-detail-title" className={titleSizeClass(selected.title)}>{selected.title}</h2>
-                <dl className="sq-facts">
-                  <dt>Host</dt>
-                  <dd className={selected.host ? undefined : 'sq-unset'}>{selected.host ?? 'Host not provided'}</dd>
-                  <dt>Where</dt><dd>{selected.location}</dd>
-                  <dt>Date</dt><dd>{selected.dateText}</dd>
-                </dl>
-                <p className="sq-sticker-desc">{selected.description ?? 'No description was provided.'}</p>
-                </div>
-                {onPlan && (
-                  <button className="sq-plan-button" type="button" disabled={selected.planned || screen.planningBlocked} onClick={() => onPlan(selected.id)}>
-                    {selected.planned ? 'In My Schedule' : '+ Plan to attend'}
-                  </button>
-                )}
-                </>
-                )}
-              </div>
-            ) : (
-              <div className="sq-sticker-placeholder">
-                <span className="sq-detail-eyebrow">EVENT DETAILS</span>
-                <h2 id="sq-detail-title">Your next discovery.</h2>
-              </div>
-            )}
+            <EventDetailContent selected={selected} verified={verified} onRetryDetail={onRetryDetail} onPlan={onPlan} planningBlocked={screen.planningBlocked} onClose={closeSheet} />
           </aside>}
         </div>
         <div className={`sq-scrim${sheetOpen && selected && ready ? ' sq-open' : ''}`} aria-hidden="true" onClick={closeSheet} />

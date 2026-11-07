@@ -1,4 +1,4 @@
-// Professor Kandel's architecture requirement: reusable business rules live in Model.
+// Regression coverage: reusable domain rules stay in the Model.
 import { describe, expect, it } from 'vitest'
 import {
   validateEventDraft, validateSearchWindow, matchingEvents, removeEventFromList,

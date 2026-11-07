@@ -4,7 +4,7 @@
 import { expect, it } from 'vitest'
 import { isValidDate } from '../src/model/events'
 
-// 📅 Leap-year trap: a year ending in 00 is a leap year only when it is
+// Leap-year trap: a year ending in 00 is a leap year only when it is
 // divisible by 400. That's why 2000 works but 1900 does not.
 it('accepts February 29 in a century year divisible by 400', () => {
   expect(isValidDate('2000-02-29')).toBe(true)
