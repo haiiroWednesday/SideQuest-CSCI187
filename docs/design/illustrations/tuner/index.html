@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Print Style Tuner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#fbf6ed;--sheet:#fffdf7;--ink:#2b211f;--muted:#6f625b;--rule:#e6dccd;--red:#a32035;--gold:#e8aa24;--chip:#f3ead9;--bg:#efe6d8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#fbf6ed;--sheet:#2a2220;--ink:#f3ebe0;--muted:#bfb1a6;--rule:#463a36;--red:#e06a7c;--chip:#3a2f2c;--bg:#1f1917}}
+:root[data-theme="dark"]{--paper:#fbf6ed;--sheet:#2a2220;--ink:#f3ebe0;--muted:#bfb1a6;--rule:#463a36;--red:#e06a7c;--chip:#3a2f2c;--bg:#1f1917}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 Inter,system-ui,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 16px 60px}
+.k{font:700 11px/1 Inter,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--red)}
+h1{font:400 clamp(34px,5vw,56px)/1 Fraunces,Georgia,serif;margin:10px 0 8px;letter-spacing:-.01em} h1 em,h2 em{font-style:italic}
+.lede{color:var(--muted);max-width:640px;margin:0 0 22px}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+@media (max-width:860px){.stage{grid-template-columns:1fr}}
+.canvasbox{background:var(--paper);border-radius:18px;padding:18px;box-shadow:0 1px 0 rgba(0,0,0,.05),0 14px 30px rgba(48,36,33,.1);position:relative}
+.canvasbox canvas{width:100%;height:auto;display:block}
+.busy{position:absolute;right:16px;top:14px;font:600 11px Inter;color:#6f625b;opacity:0;transition:opacity .2s}.busy.on{opacity:1}
+.cap{font:400 13px/2 Fraunces,serif;letter-spacing:.16em;color:#2b211f;margin:8px 4px 0}
+.side{background:var(--sheet);border-radius:18px;padding:14px;border:1px solid var(--rule)}
+.side h3{font:400 20px Fraunces,serif;margin:4px 0 10px}
+.pick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.pick button,.presets button,.act button{font:600 12px Inter;border:0;border-radius:999px;padding:7px 11px;background:var(--chip);color:var(--ink);cursor:pointer}
+.pick button.on,.presets button.on{background:var(--ink);color:var(--sheet)}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.act{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}.act button.main{background:var(--red);color:#fff}
+#pane{margin-top:6px}
+.note{font-size:12.5px;color:var(--muted);margin-top:10px}
+pre{white-space:pre-wrap;font:12px/1.5 ui-monospace,Menlo,monospace;background:var(--chip);padding:10px;border-radius:10px;margin:10px 0 0;display:none}
+h2{font:400 34px/1.05 Fraunces,serif;margin:46px 0 6px}
+.recipes{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:16px}
+.rc{background:var(--sheet);border:1px solid var(--rule);border-radius:16px;padding:16px}
+.rc h4{font:400 21px Fraunces,serif;margin:2px 0 8px}
+.rc ul{margin:0;padding-left:18px;font-size:13.5px}.rc li{margin:4px 0}
+.rc .use{margin-top:10px;font:600 12px Inter;border:0;border-radius:999px;padding:7px 12px;background:var(--chip);color:var(--ink);cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="k">SideQuest · drawing</div>
+  <h1>Print style <em>tuner</em></h1>
+  <p class="lede">The same code that draws the printed pictures, running here. Pick a picture, move a slider, and it redraws. When something looks right, save it as a preset or copy the numbers so the next drawings use them.</p>
+  <div class="stage">
+    <div class="canvasbox"><canvas id="cv"></canvas><div class="busy" id="busy">drawing…</div><div class="cap" id="cap"></div></div>
+    <div class="side">
+      <h3>Picture</h3>
+      <div class="pick" id="pick"></div>
+      <h3>Presets</h3>
+      <div class="presets" id="presets"></div>
+      <div id="pane"></div>
+      <div class="act"><button class="main" id="save">Save as preset</button><button id="copy">Copy values</button><button id="reset">Reset</button></div>
+      <pre id="out"></pre>
+      <div class="note">Saved presets stay in this browser only.</div>
+    </div>
+  </div>
+
+  <h2>Approved <em>recipes</em></h2>
+  <p class="lede">Four decisions to reuse, so every new picture starts from the same rules instead of a fresh guess. Each one loads its settings into the tuner.</p>
+  <div class="recipes" id="recipes"></div>
+</div>
+<script type="module">
+import { Pane } from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
+import { Art } from '../engine.mjs';
+import { P } from '../scenes/printkit.mjs';
+const SCENES = [
+  ['pwisteria', 'Wisteria', 'a few weeks of wisteria, then it’s gone.'], ['proses', 'Roses', 'picked on the way to somewhere else.'], ['ppicnic', 'Picnic', 'bring something to share.'],
+  ['pcamera', 'Camera', 'take some pictures, you’ll want them later.'], ['pbottle', 'Bottle', 'they’ll write back when they land.'], ['preader', 'Reader', 'forty minutes under a tree.'],
+  ['plamp', 'Study lamp', 'one more chapter, then bed.'], ['pposter', 'Poster, brush', 'observatory open night.'], ['pposterriso', 'Poster, riso', 'observatory open night.']];
+const DEFAULTS = { ...P };
+const BUILTIN = {
+  'Gel plate': { ...DEFAULTS },
+  'Riso': { ...DEFAULTS, reg: 3.5, mottle: .25, speck: .9, rim: .05, dot: 6 },
+  'Dry brush': { ...DEFAULTS, laneDry: .45, streak: .5, bristle: 1.15, dry: .3, runout: .2 },
+  'Quiet': { ...DEFAULTS, mottle: .2, speck: .35, rough: .7, streak: .15, shadow: .06, rim: .1 },
+  'Rough': { ...DEFAULTS, mottle: .7, speck: 1, rough: 2.4, dry: .35, runout: .25, rimTear: 9, shadow: .2 }};
+const RECIPES = [
+  ['A plant', 'Wisteria, roses, a leaf spray', ['Draw the wood first as one dry-brush line, thick where it is oldest.', 'Flowers are pressed one by one in two or three tints of one colour, pale where they open, deep at the tip.', 'Leaves in one olive, with no outline.', 'Leave air between clusters, and give each one its own length.'], 'Gel plate', 'pwisteria'],
+  ['An object', 'A cup, a camera, a bottle', ['Build the body first as one silhouette. Every detail follows that body.', 'Shade with a two-ink dither across the object’s own curve.', 'Highlights are short dry strokes along the shoulder.', 'One flat slab of colour behind it, never a scene.'], 'Dry brush', 'pbottle'],
+  ['A place', 'The observatory, a picnic, a desk', ['Three values only: a dark block, a mid block, the paper.', 'One subject. The rest is two or three large flat shapes.', 'Read it at 60 px wide before calling it done.', 'One small warm accent (a moon, a mug, a flag).'], 'Quiet', 'ppicnic'],
+  ['A poster', 'Events, recaps', ['Two or three inks, overprinted, slightly off register.', 'Halftone for sky and gradients; flat ink for the subject.', 'Save it for posters and recaps. It is too loud for cards.', 'Caption in spaced serif, lower case, one line.'], 'Riso', 'pposterriso']];
+const cv = document.getElementById('cv'), busy = document.getElementById('busy');
+let scene = 'pwisteria', mods = {}, timer = 0, preset = 'Gel plate';
+const load = async (n) => mods[n] || (mods[n] = await import('../scenes/' + n + '.mjs'));
+async function draw() {
+  busy.classList.add('on'); await new Promise((r) => setTimeout(r, 30));
+  try { const m = await load(scene), [W, H] = m.size, A = new Art(cv, W, H, Math.min(2, (window.devicePixelRatio || 1)), 'print', 1);
+    m.draw(A); } catch (e) { console.error(e); }
+  busy.classList.remove('on'); document.getElementById('cap').textContent = SCENES.find((s) => s[0] === scene)[2];
+}
+const redraw = () => { clearTimeout(timer); timer = setTimeout(draw, 160); };
+const pick = document.getElementById('pick');
+for (const [n, label] of SCENES) { const b = document.createElement('button'); b.textContent = label; b.onclick = () => { scene = n; [...pick.children].forEach((c) => c.classList.toggle('on', c === b)); draw(); }; if (n === scene) b.classList.add('on'); pick.append(b); }
+const pane = new Pane({ container: document.getElementById('pane') });
+const f1 = pane.addFolder({ title: 'Printed ink' }), f2 = pane.addFolder({ title: 'Dry brush' }), f3 = pane.addFolder({ title: 'Paper and riso' });
+f1.addBinding(P, 'mottle', { min: 0, max: 1.2, step: .01, label: 'blotchy' }); f1.addBinding(P, 'speck', { min: 0, max: 1.4, step: .01, label: 'specks' }); f1.addBinding(P, 'rim', { min: 0, max: .6, step: .01, label: 'ink at edge' }); f1.addBinding(P, 'pool', { min: 0, max: .4, step: .01, label: 'pooling' }); f1.addBinding(P, 'rough', { min: 0, max: 4, step: .05, label: 'rough edges' });
+f2.addBinding(P, 'dry', { min: 0, max: .7, step: .01, label: 'line dryness' }); f2.addBinding(P, 'runout', { min: 0, max: .5, step: .01, label: 'runs out' }); f2.addBinding(P, 'bristle', { min: .5, max: 2, step: .01, label: 'bristle width' }); f2.addBinding(P, 'lane', { min: 8, max: 60, step: 1, label: 'block stroke' }); f2.addBinding(P, 'laneDry', { min: 0, max: 1, step: .01, label: 'block dryness' }); f2.addBinding(P, 'streak', { min: 0, max: 1.2, step: .01, label: 'streaks' });
+f3.addBinding(P, 'paper', { min: 0, max: 1, step: .01, label: 'paper grain' }); f3.addBinding(P, 'reg', { min: 0, max: 8, step: .1, label: 'off register' }); f3.addBinding(P, 'dot', { min: 3, max: 14, step: .5, label: 'halftone dot' }); f3.addBinding(P, 'rimTear', { min: 0, max: 14, step: .5, label: 'torn white edge' }); f3.addBinding(P, 'shadow', { min: 0, max: .4, step: .01, label: 'paper shadow' });
+pane.on('change', redraw);
+const store = { get() { try { return JSON.parse(localStorage.getItem('sq-print-presets') || '{}'); } catch { return {}; } }, set(v) { try { localStorage.setItem('sq-print-presets', JSON.stringify(v)); } catch {} } };
+const presetsEl = document.getElementById('presets');
+function apply(vals, name) { Object.assign(P, vals); pane.refresh(); preset = name; renderPresets(); draw(); }
+function renderPresets() { presetsEl.innerHTML = ''; const all = { ...BUILTIN, ...store.get() };
+  for (const [name, vals] of Object.entries(all)) { const b = document.createElement('button'); b.textContent = name; b.className = name === preset ? 'on' : ''; b.onclick = () => apply(vals, name); presetsEl.append(b); } }
+document.getElementById('save').onclick = () => { const all = store.get(), n = 'Mine ' + (Object.keys(all).length + 1); all[n] = { ...P }; store.set(all); preset = n; renderPresets(); };
+document.getElementById('reset').onclick = () => apply(DEFAULTS, 'Gel plate');
+document.getElementById('copy').onclick = async () => { const txt = 'Object.assign(P, ' + JSON.stringify(Object.fromEntries(Object.entries(P).map(([k, v]) => [k, Math.round(v * 100) / 100]))) + ');', out = document.getElementById('out'); out.textContent = txt; out.style.display = 'block'; try { await navigator.clipboard.writeText(txt); document.getElementById('copy').textContent = 'Copied'; } catch {} };
+const rc = document.getElementById('recipes');
+for (const [t, sub, rules, pre, sc] of RECIPES) { const d = document.createElement('div'); d.className = 'rc'; d.innerHTML = `<div class="k" style="color:var(--muted)">${sub}</div><h4>${t}</h4><ul>${rules.map((r) => `<li>${r}</li>`).join('')}</ul>`;
+  const b = document.createElement('button'); b.className = 'use'; b.textContent = `Try it: ${pre} on the ${SCENES.find((s) => s[0] === sc)[1].toLowerCase()}`; b.onclick = () => { scene = sc; [...pick.children].forEach((c, i) => c.classList.toggle('on', SCENES[i][0] === sc)); apply(BUILTIN[pre], pre); window.scrollTo({ top: 0, behavior: 'smooth' }); }; d.append(b); rc.append(d); }
+renderPresets(); draw();
+</script>
+</body>
+</html>

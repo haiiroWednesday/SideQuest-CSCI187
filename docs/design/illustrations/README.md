@@ -65,3 +65,17 @@ The wisteria is drawn in the light cluster mode (`cluster(..., { simple: true })
 `scenes/printkit.mjs` is a third way of drawing, after the block-print and collage references: shapes are pressed, not outlined. Each ink is a flat colour with mottled, speckled dropout and a little more ink at the rim; inks overprint each other like a riso. Branches are dry-brush strokes made of separate bristles that break and run out. Torn paper scraps sit behind; a few spatters around.
 
 Printed graphics, each a transparent PNG in `printed/`: `pwisteria`, `proses`, `pfountain` (the roses over the tiled fountain), `pcup`, `pdome` (Ricard), `pbell`. Render one with `node render.cjs <scene> print 2 out.png`.
+
+### Taken further (round 9)
+
+After the research doc, the print kit gained three ways to lay colour, all driven by one tunable object `P`:
+
+- `slab()` paints a dry-brush block in parallel lanes, loaded at the start and drying out, with bristle streaks along the stroke and edges that comb out (after cloveric's drybrush recipe, MIT).
+- `dither()` shades with two inks through noise along a direction, the grainy two-tone shading from the ICS write-up on the Nikon 2030 site.
+- `halftone()` prints riso dots; `P.reg` nudges each ink off register.
+
+Paper specks are now anchored to the sheet while ink texture follows each shape. Torn paper tears only some edges, with a white fibre rim and a faint shadow.
+
+`tuner/index.html` is the live tuner (Tweakpane sliders over `P`, presets, recipe cards). It imports `../engine.mjs` and `../scenes/*.mjs`; serve the folder over HTTP to run it.
+
+New pictures: `pcamera`, `plamp`, `ppicnic`, `pbike`, `precord`, `preader`. Research tests: `pbottle` (body first), `pceramics` (judged at 60 px), `pposter` and `pposterriso`.
