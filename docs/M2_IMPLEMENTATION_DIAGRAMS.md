@@ -4,17 +4,17 @@
 
 ## Open the correct files
 
-| Required deliverable | **Open visually in diagrams.net** | GitHub source on `master` | Editable SCU Drive copy |
+**For reliable viewing, use the GitHub-native previews below.** They render directly on GitHub without asking diagrams.net to connect to the private repository.
+
+| Required deliverable | **View immediately on GitHub** | Editable original on `master` | Editable SCU Drive copy |
 | --- | --- | --- | --- |
-| **CRC / UML responsibility diagram** (2 pages) | [Open CRC drawing](https://app.diagrams.net/?mode=github#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_CRC.drawio) | [M2_CRC.drawio](diagrams/M2_CRC.drawio) | [Open Drive copy](https://app.diagrams.net/?mode=google#G1EQOXQXHnbeXry1-HULe60I2nKLw_gMR-) |
-| **Chen-style ER diagram** (1 page) | [Open ER drawing](https://app.diagrams.net/?mode=github#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_STORAGE_ER.drawio) | [M2_STORAGE_ER.drawio](diagrams/M2_STORAGE_ER.drawio) | [Open Drive copy](https://app.diagrams.net/?mode=google#G1gIQn3a0d6uCOkaqzQsg2r29I_IUkml-e) |
-| **Both diagrams together** (3 pages) | [Open combined drawing](https://app.diagrams.net/?mode=github#HhaiiroWednesday%2FSideQuest-CSCI187%2Fmaster%2Fdocs%2Fdiagrams%2FM2_IMPLEMENTATION.drawio) | [M2_IMPLEMENTATION.drawio](diagrams/M2_IMPLEMENTATION.drawio) | [Open Drive copy](https://app.diagrams.net/?mode=google#G1wQLEXbd-ihUsXFL3SV3qvAgtvtPovKgZ) |
+| **CRC / UML responsibility diagram** (2-page original) | **[View CRC preview](diagrams/M2_CRC_PREVIEW.md)** | [M2_CRC.drawio](diagrams/M2_CRC.drawio) | [Drive copy](https://app.diagrams.net/?mode=google#G1EQOXQXHnbeXry1-HULe60I2nKLw_gMR-) |
+| **Chen-style ER diagram** (1-page original) | **[View ER preview](diagrams/M2_ER_PREVIEW.md)** | [M2_STORAGE_ER.drawio](diagrams/M2_STORAGE_ER.drawio) | [Drive copy](https://app.diagrams.net/?mode=google#G1gIQn3a0d6uCOkaqzQsg2r29I_IUkml-e) |
+| **Both editable diagrams together** (3 pages) | [CRC preview](diagrams/M2_CRC_PREVIEW.md) + [ER preview](diagrams/M2_ER_PREVIEW.md) | [M2_IMPLEMENTATION.drawio](diagrams/M2_IMPLEMENTATION.drawio) | [Drive copy](https://app.diagrams.net/?mode=google#G1wQLEXbd-ihUsXFL3SV3qvAgtvtPovKgZ) |
 
-**Why these links differ:** GitHub's `.drawio` pages display the underlying XML, which is normal. The **Open visually** links load the same `master` files in [diagrams.net](https://app.diagrams.net/) using its GitHub integration. Sign into GitHub and authorize the editor if prompted; the repository is private. If you cannot authorize GitHub, use the SCU Drive editor copies with an account that has permission, or select **Download raw file** on GitHub and then **File → Open From → Device** in diagrams.net. GitHub and Drive copies are separate and do not synchronize automatically.
+The previews are GitHub Mermaid representations of the main classes, relationships and stored fields. They are **not pixel-identical exports** of the original two-page CRC and Chen-style ER drawings. For the exact course-format diagrams, download the `.drawio` file from GitHub (Raw / Download raw file) and in [diagrams.net](https://app.diagrams.net/) choose **File → Open From → Device**. This works without diagrams.net's GitHub connector, which can time out on private repositories.
 
-[Open the shared M2 folder](https://drive.google.com/drive/folders/1Nr67cdT8tEKPWBe9j3LNm6Wzw6alGgPc). The old `M2_CRC.svg` and `M2_STORAGE.svg` snapshots were removed because they represented the superseded overview; use the editor links above for the current course-format drawings.
-
-**Access:** GitHub collaborators can inspect files on `master`; SCU Drive copies require an account with access. These are separate copies, not synchronized edits. Repository changes do not establish course-portal submission status.
+[Open the shared M2 Drive folder](https://drive.google.com/drive/folders/1Nr67cdT8tEKPWBe9j3LNm6Wzw6alGgPc). The older `M2_CRC.svg` and `M2_STORAGE.svg` snapshots represented a superseded overview and were removed. GitHub and Drive diagrams are separate copies and are not synchronized. Repository changes do not establish course-portal submission status.
 
 ## CRC: what changed and why
 
