@@ -4,7 +4,7 @@
 
 > **Rule zero:** Do not change a shared data model or architecture because one document, diagram, or AI agent suggests it. Identify the mismatch, decide the intended scope with the team, then update requirements, diagrams, contracts, implementation, and tests together.
 
-## 1. Read this first: source of truth and decisions
+## Source of truth and decisions
 
 | Purpose | Authoritative reference | How to use it |
 | --- | --- | --- |
@@ -78,9 +78,21 @@ type CampusEvent = {
 
 [Current M2 ER preview](diagrams/M2_ER_PREVIEW.md) and [SQL migration](../supabase/migrations/20261103000000_create_events.sql) show **one** shared `public.events` table. Planned event UUIDs live in browser `localStorage` (`sidequest.planned-event-ids.v1`); the free-time search window is temporary UI input. A browser ID lookup is **not a SQL foreign key**.
 
+**P5 conceptual relationships (a Mermaid transcription, not deployed SQL):**
+
+```mermaid
+flowchart LR
+    U["USER"] -->|posts| E["EVENT"]
+    U -->|has| W["AVAILABILITY_WINDOW"]
+    U --- P{"PLANS TO ATTEND"}
+    P --- E
+```
+
+The Database Design lecture's P5 exercise says to begin with model classes as ER entities. For the real SQL schema, distinguish persistent records from nonpersistent services and browser state; if the course's diagram convention requires a different representation, ask the instructor rather than inventing a stored table to fit a drawing.
+
 **Final-project ER gate:** Before adding accounts, groups, maps or shared plans, produce a proposed ER with PKs, FKs, cardinality, nullable ownership for historical anonymous events, uniqueness, deletion behavior, and access permissions. Show many-to-many relationships as junction tables when persisted. Compare it explicitly with P5 and existing `public.events`. Get Daven, Sembiyan, and at least one other teammate to approve the corresponding schema/interface changes.
 
-## 2. Final architecture proposal (requires approval)
+## Proposed final architecture (requires approval)
 
 **Use existing MVC boundaries with a ports-and-adapters domain core.** The React Views render and forward actions; Controllers/use cases orchestrate; framework-independent Models own validation and evaluations; ports describe dependencies; adapters integrate SQL, calendar, maps, AI, and real-time transport. The Model must not depend on React, Views or Controllers. This is a **proposed advanced architecture**, not an extra-credit claim until implemented with genuinely interchangeable adapters and documented advantages over MVC alone.
 
@@ -123,7 +135,7 @@ verified map/route provider | server WebSocket | server AI provider
 - Adding Google sign-in changes the auth, session, RLS and API contract. Review secure, HTTP-only session handling; never grant group/event access because a client supplies an arbitrary profile ID. Restrict every group read/write by membership and role.
 - Hosting must run the Node API; static-only Vite hosting cannot serve the shared catalog. Public posting needs abuse controls and an explicit deployment approval. Follow [setup](SUPABASE_LOCAL_SETUP.md) and the [current API implementation](../app/server/api.ts).
 
-## 3. Delivery plan and ownership
+## Delivery plan and ownership
 
 **Phase gates, not simultaneous agent-generated feature branches:**
 
@@ -146,7 +158,7 @@ verified map/route provider | server WebSocket | server AI provider
 
 **PR protocol:** One owner per feature PR; another teammate reviews before merge. State behavior, changed contracts, diagram/ER effects, migration and permissions, test evidence, and UX impact. Critical interface changes require cross-feature owner review. A reviewer must inspect intent, performance, accessibility, failure cases, naming and documentation, not merely green tests. Rebase/merge carefully; never force-overwrite a teammate's work or live data.
 
-## 4. Nine extra credits: planned evidence, not claims
+## Nine extra credits: planned evidence, not claims
 
 The [professor's rubric](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit) awards **at most five points total**, subject to core completeness, a >=76% grade at the specified Week 9 checkpoint, good standing, team consent, per-person contributions, demonstration, and server-side API secrets.
 
@@ -164,7 +176,7 @@ The [professor's rubric](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB
 
 **Priority:** core reliability and course deliverables first; then identity/permissions and a complete friend-group flow. Stage other bonus features by evidence, dependency, and time. Do not promise full credit in advance.
 
-## 5. Design and review rules from CSCI 187
+## Design and review rules from CSCI 187
 
 - **Abstraction and modularity (Architecture lecture):** Name components and responsibilities before implementation; show actual communication arrows. Keep implementation details out of high-level diagrams. Model owns domain data/rules, Controller orchestrates, View presents.
 - **ER design (Database lecture):** Stable IDs; use keys and one-to-many foreign keys accurately; represent persisted many-to-many relationships with junction tables; avoid duplicate facts copied into unrelated records.
@@ -173,7 +185,7 @@ The [professor's rubric](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB
 - **UX (Usability lecture):** Scannable hierarchy, clear affordances, predictable controls, feedback for loading/errors/success, readable phone layouts, accessible labels and keyboard focus. State what is unknown instead of inventing success or availability.
 - **Reviews (Code Review lecture):** Review architectural fit, functionality, human usefulness, security, edge cases, efficiency, tests, naming, comments, style and docs. Tests can confirm an incorrect assumption; check the assumption against requirements and diagrams.
 
-## 8. Use AI tools without losing control of the project
+## Use AI tools without losing control of the project
 
 **First ask for a plan; authorize a small implementation only after review.** Paste this into a coding agent:
 
