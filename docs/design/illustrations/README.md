@@ -31,3 +31,13 @@ node render.cjs jar ink 2 jar.png      # scene, style (ink | pencil | flat), sca
 ```
 
 `renders/` holds 2x WebP renders, an 800px `-sm` copy of each for the app, the three-way bottle comparison, close-ups, and a before/after sheet.
+
+## The Mission hero, pen and ink
+
+`scenes/missionink.mjs` draws the Discover hero with no colour: Mission Santa Clara from the fountain, with a pergola and an old wisteria on the right. Every tone is made of lines. The engine gained three tools for it:
+
+- `begin()` and `end()` batch thousands of strokes into one layer. Paper knockouts drawn inside a batch hide the strokes behind them, so near things sit in front of far ones.
+- `rule(region, {angle, gap, dens})` lays long hand-drawn parallel lines across a region, broken where `dens` thins them out.
+- `stipple(region, {n, dens})` dots in the plaster texture.
+
+Render it with `node render.cjs missionink ink 2 out.png` (about four minutes at 2x).
