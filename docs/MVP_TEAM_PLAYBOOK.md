@@ -1,6 +1,6 @@
 # SideQuest | Team Playbook
 
-**November 6, 2026 | Working agreement proposed for team review.** This is the short operational guide for the four contributors. It distinguishes **implemented M2**, **final-project direction**, and **optional designs**. It does not claim that unmerged features, migrations, live Supabase verification, or external integrations are complete.
+**November 7, 2026 | Working agreement proposed for team review.** This is the short operational guide for the four contributors. It distinguishes **implemented M2**, **final-project direction**, and **optional designs**. New human-reported live Supabase checks are recorded below; unmerged features, deployment, migrations and external integrations are not assumed complete.
 
 > **Rule zero:** Do not change a shared data model or architecture because one document, diagram, or AI agent suggests it. Identify the mismatch, decide the intended scope with the team, then update requirements, diagrams, contracts, implementation, and tests together.
 
@@ -17,7 +17,7 @@
 
 **Decision ledger (as of this revision):**
 
-- **Implemented for M2:** anonymous public event posting/browsing, full-event free-time matching, and current-device My Schedule. Public events use the shared Supabase adapter when configured; the fallback is explicitly browser-only.
+- **Implemented for M2:** anonymous public event posting/browsing, full-event free-time matching, and current-device My Schedule. Public events use the shared Supabase adapter when configured; the fallback is explicitly browser-only. **November 7 human report:** Daven confirmed a real Supabase post in `public.events`, visibility in Firefox/Chrome/Edge, persistence after refresh, browser-isolated personal plans and a visible error on offline posting. This is teammate-reported manual acceptance, not an independently reproduced audit.
 - **Confirmed direction from the project discussion, requiring team architecture sign-off:** user accounts and friend groups for the final project. The broader roadmap also proposes shared plans, Someday, maps and travel, calendar connectivity, photo stamps, AI, and live updates. Do not assume every proposed subfeature or provider has final team approval.
 - **Nine-category extra-credit ambition:** recorded in the research memo, conditional on professor eligibility, team agreement, complete core features, and evidence. **Maximum is five points total**, not nine separate uncapped awards.
 - **Undecided implementation details:** authentication/session pattern, group visibility and roles, saved vs plan-scoped availability, how maps and calendar connect, final timetable, and exact tables. Record decisions before implementation.
@@ -70,7 +70,7 @@ type CampusEvent = {
 - Time is campus wall-clock (`America/Los_Angeles`). Overnight events and recurrence are not supported by the M2 record shape. A future timestamp/occurrence model needs explicit conversion and migration tests.
 - The M1 `LegacyCampusEvent` is historical compatibility. Do not substitute its old field limits or storage semantics for the public M2 contract.
 
-**A created event is readable again from shared catalog storage.** Verify this against *the actual configured database* before claiming live shared behavior; in-memory and local-browser fixtures alone do not prove that claim.
+**Shared-catalog live check (Daven's November 7 report):** posted records appeared in the real Supabase `public.events` table, were available in Firefox/Chrome/Edge, and survived refresh. Personal Schedule additions stayed isolated between those browsers; an offline post showed an error. Preserve this as **reported manual verification**. Still verify denied unauthorized UPDATE/DELETE and RLS grants, independent devices if required, and any release-specific acceptance evidence. Fixtures alone cannot establish those checks.
 
 ## P5 coursework ER diagram — current draw.io and Mermaid
 
@@ -131,7 +131,7 @@ verified map/route provider | server WebSocket | server AI provider
 
 - The committed M2 migration is `supabase/migrations/20261103000000_create_events.sql`. It creates `public.events` with nine columns (UUID `id`, title, host_name, description, location, event_date, start_time, end_time, created_at). It enables RLS and anonymous SELECT/limited INSERT, **not anonymous UPDATE/DELETE**.
 - The browser communicates through same-origin Node `/api/catalog` and `/api/events`. Supabase values `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` stay in the Node environment for this course project. Never put service-role/secret keys, OAuth refresh tokens or AI credentials into the browser, source, screenshots or PRs.
-- `{"shared":true}` reports configuration, **not** a successful live query, applied migration or valid permissions. Use a real read/insert/second-browser acceptance check and verify unauthorized mutations are denied.
+- `{"shared":true}` reports configuration, **not** a successful live query, applied migration or valid permissions. Daven reports having confirmed live read/insert and multiple-browser visibility on November 7. The screenshot does not establish the exact SQL grants or denied unauthorized mutations; verify UPDATE/DELETE denial and RLS against the configured project before claiming that permission gate passed.
 - Adding Google sign-in changes the auth, session, RLS and API contract. Review secure, HTTP-only session handling; never grant group/event access because a client supplies an arbitrary profile ID. Restrict every group read/write by membership and role.
 - Hosting must run the Node API; static-only Vite hosting cannot serve the shared catalog. Public posting needs abuse controls and an explicit deployment approval. Follow [setup](SUPABASE_LOCAL_SETUP.md) and the [current API implementation](../app/server/api.ts).
 
@@ -139,7 +139,7 @@ verified map/route provider | server WebSocket | server AI provider
 
 **Phase gates, not simultaneous agent-generated feature branches:**
 
-1. **Protect M2:** preserve post → discover → full fit → plan/remove; run tests/build; perform the still-needed *real Supabase, two-independent-browser* check. Approve reviewed real-event data before seeding; [PR #32](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/32) is a draft and has not established a live import.
+1. **Protect M2:** preserve post → discover → full fit → plan/remove; record Daven's November 7 real Supabase and Firefox/Chrome/Edge manual acceptance evidence; independently review the still-open unauthorized mutation/RLS and deployment checks. Run tests/build. Approve reviewed real-event data before seeding; [PR #32](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/32) is a draft and has not established a live import.
 2. **Architecture decision for M2 Part 2:** lock final priority features, complete updated full CRC/architecture and ER, define identity/ownership and group access, list migrations and contracts. No schema writes until review.
 3. **Identity and owned records:** Google/Supabase sign-in, profiles, permissions, event ownership, existing-event compatibility, negative RLS tests.
 4. **Friends and group plans:** invitations, membership, candidate outings, participant responses; then optional plan-scoped availability and sync. Ensure users can use the core app even without a connected calendar.
