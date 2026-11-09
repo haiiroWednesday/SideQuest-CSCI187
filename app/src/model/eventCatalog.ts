@@ -137,6 +137,28 @@ export function campusNow(now: Date = new Date()): { date: string; time: string 
   return { date: `${get('year')}-${get('month')}-${get('day')}`, time: `${get('hour')}:${get('minute')}` }
 }
 
+// Posting horizon: an event date may be at most this many years after the
+// current campus date, inclusive. Posting and the Post form's date max use
+// latestPostingDate(); the Schedule check should use it too so they match.
+export const MAX_POSTING_YEARS_AHEAD = 1
+
+// The same month/day MAX_POSTING_YEARS_AHEAD years after the campus date.
+// Feb 29 clamps to Feb 28 in a non-leap target year, matching Postgres
+// `date + interval '1 year'`, so app and SQL reports agree on the boundary.
+export function latestPostingDate(now: Date = new Date()): string {
+  const [year, month, day] = campusNow(now).date.split('-').map(Number)
+  const targetYear = year + MAX_POSTING_YEARS_AHEAD
+  // Day 0 of the next month is the last day of `month` (UTC avoids DST).
+  const lastDay = new Date(Date.UTC(targetYear, month, 0)).getUTCDate()
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${String(targetYear).padStart(4, '0')}-${pad(month)}-${pad(Math.min(day, lastDay))}`
+}
+
+// YYYY-MM-DD strings compare in calendar order as text.
+export function isWithinPostingHorizon(date: string, now: Date = new Date()): boolean {
+  return date <= latestPostingDate(now)
+}
+
 // The same posting-time rule must protect every catalog caller, including
 // scripts or future controllers that do not use the React posting form.
 // Use the Santa Clara wall-clock, not the browser's arbitrary timezone.
@@ -146,6 +168,8 @@ export function catalogPostingErrors(draft: EventDraft, now: Date = new Date()):
   const campus = campusNow(now)
   if (!errors.date && value.date < campus.date) {
     errors.date = 'Events cannot be posted in the past. Choose today or a future date.'
+  } else if (!errors.date && !isWithinPostingHorizon(value.date, now)) {
+    errors.date = `Events can be posted up to one year ahead. Choose a date on or before ${latestPostingDate(now)}.`
   } else if (!errors.date && !errors.start && !errors.end &&
     value.date === campus.date && value.start < campus.time) {
     errors.start = 'This event has already started. Choose a future start time.'
