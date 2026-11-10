@@ -8,6 +8,12 @@
 
 **Phase A permitted visual evidence:** You MAY inspect every actual UI storyboard, mockup and photo-stamp image under `docs/design/exploration-2026-11/` and `docs/design/photo-stamps/`, and any separately supplied source/export/screenshots of the private 264-option Claude artifact. These are product/interaction inputs, not architecture diagrams. Distinguish images you truly viewed from images known only by title. **Do not open other source code, UML/CRC/ER diagrams, migrations, PRs, architecture notes or the old playbook during phase A.** The first pass is analytical only, with no edits, commands, secrets or network mutations.
 
+## Newly uploaded November 5–9 design evidence (read during Phase A)
+
+Read the full [SideQuest New Feature Ideas inventory](SIDEQUEST_NEW_FEATURE_IDEAS_2026-11-09.md), adapted directly from the November 9 user-provided feature document, **before designing domain boundaries or selecting a UI**. It covers LiveWhale/SCU source ingestion, cancellations, event-media source priorities, rights/consent/EXIF/moderation, photo cropping and alt text, deterministic assembled campus illustration, round 11 photo-integrated screens and previously omitted rounds 4–6 across Discover, Schedule, Post, Someday and invitation pages. It preserves screen identifiers (PF/PK/G/L/A/B/N/R/C/I/E/W) and Keep/Maybe/Toss status where provided.
+
+**Do not confuse marks with approvals.** All of these remain proposals; the source states none is built. The other 5 November storyboard ideas are repeated there for reference, not new requirements. Inspect actual UI screenshots/Claude artifact when available and distinguish verified visuals from screen titles. Some new ideas change the data and permission model (media asset ownership, source/licensing, cancellations, reporting/moderation, RSVP evidence, recurring source updates); others can reuse existing entities as views. Free-time-first remains the primary Discover flow with Browse upcoming as the optional second mode. Avoid requiring a third-party feed or photo processing service before rights, ingestion behavior and current provider costs have been confirmed.
+
 ## 1. Who the product helps and what student interviews actually suggested
 
 SideQuest began as a student product for Santa Clara University students whose spare time, friends' uncertain commitments and interesting local options rarely line up neatly. The initial two interview transcripts are qualitative input from **two people**, not numerical proof of demand.
