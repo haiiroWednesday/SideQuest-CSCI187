@@ -10,7 +10,7 @@
 
 Our proposed delivery responsibility is **four feature-owning engineers plus a named systems-integration and quality lead**. Contributors own functioning, tested vertical slices, not merely a technology layer or an attractive screenshot.
 
-**Cynthia's primary role is Systems Integration & Quality Lead.** She coordinates feature handoffs, keeps interfaces, diagrams and user-facing behavior consistent, writes integration and shared UI code, reviews completeness, fixes cross-feature gaps, tracks quality evidence, and prepares the integrated release. She is not intended to be the default implementer of every feature, the sole test writer, or an approval bottleneck. Feature owners remain accountable for correcting defects in their own modules. Architectural scope and release decisions require team review; the RACI "A" designates one person who ensures a workstream has a conclusive result, not unilateral authority to override the whole team.
+**Cynthia's primary roles are UI/UX Design Lead and Systems Integration & Quality Lead.** She coordinates feature handoffs, keeps interfaces, diagrams and user-facing behavior consistent, writes integration and shared UI code, reviews completeness, fixes cross-feature gaps, tracks quality evidence, and prepares the integrated release. She is not intended to be the default implementer of every feature, the sole test writer, or an approval bottleneck. Feature owners remain accountable for correcting defects in their own modules. Architectural scope and release decisions require team review; the RACI "A" designates one person who ensures a workstream has a conclusive result, not unilateral authority to override the whole team.
 
 **Classroom basis:** Professor Kandel's [Lecture 09: Teamwork](https://docs.google.com/presentation/d/1IqTe0hp_cT0EfBnmQLaEsZPiLvOjjzke4hU_Hvj53FY/edit) distinguishes a team from loosely parallel work (slides 3–4); introduces Scheduler, Project Manager, and Scribe (slides 11–12); defines RACI and illustrates a matrix (slides 13–14); calls for agreeing on style, API signatures and error behavior before parallel coding (slides 16–17); and recommends respectful listening, constructive questioning and conflict resolution (slide 21). Cynthia combines coordination, technical integration, quality assurance and decision-record upkeep. The others continue to exercise technical ownership and independent review.
 
@@ -38,19 +38,19 @@ Our proposed delivery responsibility is **four feature-owning engineers plus a n
 
 ### Devonny: Discover, event details and user-facing selection/coordination
 
-**Build and own:** Free-time-first Discover plus browse-all mode; category filters tied to the same real catalog; readable fit explanations, confirmed versus near-fit versus unknown labels; individual occurrence selection and detail flow; no-match recovery, loading/error/retry; responsive keyboard-accessible interaction; invitation/response UI only after secure plan contracts are agreed.
+**Engineering ownership, working from Cynthia's overarching UX and visual direction:** Free-time-first Discover plus browse-all mode; category filters tied to the same real catalog; readable fit explanations, confirmed versus near-fit versus unknown labels; individual occurrence selection and detail flow; no-match recovery, loading/error/retry; responsive keyboard-accessible interaction; invitation/response UI only after secure plan contracts are agreed.
 
 **Demonstrate:** Student enters an interval, filters by a reusable illustration/category, views exactly which occurrences fit, examines details, and moves a selected occurrence to My Schedule. Test this on real phone and desktop widths, including very long content and empty data.
 
-**Tests and reviews:** Controller state, result ordering and eligibility, React/browser navigation, accessibility, stale-detail failures and click/focus behavior. Review Cynthia's shared UI patterns and Sembiyan's presented reason codes.
+**Tests and reviews:** Controller state, result ordering and eligibility, React/browser navigation, accessibility, stale-detail failures and click/focus behavior. Translate Cynthia's product-wide design specification and prototypes into tested Discover UI, propose improvements collaboratively, and review Sembiyan's presented reason codes. Feature implementation ownership does not transfer overall UI/UX design authority.
 
 **Boundary:** Categories are classification/filter controls, not event series; example illustrations are reused static assets, not generated for every event. Avoid fabricated event counts or unsupported "fit percentages."
 
-### Cynthia: Systems Integration & Quality Lead, with substantial direct code
+### Cynthia: UI/UX Design Lead and Systems Integration & Quality Lead, with substantial direct code
 
-**Primary accountability:** Make SideQuest function as *one product*. Own the cross-feature integration plan, contract-consistency checks, integration and end-to-end tests, release-readiness evidence, shared design system, accessible UI consistency, engineering cleanup and coordinated CRC/ER maintenance.
+**Primary accountability:** Lead SideQuest's overall UI/UX and visual design, drawing on her substantial existing design sketches, explorations and prototypes; ensure those choices are developed into a coherent, accessible visual system across Discover, Schedule, Post, Someday and social planning. Make SideQuest function as *one product*. Own the cross-feature integration plan, contract-consistency checks, integration and end-to-end tests, release-readiness evidence, shared design system, engineering cleanup and coordinated CRC/ER maintenance.
 
-**Write actual code:** Cross-feature controllers/adapters or integration patches, shared UI components, Schedule presentation integration, connections between Someday, Discover and Schedule, meaningful regression/Playwright tests, bug repairs and targeted refactors. This role has executable PRs, tests and demos, not only organizing tasks, making drawings or proofreading prose.
+**Write actual code:** Translate selected visual ideas into working reusable React components, shared navigation and responsive shells, design tokens/illustration mapping, Schedule presentation integration, cross-feature controllers/adapters or patches, connections between Someday, Discover and Schedule, meaningful regression/Playwright tests, bug repairs and targeted refactors. This role has executable PRs, tests and demos, not only organizing tasks, making drawings or proofreading prose.
 
 **Quality control:** Verify every visible status reflects actual model/data state; maintain neutral Schedule overlaps and honest unknown information; reconcile proposed ER/CRC with real TS contracts, SQL and ownership rules; test loading/error/empty/mobile cases; ensure preview-only mockups are not labeled implemented; avoid inconsistent details and date/time presentations.
 
@@ -84,7 +84,9 @@ A functional solo Someday-to-Plan journey is the explicit fallback if secure sha
 | Strict time fit, explanatory reasons and uncertainty rules | C | C | **A/R** | R |
 | Schedule model, commitment and overlap semantics | R | C | **A/R** | C |
 | Discover and event-details flow | R | I | C | **A/R** |
-| Reusable illustrations and shared UI design system | **A/R** | I | C | R |
+| Product-wide UI/UX direction, original visual explorations and screen selection | **A/R** | C | C | C |
+| Reusable illustrations, shared UI design system and components | **A/R** | I | C | R |
+| Discover visual specification and design acceptance | **A/R** | I | C | R |
 | Someday state model and personal intentions | R | C | **A/R** | R |
 | Someday user interactions | R | C | C | **A/R** |
 | Group-plan rules and response states (conditional) | C | R | **A/R** | R |
@@ -280,3 +282,57 @@ Do not equate imported review-batch IDs with actual provider event occurrence ID
 **Required proof of completion:** Named lead and reviewer, specific user outcome, reviewed PR and commit, passing test/build evidence, negative/failure tests, verified live deployment when claimed, security/cost/consent check and credible explanation in Q&A.
 
 **Open team decisions:** Exact bonus features to pursue; all four people's capacity; hosting strategy; OAuth free/busy feasibility; AI lead if Devonny is already full; permission to use a client-exposed publishable provider key under course rules; revised ER/CRC and any migrations. Use the [team HQ decision log](https://docs.google.com/document/d/1LGYSH-m4x2u8DCHyxFrRgzNRxXPLewnNvMufDJPF8jk/edit) to record what is approved. No feature or extra credit becomes authorized by adding this proposal.
+
+
+## 12. UI/UX creative leadership and implementation
+
+**Clarification requested by Cynthia, November 10:** Cynthia has already spent substantial time generating, drawing, comparing, and refining SideQuest's interface concepts and visual assets. She is the **primary creative and UX lead** for the product, not merely the person who cleans up another person's interface afterward. This expands, rather than displaces, her overall systems-integration and quality-control mandate. The team should acknowledge that design work as concrete project contribution, preserve its actual artifacts, and apply the selected design intentionally. Formal assignments remain proposed until team agreement.
+
+**Division of authority:** Cynthia is accountable for visual direction, final design specifications and cross-page design acceptance, with colleagues' input and the team's shared scope approval. Devonny is accountable for the engineering of Discover and its accessible interactions, collaborates on design improvements, and implements the approved designs with his own code and tests. Sembiyan and Daven own functional correctness and UI states in Schedule/feasibility and Post/auth respectively. All four contribute UX feedback and fix issues in their code. Cynthia should not have to individually implement every visual screen, nor should the group disregard her prior work and substitute unrelated UI without discussion.
+
+### Actual product-wide design responsibilities
+
+| Work | Primary design/accountability | Primary implementation responsibility | Acceptance requirement |
+| --- | --- | --- | --- |
+| Overall art direction, coherent product identity, typography, layout, navigation, colors, motion | **Cynthia** | Cynthia shared components; Devonny feature UI; all feature owners adapt | App feels like one unified product on mobile and desktop |
+| Select and refine prior concept boards and prototype options | **Cynthia** | Relevant feature owner | Preserve Keep/Maybe/Toss history; review actual screenshots, do not claim inaccessible artifacts were inspected |
+| Discover screen visuals, free-time form, event-ticket cards, category artwork/filter behavior | **Cynthia** final visual specification | **Devonny** Discover controllers and Views; Cynthia reusable styles/components | Free-time-first flow remains legible and usable, not lost under decorative concepts |
+| Schedule's proportional timeline, neutral overlaps and Pencil/Pen states | **Cynthia** visual specification | **Sembiyan** interval data; Cynthia timeline presentation; Devonny optional assistance | Exact proportional representation, accessible state labels and correct time meaning |
+| Post flow, preview/validation, trust and event photo/source fallbacks | **Cynthia** visual specification | **Daven** posting/API; Devonny/Cynthia shared presentation | Real errors, ownership and source provenance communicated accurately |
+| Someday's readiness, unfinished intentions, plan/defer UI | **Cynthia** visual specification | Sembiyan domain states; Devonny UI; Cynthia integration/components | A saved idea remains distinct from a scheduled event or confirmed plan |
+| Guest planning, responsive collaboration, Maps/Calendar/AI interface | **Cynthia** UX coherence and privacy review | Devonny feature UI; Daven/Sembiyan backend/domain | Consistent uncertainty, consent, safety and error affordances |
+| Art assets and category taxonomy | **Cynthia** visual art and category-tile selection | Cynthia assets/shared library; Devonny filter integration; Daven data mapping | About 6–7 reusable broad-category illustrations, no automatic image-generator requirement |
+| Accessibility and usability consistency | **Cynthia** overall system quality; **Devonny** UI accessibility engineering lead | All four fix own defects | Keyboard/screen reader, contrast, reduced-motion, focus, mobile and honest status labels |
+
+### Reuse the existing explorations before commissioning new mockups
+
+Read [the research's design section](DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md#visual-direction-each-tab-is-a-room), [round 2–3 boards](design/exploration-2026-11/), [November 9 feature ideas](SIDEQUEST_NEW_FEATURE_IDEAS_2026-11-09.md), [photo-stamp experiments](design/photo-stamps/), and accessible visual prototypes already supplied by Cynthia. The original discussions explored a shared ticket/postcard identity while making Discover, My Schedule, Post and Someday distinct but related spaces. This is a **design direction to evaluate**, not proof that all example screens, animations and 264 options were selected or implemented.
+
+Specific ideas worth comparing against actual screens:
+- **Discover:** everyday event menu and free-time-first search, illustrated category filters, exact "why it fits" reasons, time-window lens or free-hours board as optional richer interactions; keep browsing all available.
+- **My Schedule:** a true duration-proportional timeline and a practical weekly overview, with Pencil/Pen/Done distinguished by words and affordances, not color alone. Treat overlapping available choices neutrally.
+- **Post:** well-scoped steps, clear form and preview, candid server/local save states and verified image fallback. Source photos and full flyers must not be cropped misleadingly.
+- **Someday:** captured ideas, readiness conditions, preservation when deferred, link to opportunities and plans, approachable empty states.
+- **Global:** responsive navigation, typography and component tokens, art usage, accessible selection and error states. Provide a low-motion version and avoid visual novelty that hides the primary action.
+
+**Latest approved *user preference* for illustrations:** Avoid automatic event-specific image composition. Use a small set of reusable, curated category illustrations that visually group related activities. The team still needs to settle the exact taxonomy and asset ownership.
+
+### Design-to-code handoff and acceptance workflow
+
+1. **Cynthia organizes and annotates the source designs.** For a selected screen, link the actual artifact, identify design direction and Keep/Maybe/Toss status when known, and state what is exploratory versus agreed.
+2. **Cynthia writes or co-writes a screen contract:** hierarchy, states, component reuse, responsive behavior, tokens, visual labels, interaction transitions, accessibility and fallback behavior. An actual screenshot is supporting evidence, not the full behavior spec.
+3. **Feature owner implements the View and controller, with tests.** Devonny leads Discover and interactive UI, Daven handles Post/auth data and corresponding states, Sembiyan handles Schedule domain and valid interval data. Cynthia implements shared presentation components, integrations, and selected screen elements directly.
+4. **Review together before merging.** Feature owner tests functional behavior and edge cases; Cynthia checks visual/design conformance, continuity with other tabs and shared UI components; another teammate reviews the PR's executable code.
+5. **Capture real rendered evidence.** Review mobile and desktop screenshots, a keyboard-only flow and representative empty/error/long-text cases. Distinguish an implemented screen from an old design board or mockup.
+6. **Resolve disagreements explicitly.** Cynthia leads the proposed product-wide design choice but teammates can question accessibility, feasibility or engineering constraints. Record the final team decision in Team HQ rather than silently replacing the design. If delivery constraints force simplification, preserve the rationale and any deferred art concepts.
+
+**Practical workload safeguard:** Cynthia owns *the design system and visual standards* plus cross-product quality, not a list of unrelated screens to code alone. Devonny must have substantial independent front-end engineering, and Daven/Sembiyan must personally finish their respective UI states. Reserve Cynthia's hands-on coding time for shared components, coordinated screen integration, timeline/presentation work and defects that span modules. This preserves evidence of her engineering contribution and prevents product-wide QA becoming an unbounded catch-all task.
+
+### Additional visual deliverables for the November team agreement
+
+- [ ] Cynthia supplies the design-source index/selected concepts and identifies the primary daily-use flow.
+- [ ] Team confirms visual ownership: Cynthia lead UI/UX and quality; Devonny lead Discover implementation; other owners complete their feature UI.
+- [ ] Shared design specification defines typography, responsive breakpoints, category imagery, button/status styles, motion settings and accessible labels.
+- [ ] Discover, Schedule, Post and Someday receive actual mobile/desktop review against source choices.
+- [ ] Every accepted visual feature is tied to a real PR, tested state and screenshot. Unimplemented experiments stay marked as proposals.
+
