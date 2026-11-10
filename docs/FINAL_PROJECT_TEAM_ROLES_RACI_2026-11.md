@@ -4,6 +4,8 @@
 **Status: PROPOSED FOR FOUR-PERSON TEAM AGREEMENT.** This is the proposed final-project division of work, not evidence that the team accepted every assignment, shipped a feature, or approved a database migration. After agreement, record the decision and any modifications in the team's [HQ decision log](https://docs.google.com/document/d/1LGYSH-m4x2u8DCHyxFrRgzNRxXPLewnNvMufDJPF8jk/edit) with date, participants, affected interfaces, and responsible reviewers.  
 **Scope:** November 11 M2 Part 2 reflection preparation and development toward the December 2 presentation. This document supplements rather than retroactively replaces the [historical M2 MVP work allocation](MVP_TEAM_PLAYBOOK.md). Current implemented M2 remains governed by [REQUIREMENTS.md](../REQUIREMENTS.md), [SPECIFICATIONS.md](../SPECIFICATIONS.md), and reviewed code.
 
+> **Expanded integration proposal, November 10:** See [Section 10: integration and nine bonus categories](#10-expanded-integration-and-extra-credit-allocation). The new section assigns owners for Maps, Google Calendar, WebSockets, AI, authentication, external sources and deployment. This remains **subject to team agreement**, and preserves Cynthia's primary role as Systems Integration & Quality Lead instead of making her the individual owner of every integration.
+
 ## 1. The organizing principle
 
 Our proposed delivery responsibility is **four feature-owning engineers plus a named systems-integration and quality lead**. Contributors own functioning, tested vertical slices, not merely a technology layer or an attractive screenshot.
@@ -165,3 +167,116 @@ These are proposed internal commitments, **not already confirmed promises**. All
 - [Draft PR #32: candidate event import](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/32); [PR #33: proposed architecture](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/33); [PR #34: post date limit](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/34)
 
 **Change control:** Updating this Markdown plan does not merge a pull request, approve a schema migration, authorize an external integration, establish that every teammate has agreed, or modify the deployed product.
+
+
+---
+
+## 10. Expanded integration and extra-credit allocation
+
+**Decision state:** Proposed, unapproved. These roles expand the earlier feature allocation to cover external services, realtime social planning, security and the professor's nine bonus categories. All major integrations need named accountable owners even if the December team elects not to build all of them. A full conceptual architecture can contain deferred capabilities without claiming deployment.
+
+**The primary role of Cynthia remains SYSTEMS INTEGRATION & QUALITY LEAD.** She writes shared integration code, acceptance tests, quality fixes and architecture-consistency checks, and coordinates other people's feature deliveries. Do **not** quietly add complete Google Calendar OAuth, AI engineering, Someday implementation and the entire E2E suite to her personal workload. Feature leads own their own bugs, tests and service-specific decisions, while Cynthia is accountable for verified integration.
+
+### Official rubric, directly verified November 10
+
+Source: [Final Project Extra Credit Opportunities](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit).
+
+| Extra credit | Maximum | Accountable feature lead | Concrete participation | Delivery status |
+| --- | ---: | --- | --- | --- |
+| Architecture beyond MVC | **1.00** | **Cynthia**, coherence and final design | Sembiyan: pure domain/ports; Daven: real alternate adapters; Devonny: framework-neutral use cases. Real code plus justifiable draw.io architecture | Existing groundwork, implementation proof needed |
+| Real WebSocket collaboration | **1.00** | **Daven** | Sembiyan: response transitions; Devonny: live UI; Cynthia: reconnect, multi-browser and privacy QA | New, dependency-gated |
+| External system or device integration | **0.75 total** | **Sembiyan**, real travel-feasibility feature | Daven: server route adapter; Devonny: maps/travel UX; Cynthia: regression and usability. Calendar free/busy is a separate optional implementation but shares this **one** category cap | New, cost/consent-gated |
+| Automated E2E testing | **0.50** | **Cynthia**, suite and release gate | EVERY teammate authors tests for their own features; verify CI and independent browsers | Already started; expand |
+| AI API with SideQuest data | **0.50** | **Devonny**, bounded assistant experience | Daven: secret-protected server endpoint; Sembiyan: deterministic validation; Cynthia: integrated QA. Reassign explicitly if Devonny lacks capacity | Optional stretch |
+| Security/authentication | **0.50** | **Daven** | Sembiyan: private plan semantics; Devonny: sign-in/consent UI; Cynthia: adversarial tests | Required if shared plans ship |
+| Accessibility | **0.25** | **Devonny** | Cynthia audits, everyone fixes own issues | Core quality requirement |
+| Publishing | **0.25** | **Daven** | Cynthia confirms deployment reliability, Devonny responsive demo, Sembiyan semantics | Verify actual hosting, not assumed |
+| Advanced external library | **0.25** | **Devonny** | Prove real substantial React usage, not only installation; Cynthia reviews shared UI consistency | Existing implementation may qualify |
+| **Maximum total** | **5.00** | **No guaranteed award** | Team and course instructor assess actual eligibility and verified work | Not automatically earned |
+
+**Eligibility:** At least **70%** class grade at the start of Week 9, core requirements completed first, good standing, team agreement, individual eligibility/awards, every API key on the server and never committed, and complete demonstration of claimed features. The professor allows up to a five-minute presentation extension to cover qualifying extra credit. The older research memo's 76% threshold is incorrect. A rushed version of all nine features is weaker than finishing several correctly.
+
+### Detailed lead ownership for integrations
+
+| Integration | Accountable lead | Data/server and security | Domain logic | Interface | Whole-system acceptance |
+| --- | --- | --- | --- | --- | --- |
+| Maps and route time | **Sembiyan** | Daven | Sembiyan | Devonny | Cynthia |
+| Basic Calendar export (.ics or prefilled event link) | **Devonny** | No read-calendar OAuth required | Sembiyan checks event time and timezone | Devonny | Cynthia |
+| Google Calendar free/busy (optional) | **Sembiyan** | Daven OAuth, tokens, revocation | Sembiyan interprets busy vs unknown | Devonny consent/disconnect | Cynthia |
+| User authentication, plan privacy and permissions | **Daven** | Daven | Sembiyan participant states | Devonny | Cynthia |
+| WebSocket updates for group responses | **Daven** | Daven | Sembiyan transitions/deduplication | Devonny | Cynthia |
+| AI planner using live SideQuest data (optional) | **Devonny** | Daven protects API and budget | Sembiyan validates draft hard constraints | Devonny | Cynthia |
+| Trusted SCU source import (optional) | **Daven** | Daven source ingestion | Sembiyan maps occurrences and time | Devonny source/cancel status | Cynthia |
+| Someday to opportunity and plan | **Sembiyan** for states, **Devonny** for interface | Daven only if shared data needed | Sembiyan | Devonny | Cynthia integrates |
+| Architecture, coherent user journeys, release QA | **Cynthia** | Feature owners fix their modules | Feature owners fix rule issues | Feature owners fix UI issues | Cynthia |
+
+This splits implementation work from release accountability. Daven and Sembiyan already have several difficult dependencies, Devonny has extensive user-facing work, and Cynthia has cross-product responsibility. Rebalance only through an explicit team agreement with credible capacity, not by assigning overflow to Cynthia.
+
+### A. Maps: two levels of demonstrated capability
+
+**Simple fallback:** A clearly labeled link to directions in [Google Maps URLs](https://developers.google.com/maps/documentation/urls/get-started), which require no API key. This is genuinely useful but cannot be assumed to meet the upper external-integration credit.
+
+**Real integration after billing approval:** Sembiyan specifies a travel-time port with origin, destination, mode, freshness and unknown/error states. Daven implements the [Google Routes API](https://developers.google.com/maps/documentation/routes/get-api-key) through a rate-limited server adapter; Devonny displays walking/transit time and source; Cynthia checks the full user journey. [Google Routes billing](https://developers.google.com/maps/documentation/routes/usage-and-billing) requires an enabled billing account, a key or OAuth and quota management. Walking/cycling modes have beta quality warnings, and transit capabilities must be tested for real selected routes. Never treat a failed lookup as a zero-minute trip.
+
+Example: An event lasting 3–4 PM fits the student's **event-only** interval 3–4 PM. A verified 15-minute walk from their selected origin may make travel-inclusive attendance impossible. Display these distinct verdicts, rather than changing M2's strict event-time fit or pretending the student is definitely at a chosen origin.
+
+### B. Google Calendar: preserve a no-OAuth path
+
+**Level 1, reliable export:** Generate a Google Calendar event link or valid .ics file containing the exact selected occurrence, timezone and source. This needs no access to the student's Google calendar, but may offer weaker bonus evidence than authenticated external API access.
+
+**Level 2, conditional free/busy:** Daven implements narrowly scoped OAuth consent and secure token storage/revocation; Sembiyan converts busy intervals into **recorded conflicts** but never concludes that the calendar's empty slots are confirmed free; Devonny explains opt-in, permission failure and disconnect; Cynthia verifies no private details leak. Use [Calendar free/busy scopes](https://developers.google.com/workspace/calendar/api/auth) and the [Freebusy endpoint](https://developers.google.com/workspace/calendar/api/v3/reference/freebusy/query). An OAuth client with external user type in Testing generally issues a refresh token expiring after **seven days** when requesting Calendar scopes; [Google documentation](https://developers.google.com/identity/protocols/oauth2) confirms this. A testing token is not permanent calendar connectivity.
+
+**Level 3, deferred:** Two-way sync, recurring changes, conflict reconciliation and revoked-account recovery need a separate design, not a free extension of export.
+
+### C. Authentication + WebSockets as one secure group-plan feature
+
+**Recommended demo:** Organizer creates a real plan, another participant responds Works / If… / Can't in their own authorized browser, and both browsers update over a real WebSocket without refresh. After reconnect, the server remains authoritative.
+
+Daven chooses the hosting and authorization approach and implements permissioned persistence; Sembiyan owns plan/participant transitions and state replay; Devonny owns responsive live messaging, conditional status and failure UI; Cynthia tests two independent browsers, reconnection, duplicate prevention and negative permission cases.
+
+[Supabase Realtime](https://supabase.com/docs/guides/realtime/subscribing-to-database-changes) has private Broadcast and Postgres Changes, and [Realtime Authorization](https://supabase.com/docs/guides/realtime/authorization) requires appropriate policies. A public channel is inappropriate for private constraints. Although the provider regards its publishable key as intentionally public, the **professor's stricter rule says every API key must remain server-side**. Do not change the current SideQuest server-only key policy without explicit instructor clarification. A server-authorized WebSocket gateway is a valid alternative to evaluate.
+
+[Vercel WebSocket support in Functions became generally available October 20, 2026](https://vercel.com/changelog/websocket-support-is-now-generally-available), but compatibility with our existing Node server and the chosen budget is **not verified**. Function instances are not permanent shared-memory stores; use a durable authoritative backend and test reconnect, deployment limits and cost.
+
+**Blocking negative tests:** One participant cannot read or change another's private condition; a general invitation does not impersonate someone already registered; an organizer cannot retrieve old private conditions by reissuing another's credentials; revoked access is enforced according to documented token expiry; no response stays unknown; no duplicate plan response appears on reconnect. If these tests fail, do not release shared editing or claim the security/WebSocket bonus.
+
+### D. AI: one grounded, human-confirmed use case
+
+Devonny owns the full assistant-facing interaction if there is capacity. Daven provides the server-only API integration, secret handling, per-request cost caps and validation; Sembiyan checks plans against deterministic rules; Cynthia coordinates adversarial and usability tests.
+
+Best small use case: A student enters a wish or loose constraints; the AI generates a **draft** suggestion backed by actual SideQuest activity/event data and identifies unknowns; the user confirms/edit it; a rule engine rejects any violation of hard constraints. Failing AI responses must leave the underlying app working.
+
+Other directions such as flyer extraction, free-form explanations, live group chat agents and plan repair may be valuable, but are not all required for a December AI demonstration. The AI must never silently publish, RSVP, change other users' availability or invent event facts.
+
+### E. Official event sources and media provenance
+
+Daven owns investigating permission to ingest the proposed SCU/LiveWhale event feed, stable external occurrence IDs, pagination, cancellations and safe source updates. Sembiyan verifies occurrence/time mapping. Devonny displays provenance and cancellation; Cynthia checks saved plan behavior after a source update.
+
+Do not equate imported review-batch IDs with actual provider event occurrence IDs or use mutable event start time as the sole identity key. Preserve existing SideQuest event UUIDs. Official images, student-uploaded photos and flyers need distinct permissions; the approved low-effort visual direction remains reusable illustrated categories, with photo moderation and generated illustrations deferred.
+
+## 11. Priorities and decision gates for the remaining weeks
+
+**Treat these as dependency-aware levels rather than nine promises.**
+
+1. **Mandatory foundation:** Maintain the tested M2 post → shared Discover → strict fit → local Schedule path; deliver category filters, explanations, integration quality and a real public deployment.
+2. **Major integrated extension:** One secure shared-plan response with actual WebSockets and authorization, if it passes negative security and real two-browser tests.
+3. **One real external service:** Prefer Routes API when billing/quotas and correct semantics are approved. Always offer the Maps URL fallback. Calendar export is an inexpensive useful extra.
+4. **Optional extra features:** One grounded AI interaction; Calendar free/busy with OAuth; official feed import. Add these only when every involved person has time, consent and test coverage.
+5. **Future product:** Two-way Calendar sync, arbitrary external chat bots, full image moderation, advanced plan optimization and native lock-screen widgets. Preserve conceptual architecture, not unfinished public controls.
+
+| Date | Proposed gate / named responsibility |
+| --- | --- |
+| **Nov 11** | Individual M2 reflection due beginning of class; review nine categories and record team agreement. |
+| **Nov 13** | Daven proposes auth/realtime/deployment plan; Sembiyan finalizes event-fit, travel and group response contracts; Devonny/Cynthia agree end-to-end acceptance criteria. |
+| **Nov 16–17** | Integrated Discover/fit/Schedule, initial Someday, release smoke and actually implemented architecture boundaries demonstrated. |
+| **Nov 18–20** | Authorized two-browser WebSocket test; negative permission/reconnect tests. If this fails, no public shared-plan editing. |
+| **Nov 20–23** | Conditional Routes API and grounded assistant; Calendar export; free/busy only if OAuth consent and ownership are secured. |
+| **Nov 24** | Realistic usability study and E2E test evidence for complete planned journeys. |
+| **Nov 25** | Feature freeze, disable/unpublish unverified integrations, prioritize correctness. |
+| **Nov 26–29** | Owners repair own code; Cynthia runs integration/release checks; align full ER/CRC and documentation with real code. |
+| **Nov 30–Dec 1** | Timed presentation and individual technical Q&A rehearsal; show bonus evidence only for verified features. |
+| **Dec 2 start of class** | Submit final deck; confirm presentation slot and any permitted bonus extension. |
+
+**Required proof of completion:** Named lead and reviewer, specific user outcome, reviewed PR and commit, passing test/build evidence, negative/failure tests, verified live deployment when claimed, security/cost/consent check and credible explanation in Q&A.
+
+**Open team decisions:** Exact bonus features to pursue; all four people's capacity; hosting strategy; OAuth free/busy feasibility; AI lead if Devonny is already full; permission to use a client-exposed publishable provider key under course rules; revised ER/CRC and any migrations. Use the [team HQ decision log](https://docs.google.com/document/d/1LGYSH-m4x2u8DCHyxFrRgzNRxXPLewnNvMufDJPF8jk/edit) to record what is approved. No feature or extra credit becomes authorized by adding this proposal.
