@@ -1,5 +1,7 @@
 # SideQuest: whole-product research, UI, architecture and code-conformance brief for Claude Fable 5.2
 
+> **READ ORDER CORRECTION (9 Nov):** A genuine independent architecture pass MUST start in a fresh Fable session with [the requirements-only packet](FABLE_REQUIREMENTS_FIRST_INDEPENDENT_DESIGN_2026-11-09.md), and save that design *before* opening this comparative brief or any existing code, PR, CRC or ER diagram. This document contains existing design proposals and is Phase B, **not** a blind Phase A input. The initial Fable audit was partial and had already seen architecture labels. Treat its proposed ER and cutline as provisional, especially the removal of persistent friend groups, places and Someday. Never publish raw copyrighted class slides or private interview transcripts without authorization. Private source files can be kept in an excluded local workspace for additional review.
+
 Prepared 9 November 2026. **This is a research and independent-design assignment for Fable, not the team's adopted specification, and not evidence that proposed features have shipped.** The file is deliberately present in the repository so an agent opened in VS Code can read it alongside the code. It adds no runtime behavior or approval.
 
 ## Fable's mandate: exercise independent judgment
