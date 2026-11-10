@@ -25,6 +25,12 @@ Do the following in order:
 
 **Start read-only.** The first pass must inspect without editing code, diagrams, branches, workflows, database, cloud services, secrets or APIs. Do not claim that a Google Doc, Claude artifact or PR was read unless the relevant tool actually retrieved its contents. The owner can later approve a separate feature branch for produced diagrams or implementation. Do not merge automatically.
 
+## November 9 user-provided feature-document update: required for Phase B comparison
+
+The new [SideQuest New Feature Ideas inventory](SIDEQUEST_NEW_FEATURE_IDEAS_2026-11-09.md) reconstructs the uploaded November 9 document covering design rounds 4–6 and 11, LiveWhale event/photo import, media consent and moderation, deterministic illustrations and significant proposals for Discover, Post, Schedule, Someday and browser guest invitations. The previous brief largely omitted these. **The uploaded file is a proposed design inventory, not confirmation of implementation, source-feed licensing, paid-tier pricing, or team approval.**
+
+Fable must compare these proposals with the actual photo pipeline source link, UI screens and code when available, including: verified source image vs unreviewed host image; flyers/logos needing non-destructive display; production-level vs occurrence-level artwork; source cancellations affecting saved plans; rights/alt-text/EXIF/moderation/report status; club availability aggregate privacy; mobile widgets vs actual web/PWA capabilities; photo-stamp record provenance; attendance counters and RSVP versus saved plans; deterministic illustration cache invalidation. Explicitly classify **new conceptual entities versus mere UI variants**, and show implementation/permission implications without treating all 40+ visual options as must-ship.
+
 ## 1. Source hierarchy and actual entry points
 
 1. **Course requirements** supersede guesses: [M2 Part 2](https://docs.google.com/document/d/1qIx_8k4ZOGWPrISXNYXf-sOifYsXk3SWoPVkoOBP3es/edit), [Final Project Presentation](https://docs.google.com/document/d/1Tbpa5-Y14v1WwjGtmuUDFsE2ojfEljjyWZlaOnGeXv0/edit), [official extra-credit rubric](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit), [course calendar](https://docs.google.com/document/d/1iv6_7ot7_mTe7xMyBAgA_Ue7iXkppwko8qnYmGnlzOc/edit). The separately mentioned Final Project Report instructions were not located in the connected files: ask to verify in Camino, not invent them.
