@@ -6,7 +6,7 @@
 
 **Why this packet exists:** In the previous run, Fable had seen old diagram labels before the independent-design instruction, and it could not access the authenticated Claude artifact, Google Docs, full research images or lectures. It disclosed these limits correctly. This document is a **human- and source-derived synthesis** of earlier discussions and accessible material, not a substitute for inspecting all visuals or authentic course documents. Content below deliberately contains **no recommendation about what classes, SQL tables, adapters, architecture style or libraries to use**. Fable must decide those.
 
-**Do not open the rest of the repository during phase A.** Do not inspect the source of this file's history or other branch context before writing the independent design. The models and diagrams in the rest of this repository exist for phase B. The first pass is analytical only, with no edits, commands, secrets or network mutations.
+**Phase A permitted visual evidence:** You MAY inspect every actual UI storyboard, mockup and photo-stamp image under `docs/design/exploration-2026-11/` and `docs/design/photo-stamps/`, and any separately supplied source/export/screenshots of the private 264-option Claude artifact. These are product/interaction inputs, not architecture diagrams. Distinguish images you truly viewed from images known only by title. **Do not open other source code, UML/CRC/ER diagrams, migrations, PRs, architecture notes or the old playbook during phase A.** The first pass is analytical only, with no edits, commands, secrets or network mutations.
 
 ## 1. Who the product helps and what student interviews actually suggested
 
