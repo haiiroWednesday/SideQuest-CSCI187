@@ -102,6 +102,7 @@ Historical M1 event storage and fixtures remain for compatibility; they do not c
 
 - [M2 user requirements](REQUIREMENTS.md) and [technical specifications](SPECIFICATIONS.md)
 - [M2 code-review record](docs/M2_CODE_REVIEW_RECORD.md) and [integration evidence](docs/M2_INTEGRATION_VERIFICATION.md)
+- [Final-project team roles, RACI and integration/quality proposal](docs/FINAL_PROJECT_TEAM_ROLES_RACI_2026-11.md) (**pending team agreement**)
 - [Team playbook](docs/MVP_TEAM_PLAYBOOK.md) and [product research / future proposals](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md)
 - [Historical M1 requirements](docs/M1_HISTORICAL_REQUIREMENTS.md) and [specifications](docs/M1_HISTORICAL_SPECIFICATIONS.md)
 - [Development setup and coding agents](TEAM_SETUP_GUIDE.md)
