@@ -1,0 +1,204 @@
+# SideQuest: whole-product research, UI, architecture and code-conformance brief for Claude Fable 5.2
+
+Prepared 9 November 2026. **This is a research and independent-design assignment for Fable, not the team's adopted specification, and not evidence that proposed features have shipped.** The file is deliberately present in the repository so an agent opened in VS Code can read it alongside the code. It adds no runtime behavior or approval.
+
+## Fable's mandate: exercise independent judgment
+
+**Claude Fable 5.2 is the proposed lead designer and critical reviewer; Cline is only the VS Code tool interface.** Make decisive, technically defended recommendations. Reject weak prior designs, including mine, when evidence warrants it. Do not merely reproduce the old diagram or produce an unranked menu. Choose a preferred design and explain why, including reasonable alternatives, dependencies and a practical final-course cutline. The human team still controls feature commitments, personal data, accounts, production writes, grades, PR merges and deployment; analytical authority does not grant tool permissions.
+
+The owner explicitly wants the **complete future SideQuest ambition** assessed, not only their personal UI contribution or the narrow M2 implementation. Consider Daven's database and security, Sembiyan's scheduling, Devonny's discovery and details, Cynthia's UI/integration, and all of their interdependencies. Include product research, interviews, code, the full set of sketches, shared class work and peer feedback. Read the two newest lectures on **peer review/refactoring** and **testing/dependable systems**, linked below. Skip historical classroom advice about limiting AI coding assistance as requested; still follow applicable rules on security, privacy, coursework deliverables, testing, user experience, attribution and independent explanations.
+
+Do the following in order:
+1. Reconstruct the problem and ambitious requirements from user interviews, P1/P3, full deep-research memo, team conversations recovered here, visual assets and UI artifact. Make a **feature and scenario inventory** that also preserves good deferred ideas. Mark observed/user-requested, proposed, team-confirmed, merged, verified, blocked or speculative. Do not confuse brainstorms with approvals.
+2. **Before studying the existing CRC/ER drawings**, make an independent architectural proposal from those requirements. Draw Fable's own full-product CRC/responsibility diagram (or a better non-class architecture diagram if justified), an ER diagram with keys/cardinalities, a smaller end-of-quarter deliverable cutline, and an explicit context/flow diagram. Include design rationale.
+3. Then inspect original P4/P5, current M2 diagrams, the implementation, draft PR #33 and any later diagrams. Compare your independent design with the team's diagrams and the actual code. Score correct domain separation, faithful UX, scope coverage, conceptual simplicity, data ownership, testability, privacy, migration and course requirements. **Pick the superior elements and synthesize the best coherent version**, rather than mechanically combining incompatible models.
+4. Produce diagrams in **editable draw.io format**, as required by the professor. Preliminary Mermaid/PlantUML is fine for reasoning, but it does not replace the final editable diagram. Maintain separate labelled **as-built M2**, **recommended final-course target**, and **long-range product extension** views. Don't edit the professor-approved historic P4 snapshot. Only use tools and permissions available in Cline; if read-only mode prevents creating drawings, provide precise diagram source/specifications and request authorization before writing files.
+5. Map the chosen design to concrete source paths, TypeScript interfaces, React presentation boundaries, API routes, Supabase tables/policies, migrations, adapters, test layers and contributor ownership. Inspect whether current code conforms to the **as-built** diagrams; then create an honest delta report for target design. Never describe a proposed model as already present.
+6. Recommend a single evidence-backed scope and milestone calendar through the December 2 presentation, with **rehearsal and individual oral Q&A continuously during development**. Identify the hard critical path and where to trim scope without losing the original product's purpose.
+7. Create a **continuous diagram-to-code conformance method**, with machine-verifiable invariants where possible and human review for conceptual portions. Make architecture drift visible in CI and in every PR, not simply a reminder to remember the diagrams.
+8. End with a numbered list of choices Fable has made, unresolved requirements that truly need the professor or real teammates, and the five highest-consequence flaws of its own proposal. Record confidence and trace all factual claims to links/files.
+
+**Start read-only.** The first pass must inspect without editing code, diagrams, branches, workflows, database, cloud services, secrets or APIs. Do not claim that a Google Doc, Claude artifact or PR was read unless the relevant tool actually retrieved its contents. The owner can later approve a separate feature branch for produced diagrams or implementation. Do not merge automatically.
+
+## 1. Source hierarchy and actual entry points
+
+1. **Course requirements** supersede guesses: [M2 Part 2](https://docs.google.com/document/d/1qIx_8k4ZOGWPrISXNYXf-sOifYsXk3SWoPVkoOBP3es/edit), [Final Project Presentation](https://docs.google.com/document/d/1Tbpa5-Y14v1WwjGtmuUDFsE2ojfEljjyWZlaOnGeXv0/edit), [official extra-credit rubric](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit), [course calendar](https://docs.google.com/document/d/1iv6_7ot7_mTe7xMyBAgA_Ue7iXkppwko8qnYmGnlzOc/edit). The separately mentioned Final Project Report instructions were not located in the connected files: ask to verify in Camino, not invent them.
+2. **New lecture 17, peer review and refactoring:** [17_MVP_Peer_Review_refactoring](https://docs.google.com/presentation/d/1-0Z0HvjJcVcsid9mWBQxRekZcZC_BJoa1m3Dd2vmx3A/edit). Its pages 8–13 emphasize redesigning full CRC/ER for the final scope instead of squeezing new functionality into old models. Pages 15–17 demand concrete reflections, dates, actual contribution owners, examples of feedback, conflict-resolution attempts, meaningful coding by **every** team member, almost binary final-project requirement grading, and early demo/presentation preparation. Its peer-review pairing table lists Yachun with Nolan Fallin and Henry Packer; that establishes assigned peers, **not what feedback actually occurred**.
+3. **New lecture 18, testing and dependable systems:** [18_Testing](https://docs.google.com/presentation/d/1XyMsMNsPUtODs1woGS9To3vSVgVDBmJseGcQSpeS2Q4/edit). Development tests: unit/component/system and white-box. Regression: save a reproducing input and expected result, see the test fail before fixing, fix, confirm it passes. Release: integrated black-box/E2E, nonfunctional performance/load/stress/security/reliability/accessibility. Usability: real representative users performing realistic goals, neutral observer, think aloud, no leading questions, no step-by-step coaching. Avoid claims based exclusively on unit tests. Guard against race conditions, unchecked conversions, stale UI, single-point-of-failure assumptions and injection.
+4. **Actual implemented M2:** current [README](../README.md), [REQUIREMENTS](../REQUIREMENTS.md), [SPECIFICATIONS](../SPECIFICATIONS.md), [AGENTS](../AGENTS.md), [setup](../TEAM_SETUP_GUIDE.md), real source, migrations and tests. Current-M2 documents are baseline records, **not final-product requirements**. Master playbook [docs/MVP_TEAM_PLAYBOOK.md](MVP_TEAM_PLAYBOOK.md) is historically overlong/stale in parts.
+5. **Future vision:** read the *complete* [DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md](DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md), about 100 KB, including raw interview evidence, competition, architecture, 9 extra-credit opportunities, peer feedback, November UI explorations and all linked images. Do not stop at the executive summary.
+6. **Team work:** [Team HQ and decision log](https://docs.google.com/document/d/1LGYSH-m4x2u8DCHyxFrRgzNRxXPLewnNvMufDJPF8jk/edit), [working individual M2 reflection](https://docs.google.com/document/d/1nI9fp8i22_BkfdEBeZ6pj7OrVT4NfmA0zdI7-f7DCks/edit), [M2 review record](M2_CODE_REVIEW_RECORD.md), [M2 verification](M2_INTEGRATION_VERIFICATION.md), [diagram-to-code guide](M2_IMPLEMENTATION_DIAGRAMS.md), historic P4/P5 diagram links in the playbook and current editable M2 draw.io files under docs/diagrams.
+7. **Draft PRs, on 9 November:** [#32 event import](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/32), [#33 replacement playbook + final architecture](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/33), [#34 rolling one-year posting-date cap](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/34). Read actual diffs, review threads, comments and CI, not only titles. Check newer PRs when starting.
+8. **Original source research:** [P1 interviews](https://docs.google.com/document/d/1NRX14JTG78lvDj_AUFRzaricBm-QR4vECJiLfvXGu1M/edit), [P1 personas and full user requirements](https://docs.google.com/document/d/13OOI6XF8nOiJcPj4t3Jdfxqid2EOuCfh78p7x7cYOGE/edit), [P3 campus-MVP requirements](https://docs.google.com/document/d/11Yq8sW1aOphznZHP-zbul2OedCbLJtxczb-ZZDD3oR8/edit). Two original interviewees are useful qualitative evidence, not a representative sample.
+
+**History/access limitation:** A prior ChatGPT assistant sampled the UI artifact, but the current browser fetch was blocked by Claude's access restrictions. The full artifact cannot be certified reviewed yet. Its exact link is provided below so Fable, with authorized browser access, can try to open it; if it cannot, inspect the repository sketches and ask for an export or screenshots rather than claiming to have inspected all options. Chat history retrieval is selective; this note is a reconstruction, not the entire account transcript.
+
+## 2. The complete ambition, not only the event catalog
+
+Original SideQuest: help students turn a **spare window**, **a desire to be with particular people**, or **an unfinished wish to do something** into a workable outing, while respecting costs, transportation, weather, hours, registration, participant limits and incomplete information. When a plan fails, preserve the part people care about rather than erase their idea. The interviews cover informal rotating groups, one-activity outings, forgotten destinations, communication through text/social apps, uncertain schedules, and swapping a large trip for a nearby low-effort activity.
+
+These are distinct domain concepts, not synonyms:
+- **Event series / Event group:** a theatre production, concert series, recurring club meeting, exhibition or other common program.
+- **Occurrence:** an individually scheduled showing/session, with its own ID, date, venue/status, start and perhaps unknown end. A single event can have one occurrence. An event may have more than one on the same day.
+- **Place / Activity:** a visitable location or repeatable activity without a required fixed occurrence (boba, museum, climbing, bowling).
+- **Intention / Someday:** a wanted activity independent of a date; can be deferred, activated, completed, revisited or rejected.
+- **Plan / outing proposal:** selected event occurrence or activity, proposed time, participants, states, conditions and decisions; not the public Event record itself.
+- **Availability claim:** user-reported or imported from a permitted source, scoped to person and optionally plan, with confidence and visibility.
+- **Fit evaluation:** a reasoned outcome and evidence, not a bare always-true/always-false flag or invented percentage.
+- **Source / provenance:** an organizer fact, official external source, self-reported student post, corrected/cancelled source, user choice or AI draft, with verification time.
+- **Personal Schedule:** current MVP stores only occurrence/event IDs in browser localStorage. Future accounts/shared plans need an explicit versioned migration and confirmation; local plans are not automatically RSVPs.
+
+**Three entry points:** (A) "I have 90 minutes; what can I do?" (B) "I want to be with these people; what will work?" (C) "I've wanted to try this; when can we?" Provide solo/no-account or low-friction discovery where feasible rather than making all value contingent on creating a friendship network.
+
+**Group coordination design questions:** permanent friend relationships and groups versus temporary single-plan invitations; invite-by-link without app signup versus authenticated group roles; mutual interest ("I'll go if you go") without exposing unilateral wishes; invite expiration, revocation, ownership and nonmember denial; conditional replies that expire; overlapping group constraints; no assumption that silence, an empty Google Calendar, "maybe," or RSVP implies agreement. Consider least-off participant fairness rather than maximizing the raw majority. Private budget and travel constraints must not leak their precise values to the organizer; only an authorized fit result may be shared.
+
+**Plans evolve:** pencil/tentative, pen/confirmed, completed, canceled, postponed, repaired; invitations and RSVPs can be separate state dimensions. When an outing fails, offer to preserve people + time, the desired activity, or the available time with lower effort. Save declined/postponed ideas in Someday if authorized. Source corrections may require reconfirming plans.
+
+**Discovery data:** official SCU events, student posts, department listings, theatre, music, Sustainability, Mission & Ministry, athletics, clubs and verified feeds if approved. A source-backed candidate importer is different from an automatic sync system. Support identity of repeated sessions across multiple sources, provenance, de-duplication, changing venues, cancellations, postponements, sold out status, eligibility, registration and independent special receptions attached to performances. No imaginary provider API, scraped private calendar, invented session, invented finishing time or unverified "official" badge.
+
+**Additional ambitions to assess, not all promises for December:** manual weekly availability, optional Google Calendar free/busy-only access, calendar export/import, map discovery and sourced door-to-door travel, weather and cost, accessible voice input, original illustrational details, four shapes of photo/postcard stamps in ticket stubs, personal post ownership/edit/delete, personalized opportunity shortlists, AI flyer-to-reviewable-post and plain-language search, time-sensitive reminders, real-time updates/WebSocket, "why it fits" explanations and a fit lab, comparison of two options, time/cost participation policies (full/partial/drop-in/late allowed), community/club participation, reflective memory/passport, saved interests, recommendations and minimal-data-first onboarding. Consider both meaningful standalone vertical slices and long-range architecture extensions.
+
+**Extra-credit ambition:** The professor offers nine categories with **five points maximum total**: advanced architecture (1), WebSockets (1), external system/device (up to .75), E2E/performance (up to .5), AI integration (up to .5), security (up to .5), accessibility (.25), publishing (.25), substantive advanced library (.25). The official rubric demands eligible grade/participation, completed core requirements, team agreement and demonstrated quality. Fable should select feasible credit opportunities only after preserving a complete user journey. Development-time AI assistance by itself is not an AI feature.
+
+## 3. The UI-work chat and artifact: examine the visuals, not only written descriptions
+
+**Exact Claude artifact from the earlier SideQuest work chat:** https://claude.ai/artifact/VG7bovBUCgTHQoZASvRKFp
+
+Historical ChatGPT retrieval: on November 6–7 a prior assistant opened an artifact with **264 selectable design options** and sampled, rather than exhaustively reviewed, the options. It reported duplicated IDs, P7 selecting a different older screen, P9 navigation returning to an older P8, and an A1/redraw mismatch. It inspected samples P1–P11, A26, L1/L2/L3/L4/L9 and N3. Provisional reactions: keep the cream/burgundy/serif identity, develop **L3 event menu** as a possible everyday baseline; **L2 claw machine** as occasional playful exploration; rebuild rather than mechanically reuse illustrations. All of these are observations or proposals, **not final UI selections**. There is also a shorter earlier repository research set described as 136 screens; do not conflate it with the 264-option artifact.
+
+**The full image-rich repository design atlas:**
+- [November exploration index and narrative](DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md#design-exploration-since-the-extra-credit-plan-4-to-5-november), including Sunday-to-weekend storyboard, zero-setup storyboard, Pencil/Pen, activity jar, group poll, map/travel, repair, voice, accessibility.
+- [Design image directory](design/exploration-2026-11/), including style-1-four-rooms.jpg; round2-1-discover.jpg through round2-6-tab-bar.jpg; round3-1-discover.jpg through round3-4-someday.jpg; week-1 through week-8; zero-1 through zero-3; older-friends and older-ideas comparisons.
+- [Photo stamp designs](design/photo-stamps/), four aspect-ratio frames and placement in the ticket stub; image metadata, alt text and permission/storage implications.
+- Existing code and visuals of Discover, ticket/event details, posting, My Schedule and mobile states: compare actual rendered app with sketches; don't infer shipped behavior from artwork.
+
+**UI goals and specific open aesthetic decisions:**
+- Maintain consistent visual hierarchy and recognizable SCU/paper/ticket direction while evaluating more differentiated tabs: Discover paper, My Schedule night ink/ticket book, Post print shop, Someday jar; accessible keyboard/focus, readable time/source, phone sizing, reduced motion.
+- Discover's vertical trail was preferred to hidden horizontal scrolling, but the team can assess high-density columns and a special map/timeline mode. No requirement to turn every screen into a theatrical animation.
+- Plan status must be legible and distinct from duration and spatial overlap. Ticket and postcard imagery must not hide time, title, source, plan action or accessibility labels. "Bigger cards" was ambiguous feedback: text size versus timestamp legibility versus touch target, needing real user clarification.
+- Preserve powerful ideas from older boards even when deferred: first-screen what-fits, departures board, day dial, ticket book, photo-stamp journal, event invitation cards, solo/short-window discovery, two-to-three-option group poll, privately constrained travel, "one question clears the fog", choice to keep people/time/activity, and visual explanations of why an outing is possible.
+
+### Non-negotiable visual investigation: duration-proportional and overlapping schedule boxes
+
+This requirement appeared in peer feedback and is reaffirmed by the owner in the present discussion. **My Schedule should be capable of a real timeline: every scheduled card/box has vertical length proportional to actual runtime** (or horizontal length on an explicitly horizontal time axis). A two-hour event should occupy twice the logical time extent of a one-hour event unless a documented, visible minimum-size or clipped layout adjustment applies. Date/clock anchors must be consistent. A long event does not get the same physical height as a short one in the true timeline.
+
+**Events that overlap in time appear as parallel lanes/side-by-side boxes. The existence of an overlap is a neutral scheduling fact, not intrinsically an error, warning, negative evaluation or red conflict.** A person may be considering alternatives, looking at public events or holding tentative plans. Any actual scheduling contradiction must be derived from independent semantics (e.g., two committed non-overridable attendance obligations), shown separately and explained. Do not transform a visual layout rule into a business-rule rejection. Support concurrent starts, partial overlaps, nesting, exact touching boundaries, more overlaps than visible lanes, and responsive phone layout.
+
+Earlier peer-feedback proposal: presenter computes top/height/lane using event intervals, View draws geometry; short blocks should retain labels and tap targets; large gaps can compress with an explicitly labelled break; desktop maximum about three side-by-side and phone about two, followed by +N more, subject to testing. Presenter's geometry must not change Model truth. Test with 30, 60, 90, 120, 180 minute events, crossing/no-crossing intervals, and overlapping events. Check screen readers and keyboard chronological order independent of visual lane order.
+
+**Unknown end time is genuinely open** and affects duration-proportional geometry. Competing options to judge:
+A) require verified end for exact-fit and timeline; still show start-only events in discovery;
+B) nullable end with distinct "possible fit/unknown" state, separate unbounded/open-ended visual;
+C) user-editable tentative duration assumption (e.g., 90 minutes) used ONLY for personal planning/display, visually dashed or marked estimated and never stored/published as an organizer's confirmed end;
+D) category-specific duration defaults (dangerous without evidence) or exclusion from availability search.
+Fable should choose and justify a coherent approach covering same-day/overnight, DST and data source quality. Do **not** show a 90-minute solid height with no estimate label as if verified. Separate source truth, derived estimate and user choice in types and persistence. Distinguish advertised doors time, event start, runtime, official close and flexible drop-in windows. Unknowns must remain observable.
+
+## 4. Specific peer feedback and Nov 9 lectures
+
+The user already identified the source: [peer feedback after live catalog test (Nov 4)](DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md#peer-feedback-after-the-live-catalog-test-4-november). Do not ask for it again. Concrete observations:
+- One-character titles, unbroken 2,000-character strings and year 9999 were accepted and exposed visual and validation problems.
+- Long text broke tickets; selected/unselected styling too similar; selected ticket still moved on hover. Shortened trail text and readable details, strong selected state, stable hover were developed.
+- People wanted a shortcut to My Schedule after planning but not a forced redirect; success toast link was added.
+- On-blur field errors, then revalidate as corrected, preserve full submit validation; very long inputs and future date horizon require cross-layer consistency.
+- Populate the demo with **real sourced SCU events**, avoiding unsafe test records or invented facts; reviewed PR #32 is a starting point, not an approved source synchronization system.
+- **Duration-proportional My Schedule** and neutral side-by-side overlaps are requested; this is not the same as ordinary fixed-height Discover tickets.
+- Personal post edit/delete permissions require ownership. Earlier private edit-code concept competes with eventual authenticated accounts; recommend one consistent approach.
+- Photo/poster as four stamp shapes only after image authorization/storage/alt-text is addressed.
+- Horizontal Discover scrolling was rejected for general browsing; "bigger cards" requires clarifying the actual problem.
+- Devonny reported that an oversized mobile hero hid the first event; historical phone redesign raised the first ticket from a y-position around 519px to 355px on a 375x667 screen. Use as dated comparison, not an invariant for every device.
+
+The [M2 code-review record](M2_CODE_REVIEW_RECORD.md) documents concrete PRs: #15 had 500-versus-2,000 character and provisional 100-plan conflicts; #18 discovered Model-layer past-date bypass; #19 found blocked localStorage and stale read race; #25's expiration/ordering tests were incorporated through #26; later #31 refactored code/UX. Include these in architecture/verification narratives. Daven also reviewed PR #32's time-varying tests, redirect-to-new-host POST, source allowlist, duplicate normalization, Slices of Religious Life venue and Global Learning hours.
+
+**Nov 9 class/testing lesson actionable requirements:** design for the *entire* final feature set, preserve a meaningful split in responsibilities, use exact milestones and owner-specific written contributions, record peer feedback as observed, not fabricated. Final grading may offer little partial credit, and everybody needs meaningful code contributions. Verify testing at 3 levels: development/white-box; release/integrated black-box/E2E and nonfunctional; user research in realistic unguided tasks. Add regression tests for known failures that first reproduce the bug, check that the test detects it, then fix it. Test time and state races and SQL/RLS abuse paths, not just happy-path screens. Keep user testing distinct from technical integration checks.
+
+**Nov 9 class feedback from the user is not fully documented in retrieved sources**; don't write invented interactions into the reflection. Lecture 17's names indicate assigned review peers, not what anybody said. Use genuine notes if accessible; otherwise flag the missing firsthand record.
+
+## 5. GitHub truth and cross-contributor blockers (checked Nov 9)
+
+- **Master as-built M2:** React/TypeScript/Vite, Node API, EventCatalogPort, in-memory and Supabase adapters, public.events storing individual date/start/end rows, same-day fully-known duration, public anonymous post/read, browser-local Schedule IDs, future-only posting, browser and unit tests. Security and live deployment claims require scoping.
+- **PR #32 draft import:** 19 dated records for 14 titles; source-linked manual review and explicit opt-in import. No automatic sync, no public import by PR. Daven's review: test selection count changes with the real date; fetch redirects could relay a POST; unapproved source allowlist; weak duplicate normalizer; held source facts. New grouping should distinguish separate performances and source identity.
+- **PR #33 draft playbook:** newer than the master October playbook, but still a proposal. Includes MVC + ports/adapters, identity, friends, groups, plans, availability, places, sources, nine extra-credit categories. Daven suggests showing EventCatalogPort with two adapters as concrete advanced-architecture evidence and possibly asking professor. No existing approval for full ER.
+- **Nov 7 Daven's live Supabase report:** cross-browser read/post/refresh and isolated local plans worked. He subsequently confirmed anonymous permissions on real project: SELECT, bounded 7-column INSERT, UPDATE/DELETE denied with 401, original row unchanged; SQL CI checks match. Some AGENTS/README docs inaccurately say live checks were not done. This does **not** prove authenticated ownership or secure public posting moderation.
+- **PR #34 open, one-year posting horizon:** Daven's branch proposes model/UI/date cap plus SQL date sanity bound. The user's review correctly flagged failing 2099/2030 fixtures and frozen-browser versus real-server clock; should cap **creation**, not invalidate old/saved events. SQL upper year <2100 is not a rolling California-year INSERT restriction, so direct anonymous DB insert bypasses model cap. Reconcile policy, model, tests, migration and requirements before merge.
+- **Current system time representation:** campus local date + HH:mm start/end, no overnight and no nullable end; proposed series/occurrences, sold-out status, source updates and account-level persistence need additive migration. Preserve existing IDs and avoid falsely identifying group_ids as current schema.
+- **Teammate focus, not all obligations:** Daven = Supabase/database/posting/security; Sembiyan = matching/Schedule/group availability; Devonny = discovery/details/UX; Cynthia = cross-feature UI/integration, architecture/documentation, testing coordination. Everyone must implement meaningful code, not only review artifacts. Avoid assigning Daven every server task at once.
+- **Product/security interactions:** existing hostName is unverified display text, not an owner; client-side keys are not authorization; event edits, official imports and source synchronization need separately authorized server pathways. No shared private calendar titles, unrestricted anon edits, fabricated source verification or secrets in frontend/repo.
+
+## 6. Fable's independent architecture and adjudication protocol
+
+### Stage A: requirements-first independent design
+From interview needs and the full ambition, produce in sequence:
+- A **context diagram** showing SCU student, group participant, organizer, official event sources, Google busy/free, maps/travel, optional AI provider, Supabase/auth, browser UI/server; separate trusted and untrusted borders.
+- A full-product **CRC/responsibility design**, with responsibilities and collaborators, reflecting existing MVC and appropriate ports/adapters; consider at minimum EventSeries, EventOccurrence, EventCatalog, SourceRecord/Importer, Place/Activity, UserIdentity, Group/Member, Invitation, AvailabilityClaim, FitEvaluation, Intention, OutingPlan, Participation/RSVP, ScheduleProjection, AccessPolicy and optional external adapters. Do not blindly create all as classes or tables: justify responsibility and lifecycle.
+- A complete **ER diagram** with PK, FK, cardinalities, uniqueness, check/nullability rules and permission/ownership annotations. Keep persistent entities separate from transient fit results, presentation geometry and non-persisted local schedule. Show whether grouping is optional/nullable and standalone events are valid. Explain shared plan option references to occurrences or unscheduled activities, group roles and response constraints, local migration, source identity across rescheduling and privacy/visibility scopes.
+- Two **cutlines**: what the team can reasonably deliver by Dec 2 (working, reviewed, demonstrated and testable), versus long-range extensibility that remains explicit but unimplemented. Avoid both a one-table blind alley and a speculative microservice palace.
+- A worked walkthrough: a user selects a Thursday performance out of seven; another session overlaps; its true end is unknown; the user has a 90-minute provisional assumption; friend replies "maybe after 3"; organizer changes performance time; the saved plan updates and requests reconfirmation, without false claims of certainty. This one scenario should exercise the chosen model and UI.
+
+### Stage B: inspect and compare prior designs
+Only after archiving your independent draft, review:
+- Professor-approved P4 Event/EventCatalog/Schedule CRC.
+- Original P5 ER with USER/EVENT/AVAILABILITY_WINDOW/PLANS TO ATTEND.
+- Current M2 draw.io and model/controller/View code.
+- PR #33 proposed ports/adapters, PR #32 sources, PR #34 validation.
+- Full UI artifact and repository drawings. Separate runtime requirements from illustration decisions.
+
+Publish a **side-by-side design comparison** with concrete examples of what Fable, the original P4/P5, the M2 as-built and PR #33 get right/wrong. State a decisive choice on event series versus occurrences, unknown ends, time window semantics, plans versus RSVPs, auth/group invites, sources, private availability and diagram granularity. Explain why the winner is better using explicit requirements, actual code constraints and failure scenarios.
+
+### Stage C: synthesize and check code
+Create a **recommended canonical design** and express it in editable draw.io. Keep a separate current-as-built diagram. Produce a requirements-to-architecture-to-code crosswalk:
+- Requirement ID and precise user story; supported by interview/peer feedback or marked speculative.
+- Architectural responsibility and API/contract owner.
+- Persistent tables/fields and permissions, or explicitly not persisted.
+- Exact current file paths and tests, or **NOT IMPLEMENTED**.
+- Reviewer, planned milestone, observable acceptance criterion.
+- Differences to change; migration, rollback and what will happen to old records.
+
+Do not "validate" a proposed ER from the presence of a file name. Check actual SQL definitions and migrations; compare PK/FK/check/policies/grants against required invariants. Do not claim exact diagram conformance for manually drawn intent without review.
+
+## 7. Make future code match architecture continuously
+
+Propose and eventually install a pragmatic architecture-conformance workflow, with requirements central:
+
+1. **Version and designate authority**: immutable P4/P5 historic artifacts, M2 as-built diagrams, canonical final target diagram/ADR approved for implementation, extended future vision diagram. Date, revision, owner and status on every diagram. Keep architectural choices in brief ADRs with alternatives and testable consequences.
+2. **Traceability matrix** as tracked Markdown/CSV or generated JSON: requirement ID -> CRC responsibility/use case -> TypeScript interface/module -> API route -> DB entity/policy -> test -> PR -> demo evidence. Make missing links visible in review; every in-scope requirement gets a test/evidence path.
+3. **Dependency and boundary checks**: lint/import graph to enforce domain does not import React, server-only adapters do not leak browser, Views do not execute SQL, controller/use-case doesn't fake validation, source import doesn't mutate unauthorized records, consistent EventCatalogPort contracts. Use narrow rules, not a speculative rewrite.
+4. **Database diff**: machine-readable SQL migration/schema introspection in isolated Postgres/Supabase test env to check actual PK/FK/cardinality-related constraints and RLS. Compare a generated as-built ER/DBML representation to the editable proposed design by review. Directly converting diagrams to SQL is optional and only after proof of correctness.
+5. **Contract and property tests** for stable IDs, anonymous/owner/group denial, time truth/uncertainty, real occurrence identities, sources/cancellation, serializability, timezone and DST, unknown versus false, schedule geometry and neutral overlap, partial/conditional fit, race conditions, failed persistence, error/empty/offline states.
+6. **PR gate**: every relevant PR declares the approved requirement ID, changed domain/schema/UI contracts, affected diagram and ADR, migration/data compatibility, tests run, real UI screenshot if visual, accessibility/manual checks and reviewer from another owner. If design changed, update canonical diagram **in same PR** or explicitly record follow-up with a blocking issue. CI cannot verify the intended meaning of every conceptual relationship; human cross-check remains necessary.
+7. **Shared PR sequencing**: one human integration owner for shared App.tsx; feature branches/worktrees for parallel agents; check status and protect uncommitted work before sync; architecture/model/schema change approval before parallel implementation. Never allow agents to merge conflicting code on the basis of a green build alone.
+8. **Release validation**: two authenticated clients where relevant, real provider permissions, true shared catalog versus fallback, user-facing test of complete journeys, reproduced edge cases, annotated screenshot baselines and group demo. Preserve failure evidence, including release blockers.
+9. **Drift report as a generated artifact**: every milestone has a short document showing approved target -> code delta -> tests/evidence -> unverified claims -> next blockers, with file/commit links. Use truthful statuses (verified human report versus independent reproduction).
+10. **Professor defensibility**: justify a more advanced architecture over plain MVC with a real adapter substitution and tests. CRC includes actual responsibilities/collaborators, ER actual stored relationships, diagrams reflect what was built at submission. Conceptual future extensions are identified separately rather than falsely counted as code.
+
+## 8. Course milestones, individual contributions and presentation
+
+- **Nov 9–10:** Full scope/owners/architecture discussion, Nov 9 actual feedback notes, initial independent Fable design and diagram comparison. First 5–10 minute M2 demonstration and individual oral practice.
+- **Nov 11 beginning of class:** individual M2 Part 2 reflection Google Doc, viewable link submitted via Camino. Professor wants exact individual contributions, team strategy, received/given review examples, updated final CRC/ER reasoning and owner/deadline plan. The editable final diagrams travel with the final GitHub submission; completing them early guides work.
+- **Nov 14–15 target:** authenticated identity/security architecture or approved simpler identity cutline, tested schema changes; oral defense.
+- **Nov 18–19 target:** friends or temporary group flow and occurrence-specific discovery; cross-owner integration checks and Q&A.
+- **Nov 21–22 target:** group plan proposal + response vertical slice, first complete timed presentation rehearsal.
+- **Nov 24–25 target:** availability/unknown states, source reliability, end-to-end testing and user observation. Thanksgiving reduces available meeting time.
+- **Nov 27 target:** conditional features gate and asynchronous Q&A practice; don't assume holiday-week work capacity.
+- **Nov 29–30 target:** scope freeze, current-code CRC/ER accuracy check, regression/access/security and actual user tests, backup demo video.
+- **Dec 1:** complete dressed rehearsal with everyone able to explain their own work and shared architecture.
+- **Dec 2 beginning of class:** final slide deck to Gradescope; groups 1–3 present Dec 2, others Dec 4. Verify SideQuest's registered group; group talk 7–10 minutes including roughly 3–6 minute honest demo, then about 7 minutes individual Q&A, approx 1 minute/answer. Practice interview, UX, architecture, challenge/repair, teamwork, evolution and individual contributions.
+- **Dec 4 end of day:** single submission of handwritten notes from watching other groups' talks.
+
+For **every PR**, record problem -> decisions and rejected alternatives -> owner contributions -> exact file/diagram changes -> regression evidence -> one-minute explanation -> likely professor question. All four people need meaningful coding, per lecture 17. Don't invent Nov 9 peer exchanges or pretend the professor has predetermined who gets which question. Rehearsals should start while coding, not after feature freeze.
+
+## 9. Required output format from Fable
+
+Deliver a single rigorous report or a coherent set of linked artifacts:
+
+1. Evidence/source inventory with access failures, current SHA and draft PR status.
+2. Full ambitions inventory and a **graded-deadline feature cutline** with explicit priorities and things intentionally postponed.
+3. Independent architecture diagrams (pre-comparison) plus a written rationale.
+4. Existing-architecture comparison table; name exactly where original drawings or current code are weaker/stronger.
+5. Synthesized canonical **final-course** CRC or justified alternative architecture, full ER, context and main sequence diagrams; editable draw.io source once authorized.
+6. As-built M2 vs canonical planned architecture and a requirement-by-requirement, file-by-file code-conformance report.
+7. Decision register: choose a recommendation, record real remaining external questions and dependencies; do not evade decisions with generic "tradeoffs".
+8. Phased migration, contracts, negative tests, security gates and PR-level diagram drift prevention.
+9. Roles, dates, milestone acceptance, continuous presentation and individual Q&A drills.
+10. Counterarguments to Fable's preferred design and five most costly ways it could fail.
+
+**No code changes or external writes in phase one.** Clearly distinguish its architecture judgment from user/team approval, and ensure it understands every teammate's contributions rather than attributing all technical work to Cynthia.
