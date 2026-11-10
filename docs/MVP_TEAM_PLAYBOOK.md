@@ -1,5 +1,7 @@
 # SideQuest MVP — the team's build playbook
 
+> **New final-project team-role proposal (10 Nov 2026):** Read [Final Project Team Roles, RACI, Integration & Quality Plan](FINAL_PROJECT_TEAM_ROLES_RACI_2026-11.md). It proposes Cynthia as **Systems Integration & Quality Lead** with hands-on integration/test coding, alongside feature ownership by Daven (catalog/backend/permissions), Sembiyan (feasibility/Schedule/rules), and Devonny (Discover/selection). Includes proposed Someday handoffs, RACI, review gates and milestones. **Pending agreement from all four people.** The M2 workstream table below describes the earlier MVP allocation and is preserved as historical context.
+
 > **Implementation status update:** the proposed integration now connects the merged catalog/posting/Schedule code and Cynthia’s supplied view patch in production `App.tsx`. Contract and coursework sections below remain authoritative; older “not implemented yet” descriptions are historical. See [integration verification](M2_INTEGRATION_VERIFICATION.md) for tested behavior and remaining checks. P4 has been approved by the professor and is resolved.
 
 **Updated 28 October 2026 · CSCI 187 · M2 implementation guide + separately identified P5 coursework ER**  
