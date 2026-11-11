@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { sharedCatalogHttpFixture, SHARED_APP } from './helpers/sharedCatalog'
-import type { EventRow } from '../src/model/eventCatalog'
+import { latestPostingDate, type EventRow } from '../src/model/eventCatalog'
 import { campusDateFromToday } from '../tests/fixtures/campusDateValue'
 
 // The Node API validates against real time; the page's simulated clock must
@@ -145,4 +145,51 @@ test('production build keeps database credentials on the server and posts throug
       expect(request.headers.authorization).toBeUndefined()
     }
   } finally { await context.close() }
+})
+
+test('the mobile Post form rejects a date beyond the cap and accepts the last allowed day', async ({ browser }) => {
+  const backend = sharedCatalogHttpFixture()
+  const context = await browser.newContext({ viewport: { width: 375, height: 812 } })
+  try {
+    await backend.attach(context)
+    const page = await context.newPage()
+    const now = new Date()
+    await page.clock.install({ time: now })
+    await page.goto(`${SHARED_APP}/#post`)
+
+    const max = latestPostingDate(now)
+    const nextDate = new Date(`${max}T12:00:00Z`)
+    nextDate.setUTCDate(nextDate.getUTCDate() + 1)
+    const beyond = nextDate.toISOString().slice(0, 10)
+    const date = page.getByLabel('DATE', { exact: true })
+
+    await expect(date).toHaveAttribute('max', max)
+    await date.fill(beyond)
+    await date.press('Tab')
+    await expect(date).toHaveAttribute('aria-invalid', 'true')
+    await expect(page.locator('#post-date-error')).toContainText(`on or before ${max}`)
+    await expect(page.locator('#post-date-error')).toBeVisible()
+    expect((await backend.state()).rows).toHaveLength(0)
+
+    await date.fill(max)
+    await date.press('Tab')
+    await expect(date).not.toHaveAttribute('aria-invalid', 'true')
+    await expect(page.locator('#post-date-error')).toHaveCount(0)
+    const fields = {
+      'EVENT NAME': 'Last allowed day',
+      'HOST NAME': 'SCU Club',
+      DESCRIPTION: 'Posting boundary test.',
+      LOCATION: 'Benson 101',
+      START: '14:30',
+      END: '15:30',
+    }
+    for (const [name, value] of Object.entries(fields)) {
+      await page.getByLabel(name, { exact: true }).fill(value)
+    }
+    await page.getByRole('button', { name: '+ Post event' }).click()
+    await expect(page.getByRole('status')).toContainText('Posted “Last allowed day”')
+    expect((await backend.state()).rows).toHaveLength(1)
+  } finally {
+    await context.close()
+  }
 })
