@@ -1,5 +1,5 @@
 -- Run after 20261110000000_event_date_posting_horizon.sql in an isolated
--- PostgreSQL database as its owner. Test owner: Daven.
+-- PostgreSQL database as its owner.
 -- Every test write is rolled back; this does not provision or alter live roles.
 begin;
 -- now() cannot be faked here, so the Feb 29 rule is checked on the policy's
