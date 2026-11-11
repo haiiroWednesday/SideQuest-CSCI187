@@ -80,7 +80,7 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
               <p>Share a campus activity. Dates and times use California time.{!connection.shared && ' Posts are saved in this browser only.'}</p>
               <EmbeddedPostEventForm connection={connection} now={now}
                 onPosted={() => { void events.refresh() }} />
-              <a className="sq-text-link" href="#discover">Back to Discover →</a>
+              <p className="sq-post-back"><a className="sq-arrow-link" href="#discover">Back to Discover<span className="sq-pen-arrow" aria-hidden="true" /></a></p>
             </section>
           </main>
         </div>

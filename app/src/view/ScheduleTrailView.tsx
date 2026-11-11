@@ -55,7 +55,7 @@ export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes
         {screen.status === 'loading' ? <p role="status">Loading planned event details…</p> : screen.status === 'empty' ? (
           <div className="sq-empty-card">
             <b>Nothing planned yet.</b>
-            {routes?.discover && <a className="sq-plan-button sq-plan-link" href={routes.discover}>Browse Discover →</a>}
+            {routes?.discover && <a className="sq-arrow-link" href={routes.discover}>Browse Discover<span className="sq-pen-arrow" aria-hidden="true" /></a>}
           </div>
         ) : screen.status === 'blocked' ? (
           <div className="sq-message sq-message-error" role="alert"><h3>Your saved plans could not be read.</h3>{onRecover && <button type="button" onClick={onRecover}>Recover valid plans</button>}</div>

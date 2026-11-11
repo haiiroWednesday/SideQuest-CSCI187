@@ -196,7 +196,7 @@ export function DiscoverView({
                 <div className="sq-message-actions">
                   {free?.active && onFreeWindowChange && <button type="button" className="sq-text-button"
                     onClick={() => onFreeWindowChange({ date: '', start: '', end: '' })}>Show all events</button>}
-                  {routes?.post && <a className="sq-text-link" href={routes.post}>Post an event</a>}
+                  {routes?.post && <a className="sq-arrow-link" href={routes.post}>Post an event<span className="sq-pen-arrow" aria-hidden="true" /></a>}
                 </div>
               </div>
             ) : (
@@ -228,7 +228,7 @@ export function DiscoverView({
                   </section>
                 ))}
                 {routes?.post && (
-                  <p className="sq-endcap"><a href={routes.post}><span className="sq-endcap-lead">That's everything coming up.</span> <span className="sq-endcap-cta">Post something<span className="sq-endcap-arrow" aria-hidden="true" /></span></a></p>
+                  <p className="sq-endcap"><a className="sq-arrow-link" href={routes.post}><span className="sq-endcap-lead">That's everything coming up.</span> <span className="sq-endcap-cta">Post something<span className="sq-pen-arrow" aria-hidden="true" /></span></a></p>
                 )}
               </div>
             )}

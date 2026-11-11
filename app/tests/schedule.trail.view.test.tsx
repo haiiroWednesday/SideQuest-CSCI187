@@ -48,7 +48,7 @@ describe('My Schedule trail view: draws the Controller screen', () => {
   it('has an empty state that points back to Discover', () => {
     render(<ScheduleTrailView screen={presentSchedule({ ids: [], entries: [], missingIds: [] })} routes={{ discover: '/' }} />)
     expect(screen.getByText('Nothing planned yet.')).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Browse Discover →' }).getAttribute('href')).toBe('/')
+    expect(screen.getByRole('link', { name: 'Browse Discover' }).getAttribute('href')).toBe('/')
   })
 })
 

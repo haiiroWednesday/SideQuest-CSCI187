@@ -32,9 +32,7 @@
 .sq-post-panel .success { background: var(--sq-sticky); color: var(--sq-ink); }
 .sq-post-panel .error[role="alert"] { background: #fbe6e2; }
 /* leaving the page sits well below the form, past a dashed rule */
-.sq-post-panel > .sq-text-link { display: block; width: fit-content; margin: 64px auto 0; padding-top: 22px; font: 600 18px var(--font-sans); text-decoration: none; color: var(--sq-red); }
-.sq-post-panel > .sq-text-link::before { content: ""; display: block; width: min(780px, 80vw); height: 0; margin: -22px 0 22px 50%; transform: translateX(-50%); border-top: 1.5px dashed var(--sq-rule-strong); }
-.sq-post-panel > .sq-text-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+.sq-post-back { margin: 64px 0 0; padding-top: 26px; border-top: 1.5px dashed var(--sq-rule-strong); text-align: center; }
 @media (max-width: 760px) {
   .sq-post-panel .event-form { padding: 24px 18px 26px; border-radius: 22px; box-shadow: 6px 6px 0 var(--sq-red-deep); }
   .sq-post-panel > p { font-size: 17px; }
