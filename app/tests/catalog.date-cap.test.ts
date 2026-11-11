@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 // Posting horizon: an event date may be at most one year after the current
-// campus date (America/Los_Angeles), inclusive. Test owner: Daven.
+// campus date (America/Los_Angeles), inclusive.
 import { describe, expect, it } from 'vitest'
 import dateBoundSql from '../../supabase/migrations/20261108000000_event_date_sanity_bound.sql?raw'
 import horizonPolicySql from '../../supabase/migrations/20261110000000_event_date_posting_horizon.sql?raw'
