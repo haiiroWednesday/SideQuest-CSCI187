@@ -5,11 +5,11 @@ import { describe, expect, it } from 'vitest'
 import dateBoundSql from '../../supabase/migrations/20261108000000_event_date_sanity_bound.sql?raw'
 import horizonPolicySql from '../../supabase/migrations/20261110000000_event_date_posting_horizon.sql?raw'
 import {
-  isWithinPostingHorizon as controllerHorizon, latestPostingDate as controllerLatest,
-  MAX_POSTING_YEARS_AHEAD, postEvent, postingDraftErrors, type EventDraft,
+  latestPostingDate as controllerLatest, postEvent, postingDraftErrors, type EventDraft,
 } from '../src/controller/postEvent'
 import {
-  catalogPostingErrors, createEventCatalog, EventCatalogError, isWithinPostingHorizon, latestPostingDate,
+  catalogPostingErrors, createEventCatalog, EventCatalogError,
+  isWithinPostingHorizon, latestPostingDate, MAX_POSTING_YEARS_AHEAD,
 } from '../src/model/eventCatalog'
 import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 
@@ -37,6 +37,13 @@ describe('latestPostingDate', () => {
     expect(isWithinPostingHorizon('2029-02-28', leapDay)).toBe(true)
     expect(isWithinPostingHorizon('2029-03-01', leapDay)).toBe(false)
   })
+  it('includes both posting-horizon boundaries and rejects invalid dates', () => {
+    expect(isWithinPostingHorizon('2026-11-07', NOW)).toBe(false)
+    expect(isWithinPostingHorizon('2026-11-08', NOW)).toBe(true)
+    expect(isWithinPostingHorizon('2027-11-08', NOW)).toBe(true)
+    expect(isWithinPostingHorizon('2027-11-09', NOW)).toBe(false)
+    expect(isWithinPostingHorizon('2026-02-30', NOW)).toBe(false)
+  })
   it('does not reach Feb 29 when today is Feb 28 before a leap year', () => {
     const beforeLeap = new Date('2027-02-28T20:00:00Z')
     expect(latestPostingDate(beforeLeap)).toBe('2028-02-28')
@@ -44,7 +51,6 @@ describe('latestPostingDate', () => {
   })
   it('is the same rule the Controller re-exports for Views', () => {
     expect(controllerLatest).toBe(latestPostingDate)
-    expect(controllerHorizon).toBe(isWithinPostingHorizon)
   })
 })
 
