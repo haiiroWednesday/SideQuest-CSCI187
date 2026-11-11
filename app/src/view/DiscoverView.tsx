@@ -164,6 +164,7 @@ export function DiscoverView({
   })
   const ready = screen.status === 'ready'
   const free = screen.freeWindow
+  const noMatch = Boolean(free?.active) && screen.status === 'ready'
 
 
   return (
@@ -191,10 +192,11 @@ export function DiscoverView({
               </div>
             ) : screen.status === 'empty' || (screen.status === 'ready' && screen.count === 0) ? (
               <div className="sq-message sq-message-empty" role="status">
-                <h3>{free?.active ? 'No events fit this window.' : 'No events to show yet.'}</h3>
-                {free?.active && <p>Try a longer window, or see everything coming up.</p>}
+                {/* "No events fit" only when there were events to fit. An empty catalog says so plainly, even with a window filled in. */}
+                <h3>{noMatch ? 'No events fit this window.' : 'No events to show yet.'}</h3>
+                {noMatch && <p>Try a longer window, or see everything coming up.</p>}
                 <div className="sq-message-actions">
-                  {free?.active && onFreeWindowChange && <button type="button" className="sq-text-button"
+                  {noMatch && onFreeWindowChange && <button type="button" className="sq-text-button"
                     onClick={() => onFreeWindowChange({ date: '', start: '', end: '' })}>Show all events</button>}
                   {routes?.post && <a className="sq-arrow-link" href={routes.post}>Post an event<span className="sq-pen-arrow" aria-hidden="true" /></a>}
                 </div>

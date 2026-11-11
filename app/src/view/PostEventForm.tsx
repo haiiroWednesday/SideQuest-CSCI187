@@ -1,6 +1,6 @@
 // VIEW: compose the post editor and catalog list without behavior flags.
 // Posting validation and storage operations remain behind Controller ports.
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, useRef } from 'react'
 import {
   postEvent, postingDraftErrors, initialCampusWindow,
   type CampusEvent, type CatalogFieldErrors, type ConnectedCatalog, type EventDraft,
@@ -43,7 +43,12 @@ function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props
   const [formError, setFormError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  // A double click lands its second click after the first post has finished and the form has reset.
+  // That second submit would validate the empty form and show errors under the success message, so
+  // submits within a moment of a successful post are ignored until the user edits something.
+  const postedAt = useRef<number | null>(null)
   const update = (field: keyof EventDraft, value: string) => {
+    postedAt.current = null
     const nextDraft = { ...draft, [field]: value }
     setDraft(nextDraft)
     const errors = postingDraftErrors(nextDraft, now())
@@ -66,6 +71,7 @@ function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (submitting) return // prevents double posts from a double click
+    if (postedAt.current !== null && performance.now() - postedAt.current < 1000) return
     setSubmitting(true)
     setNotice(null)
     setFormError(null)
@@ -85,6 +91,7 @@ function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props
     setFieldErrors({})
     setValidatedFields({})
     setNotice(result.message)
+    postedAt.current = performance.now()
     // Keep host name, date and times to make posting a similar event quicker.
     setDraft(current => ({ ...current, title: '', description: '', location: '' }))
     onPosted?.(result.event)

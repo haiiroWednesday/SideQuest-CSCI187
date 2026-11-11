@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "start": "node dist-server/index.js"
+    "start": "node dist-server/index.js",
+    "test:qa36": "SIDEQUEST_QA36=1 playwright test e2e/qa-issue36.spec.ts --workers=4"
   },
   "engines": {
     "node": ">=22.12.0"

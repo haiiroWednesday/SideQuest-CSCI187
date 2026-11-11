@@ -267,6 +267,8 @@
 .sq-free-field input:focus { outline: none; }
 /* A filled field is sage, never red: red is kept for errors and the main action. */
 .sq-free-field.sq-set { background: var(--sq-sage-tint); border-color: var(--sq-sage); color: var(--sq-sage); }
+/* The one red state: the fields a window error is about. */
+.sq-free-field.sq-invalid { background: #fdf4f2; border-color: var(--sq-red); color: var(--sq-red-deep); }
 .sq-free-count { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 999px; background: var(--sq-gold); color: var(--sq-ink); font: 700 17px var(--font-sans); }
 .sq-free-clear { border: 0; background: none; color: var(--sq-muted); font: 600 16px var(--font-sans); padding: 10px 6px; cursor: pointer; }
 .sq-free-clear:hover { color: var(--sq-ink); }
@@ -363,6 +365,12 @@
 .sq-sticker-placeholder h2 { color: var(--sq-ink); margin: 6px 0 0; }
 .sq-sheet-close, .sq-scrim { display: none; }
 
+/* Between the phone tab bar (760px) and full desktop, the header tabs tighten so a plan count never pushes them off screen. */
+@media (min-width: 761px) and (max-width: 980px) {
+  .sq-nav { gap: 2px; }
+  .sq-tab { padding: 12px 9px 10px; font-size: 21px; }
+  .sq-post { margin-left: 6px; padding: 12px 16px 12px 12px; font-size: 17px; }
+}
 @media (max-width: 1160px) {
   .sq-board { grid-template-columns: minmax(0, 1fr) 360px; gap: 30px; }
   .sq-stubs { grid-template-columns: 1fr; }
@@ -426,7 +434,8 @@
   .sq-sticker-time i { font-size: 26px; }
   .sq-sticker-time .sq-sticker-until { font-size: 19px; }
   .sq-sticker h2 { font-size: 38px; }
-  .sq-sheet-close { display: block; position: absolute; top: 6px; right: 8px; width: 48px; height: 48px; border: 0; background: none; font: 400 34px/1 var(--font-sans); color: var(--sq-muted); cursor: pointer; }
+  /* z-index: the ticket top below is positioned too and would otherwise sit over the × and swallow taps. */
+  .sq-sheet-close { display: block; position: absolute; z-index: 3; top: 6px; right: 8px; width: 48px; height: 48px; border: 0; background: none; font: 400 34px/1 var(--font-sans); color: var(--sq-muted); cursor: pointer; }
   .sq-scrim { display: block; position: fixed; inset: 0; z-index: 35; background: rgba(48, 36, 33, .38); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
   .sq-scrim.sq-open { opacity: 1; pointer-events: auto; }
   .sq-sticker-placeholder { display: none; }

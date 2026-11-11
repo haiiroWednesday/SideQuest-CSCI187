@@ -11,9 +11,9 @@ type FreeWindowFieldProps = {
 
 function FreeWindowField({ field, label, type, free, onWindowChange }: FreeWindowFieldProps) {
   return (
-    <label className={`sq-free-field${free.values[field] ? ' sq-set' : ''}`}>
+    <label className={`sq-free-field${free.invalid.includes(field) ? ' sq-invalid' : free.values[field] ? ' sq-set' : ''}`}>
       <span>{label}</span>
-      <input type={type} value={free.values[field]}
+      <input type={type} value={free.values[field]} aria-invalid={free.invalid.includes(field) || undefined}
         aria-describedby={free.error ? 'sq-free-error' : free.hint ? 'sq-free-hint' : undefined}
         onChange={event => onWindowChange({ ...free.values, [field]: event.target.value })} />
     </label>

@@ -57,6 +57,8 @@ export type FreeWindowModel = {
   fitText: string | null
   hint: string | null
   error: string | null
+  /** Fields the error is about, so the View can mark exactly those as invalid. */
+  invalid: ('date' | 'start' | 'end')[]
   canClear: boolean
 }
 

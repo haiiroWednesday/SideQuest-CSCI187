@@ -1,6 +1,7 @@
 // CONTROLLER: prepare upcoming-event groups and free-window feedback for Discover.
 import { eventPhase } from '../model/eventTiming'
 import { findEvents } from './findEvents'
+import { isValidDate } from '../model/events'
 import { byTime, groupDays, toStub, type ScreenEvent, type FreeWindow, type FreeWindowModel, type DiscoverScreen } from './screenModels'
 
 // ---------- Discover
@@ -36,9 +37,11 @@ export function presentDiscover(input: {
       fitCount,
       // Zero matches are explained once, by the empty-state note under the form, so no count pill repeats it.
       fitText: fitCount ? `${fitCount} fit` : null,
-      hint: !complete && Boolean(values.date || values.start || values.end)
+      // The hint promises "all upcoming events", so it only shows when there are some.
+      hint: !complete && upcoming.length > 0 && Boolean(values.date || values.start || values.end)
         ? 'Showing all upcoming events. Complete the date and both times to filter.' : null,
       error: search?.error ?? null,
+      invalid: !search?.error ? [] : isValidDate(values.date) ? ['start', 'end'] : ['date'],
       canClear: Boolean(values.date || values.start || values.end),
     }
   }
