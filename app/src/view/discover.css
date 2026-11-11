@@ -10,6 +10,8 @@
   --sq-rule: #d8c9b7;
   --sq-rule-strong: #cbb6a5;
   --sq-gold: #e8aa24;
+  --sq-sage: #506252;
+  --sq-sage-tint: #e8f0e5;
   --sq-on-red: #fff9ec;
   --sq-row-hover: #f5ece1;
   --sq-row-selected: #f1e3d8;
@@ -201,6 +203,8 @@
   text-underline-offset: 3px;
 }
 
+.sq-message-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 28px; }
+.sq-message-actions .sq-text-link { font-size: 19px; min-height: 44px; display: inline-flex; align-items: center; }
 .sq-discover-page .sq-text-link { color: var(--sq-red); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 
 .sq-plan-button {
@@ -261,7 +265,8 @@
 .sq-free-field span { white-space: nowrap; }
 .sq-free-field input { border: 0; background: transparent; font: 600 17px var(--font-sans); color: var(--sq-ink); padding: 6px 4px; min-width: 0; }
 .sq-free-field input:focus { outline: none; }
-.sq-free-field.sq-set { background: var(--sq-row-selected); border-color: var(--sq-row-selected); color: var(--sq-red); }
+/* A filled field is sage, never red: red is kept for errors and the main action. */
+.sq-free-field.sq-set { background: var(--sq-sage-tint); border-color: var(--sq-sage); color: var(--sq-sage); }
 .sq-free-count { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 999px; background: var(--sq-gold); color: var(--sq-ink); font: 700 17px var(--font-sans); }
 .sq-free-clear { border: 0; background: none; color: var(--sq-muted); font: 600 16px var(--font-sans); padding: 10px 6px; cursor: pointer; }
 .sq-free-clear:hover { color: var(--sq-ink); }
@@ -445,7 +450,6 @@
 .sq-nx.sq-live-soon { background: var(--sq-sticky); color: var(--sq-red); letter-spacing: .3px; }
 .sq-nx.sq-live-now { letter-spacing: .3px; }
 .sq-bubble-month { font: 800 9px var(--font-sans) !important; letter-spacing: 1.4px; margin-top: 2px; }
-.sq-free-count.sq-none { background: var(--sq-row-selected); color: var(--sq-red); }
 
 /* ---------- My Schedule ---------- */
 .sq-hero-schedule { align-items: flex-end; }

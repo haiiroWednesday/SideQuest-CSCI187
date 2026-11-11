@@ -58,6 +58,7 @@ Follow the [shared coding conventions](TEAM_SETUP_GUIDE.md#shared-coding-convent
 2. **Plan first**, list touched files, risks, and tests; do not make unrequested architecture changes.
 3. Implement one focused feature change, with real assertions and meaningful negative/edge tests.
 4. Inside `app/`, run `npm test` and `npm run build`. Report actual output, not an assumed pass.
+   For any change to what a screen shows, also run `npx playwright test e2e/ui-audit.spec.ts` and open every screenshot in `app/test-results/ui-audit/`, following the [UI review checklist](docs/UI_REVIEW_CHECKLIST.md).
 5. Review `git diff`; ask before commits, pushes, PR creation, database migrations, deployment, secret access, destructive commands, or merges.
 6. Keep secrets off GitHub and out of browser bundles. All Supabase keys, including publishable keys, stay on the Node server. Browser code calls the same-origin HTTP port; never expose database credentials in front-end code or Git.
 7. Use the smallest working change; preserve M1 behavior and tests unless the team intentionally replaces them.

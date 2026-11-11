@@ -34,7 +34,7 @@ export function FreeWindowForm({ free, ready, onWindowChange, disabledByDialog }
       <FreeWindowField field="start" label="from" type="time" free={free} onWindowChange={onWindowChange} />
       <FreeWindowField field="end" label="until" type="time" free={free} onWindowChange={onWindowChange} />
       {free.fitText && ready && (
-        <span className={`sq-free-count${free.fitCount === 0 ? ' sq-none' : ''}`} role="status">{free.fitText}</span>
+        <span className="sq-free-count" role="status">{free.fitText}</span>
       )}
       {free.canClear && (
         <button type="button" className="sq-free-clear"

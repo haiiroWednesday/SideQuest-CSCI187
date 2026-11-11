@@ -34,7 +34,8 @@ export function presentDiscover(input: {
       values,
       active: fitting !== null,
       fitCount,
-      fitText: fitCount === null ? null : fitCount === 0 ? 'Nothing fits' : `${fitCount} fit`,
+      // Zero matches are explained once, by the empty-state note under the form, so no count pill repeats it.
+      fitText: fitCount ? `${fitCount} fit` : null,
       hint: !complete && Boolean(values.date || values.start || values.end)
         ? 'Showing all upcoming events. Complete the date and both times to filter.' : null,
       error: search?.error ?? null,

@@ -118,7 +118,7 @@ describe('presentDiscover: the clock decides the labels', () => {
     expect(backwards.days[0].events.map(e => e.fit)).toEqual([null, null])
 
     const none = presentDiscover({ events: list, now, freeWindow: { date: '2026-11-05', start: '09:00', end: '10:00' } })
-    expect(none.freeWindow?.fitText).toBe('Nothing fits')
+    expect(none.freeWindow?.fitText).toBeNull()
     expect(none.days).toEqual([])
   })
 

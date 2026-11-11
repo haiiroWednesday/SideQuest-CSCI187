@@ -190,11 +190,14 @@ export function DiscoverView({
                 {onRetry && <button type="button" className="sq-text-button" onClick={onRetry}>Try again</button>}
               </div>
             ) : screen.status === 'empty' || (screen.status === 'ready' && screen.count === 0) ? (
-              <div className="sq-message sq-message-empty">
+              <div className="sq-message sq-message-empty" role="status">
                 <h3>{free?.active ? 'No events fit this window.' : 'No events to show yet.'}</h3>
-                {free?.active && onFreeWindowChange && <button type="button" className="sq-text-button"
-                  onClick={() => onFreeWindowChange({ date: '', start: '', end: '' })}>Show all events</button>}
-                {routes?.post && <a className="sq-text-link" href={routes.post}>Post an event</a>}
+                {free?.active && <p>Try a longer window, or see everything coming up.</p>}
+                <div className="sq-message-actions">
+                  {free?.active && onFreeWindowChange && <button type="button" className="sq-text-button"
+                    onClick={() => onFreeWindowChange({ date: '', start: '', end: '' })}>Show all events</button>}
+                  {routes?.post && <a className="sq-text-link" href={routes.post}>Post an event</a>}
+                </div>
               </div>
             ) : (
               <div className="sq-trail">

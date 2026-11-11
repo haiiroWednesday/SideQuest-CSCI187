@@ -8,14 +8,18 @@
 .sq-post-fieldset { display: flex; flex-direction: column; gap: 22px; border: 0; padding: 0; margin: 0; min-width: 0; }
 .sq-post-panel .field { display: grid; gap: 8px; }
 .sq-post-panel .event-form label { display: block; }
-.sq-post-panel .event-form label span { font: 700 13px/1 var(--font-sans); letter-spacing: .12em; color: var(--sq-red); }
+.sq-post-panel .event-form label span { font: 700 13px/1 var(--font-sans); letter-spacing: .12em; color: var(--sq-ink); }
+/* Red means "fix this": only a field that failed validation turns red, label and all. */
+.sq-post-panel .field:has([aria-invalid="true"]) label span { color: var(--sq-red-deep); }
 .sq-post-panel .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .sq-post-panel .event-form :is(input, textarea) { box-sizing: border-box; width: 100%; min-height: 56px; padding: 14px 16px; border: 1.5px solid var(--sq-rule-strong); border-radius: 14px;
   font: 500 19px/1.35 var(--font-sans); background: #fffdf8; color: var(--sq-ink); transition: border-color .15s ease, box-shadow .15s ease; }
 .sq-post-panel textarea { min-height: 120px; resize: vertical; }
 .sq-post-panel :is(input, textarea)::placeholder { color: #9a8f86; font-weight: 400; }
-.sq-post-panel .event-form :is(input, textarea):focus { outline: none; border-color: var(--sq-red); box-shadow: 0 0 0 4px var(--sq-row-selected); }
-.sq-post-panel [aria-invalid="true"] { border-color: var(--sq-red); }
+.sq-post-panel .event-form :is(input, textarea):focus { outline: none; border-color: var(--sq-ink); box-shadow: 0 0 0 4px rgba(232, 170, 36, .32); }
+/* Same specificity as the base field rule plus the attribute, so the error border always wins. */
+.sq-post-panel .event-form :is(input, textarea)[aria-invalid="true"] { border-color: var(--sq-red); background: #fdf4f2; }
+.sq-post-panel .event-form :is(input, textarea)[aria-invalid="true"]:focus { box-shadow: 0 0 0 4px #f7dcd8; }
 .sq-post-panel small { font: 600 14px/1.4 var(--font-sans); }
 .sq-post-panel :is(.error, .field-error) { color: var(--sq-red-deep); }
 .sq-post-panel .primary-button:focus-visible { outline: 3px solid var(--sq-red-deep); outline-offset: 3px; }

@@ -195,6 +195,9 @@ describe('Discover View: draws the Controller screen', () => {
     expect(screen.getByRole('button', { name: 'View details for Poetry Reading' })).toBeTruthy()
     rerender(draw(events, { freeWindow: { date: '2030-11-07', start: '01:00', end: '02:00' } }, { onFreeWindowChange: onChange }))
     expect(screen.getByText('No events fit this window.')).toBeTruthy()
+    // Said once: the note explains zero matches, so no count pill beside the form repeats it.
+    expect(screen.getAllByRole('status')).toHaveLength(1)
+    expect(screen.queryByText('Nothing fits')).toBeNull()
     expect(screen.queryByRole('button', { name: 'View details for Poetry Reading' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Show all events' }))
     expect(onChange).toHaveBeenLastCalledWith({ date: '', start: '', end: '' })
