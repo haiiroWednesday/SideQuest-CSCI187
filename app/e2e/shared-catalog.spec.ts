@@ -163,18 +163,6 @@ test('the mobile Post form rejects a date beyond the cap and accepts the last al
     const beyond = nextDate.toISOString().slice(0, 10)
     const date = page.getByLabel('DATE', { exact: true })
 
-    await expect(date).toHaveAttribute('max', max)
-    await date.fill(beyond)
-    await date.press('Tab')
-    await expect(date).toHaveAttribute('aria-invalid', 'true')
-    await expect(page.locator('#post-date-error')).toContainText(`on or before ${max}`)
-    await expect(page.locator('#post-date-error')).toBeVisible()
-    expect((await backend.state()).rows).toHaveLength(0)
-
-    await date.fill(max)
-    await date.press('Tab')
-    await expect(date).not.toHaveAttribute('aria-invalid', 'true')
-    await expect(page.locator('#post-date-error')).toHaveCount(0)
     const fields = {
       'EVENT NAME': 'Last allowed day',
       'HOST NAME': 'SCU Club',
@@ -186,6 +174,21 @@ test('the mobile Post form rejects a date beyond the cap and accepts the last al
     for (const [name, value] of Object.entries(fields)) {
       await page.getByLabel(name, { exact: true }).fill(value)
     }
+
+    await expect(date).toHaveAttribute('max', max)
+    await date.fill(beyond)
+    await date.blur()
+    await expect(date).toHaveAttribute('aria-invalid', 'true')
+    await expect(page.locator('#post-date-error')).toContainText(`on or before ${max}`)
+    await expect(page.locator('#post-date-error')).toBeVisible()
+    await page.getByRole('button', { name: '+ Post event' }).click()
+    expect((await backend.state()).rows).toHaveLength(0)
+    expect((await backend.state()).methods.filter(method => method === 'POST')).toHaveLength(0)
+
+    await date.fill(max)
+    await date.blur()
+    await expect(date).not.toHaveAttribute('aria-invalid', 'true')
+    await expect(page.locator('#post-date-error')).toHaveCount(0)
     await page.getByRole('button', { name: '+ Post event' }).click()
     await expect(page.getByRole('status')).toContainText('Posted “Last allowed day”')
     expect((await backend.state()).rows).toHaveLength(1)
