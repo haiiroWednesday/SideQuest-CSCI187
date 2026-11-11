@@ -5,9 +5,10 @@ import { createEventCatalog } from '../src/model/eventCatalog'
 import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 import { createSupabaseEventCatalogFromEnv } from '../src/model/supabaseEventTable'
 import { createHttpEventCatalog } from '../src/model/httpEventCatalog'
+import { campusDateFromToday } from './fixtures/campusDates'
 
 const servers: Server[] = []
-const draft = { title: 'Server workshop', hostName: 'Art Club', description: 'Paint together', location: 'Library', date: '2099-11-08', start: '14:30', end: '15:30' }
+const draft = { title: 'Server workshop', hostName: 'Art Club', description: 'Paint together', location: 'Library', date: campusDateFromToday(30), start: '14:30', end: '15:30' }
 async function setup(configured = true) {
   const table = createInMemoryEventTable()
   const api = createCatalogApi(configured ? createEventCatalog(table) : null)
