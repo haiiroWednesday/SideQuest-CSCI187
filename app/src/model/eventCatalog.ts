@@ -157,7 +157,7 @@ export function latestPostingDate(now: Date = new Date()): string {
 
 // YYYY-MM-DD strings compare in calendar order as text.
 export function isWithinPostingHorizon(date: string, now: Date = new Date()): boolean {
-  return date <= latestPostingDate(now)
+  return isValidDate(date) && date >= campusNow(now).date && date <= latestPostingDate(now)
 }
 
 // The same posting-time rule must protect every catalog caller, including
