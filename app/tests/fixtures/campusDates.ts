@@ -1,6 +1,6 @@
 // TEST FIXTURE: dates that respect the one-year posting horizon.
-// Posting and the Schedule reject dates more than one year after today, so
-// fixtures must not hard-code far-future dates against the real clock.
+// Posting rejects dates more than one year after today, so posting fixtures
+// must not hard-code far-future dates against the real clock.
 import { afterEach, beforeEach, vi } from 'vitest'
 import { campusNow } from '../../src/model/eventCatalog'
 

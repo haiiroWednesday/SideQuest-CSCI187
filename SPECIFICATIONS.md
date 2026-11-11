@@ -17,7 +17,7 @@
 - `app/src/model/supabaseEventTable.ts`: remote storage adapter, never imported by Views; `app/src/model/browserEventTable.ts`: browser-only fallback. `app/src/model/inMemoryEventTable.ts` is a test fixture.
 - `app/src/main.tsx`: obtains only the connection flag from `/api/catalog`. `server/api.ts` mediates same-origin catalog requests; only the Node server loads `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`.
 
-**Validation boundaries:** title <=120; hostName <=120; required description <=2000; location <=200; nonempty trimmed fields, valid date, strictly increasing times. The local legacy M1 event list has a separate historical contract and limits.
+**Validation boundaries:** title <=120; hostName <=120; required description <=2000; location <=200; nonempty trimmed fields, valid date, strictly increasing times. **Posting date:** today through one year ahead, inclusive, in campus time (`America/Los_Angeles`; Feb 29 → Feb 28 next year), via `catalogPostingErrors`/`latestPostingDate`. The EventCatalog Model enforces it on every `create()`, the Node API rejects violations (it calls the Model), and the anonymous INSERT RLS policy enforces the same date range in the database. This is a posting rule only; the Schedule does not apply it to existing plans. The local legacy M1 event list has a separate historical contract and limits.
 
 ## S2 — Public catalog and discovery (R2)
 The current `EventCatalogPort` supplies:
@@ -49,6 +49,8 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 
 ## S5 — Persistence, permissions, and failures (R1–R5)
 - Proposed SQL migration: `supabase/migrations/20261103000000_create_events.sql` creates one `public.events` table with `id` UUID PK, `title`, `host_name`, `description`, `location`, `event_date`, `start_time`, `end_time`, `created_at`. It enables row-level security and grants anonymous SELECT and bounded INSERT, **not UPDATE/DELETE**.
+- `supabase/migrations/20261108000000_event_date_sanity_bound.sql` adds a `NOT VALID` CHECK `event_date < 2100-01-01`. It is only a sanity guard against absurd dates, not the posting rule.
+- `supabase/migrations/20261110000000_event_date_posting_horizon.sql` replaces the anonymous INSERT policy's `WITH CHECK (true)` with the posting rule: `event_date` from today through today + 1 year in `America/Los_Angeles`, inclusive. A rejected insert fails with an RLS violation. CI tests it as `anon` in `supabase/tests/event_date_posting_horizon.sql`.
 - All Supabase keys, including the publishable key, remain server-side. `model/httpEventCatalog.ts` uses same-origin requests with no database credentials. `server/api.ts` calls the Model adapter; the browser bundle is scanned for credential markers during build. No real keys belong in Git.
 - The existence of a migration file is not proof of deployment. Verify real permissions and two-browser reads/writes in a configured Supabase project before claiming the public catalog works in production.
 - Local storage failures show honest feedback; no success claim after a failed write. Corrupt saved data is not silently replaced. A previously saved plan ID survives a remote lookup error.

@@ -139,7 +139,8 @@ export function campusNow(now: Date = new Date()): { date: string; time: string 
 
 // Posting horizon: an event date may be at most this many years after the
 // current campus date, inclusive. Posting and the Post form's date max use
-// latestPostingDate(); the Schedule check should use it too so they match.
+// latestPostingDate(). This is a posting rule only: the Schedule does not
+// apply it to events that are already in the catalog.
 export const MAX_POSTING_YEARS_AHEAD = 1
 
 // The same month/day MAX_POSTING_YEARS_AHEAD years after the campus date.
