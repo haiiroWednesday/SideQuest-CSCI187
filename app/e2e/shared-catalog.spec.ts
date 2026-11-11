@@ -1,18 +1,13 @@
 import { expect, test } from '@playwright/test'
 import { sharedCatalogHttpFixture, SHARED_APP } from './helpers/sharedCatalog'
 import type { EventRow } from '../src/model/eventCatalog'
+import { campusDateFromToday } from '../tests/fixtures/campusDateValue'
 
-// Every date in this spec is relative to the real campus date. Each page clock
-// is frozen, but the Node API validates posts with the real clock, and both
-// must accept the posted date under the one-year posting horizon.
-function campusDatePlusDays(days: number): string {
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date())
-  const [year, month, day] = today.split('-').map(Number)
-  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
-}
-const EVENT_DATE = campusDatePlusDays(30)
+// The Node API validates against real time; the page's simulated clock must
+// also accept dates created for that test run.
+const EVENT_DATE = campusDateFromToday(30)
 // 9-10am campus time on the day before EVENT_DATE, so the event is "tomorrow".
-const PAGE_NOW = new Date(`${campusDatePlusDays(29)}T17:00:00Z`)
+const PAGE_NOW = new Date(`${campusDateFromToday(29)}T17:00:00Z`)
 
 const ID = '11111111-1111-4111-8111-111111111111'
 const row: EventRow = { id: ID, title: 'Shared workshop', host_name: 'Art Club', description: 'A workshop in the public catalog.', location: 'Library', event_date: EVENT_DATE, start_time: '14:30:00', end_time: '15:30:00' }
