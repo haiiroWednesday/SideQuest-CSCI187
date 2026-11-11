@@ -3,6 +3,7 @@
 // campus date (America/Los_Angeles), inclusive. Test owner: Daven.
 import { describe, expect, it } from 'vitest'
 import dateBoundSql from '../../supabase/migrations/20261108000000_event_date_sanity_bound.sql?raw'
+import horizonPolicySql from '../../supabase/migrations/20261110000000_event_date_posting_horizon.sql?raw'
 import {
   isWithinPostingHorizon as controllerHorizon, latestPostingDate as controllerLatest,
   MAX_POSTING_YEARS_AHEAD, postEvent, postingDraftErrors, type EventDraft,
@@ -41,7 +42,7 @@ describe('latestPostingDate', () => {
     expect(latestPostingDate(beforeLeap)).toBe('2028-02-28')
     expect(isWithinPostingHorizon('2028-02-29', beforeLeap)).toBe(false)
   })
-  it('is the same rule the Controller re-exports for Views and the Schedule', () => {
+  it('is the same rule the Controller re-exports for Views', () => {
     expect(controllerLatest).toBe(latestPostingDate)
     expect(controllerHorizon).toBe(isWithinPostingHorizon)
   })
@@ -95,5 +96,15 @@ describe('database sanity bound', () => {
   it('is looser than the app rule, so every date the app accepts also fits the database', () => {
     // The latest date the app can ever accept before the bound is 2099-12-31.
     expect(latestPostingDate(new Date('2098-12-31T20:00:00Z')) < '2100-01-01').toBe(true)
+  })
+})
+
+// Behavior is tested by supabase/tests/event_date_posting_horizon.sql in CI;
+// this keeps the policy text checked by a local `npm test` too.
+describe('database posting-horizon policy', () => {
+  it('limits anonymous inserts to today through one year ahead in campus time', () => {
+    const sql = horizonPolicySql.replace(/\s+/g, ' ')
+    expect(sql).toContain(`alter policy "Anyone may submit a valid event" on public.events with check (`)
+    expect(sql).toContain(`event_date between (now() at time zone 'America/Los_Angeles')::date and ((now() at time zone 'America/Los_Angeles')::date + interval '1 year')::date`)
   })
 })
