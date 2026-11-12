@@ -6,10 +6,11 @@
 - A student should be able to submit an event with a title, host display name, description, location, day, start and end time.
 - A student should receive clear per-field feedback on invalid or missing details.
 - New events may be dated from today through one year ahead, inclusive, using Santa Clara campus time (a post made on Feb 29 may be dated up to Feb 28 of the next year). Events posted for today must not already have started. The EventCatalog Model, the server and a database insert policy all enforce the date range; a separate year-2100 database limit is only a sanity guard.
+- New posts are limited to a title of 80 characters, a host name of 60, a location of 120 and a description of 1,000 (after trimming spaces). The title, host name and location must each contain at least one letter or number in any language: "&&&&", "!!!" or "🎉🎉" alone is rejected, while "読書会", "Café Night" and "🎉 Party 2" are accepted. The EventCatalog Model, the server and the database insert policy all enforce these posting rules. Events stored before these rules, up to the storage limits (title and host 120, location 200, description 2,000), still appear, open and can be planned.
 - A successful post should receive a stable event ID and remain available after page refresh when the selected storage works.
 - The host name is self-reported, **not** an authenticated organizer identity.
 
-**Acceptance:** Valid future post succeeds; yesterday, more than one year ahead, same-day past start, invalid date, blank required fields, oversized values and reversed intervals are rejected. A storage/network error preserves what was typed, reports failure and must not claim success.
+**Acceptance:** Valid future post succeeds; yesterday, more than one year ahead, same-day past start, invalid date, blank required fields, values over the posting limits, a title, host or location without any letter or number, and reversed intervals are rejected. A storage/network error preserves what was typed, reports failure and must not claim success.
 
 ## R2 — Discover the posted event catalog
 - Students should be able to see upcoming publicly posted campus events with title, host, description, location, date and time.
