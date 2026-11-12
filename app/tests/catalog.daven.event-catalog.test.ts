@@ -59,7 +59,7 @@ describe('EventCatalog.create', () => {
     ['blank title', { title: '   ' }, 'event title'],
     ['blank host name', { hostName: '' }, 'host name'],
     ['blank description', { description: ' ' }, 'description'],
-    ['title over 120 characters', { title: 'x'.repeat(121) }, '120 characters'],
+    ['title over 80 characters', { title: 'x'.repeat(81) }, '80 characters'],
     ['impossible date', { date: '2026-02-30' }, 'valid event date'],
     ['end equal to start', { start: '14:00', end: '14:00' }, 'end later'],
     ['end before start (overnight)', { start: '23:00', end: '01:00' }, 'end later'],
@@ -75,9 +75,9 @@ describe('EventCatalog.create', () => {
     expect(table.rows.size).toBe(0)
   })
 
-  it('accepts a title of exactly 120 characters (boundary)', async () => {
+  it('accepts a title of exactly 80 characters (posting boundary)', async () => {
     const catalog = createEventCatalog(createInMemoryEventTable(), clock)
-    await expect(catalog.create(draft({ title: 'x'.repeat(120) }))).resolves.toMatchObject({ title: 'x'.repeat(120) })
+    await expect(catalog.create(draft({ title: 'x'.repeat(80) }))).resolves.toMatchObject({ title: 'x'.repeat(80) })
   })
 
   it('does not overwrite an existing event if the store hands out a duplicate ID', async () => {

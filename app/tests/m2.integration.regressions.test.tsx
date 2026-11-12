@@ -3,7 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import App from '../src/App'
-import { createEventCatalog, type CampusEvent, type EventCatalogPort } from '../src/model/eventCatalog'
+import { createEventCatalog, toEventRow, type CampusEvent, type EventCatalogPort } from '../src/model/eventCatalog'
 import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 import { PLANNED_IDS_KEY } from '../src/model/schedule'
 import { createSharedScheduleController } from '../src/controller/sharedSchedule'
@@ -28,7 +28,7 @@ beforeEach(() => { localStorage.clear(); location.hash = '#discover' })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 describe('shared Schedule resolution', () => {
-  it.each([500, 501, 2000])('resolves and plans a valid %i-character description from a separate catalog client', async length => {
+  it.each([500, 501, 1000])('resolves and plans a valid %i-character description from a separate catalog client', async length => {
     const rows = new Map()
     const poster = createEventCatalog(createInMemoryEventTable(rows), now)
     const reader = createEventCatalog(createInMemoryEventTable(rows), now)
@@ -40,11 +40,20 @@ describe('shared Schedule resolution', () => {
     expect(added.schedule.entries[0].event.description).toHaveLength(length)
     expect(JSON.parse(localStorage.getItem(PLANNED_IDS_KEY)!)).toEqual([created.id])
   })
-  it('rejects a 2001-character description and past posts directly at the Model boundary', async () => {
+  it('resolves and plans a stored 2000-character description that predates the 1000-character posting limit', async () => {
+    const rows = new Map()
+    const { id: _, ...draft } = event({ description: 'x'.repeat(2000) })
+    const stored = await createInMemoryEventTable(rows).insert(toEventRow(draft))
+    const schedule = createSharedScheduleController(createEventCatalog(createInMemoryEventTable(rows), now))
+    const added = await schedule.add(stored.id)
+    expect(added.error).toBeNull()
+    expect(added.schedule.entries[0].event.description).toHaveLength(2000)
+  })
+  it('rejects a 1001-character description and past posts directly at the Model boundary', async () => {
     const table = createInMemoryEventTable()
     const catalog = createEventCatalog(table, now)
     const { id: _, ...draft } = event()
-    await expect(catalog.create({ ...draft, description: 'x'.repeat(2001) })).rejects.toMatchObject({ kind: 'invalid' })
+    await expect(catalog.create({ ...draft, description: 'x'.repeat(1001) })).rejects.toMatchObject({ kind: 'invalid' })
     await expect(catalog.create({ ...draft, date: '2030-11-06' })).rejects.toMatchObject({ kind: 'invalid' })
     await expect(catalog.create({ ...draft, start: '08:30', end: '10:00' })).rejects.toMatchObject({ kind: 'invalid' })
     expect(table.rows.size).toBe(0)

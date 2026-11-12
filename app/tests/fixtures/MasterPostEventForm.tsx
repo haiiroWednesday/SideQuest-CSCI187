@@ -4,7 +4,7 @@
 // what came back.
 import { useState, type FormEvent, type ReactNode } from 'react'
 import {
-  postEvent, CATALOG_LIMITS,
+  postEvent, POSTING_LIMITS,
   type CampusEvent, type CatalogFieldErrors, type ConnectedCatalog, type EventDraft,
 } from '../../src/controller/postEvent'
 import { displayDate, displayTime, initialEventWindow, todayLocal } from '../../src/controller/findEvents'
@@ -77,25 +77,25 @@ export function PostEventForm({ connection, now = () => new Date(), catalogEvent
             A wrapped textarea would include its typed text in its accessible name. */}
         <div className="field">
           <label htmlFor="post-title"><span>EVENT NAME</span></label>
-          <input id="post-title" type="text" value={draft.title} required maxLength={CATALOG_LIMITS.title} {...errorProps('title')}
+          <input id="post-title" type="text" value={draft.title} required maxLength={POSTING_LIMITS.title} {...errorProps('title')}
             placeholder="e.g. Art Workshop" onChange={(e) => update('title', e.target.value)} />
           {fieldError('title')}
         </div>
         <div className="field">
           <label htmlFor="post-hostName"><span>HOST NAME</span></label>
-          <input id="post-hostName" type="text" value={draft.hostName} required maxLength={CATALOG_LIMITS.hostName} {...errorProps('hostName')}
+          <input id="post-hostName" type="text" value={draft.hostName} required maxLength={POSTING_LIMITS.hostName} {...errorProps('hostName')}
             placeholder="e.g. SCU Photography Club" onChange={(e) => update('hostName', e.target.value)} />
           {fieldError('hostName')}
         </div>
         <div className="field">
           <label htmlFor="post-description"><span>DESCRIPTION</span></label>
-          <textarea id="post-description" value={draft.description} required maxLength={CATALOG_LIMITS.description} rows={3} {...errorProps('description')}
+          <textarea id="post-description" value={draft.description} required maxLength={POSTING_LIMITS.description} rows={3} {...errorProps('description')}
             placeholder="What makes this event special?" onChange={(e) => update('description', e.target.value)} />
           {fieldError('description')}
         </div>
         <div className="field">
           <label htmlFor="post-location"><span>LOCATION</span></label>
-          <input id="post-location" type="text" value={draft.location} required maxLength={CATALOG_LIMITS.location} {...errorProps('location')}
+          <input id="post-location" type="text" value={draft.location} required maxLength={POSTING_LIMITS.location} {...errorProps('location')}
             placeholder="e.g. Student Center" onChange={(e) => update('location', e.target.value)} />
           {fieldError('location')}
         </div>
