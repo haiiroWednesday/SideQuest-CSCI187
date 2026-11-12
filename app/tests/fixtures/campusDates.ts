@@ -2,13 +2,8 @@
 // Posting rejects dates more than one year after today, so posting fixtures
 // must not hard-code far-future dates against the real clock.
 import { afterEach, beforeEach, vi } from 'vitest'
-import { campusNow } from '../../src/model/eventCatalog'
 
-// The campus date `days` after today (America/Los_Angeles), as YYYY-MM-DD.
-export function campusDateFromToday(days: number, now: Date = new Date()): string {
-  const [year, month, day] = campusNow(now).date.split('-').map(Number)
-  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
-}
+export { campusDateFromToday } from './campusDateValue'
 
 // Noon on 2029-12-01 in California. Existing suites use 2030-11-xx events as
 // "upcoming"; from this date they stay upcoming and within the horizon

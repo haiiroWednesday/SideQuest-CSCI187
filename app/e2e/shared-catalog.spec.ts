@@ -1,18 +1,13 @@
 import { expect, test } from '@playwright/test'
 import { sharedCatalogHttpFixture, SHARED_APP } from './helpers/sharedCatalog'
-import type { EventRow } from '../src/model/eventCatalog'
+import { latestPostingDate, type EventRow } from '../src/model/eventCatalog'
+import { campusDateFromToday } from '../tests/fixtures/campusDateValue'
 
-// Every date in this spec is relative to the real campus date. Each page clock
-// is frozen, but the Node API validates posts with the real clock, and both
-// must accept the posted date under the one-year posting horizon.
-function campusDatePlusDays(days: number): string {
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date())
-  const [year, month, day] = today.split('-').map(Number)
-  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
-}
-const EVENT_DATE = campusDatePlusDays(30)
+// The Node API validates against real time; the page's simulated clock must
+// also accept dates created for that test run.
+const EVENT_DATE = campusDateFromToday(30)
 // 9-10am campus time on the day before EVENT_DATE, so the event is "tomorrow".
-const PAGE_NOW = new Date(`${campusDatePlusDays(29)}T17:00:00Z`)
+const PAGE_NOW = new Date(`${campusDateFromToday(29)}T17:00:00Z`)
 
 const ID = '11111111-1111-4111-8111-111111111111'
 const row: EventRow = { id: ID, title: 'Shared workshop', host_name: 'Art Club', description: 'A workshop in the public catalog.', location: 'Library', event_date: EVENT_DATE, start_time: '14:30:00', end_time: '15:30:00' }
@@ -150,4 +145,54 @@ test('production build keeps database credentials on the server and posts throug
       expect(request.headers.authorization).toBeUndefined()
     }
   } finally { await context.close() }
+})
+
+test('the mobile Post form rejects a date beyond the cap and accepts the last allowed day', async ({ browser }) => {
+  const backend = sharedCatalogHttpFixture()
+  const context = await browser.newContext({ viewport: { width: 375, height: 812 } })
+  try {
+    await backend.attach(context)
+    const page = await context.newPage()
+    const now = new Date()
+    await page.clock.install({ time: now })
+    await page.goto(`${SHARED_APP}/#post`)
+
+    const max = latestPostingDate(now)
+    const nextDate = new Date(`${max}T12:00:00Z`)
+    nextDate.setUTCDate(nextDate.getUTCDate() + 1)
+    const beyond = nextDate.toISOString().slice(0, 10)
+    const date = page.getByLabel('DATE', { exact: true })
+
+    const fields = {
+      'EVENT NAME': 'Last allowed day',
+      'HOST NAME': 'SCU Club',
+      DESCRIPTION: 'Posting boundary test.',
+      LOCATION: 'Benson 101',
+      START: '14:30',
+      END: '15:30',
+    }
+    for (const [name, value] of Object.entries(fields)) {
+      await page.getByLabel(name, { exact: true }).fill(value)
+    }
+
+    await expect(date).toHaveAttribute('max', max)
+    await date.fill(beyond)
+    await date.blur()
+    await expect(date).toHaveAttribute('aria-invalid', 'true')
+    await expect(page.locator('#post-date-error')).toContainText(`on or before ${max}`)
+    await expect(page.locator('#post-date-error')).toBeVisible()
+    await page.getByRole('button', { name: '+ Post event' }).click()
+    expect((await backend.state()).rows).toHaveLength(0)
+    expect((await backend.state()).methods.filter(method => method === 'POST')).toHaveLength(0)
+
+    await date.fill(max)
+    await date.blur()
+    await expect(date).not.toHaveAttribute('aria-invalid', 'true')
+    await expect(page.locator('#post-date-error')).toHaveCount(0)
+    await page.getByRole('button', { name: '+ Post event' }).click()
+    await expect(page.getByRole('status')).toContainText('Posted “Last allowed day”')
+    expect((await backend.state()).rows).toHaveLength(1)
+  } finally {
+    await context.close()
+  }
 })

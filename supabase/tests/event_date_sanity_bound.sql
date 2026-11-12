@@ -1,5 +1,5 @@
 -- Run after 20261108000000_event_date_sanity_bound.sql in an isolated
--- PostgreSQL database as its owner. Test owner: Daven.
+-- PostgreSQL database as its owner.
 -- This tests the CHECK itself, so it runs as the table owner, which RLS does
 -- not apply to. Anonymous inserts are also limited by the posting-horizon
 -- policy; see event_date_posting_horizon.sql.
