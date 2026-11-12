@@ -1,9 +1,16 @@
 import { expect, test } from '@playwright/test'
 import { sharedCatalogHttpFixture, SHARED_APP } from './helpers/sharedCatalog'
-import type { EventRow } from '../src/model/eventCatalog'
+import { latestPostingDate, type EventRow } from '../src/model/eventCatalog'
+import { campusDateFromToday } from '../tests/fixtures/campusDateValue'
+
+// The Node API validates against real time; the page's simulated clock must
+// also accept dates created for that test run.
+const EVENT_DATE = campusDateFromToday(30)
+// 9-10am campus time on the day before EVENT_DATE, so the event is "tomorrow".
+const PAGE_NOW = new Date(`${campusDateFromToday(29)}T17:00:00Z`)
 
 const ID = '11111111-1111-4111-8111-111111111111'
-const row: EventRow = { id: ID, title: 'Shared workshop', host_name: 'Art Club', description: 'A workshop in the public catalog.', location: 'Library', event_date: '2030-11-08', start_time: '14:30:00', end_time: '15:30:00' }
+const row: EventRow = { id: ID, title: 'Shared workshop', host_name: 'Art Club', description: 'A workshop in the public catalog.', location: 'Library', event_date: EVENT_DATE, start_time: '14:30:00', end_time: '15:30:00' }
 
 test('independent browser sessions share public posts and keep their personal plans separate', async ({ browser }) => {
   const backend = sharedCatalogHttpFixture()
@@ -11,17 +18,17 @@ test('independent browser sessions share public posts and keep their personal pl
   try {
     await backend.attach(poster); await backend.attach(attendee)
     const a = await poster.newPage(), b = await attendee.newPage()
-    for (const page of [a, b]) await page.clock.install({ time: new Date('2030-11-07T17:00:00Z') })
+    for (const page of [a, b]) await page.clock.install({ time: PAGE_NOW })
     await a.goto(`${SHARED_APP}/#post`)
     await expect(a.getByTestId('catalog-not-shared')).toHaveCount(0)
-    const values = { 'EVENT NAME': 'Shared workshop', 'HOST NAME': 'Art Club', DESCRIPTION: 'The whole shared catalog flow.', LOCATION: 'Library', DATE: '2030-11-08', START: '14:30', END: '15:30' }
+    const values = { 'EVENT NAME': 'Shared workshop', 'HOST NAME': 'Art Club', DESCRIPTION: 'The whole shared catalog flow.', LOCATION: 'Library', DATE: EVENT_DATE, START: '14:30', END: '15:30' }
     for (const [name, value] of Object.entries(values)) await a.getByLabel(name, { exact: true }).fill(value)
     await a.getByRole('button', { name: '+ Post event' }).click()
     await expect(a.getByRole('status')).toContainText('to the shared catalog')
     expect((await backend.state()).rows).toHaveLength(1)
     await b.goto(SHARED_APP)
     await expect(b.getByRole('button', { name: 'View details for Shared workshop' })).toBeVisible()
-    await b.getByLabel('Free on', { exact: true }).fill('2030-11-08')
+    await b.getByLabel('Free on', { exact: true }).fill(EVENT_DATE)
     await expect(b.getByText('Showing all upcoming events. Complete the date and both times to filter.')).toBeVisible()
     await expect(b.getByRole('button', { name: 'View details for Shared workshop' })).toBeVisible()
     await b.getByLabel('from', { exact: true }).fill('01:00')
@@ -30,7 +37,7 @@ test('independent browser sessions share public posts and keep their personal pl
     await b.getByRole('button', { name: 'Show all events' }).click()
     await expect(b.getByLabel('Free on', { exact: true })).toHaveValue('')
     await expect(b.getByRole('button', { name: 'View details for Shared workshop' })).toBeVisible()
-    await b.getByLabel('Free on', { exact: true }).fill('2030-11-08')
+    await b.getByLabel('Free on', { exact: true }).fill(EVENT_DATE)
     await b.getByLabel('from', { exact: true }).fill('14:30')
     await b.getByLabel('until', { exact: true }).fill('15:30')
     await b.getByRole('button', { name: '+ Plan to attend' }).click()
@@ -56,7 +63,7 @@ test('a shared catalog read failure offers retry and never silently switches to 
   try {
     await backend.attach(context)
     const page = await context.newPage()
-    await page.clock.install({ time: new Date('2030-11-07T17:00:00Z') })
+    await page.clock.install({ time: PAGE_NOW })
     await backend.failReads(true)
     await page.goto(SHARED_APP)
     await expect(page.getByText('Events could not be loaded.')).toBeVisible()
@@ -73,7 +80,7 @@ test('failed plan lookups retain the ID, allow retry, and still allow local remo
   try {
     await backend.attach(context)
     const page = await context.newPage()
-    await page.clock.install({ time: new Date('2030-11-07T17:00:00Z') })
+    await page.clock.install({ time: PAGE_NOW })
     await page.goto(SHARED_APP)
     await page.evaluate(id => localStorage.setItem('sidequest.planned-event-ids.v1', JSON.stringify([id])), ID)
     await backend.failReads(true)
@@ -97,9 +104,9 @@ test('posting failure keeps the draft, and retry creates exactly one public even
   try {
     await backend.attach(context)
     const page = await context.newPage()
-    await page.clock.install({ time: new Date('2030-11-07T17:00:00Z') })
+    await page.clock.install({ time: PAGE_NOW })
     await page.goto(`${SHARED_APP}/#post`)
-    for (const [name, value] of Object.entries({ 'EVENT NAME': 'Retry workshop', 'HOST NAME': 'Art Club', DESCRIPTION: 'Keep this text.', LOCATION: 'Library', DATE: '2030-11-08', START: '14:30', END: '15:30' })) await page.getByLabel(name, { exact: true }).fill(value)
+    for (const [name, value] of Object.entries({ 'EVENT NAME': 'Retry workshop', 'HOST NAME': 'Art Club', DESCRIPTION: 'Keep this text.', LOCATION: 'Library', DATE: EVENT_DATE, START: '14:30', END: '15:30' })) await page.getByLabel(name, { exact: true }).fill(value)
     await backend.failInserts(true)
     await page.getByRole('button', { name: '+ Post event' }).click()
     await expect(page.getByRole('alert')).toContainText('Could not confirm this post')
@@ -122,7 +129,7 @@ test('production build keeps database credentials on the server and posts throug
     page.on('request', request => requests.push({ url: request.url(), headers: request.headers() }))
     await page.goto('http://127.0.0.1:5177/#post')
     await expect(page.getByTestId('catalog-not-shared')).toHaveCount(0)
-    for (const [name, value] of Object.entries({ 'EVENT NAME': 'Production workshop', 'HOST NAME': 'Art Club', DESCRIPTION: 'A server-only catalog test.', LOCATION: 'Library', DATE: '2099-11-08', START: '14:30', END: '15:30' })) await page.getByLabel(name, { exact: true }).fill(value)
+    for (const [name, value] of Object.entries({ 'EVENT NAME': 'Production workshop', 'HOST NAME': 'Art Club', DESCRIPTION: 'A server-only catalog test.', LOCATION: 'Library', DATE: EVENT_DATE, START: '14:30', END: '15:30' })) await page.getByLabel(name, { exact: true }).fill(value)
     await page.getByRole('button', { name: '+ Post event' }).click()
     await expect(page.getByRole('status')).toContainText('Posted “Production workshop”')
     expect((await backend.state()).rows).toHaveLength(1)
@@ -138,4 +145,54 @@ test('production build keeps database credentials on the server and posts throug
       expect(request.headers.authorization).toBeUndefined()
     }
   } finally { await context.close() }
+})
+
+test('the mobile Post form rejects a date beyond the cap and accepts the last allowed day', async ({ browser }) => {
+  const backend = sharedCatalogHttpFixture()
+  const context = await browser.newContext({ viewport: { width: 375, height: 812 } })
+  try {
+    await backend.attach(context)
+    const page = await context.newPage()
+    const now = new Date()
+    await page.clock.install({ time: now })
+    await page.goto(`${SHARED_APP}/#post`)
+
+    const max = latestPostingDate(now)
+    const nextDate = new Date(`${max}T12:00:00Z`)
+    nextDate.setUTCDate(nextDate.getUTCDate() + 1)
+    const beyond = nextDate.toISOString().slice(0, 10)
+    const date = page.getByLabel('DATE', { exact: true })
+
+    const fields = {
+      'EVENT NAME': 'Last allowed day',
+      'HOST NAME': 'SCU Club',
+      DESCRIPTION: 'Posting boundary test.',
+      LOCATION: 'Benson 101',
+      START: '14:30',
+      END: '15:30',
+    }
+    for (const [name, value] of Object.entries(fields)) {
+      await page.getByLabel(name, { exact: true }).fill(value)
+    }
+
+    await expect(date).toHaveAttribute('max', max)
+    await date.fill(beyond)
+    await date.blur()
+    await expect(date).toHaveAttribute('aria-invalid', 'true')
+    await expect(page.locator('#post-date-error')).toContainText(`on or before ${max}`)
+    await expect(page.locator('#post-date-error')).toBeVisible()
+    await page.getByRole('button', { name: '+ Post event' }).click()
+    expect((await backend.state()).rows).toHaveLength(0)
+    expect((await backend.state()).methods.filter(method => method === 'POST')).toHaveLength(0)
+
+    await date.fill(max)
+    await date.blur()
+    await expect(date).not.toHaveAttribute('aria-invalid', 'true')
+    await expect(page.locator('#post-date-error')).toHaveCount(0)
+    await page.getByRole('button', { name: '+ Post event' }).click()
+    await expect(page.getByRole('status')).toContainText('Posted “Last allowed day”')
+    expect((await backend.state()).rows).toHaveLength(1)
+  } finally {
+    await context.close()
+  }
 })

@@ -5,11 +5,11 @@
 ## R1 — Post a campus event
 - A student should be able to submit an event with a title, host display name, description, location, day, start and end time.
 - A student should receive clear per-field feedback on invalid or missing details.
-- New events must be today or in the future, and events posted for today must not already have started, using Santa Clara campus time.
+- New events may be dated from today through one year ahead, inclusive, using Santa Clara campus time (a post made on Feb 29 may be dated up to Feb 28 of the next year). Events posted for today must not already have started. The EventCatalog Model, the server and a database insert policy all enforce the date range; a separate year-2100 database limit is only a sanity guard.
 - A successful post should receive a stable event ID and remain available after page refresh when the selected storage works.
 - The host name is self-reported, **not** an authenticated organizer identity.
 
-**Acceptance:** Valid future post succeeds; yesterday, same-day past start, invalid date, blank required fields, oversized values and reversed intervals are rejected. A storage/network error preserves what was typed, reports failure and must not claim success.
+**Acceptance:** Valid future post succeeds; yesterday, more than one year ahead, same-day past start, invalid date, blank required fields, oversized values and reversed intervals are rejected. A storage/network error preserves what was typed, reports failure and must not claim success.
 
 ## R2 — Discover the posted event catalog
 - Students should be able to see upcoming publicly posted campus events with title, host, description, location, date and time.

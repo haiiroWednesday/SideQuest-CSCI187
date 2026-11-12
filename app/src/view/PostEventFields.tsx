@@ -1,6 +1,6 @@
 // VIEW: accessible posting inputs. Validation decisions are supplied by the controller-facing form.
 import type { FormEvent } from 'react'
-import { CATALOG_LIMITS, campusNow, type CatalogFieldErrors, type EventDraft } from '../controller/postEvent'
+import { CATALOG_LIMITS, campusNow, latestPostingDate, type CatalogFieldErrors, type EventDraft } from '../controller/postEvent'
 
 type PostEventFieldsProps = {
   draft: EventDraft
@@ -51,7 +51,7 @@ export function PostEventFields({ draft, fieldErrors, submitting, now, onSubmit,
         </div>
         <div className="field">
           <label htmlFor="post-date"><span>DATE</span></label>
-          <input id="post-date" type="date" value={draft.date} min={campusNow(now()).date} required {...errorProps('date')}
+          <input id="post-date" type="date" value={draft.date} min={campusNow(now()).date} max={latestPostingDate(now())} required {...errorProps('date')}
             onChange={(e) => onChange('date', e.target.value)} onBlur={() => onBlur('date')} />
           {fieldError('date')}
         </div>
