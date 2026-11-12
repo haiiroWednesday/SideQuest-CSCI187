@@ -1,5 +1,6 @@
 // VIEW: display a selected event and its verified catalog state.
 import type { StubModel } from '../controller/presentScreens'
+import { titleSizeClass } from './titleSize'
 
 export type SelectedDetailState =
   | { id: string; status: 'loading' }
@@ -14,14 +15,6 @@ type DetailProps = {
   onPlan?: (eventId: string) => void
   planningBlocked: boolean
   onClose: () => void
-}
-
-// Long titles remain available in full, with smaller type to keep the card useful.
-const LONG_DETAIL_TITLE_CHARACTERS = 40
-const EXTRA_LONG_DETAIL_TITLE_CHARACTERS = 80
-function titleSizeClass(title: string): string | undefined {
-  return title.length > EXTRA_LONG_DETAIL_TITLE_CHARACTERS ? 'sq-title-xlong'
-    : title.length > LONG_DETAIL_TITLE_CHARACTERS ? 'sq-title-long' : undefined
 }
 
 function VerifiedEventDetails({ event, onPlan, planningBlocked }: {

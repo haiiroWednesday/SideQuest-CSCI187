@@ -3,6 +3,7 @@
 // and reports which plan the student wants to remove.
 import { presentSchedule, type ScheduleInput, type ScheduleScreen } from '../controller/presentScreens'
 import { DayBubble, EventStub, SideQuestHeader, useMinuteTick, type SideQuestRoutes } from './DiscoverView'
+import { titleSizeClass } from './titleSize'
 
 /** Re-ask the Controller every half minute so Next up and Happening now stay true. */
 export function useScheduleScreen(input: ScheduleInput, now?: Date): ScheduleScreen {
@@ -74,7 +75,7 @@ export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes
                       <small>{next.stub.dow}</small><b>{next.stub.dayNumber}</b><small>{next.stub.month}</small>
                     </div>
                   </div>
-                  <h2 id="sq-next-title">{next.stub.title}</h2>
+                  <h2 id="sq-next-title" className={titleSizeClass(next.stub.title)}>{next.stub.title}</h2>
                   <dl className="sq-facts">
                     {next.stub.host && <><dt>Host</dt><dd>{next.stub.host}</dd></>}
                     <dt>Where</dt><dd>{next.stub.location}</dd>
