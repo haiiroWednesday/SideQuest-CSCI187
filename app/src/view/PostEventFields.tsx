@@ -1,6 +1,6 @@
 // VIEW: accessible posting inputs. Validation decisions are supplied by the controller-facing form.
 import type { FormEvent } from 'react'
-import { CATALOG_LIMITS, campusNow, latestPostingDate, type CatalogFieldErrors, type EventDraft } from '../controller/postEvent'
+import { POSTING_LIMITS, campusNow, latestPostingDate, type CatalogFieldErrors, type EventDraft } from '../controller/postEvent'
 
 type PostEventFieldsProps = {
   draft: EventDraft
@@ -27,25 +27,25 @@ export function PostEventFields({ draft, fieldErrors, submitting, now, onSubmit,
             A wrapped textarea would include its typed text in its accessible name. */}
         <div className="field">
           <label htmlFor="post-title"><span>EVENT NAME</span></label>
-          <input id="post-title" type="text" value={draft.title} required maxLength={CATALOG_LIMITS.title} {...errorProps('title')}
+          <input id="post-title" type="text" value={draft.title} required maxLength={POSTING_LIMITS.title} {...errorProps('title')}
             placeholder="e.g. Art Workshop" onChange={(e) => onChange('title', e.target.value)} onBlur={() => onBlur('title')} />
           {fieldError('title')}
         </div>
         <div className="field">
           <label htmlFor="post-hostName"><span>HOST NAME</span></label>
-          <input id="post-hostName" type="text" value={draft.hostName} required maxLength={CATALOG_LIMITS.hostName} {...errorProps('hostName')}
+          <input id="post-hostName" type="text" value={draft.hostName} required maxLength={POSTING_LIMITS.hostName} {...errorProps('hostName')}
             placeholder="e.g. SCU Photography Club" onChange={(e) => onChange('hostName', e.target.value)} onBlur={() => onBlur('hostName')} />
           {fieldError('hostName')}
         </div>
         <div className="field">
           <label htmlFor="post-description"><span>DESCRIPTION</span></label>
-          <textarea id="post-description" value={draft.description} required maxLength={CATALOG_LIMITS.description} rows={3} {...errorProps('description')}
+          <textarea id="post-description" value={draft.description} required maxLength={POSTING_LIMITS.description} rows={3} {...errorProps('description')}
             placeholder="What makes this event special?" onChange={(e) => onChange('description', e.target.value)} onBlur={() => onBlur('description')} />
           {fieldError('description')}
         </div>
         <div className="field">
           <label htmlFor="post-location"><span>LOCATION</span></label>
-          <input id="post-location" type="text" value={draft.location} required maxLength={CATALOG_LIMITS.location} {...errorProps('location')}
+          <input id="post-location" type="text" value={draft.location} required maxLength={POSTING_LIMITS.location} {...errorProps('location')}
             placeholder="e.g. Student Center" onChange={(e) => onChange('location', e.target.value)} onBlur={() => onBlur('location')} />
           {fieldError('location')}
         </div>

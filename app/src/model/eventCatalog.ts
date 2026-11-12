@@ -49,6 +49,30 @@ export const CATALOG_LIMITS = {
   location: 200,
 } as const
 
+// Posting-only limits, applied by catalogPostingErrors() and mirrored by the
+// anonymous INSERT policy in
+// supabase/migrations/20261111000000_event_text_posting_rules.sql. They are
+// stricter than CATALOG_LIMITS (the storage ceiling), which read paths keep
+// using so older, longer events still list, open and can be planned.
+// Each value must stay <= the matching CATALOG_LIMITS value.
+export const POSTING_LIMITS = {
+  title: 80,
+  hostName: 60,
+  description: 1000,
+  location: 120,
+} as const
+
+// Names and places need at least one Unicode letter (L*) or decimal digit (Nd),
+// so text made only of symbols or emoji cannot be posted. \p{Nd} rather than \p{N} matches
+// ICU's u_isalnum, which the database policy uses via [[:alnum:]] with the
+// "und-x-icu" collation, so app and database accept the same text.
+const LETTER_OR_DIGIT = /[\p{L}\p{Nd}]/u
+const REQUIRES_LETTER_OR_DIGIT = ['title', 'hostName', 'location'] as const
+
+export function hasLetterOrDigit(text: string): boolean {
+  return LETTER_OR_DIGIT.test(text)
+}
+
 const FIELD_LABELS: Record<keyof typeof CATALOG_LIMITS, string> = {
   title: 'event title',
   hostName: 'host name',
@@ -78,7 +102,7 @@ export function trimDraft(draft: EventDraft): EventDraft {
 
 // Validate field shape and field lengths for every caller, matching the
 // database CHECK constraints. The separate catalogPostingErrors() adds the
-// campus-time rule; createEventCatalog() enforces both before every insert.
+// posting-only text and campus-time rules; createEventCatalog() enforces both before every insert.
 //
 // Note: JavaScript counts an emoji as 2 characters, while Postgres counts it as 1.
 // The app is therefore slightly stricter than the database, never looser.
@@ -167,6 +191,15 @@ export function catalogPostingErrors(draft: EventDraft, now: Date = new Date()):
   const errors = catalogDraftErrors(draft)
   const value = trimDraft(draft)
   const campus = campusNow(now)
+  // Text rules for new posts only; a blank field keeps its "Please enter" message.
+  for (const field of Object.keys(POSTING_LIMITS) as (keyof typeof POSTING_LIMITS)[]) {
+    if (!value[field]) continue
+    if (value[field].length > POSTING_LIMITS[field]) {
+      errors[field] = `The ${FIELD_LABELS[field]} must be ${POSTING_LIMITS[field]} characters or fewer.`
+    } else if ((REQUIRES_LETTER_OR_DIGIT as readonly string[]).includes(field) && !hasLetterOrDigit(value[field])) {
+      errors[field] = `The ${FIELD_LABELS[field]} must include at least one letter or number.`
+    }
+  }
   if (!errors.date && value.date < campus.date) {
     errors.date = 'Events cannot be posted in the past. Choose today or a future date.'
   } else if (!errors.date && !isWithinPostingHorizon(value.date, now)) {
