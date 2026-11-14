@@ -63,6 +63,8 @@ jobs:
           path: app/coverage/
           if-no-files-found: warn
           retention-days: 14
+      - name: Verify targeted interval mutation pilot
+        run: npm run test:mutation:pilot
       - name: Type-check and build
         run: npm run build
       - name: Install Chromium for browser smoke test
