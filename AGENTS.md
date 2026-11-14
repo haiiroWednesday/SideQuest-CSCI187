@@ -4,6 +4,9 @@
 
 ## Source of truth
 
+> **Read the [current status and decision register](docs/CURRENT_STATUS_AND_DECISIONS_2026-11-13.md) first.** This source-of-truth page distinguishes M2 code, November PR states, PR #39's unmerged coverage metrics, Daven's reported November 7 live Supabase checks, and proposed SCU-only mapping. Historical P4/P5/lecture notes and older handoff snapshots must not override current implementation or pretend planned features have shipped. [PR #33](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/33) is a conflicting **draft rewrite** of the playbook; compare and reconcile, never silently overwrite master/current decisions.
+
+
 - **[MVP playbook](docs/MVP_TEAM_PLAYBOOK.md)** — authoritative **M2 code contract**, architecture diagrams and tests, plus the separately identified [current P5 coursework ER](docs/MVP_TEAM_PLAYBOOK.md#p5-coursework-er-diagram--current-drawio-and-mermaid), classroom sketch and original Google Docs.
 - **[Team setup + coding agents](TEAM_SETUP_GUIDE.md)** — Git, VS Code, OpenCode/Cursor/Claude Code/Codex/Cline options, optional specialist agents, safe PR reviews.
 - **[Product research and roadmap](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md)** — raw interviews, comparison research, validated extra-credit rubric, **future-only** features. Do not expand M2 automatically.
@@ -24,7 +27,7 @@
 - Anyone may post/browse events; **no account, login, or USER table**.
 - Every public Event has `id,title,hostName,description,location,date,start,end`. `hostName` is unverified display text, **not** a user ID.
 - Use M1-compatible `date` (YYYY-MM-DD) and `start,end` (HH:mm) on the **same day**, with `start < end`. No overnight events in this MVP.
-- One **shared public EventCatalog**; the Supabase adapter, event-posting form and integrated catalog/Search/Schedule code are merged (#18–#20). **Live Supabase configuration and cross-browser read/write are not verified.** Without environment configuration, the app uses an explicitly labeled browser-only fallback.
+- One **shared public EventCatalog**; the Supabase adapter, event-posting form and integrated catalog/Search/Schedule code are merged (#18–#20). **Live Supabase checks were team-reported on Nov 7; the full independent release-acceptance checklist remains incomplete.** Without environment configuration, the app uses an explicitly labeled browser-only fallback.
 - **Schedule** stores planned Event IDs **on the current device**. Removing a plan does not delete the public Event.
 - Free-time matching requires the **entire** event to fit, inclusive boundaries. No partial matching or travel feasibility.
 - Out of scope: user profiles, cost, registration enforcement, saved availability, cross-device schedules, and extra tables for anonymous users.
@@ -64,4 +67,4 @@ Follow the [shared coding conventions](TEAM_SETUP_GUIDE.md#shared-coding-convent
 
 **Default:** If a prompt conflicts with the agreed implementation contract or another teammate's file ownership, stop and explain the conflict. Do not invent features.
 
-**The P4 diagram is accepted.** Keep it unchanged. Current M2 source diagrams are [CRC](docs/diagrams/M2_CRC.drawio) and [ER](docs/diagrams/M2_STORAGE_ER.drawio), with a [combined file](docs/diagrams/M2_IMPLEMENTATION.drawio). Use the current [README](README.md), [specifications](SPECIFICATIONS.md) and [M2 verification](docs/M2_INTEGRATION_VERIFICATION.md), not historical M1 walkthroughs. Do not reuse a local server when running Playwright: browser tests POST events and a developer server may have real Supabase credentials.
+**Current campus mapping is a proposal, not a merged M2 feature:** if the team approves a custom SCU map, prefer a separately sourced/verified campus place and walkway graph on campus; external directions are a labeled fallback for off-campus or unsupported routes. Do not introduce a Google Routes dependency, map geometry, new SQL tables or new `CampusEvent` fields without reviewed contracts, rights checks and tests. **The P4 diagram is accepted.** Keep it unchanged. Current M2 source diagrams are [CRC](docs/diagrams/M2_CRC.drawio) and [ER](docs/diagrams/M2_STORAGE_ER.drawio), with a [combined file](docs/diagrams/M2_IMPLEMENTATION.drawio). Use the current [README](README.md), [specifications](SPECIFICATIONS.md) and [M2 verification](docs/M2_INTEGRATION_VERIFICATION.md), not historical M1 walkthroughs. Do not reuse a local server when running Playwright: browser tests POST events and a developer server may have real Supabase credentials.
