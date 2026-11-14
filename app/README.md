@@ -54,7 +54,7 @@ as a `sidequest-code-coverage` artifact after test execution.
 
 ## Quality and release-evidence checks
 
-The full Playwright command now runs the regular **Chromium suite** plus the
+Run `npm run test:mutation:pilot` for an isolated four-mutant regression check of the current time-fit rule. This does not rewrite tracked files or report whole-repository mutation coverage.\n\nThe full Playwright command now runs the regular **Chromium suite** plus the
 `@cross-browser` smoke scenario in **Firefox and WebKit**. Install all three
 engines with `npx playwright install --with-deps chromium firefox webkit`.
 Browser tests start isolated fixtures and must never reuse a developer
