@@ -33,12 +33,24 @@ Set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and optionally `PORT` in the **N
 
 ```bash
 npm test
+npm run test:coverage
 npm run build
 npx playwright install chromium
 npm run test:e2e
 ```
 
 Browser checks start a local fake PostgREST service, two development servers and the real production server. They use explicitly fake server credentials and do not mutate the team database. Build first so the production browser test has current artifacts.
+
+`npm run test:coverage` runs the Vitest suite with V8 code coverage and prints
+**statement, branch, function, and line** percentages in the terminal. Open
+`app/coverage/index.html` (or `coverage/index.html` when working inside `app/`)
+for file-level uncovered lines and branches. The command also writes
+`coverage/lcov.info` and `coverage/coverage-summary.json`.
+The report includes production TypeScript/React files in `app/src/` and
+`app/server/`, even if no Vitest test imports them. It does **not** measure
+Playwright browser or PostgreSQL SQL execution. Coverage is informational for
+now: no minimum percentage gate has been set. GitHub Actions uploads the report
+as a `sidequest-code-coverage` artifact after test execution.
 
 ## Database and public-write safeguards
 
