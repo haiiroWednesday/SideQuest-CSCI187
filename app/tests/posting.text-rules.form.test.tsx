@@ -24,8 +24,8 @@ function renderForm() {
   render(<PostEventForm connection={{ catalog: createEventCatalog(createInMemoryEventTable(rows), now), shared: true }} now={now} />)
   return rows
 }
-// fireEvent.change sets the value directly, as a paste or script could; jsdom
-// does not apply maxLength, so the Model rule is what rejects these.
+// fireEvent.change sets the value directly, as a paste or script could. The
+// form has no maxLength, so the Model posting rule is what rejects these.
 async function submit(values: Partial<EventDraft>) {
   const f = form()
   const draft = { ...valid, ...values }
@@ -40,11 +40,15 @@ beforeEach(() => { window.localStorage.clear(); window.location.hash = '' })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 describe('Post form text rules', () => {
-  it('limits typing to the posting limits', () => {
+  it('does not cut off typing, and states each limit in a hint from the first render', () => {
     renderForm()
     for (const field of Object.keys(LABELS) as (keyof typeof LABELS)[]) {
-      expect(form().getByLabelText(LABELS[field]).getAttribute('maxlength')).toBe(String(POSTING_LIMITS[field]))
+      const control = form().getByLabelText(LABELS[field])
+      expect(control.hasAttribute('maxlength')).toBe(false)
+      expect(document.getElementById(`post-${field}-hint`)?.textContent).toBe(`Up to ${POSTING_LIMITS[field]} characters`)
+      expect(control.getAttribute('aria-describedby')).toBe(field === 'description' ? 'post-description-hint post-description-count' : `post-${field}-hint`)
     }
+    for (const label of ['DATE', 'START', 'END']) expect(form().getByLabelText(label).getAttribute('aria-describedby')).toBeNull()
   })
 
   it.each(Object.keys(LABELS) as (keyof typeof LABELS)[])('%s: shows the posting limit one over and does not post', async field => {
@@ -93,21 +97,29 @@ describe('Post form character counters', () => {
   const set = (field: keyof typeof LABELS, value: string) => fireEvent.change(form().getByLabelText(LABELS[field]), { target: { value } })
   const describedBy = (field: keyof typeof LABELS | 'date') => form().getByLabelText(field === 'date' ? 'DATE' : LABELS[field]).getAttribute('aria-describedby')
 
-  it('always shows the description counter, from 0 to the limit, without a live region', async () => {
+  it('always shows the description counter, from 0 past the limit, without a live region', async () => {
     renderForm()
     expect(count('description')?.textContent).toBe('0/1000 characters')
-    expect(describedBy('description')).toBe('post-description-count')
+    expect(describedBy('description')).toBe('post-description-hint post-description-count')
     await userEvent.type(form().getByLabelText('DESCRIPTION'), 'Hello')
     expect(count('description')?.textContent).toBe('5/1000 characters')
-    expect(count('description')?.hasAttribute('data-at-limit')).toBe(false)
     set('description', 'x'.repeat(1000))
     expect(count('description')?.textContent).toBe('1000/1000 characters')
-    expect(count('description')?.hasAttribute('data-at-limit')).toBe(true)
-    expect(count('description')?.getAttribute('aria-live')).toBeNull()
-    expect(count('description')?.getAttribute('role')).toBeNull()
+    expect(count('description')?.hasAttribute('data-over-limit')).toBe(false)
+    set('description', 'x'.repeat(1200))
+    expect((form().getByLabelText('DESCRIPTION') as HTMLTextAreaElement).value).toHaveLength(1200)
+    expect(count('description')?.textContent).toBe('1200/1000 characters')
+    expect(count('description')?.hasAttribute('data-over-limit')).toBe(true)
+    fireEvent.blur(form().getByLabelText('DESCRIPTION'))
+    expect(document.getElementById('post-description-error')?.textContent).toBe('The description must be 1000 characters or fewer.')
+    expect(describedBy('description')).toBe('post-description-error post-description-hint post-description-count')
+    for (const id of ['post-description-count', 'post-description-hint']) {
+      expect(document.getElementById(id)?.getAttribute('aria-live')).toBeNull()
+      expect(document.getElementById(id)?.getAttribute('role')).toBeNull()
+    }
   })
 
-  it('counts the raw value, including spaces, as maxLength does', () => {
+  it('counts the raw value, including spaces', () => {
     renderForm()
     set('description', '  ab  ')
     expect(count('description')?.textContent).toBe('6/1000 characters')
@@ -119,21 +131,23 @@ describe('Post form character counters', () => {
     expect(count(field)).toBeNull()
     set(field, 'x'.repeat(threshold - 1))
     expect(count(field)).toBeNull()
-    expect(describedBy(field)).toBeNull()
+    expect(describedBy(field)).toBe(`post-${field}-hint`)
     set(field, 'x'.repeat(threshold))
     expect(count(field)?.textContent).toBe(`${threshold}/${limit} characters`)
-    expect(describedBy(field)).toBe(`post-${field}-count`)
-    expect(count(field)?.hasAttribute('data-at-limit')).toBe(false)
+    expect(describedBy(field)).toBe(`post-${field}-hint post-${field}-count`)
     set(field, 'x'.repeat(limit))
     expect(count(field)?.textContent).toBe(`${limit}/${limit} characters`)
-    expect(count(field)?.hasAttribute('data-at-limit')).toBe(true)
+    expect(count(field)?.hasAttribute('data-over-limit')).toBe(false)
+    set(field, 'x'.repeat(limit + 1))
+    expect(count(field)?.textContent).toBe(`${limit + 1}/${limit} characters`)
+    expect(count(field)?.hasAttribute('data-over-limit')).toBe(true)
   })
 
-  it('describes a field by both its error and its counter, and leaves other fields alone', async () => {
+  it('describes a field by its error, hint and counter in that order, and leaves other fields alone', async () => {
     renderForm()
     await submit({ title: '&'.repeat(70) })
     expect(await form().findByText('The event title must include at least one letter or number.')).toBeTruthy()
-    expect(describedBy('title')).toBe('post-title-error post-title-count')
+    expect(describedBy('title')).toBe('post-title-error post-title-hint post-title-count')
     expect(describedBy('date')).toBeNull()
   })
 })
