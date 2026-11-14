@@ -66,7 +66,15 @@ jobs:
       - name: Type-check and build
         run: npm run build
       - name: Install Chromium for browser smoke test
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium firefox webkit
       # 🌐 The final check drives Chromium through a real user workflow.
       - name: Run browser smoke test
         run: npm run test:e2e
+      - name: Upload browser screenshots and failure traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sidequest-browser-evidence
+          path: app/test-results/
+          if-no-files-found: ignore
+          retention-days: 14
