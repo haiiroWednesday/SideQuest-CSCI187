@@ -25,7 +25,7 @@ Use [requirements](../REQUIREMENTS.md), [specifications](../SPECIFICATIONS.md), 
 | PR | Verified status Nov 13 | Implication |
 | --- | --- | --- |
 | [#32](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/32) | Open **draft** | Reviewed event candidates only; no approved live SCU import or published feed |
-| [#33](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/33) | Open **draft**, currently not mergeable | Playbook rewrite proposal. Reconcile with this status register, updated map direction, and master before merging; do not overwrite the current playbook blindly |
+| [#33](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/33) | Open **draft**, currently not mergeable | Source of the concise playbook structure now reconciled into PR #40, with the original long-form guide archived. Do not merge #33 separately over the reconciled file; consider closing after team acceptance |
 | [#35](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/35) | Open | Shorter root README proposal; avoid parallel broad README rewrites |
 | [#38](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/38) | Open | Posting-only string validation/limit proposal, not the current contract |
 | [#39](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/39) | Open, ready for review | V8 coverage tooling/reporting; CI green on PR branch, **not in master** |
