@@ -87,3 +87,53 @@ describe('events stored before the posting limits', () => {
     await waitFor(() => expect(JSON.parse(window.localStorage.getItem(PLANNED_IDS_KEY) ?? '[]')).toEqual([stored.id]))
   })
 })
+
+describe('Post form character counters', () => {
+  const count = (field: keyof typeof LABELS) => document.getElementById(`post-${field}-count`)
+  const set = (field: keyof typeof LABELS, value: string) => fireEvent.change(form().getByLabelText(LABELS[field]), { target: { value } })
+  const describedBy = (field: keyof typeof LABELS | 'date') => form().getByLabelText(field === 'date' ? 'DATE' : LABELS[field]).getAttribute('aria-describedby')
+
+  it('always shows the description counter, from 0 to the limit, without a live region', async () => {
+    renderForm()
+    expect(count('description')?.textContent).toBe('0/1000 characters')
+    expect(describedBy('description')).toBe('post-description-count')
+    await userEvent.type(form().getByLabelText('DESCRIPTION'), 'Hello')
+    expect(count('description')?.textContent).toBe('5/1000 characters')
+    expect(count('description')?.hasAttribute('data-at-limit')).toBe(false)
+    set('description', 'x'.repeat(1000))
+    expect(count('description')?.textContent).toBe('1000/1000 characters')
+    expect(count('description')?.hasAttribute('data-at-limit')).toBe(true)
+    expect(count('description')?.getAttribute('aria-live')).toBeNull()
+    expect(count('description')?.getAttribute('role')).toBeNull()
+  })
+
+  it('counts the raw value, including spaces, as maxLength does', () => {
+    renderForm()
+    set('description', '  ab  ')
+    expect(count('description')?.textContent).toBe('6/1000 characters')
+  })
+
+  it.each([['title', 64], ['hostName', 48], ['location', 96]] as const)('%s: shows its counter only from %i characters', (field, threshold) => {
+    renderForm()
+    const limit = POSTING_LIMITS[field]
+    expect(count(field)).toBeNull()
+    set(field, 'x'.repeat(threshold - 1))
+    expect(count(field)).toBeNull()
+    expect(describedBy(field)).toBeNull()
+    set(field, 'x'.repeat(threshold))
+    expect(count(field)?.textContent).toBe(`${threshold}/${limit} characters`)
+    expect(describedBy(field)).toBe(`post-${field}-count`)
+    expect(count(field)?.hasAttribute('data-at-limit')).toBe(false)
+    set(field, 'x'.repeat(limit))
+    expect(count(field)?.textContent).toBe(`${limit}/${limit} characters`)
+    expect(count(field)?.hasAttribute('data-at-limit')).toBe(true)
+  })
+
+  it('describes a field by both its error and its counter, and leaves other fields alone', async () => {
+    renderForm()
+    await submit({ title: '&'.repeat(70) })
+    expect(await form().findByText('The event title must include at least one letter or number.')).toBeTruthy()
+    expect(describedBy('title')).toBe('post-title-error post-title-count')
+    expect(describedBy('date')).toBeNull()
+  })
+})

@@ -18,6 +18,9 @@
 .sq-post-panel [aria-invalid="true"] { border-color: var(--sq-red); }
 .sq-post-panel small { font: 600 14px/1.4 var(--font-sans); }
 .sq-post-panel :is(.error, .field-error) { color: var(--sq-red-deep); }
+/* character counter, right-aligned under its field; red once it reaches the limit */
+.sq-post-panel .field-count { justify-self: end; color: var(--sq-muted); font-variant-numeric: tabular-nums; }
+.sq-post-panel .field-count[data-at-limit] { color: var(--sq-red-deep); }
 .sq-post-panel .primary-button:focus-visible { outline: 3px solid var(--sq-red-deep); outline-offset: 3px; }
 .sq-post-panel .primary-button { width: 100%; min-height: 62px; margin-top: 8px; border: 0; border-radius: 999px; padding: 16px; background: var(--sq-red); color: var(--sq-on-red);
   font: 700 20px var(--font-sans); cursor: pointer; box-shadow: 0 4px 0 var(--sq-red-deep); transition: transform .12s ease, box-shadow .12s ease, background .12s ease; }
