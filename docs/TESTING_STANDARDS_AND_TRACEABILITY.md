@@ -24,6 +24,7 @@ From `app/`:
 npm ci
 npm test                    # Vitest unit, component, controller and API tests
 npm run test:coverage       # V8: statements, branches, functions, lines
+npm run test:mutation:pilot   # Four selected isolated event-fit mutations
 npm run build
 npx playwright install --with-deps chromium firefox webkit
 npm run test:e2e             # Full Chromium plus tagged Firefox/WebKit smoke; local fixtures only
@@ -31,7 +32,7 @@ npm run test:e2e             # Full Chromium plus tagged Firefox/WebKit smoke; l
 
 The additional Playwright checks use `@axe-core/playwright` to flag **serious/critical automated WCAG A/AA violations** in Discover, Post and Schedule. The cross-browser case checks a narrow-viewport navigation and invalid-post flow. The layout test verifies no horizontal overflow at 320, 390 and 1280 pixels and retains screen captures in `test-results/` as **review evidence**. These screenshots are *not yet golden pixel-diff snapshots*; stabilize fonts and the design before adding trustworthy comparisons.
 
-The deterministic `interval.properties.test.ts` checks 500 generated event/free-window pairs against an independent time arithmetic oracle, 300 interval expansion examples, exact-edge cases and zero-overlap transitions. This adds test-data breadth without an external property-testing dependency. It is **not** a full fast-check shrinking suite or a Stryker mutation campaign. The strict inequality boundary assertions are explicitly mutation-sensitive. Run a focused mutation pilot against event-fit code only after agreeing on time/cost and a safe isolated working copy, then publish surviving mutants rather than guessing a score.
+The deterministic `interval.properties.test.ts` checks 500 generated event/free-window pairs against an independent time arithmetic oracle, 300 interval expansion examples, exact-edge cases and zero-overlap transitions. This adds test-data breadth without an external property-testing dependency. It is **not** a full fast-check shrinking suite or a Stryker mutation campaign. The separate `scripts/mutation-interval-pilot.mjs` compiles and runs four hand-selected altered `fitsFully` predicates in isolated Node VMs without modifying working-tree files; CI fails if a mutant survives its independent boundary corpus. This yields a **selected-mutant** result only, not a statistically meaningful mutation score for the full repository. If useful, later pilot Stryker on a dedicated isolated worktree and publish all surviving mutants.
 
 ## Manual live Supabase acceptance (REQUIRES authorized tester)
 
@@ -67,4 +68,4 @@ When a campus-only map is approved, verify student names/aliases, correct entran
 1. Review highest-risk uncovered code branches in PR #39, especially `src/controller/postEvent.ts` and `server/api.ts`. Prefer meaningful assertions over a fixed 80% percentage gate.
 2. Investigate all new axe findings and Firefox/WebKit failures; fix actual UI defects, not by blanket-disabling scanner rules or adding indiscriminate retries.
 3. Complete and independently review the **real** Supabase acceptance record, then add safe authorization tests if a group/account model is ever approved.
-4. Add stable pixel-diff visual snapshots after designs/fonts settle, and perform targeted Stryker/fast-check campaigns with recorded surviving mutations and failing shrunk examples. Avoid running full mutation tests against the whole application in every CI job.
+4. Add stable pixel-diff visual snapshots after designs/fonts settle, and expand beyond the four-mutant pilot to targeted Stryker/fast-check campaigns with recorded surviving mutations and shrunk failures. Avoid running full mutation tests against the whole application in every CI job.
