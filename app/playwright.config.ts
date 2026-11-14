@@ -1,9 +1,15 @@
 import { defineConfig } from '@playwright/test'
 
-// 🌐 Playwright runs end-to-end tests in a real Chromium browser.
-// Unlike Vitest's jsdom tests, it checks the app and web server together.
+// Playwright exercises the actual app/server in Chromium and selected\n// smoke paths in Firefox and WebKit; Vitest components run separately.
 export default defineConfig({
   testDir: './e2e',
+  // Keep the full suite in Chromium; run the tagged high-value cross-browser
+  // smoke path in Firefox and WebKit rather than tripling every fixture test.
+  projects: [
+    { name: 'chromium', use: { browserName: 'chromium' } },
+    { name: 'firefox', grep: /@cross-browser/, use: { browserName: 'firefox' } },
+    { name: 'webkit', grep: /@cross-browser/, use: { browserName: 'webkit' } },
+  ],
   // CI retries once after a failure; locally we see failures immediately.
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
