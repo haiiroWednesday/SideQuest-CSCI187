@@ -60,7 +60,7 @@ Measure success (without hints), completion time, false-positive confirmations, 
 
 ## Future SCU map acceptance (NOT IN CURRENT M2)
 
-When a campus-only map is approved, verify student names/aliases, correct entrance, path network geometry, unreachable/crossing gates, closed segments, mobility constraints, shortest-path correctness, duration uncertainty, unknown/off-campus origins, source rights and access-control policy. A travel-inclusive feasibility verdict must remain distinct from existing event-only full fit. See [proposed SCU routing direction](CURRENT_STATUS_AND_DECISIONS_2026-11-13.md) after the documentation PR merges.
+When a campus-only map is approved, verify student names/aliases, correct entrance, path network geometry, unreachable/crossing gates, closed segments, mobility constraints, shortest-path correctness, duration uncertainty, unknown/off-campus origins, source rights and access-control policy. A travel-inclusive feasibility verdict must remain distinct from existing event-only full fit. See [proposed SCU routing direction in documentation PR #40](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/40); follow its register after merge.
 
 ## Next hardening work, by measured risk
 
