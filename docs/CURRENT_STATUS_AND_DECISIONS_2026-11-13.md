@@ -9,7 +9,7 @@
 3. **TEAM REPORTED:** a named person says they tested a real service; preserve provenance and do not upgrade to independently audited.
 4. **PROPOSED / PENDING:** a plan, unmerged PR, unresolved integration, or required acceptance evidence. No proposed feature is shipped merely because it appears in a diagram or playbook.
 
-Use [requirements](../REQUIREMENTS.md), [specifications](../SPECIFICATIONS.md), and [production source](../app/src/) for the current M2 behavior. The [MVP playbook](MVP_TEAM_PLAYBOOK.md) includes October history and examples; [RACI/final plan](FINAL_PROJECT_TEAM_ROLES_RACI_2026-11.md) is a proposal until the team agrees. This document does not certify a professor's grade, submission or extra-credit award.
+Use [requirements](../REQUIREMENTS.md), [specifications](../SPECIFICATIONS.md), and [production source](../app/src/) for the current M2 behavior. The [MVP playbook](MVP_TEAM_PLAYBOOK.md) is the reconciled, concise operational guide; the [October long-form guide and examples](MVP_TEAM_PLAYBOOK_ARCHIVED_2026-10.md) are preserved separately; [RACI/final plan](FINAL_PROJECT_TEAM_ROLES_RACI_2026-11.md) is a proposal until the team agrees. This document does not certify a professor's grade, submission or extra-credit award.
 
 ## Shipped M2 architecture, as recorded in master
 
