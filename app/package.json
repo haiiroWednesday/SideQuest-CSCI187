@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "start": "node dist-server/index.js",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:mutation:pilot": "node scripts/mutation-interval-pilot.mjs"
   },
   "engines": {
     "node": ">=22.12.0"
