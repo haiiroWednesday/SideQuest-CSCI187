@@ -1,6 +1,6 @@
 # SideQuest — Current M2 MVP User Requirements
 
-**Current implementation contract, updated November 4, 2026.** This supersedes the M1-focused root requirements. Historical M1 requirements remain in [docs/M1_HISTORICAL_REQUIREMENTS.md](docs/M1_HISTORICAL_REQUIREMENTS.md). This document describes the adopted P4-based MVP scope; the wider P3 research vision remains a future plan.
+**M2 implementation contract (November 4 baseline, checked against master November 13, 2026).** This supersedes the M1-focused root requirements. Historical M1 requirements remain in [docs/M1_HISTORICAL_REQUIREMENTS.md](docs/M1_HISTORICAL_REQUIREMENTS.md). This document describes the adopted P4-based MVP scope; the wider P3 research vision remains a future plan.
 
 ## R1 — Post a campus event
 - A student should be able to submit an event with a title, host display name, description, location, day, start and end time.
@@ -51,6 +51,10 @@
 - **Shared storage:** the repository includes a Supabase adapter, SQL schema and browser fallback; the browser uses a same-origin Node API. A successful local build does not establish that the live Supabase instance is configured or independently verified.
 - **Provisional choice:** maximum 100 saved local plans, subject to explicit team confirmation.
 - **Safety boundary:** anonymous public insertion is a class-prototype choice and needs deployment/security review, including the project's server-side API-key policy.
+
+## Future-project direction (NOT part of M2 acceptance)
+
+The proposed custom map and routing work is scoped to **Santa Clara University's campus**, using student-recognized place aliases, verified building entrances and independently validated pedestrian path connections. Its purpose is explaining whether nearby real activities fit a student's selected time and travel constraints; future social planning/Someday/plan repair depend on separate permissions and domain design. For external/unknown locations, show an honest unknown and/or external directions, never a fabricated duration. Current M2 stores **free-text** event location only and has **no map, route graph, GPS tracking or travel-inclusive matching**. Requirements must change explicitly, with team review and tests, before any proposed feature becomes a delivered commitment. See [current status](docs/CURRENT_STATUS_AND_DECISIONS_2026-11-13.md) and [updated RACI](docs/FINAL_PROJECT_TEAM_ROLES_RACI_2026-11.md).
 
 ## Supporting documents
 
