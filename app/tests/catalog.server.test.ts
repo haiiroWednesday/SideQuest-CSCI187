@@ -58,6 +58,31 @@ describe('same-origin server API', () => {
     expect((await fetch(url + '/api/events', { method: 'POST', body: 'text' })).status).toBe(415)
     expect(table.rows.size).toBe(0)
   })
+
+  it('rejects non-object JSON bodies and unsupported queries before any write', async () => {
+    const { url, table } = await setup()
+    for (const invalidBody of ['null', '[]', '"string"', '5']) {
+      const response = await fetch(url + '/api/events', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: invalidBody,
+      })
+      expect(response.status, `payload: ${invalidBody}`).toBe(400)
+    }
+    expect((await fetch(url + '/api/events?role=admin')).status).toBe(400)
+    expect((await fetch(url + '/api/does-not-exist')).status).toBe(404)
+    expect((await fetch(url + '/api/events', { method: 'OPTIONS' })).status).toBe(405)
+    expect(table.rows.size).toBe(0)
+  })
+
+  it('protects catalog responses from browser caching and permissive CORS', async () => {
+    const { url } = await setup()
+    const response = await fetch(url + '/api/catalog')
+    expect(response.status).toBe(200)
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(response.headers.get('x-content-type-options')).toBe('nosniff')
+    expect(response.headers.get('access-control-allow-origin')).toBeNull()
+    expect(JSON.stringify(await response.json())).not.toMatch(/supabase_publishable|sb_secret_/i)
+  })
+
   it('limits repeated submissions without trusting spoofed forwarded addresses', async () => {
     const { url, post, table } = await setup()
     for (let i = 0; i < POSTS_PER_MINUTE; i++) expect((await post(draft)).status).toBe(201)
