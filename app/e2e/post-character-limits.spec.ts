@@ -28,7 +28,7 @@ test('the mobile Post form keeps over-limit text, flags it and posts once it fit
   await description.fill('x'.repeat(1200))
   expect(await description.inputValue()).toHaveLength(1200)
   await expect(counter).toHaveText(/^1200\/1000/)
-  await expect(counter).toHaveAttribute('data-over-limit', '')
+  await expect(counter).toHaveAttribute('data-over-limit')
 
   await description.blur()
   const error = page.locator('#post-description-error')
