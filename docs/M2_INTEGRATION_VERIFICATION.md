@@ -33,6 +33,13 @@ Local Chromium was extracted from a temporary @sparticuz/chromium package outsid
 - The README, M2 specifications, historical walkthrough and course audit now refer to the integrated release.
 - **Exact-commit CI:** React CI for `5226f398920d096c8a59410ddc8c7e0d0c1a8a58` passed 338 Vitest tests, 18 Playwright checks, TypeScript/build, and isolated PostgreSQL permissions checks. [Run details](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions/runs/41963193978). These checks do not replace the pending live-database acceptance test.
 
+## November 13 evidence addendum (after the November 4 snapshot)
+
+- **Merged implementation update:** [PR #34](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/34) and its incorporated [PR #37](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/37) add/test a one-year-ahead posting horizon in campus time, including Model/API/date UI/SQL-policy handling. This is now a **merged** posting rule, separate from legacy read/Schedule records.
+- **Unmerged testing enhancement:** [PR #39](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/39) passed both CI workflows on its head `15d8b1076cd1a66866e5db34322ef33c8618bc5a`. React CI recorded **368 Vitest passes across 41 files, 19 Playwright passes, successful build and isolated PostgreSQL checks**. Its V8-only code coverage for app source/server is **92.78% statements / 88.47% branches / 96.19% functions / 95.95% lines**. These checks do not establish that coverage instrumentation is merged into master. [Exact run](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions/runs/43542385069).
+- **Reported live test, with provenance:** Daven's November 7 real Supabase write/read and Firefox/Chrome/Edge exercise was recorded in the shared [Team HQ Google Doc](https://docs.google.com/document/d/1LGYSH-m4x2u8DCHyxFrRgzNRxXPLewnNvMufDJPF8jk/edit). Treat this as **TEAM REPORTED**, not as an independently completed acceptance checklist. The release still needs exact tester/date, applied migrations, successful independent two-browser event ID checks, and negative RLS/UPDATE/DELETE assertions documented against the actual authorized environment.
+- [Current status and open PR tracker](CURRENT_STATUS_AND_DECISIONS_2026-11-13.md) distinguishes verified code/CI from pending deployment and future mapping/coordination proposals.
+
 ## Live shared-catalog acceptance (NOT VERIFIED)
 
 **Record status as of November 4, 2026: pending actual authorized team-run test.** Local Vitest, Chromium, isolated PostgreSQL and a `/api/catalog` `{"shared":true}` response do **not** establish that the current team Supabase instance is provisioned and functioning.
