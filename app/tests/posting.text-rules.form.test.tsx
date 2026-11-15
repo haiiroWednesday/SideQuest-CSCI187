@@ -119,10 +119,32 @@ describe('Post form character counters', () => {
     }
   })
 
-  it('counts the raw value, including spaces', () => {
+  it('counts the trimmed length that posting validates, and keeps the raw text', () => {
     renderForm()
     set('description', '  ab  ')
-    expect(count('description')?.textContent).toBe('6/1000 characters')
+    expect(count('description')?.textContent).toBe('2/1000 characters')
+    expect((form().getByLabelText('DESCRIPTION') as HTMLTextAreaElement).value).toBe('  ab  ')
+  })
+
+  it('treats 1,000 characters plus trailing spaces as within the limit', () => {
+    renderForm()
+    const description = form().getByLabelText('DESCRIPTION') as HTMLTextAreaElement
+    set('description', 'x'.repeat(1000) + '  ')
+    expect(description.value).toHaveLength(1002)
+    expect(count('description')?.textContent).toBe('1000/1000 characters')
+    expect(count('description')?.hasAttribute('data-over-limit')).toBe(false)
+    fireEvent.blur(description)
+    expect(document.getElementById('post-description-error')).toBeNull()
+    expect(description.hasAttribute('aria-invalid')).toBe(false)
+  })
+
+  it('still flags 1,001 non-space characters as over the limit', () => {
+    renderForm()
+    set('description', 'x'.repeat(1001))
+    expect(count('description')?.textContent).toBe('1001/1000 characters')
+    expect(count('description')?.hasAttribute('data-over-limit')).toBe(true)
+    fireEvent.blur(form().getByLabelText('DESCRIPTION'))
+    expect(document.getElementById('post-description-error')?.textContent).toBe('The description must be 1000 characters or fewer.')
   })
 
   it.each([['title', 64], ['hostName', 48], ['location', 96]] as const)('%s: shows its counter only from %i characters', (field, threshold) => {
@@ -130,6 +152,8 @@ describe('Post form character counters', () => {
     const limit = POSTING_LIMITS[field]
     expect(count(field)).toBeNull()
     set(field, 'x'.repeat(threshold - 1))
+    expect(count(field)).toBeNull()
+    set(field, 'x'.repeat(threshold - 1) + '   ')
     expect(count(field)).toBeNull()
     expect(describedBy(field)).toBe(`post-${field}-hint`)
     set(field, 'x'.repeat(threshold))

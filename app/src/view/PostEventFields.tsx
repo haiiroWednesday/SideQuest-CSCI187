@@ -1,6 +1,6 @@
 // VIEW: accessible posting inputs. Validation decisions are supplied by the controller-facing form.
 import type { FormEvent } from 'react'
-import { POSTING_LIMITS, campusNow, latestPostingDate, type CatalogFieldErrors, type EventDraft } from '../controller/postEvent'
+import { POSTING_LIMITS, campusNow, trimDraft, latestPostingDate, type CatalogFieldErrors, type EventDraft } from '../controller/postEvent'
 
 type PostEventFieldsProps = {
   draft: EventDraft
@@ -24,11 +24,14 @@ const limitOf = (field: keyof EventDraft): number | null =>
   field in POSTING_LIMITS ? POSTING_LIMITS[field as CountedField] : null
 
 export function PostEventFields({ draft, fieldErrors, submitting, now, onSubmit, onChange, onBlur }: PostEventFieldsProps) {
-  // Raw value length in UTF-16 units, the same count as the input's value.length.
+  // Count the trimmed length in UTF-16 units: the same value catalogPostingErrors()
+  // checks, so the counter turns red exactly when posting would fail. The input
+  // itself still shows the raw draft text.
+  const trimmed = trimDraft(draft)
   const counter = (field: keyof EventDraft) => {
     const limit = limitOf(field)
     if (limit === null) return null
-    const length = draft[field].length
+    const length = trimmed[field].length
     return field === 'description' || length >= Math.ceil(limit * NEAR_LIMIT_RATIO) ? { length, limit } : null
   }
   // Link each control to its error, its limit hint and its counter, in that
