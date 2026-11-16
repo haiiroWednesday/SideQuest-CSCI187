@@ -1,0 +1,358 @@
+{
+  "version": 1,
+  "asOf": "2026-11-16",
+  "scope": "SideQuest CSCI 187; testable lecturer guidance and final deliverable checks, not a Gradescope grading certificate",
+  "sources": {
+    "lecture18": "https://docs.google.com/presentation/d/1XyMsMNsPUtODs1woGS9To3vSVgVDBmJseGcQSpeS2Q4/edit",
+    "lecture13": "https://docs.google.com/presentation/d/1PHrPPbAgmuRK1Nx4yscSPgbZCXcMPePesPGj-Oa2IZ8/edit",
+    "lecture07": "https://docs.google.com/presentation/d/1S5NFSWBuB7DNCxgtnEIwg7Yq-osRQyr4eVQB9pk-UqI/edit",
+    "lecture16": "https://docs.google.com/presentation/d/1gKGQi7yyhd0Ec8iMf2A0aO04cwP9_elCbgZXGdTxUKo/edit",
+    "lecture17": "https://docs.google.com/presentation/d/1-0Z0HvjJcVcsid9mWBQxRekZcZC_BJoa1m3Dd2vmx3A/edit",
+    "finalPresentation": "https://docs.google.com/document/d/1Tbpa5-Y14v1WwjGtmuUDFsE2ojfEljjyWZlaOnGeXv0/edit",
+    "extraCredit": "https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit"
+  },
+  "automated": [
+    {
+      "id": "DEV-UNIT",
+      "source": "lecture18",
+      "claim": "Unit: pure domain rules",
+      "evidence": [
+        "app/tests/model.fits.test.ts"
+      ]
+    },
+    {
+      "id": "DEV-COMPONENT",
+      "source": "lecture18",
+      "claim": "Component: React behavior",
+      "evidence": [
+        "app/tests/posting.daven.form.test.tsx"
+      ]
+    },
+    {
+      "id": "DEV-SYSTEM",
+      "source": "lecture18",
+      "claim": "System: public post to separate browser planning",
+      "evidence": [
+        "app/e2e/shared-catalog.spec.ts"
+      ]
+    },
+    {
+      "id": "DEV-WHITEBOX",
+      "source": "lecture18",
+      "claim": "White-box data/architecture checks",
+      "evidence": [
+        "app/tests/architecture.boundaries.test.ts"
+      ]
+    },
+    {
+      "id": "DEV-REGRESSION",
+      "source": "lecture18",
+      "claim": "Bug reproductions, date/edge regression",
+      "evidence": [
+        "app/tests/catalog.date-cap.test.ts"
+      ]
+    },
+    {
+      "id": "DEV-BOUNDARIES",
+      "source": "lecture18",
+      "claim": "Boundary partitions and property-style interval oracle",
+      "evidence": [
+        "app/tests/interval.properties.test.ts"
+      ]
+    },
+    {
+      "id": "RELEASE-BLACKBOX",
+      "source": "lecture18",
+      "claim": "User-facing browser flows without direct model control",
+      "evidence": [
+        "app/e2e/cross-browser.spec.ts"
+      ]
+    },
+    {
+      "id": "RELEASE-BUILD",
+      "source": "lecture18",
+      "claim": "Production build and real Node-server contract",
+      "evidence": [
+        "app/e2e/shared-catalog.spec.ts"
+      ]
+    },
+    {
+      "id": "NF-PERFORMANCE",
+      "source": "lecture18",
+      "claim": "Informational local request latency sampling, without production SLO claims",
+      "evidence": [
+        "app/e2e/release-dependability.spec.ts"
+      ]
+    },
+    {
+      "id": "NF-LOAD",
+      "source": "lecture18",
+      "claim": "Bounded concurrent local GETs and consistency",
+      "evidence": [
+        "app/e2e/release-dependability.spec.ts"
+      ]
+    },
+    {
+      "id": "NF-STRESS",
+      "source": "lecture18",
+      "claim": "Rate limit denies further public writes beyond cap",
+      "evidence": [
+        "app/tests/catalog.server.test.ts"
+      ]
+    },
+    {
+      "id": "NF-SECURITY",
+      "source": "lecture18",
+      "claim": "Input validation and forbidden write methods",
+      "evidence": [
+        "app/tests/catalog.server.test.ts"
+      ]
+    },
+    {
+      "id": "NF-RELIABILITY",
+      "source": "lecture18",
+      "claim": "Fault injection, retry and subsequent recovery",
+      "evidence": [
+        "app/e2e/release-dependability.spec.ts"
+      ]
+    },
+    {
+      "id": "NF-ACCESSIBILITY",
+      "source": "lecture18",
+      "claim": "Automated WCAG A/AA scan on principal screens",
+      "evidence": [
+        "app/e2e/accessibility.spec.ts"
+      ]
+    },
+    {
+      "id": "NF-RESPONSIVE",
+      "source": "lecture18",
+      "claim": "Geometry checks across narrow and wide viewports",
+      "evidence": [
+        "app/e2e/visual-layout.spec.ts"
+      ]
+    },
+    {
+      "id": "NF-PRIVACY",
+      "source": "lecture18",
+      "claim": "No server-held credentials shipped to browser",
+      "evidence": [
+        "app/e2e/shared-catalog.spec.ts"
+      ]
+    },
+    {
+      "id": "CODE-MVC",
+      "source": "lecture07",
+      "claim": "No View to Model and Controller to View imports",
+      "evidence": [
+        "app/tests/architecture.boundaries.test.ts"
+      ]
+    },
+    {
+      "id": "CODE-CONVENTIONS",
+      "source": "lecture13",
+      "claim": "Automated import/comment convention checks",
+      "evidence": [
+        "app/tests/source-consistency.test.ts"
+      ]
+    },
+    {
+      "id": "CODE-SUPPRESSIONS",
+      "source": "lecture13",
+      "claim": "Prohibit unreviewable TS diagnostic suppressions in production",
+      "evidence": [
+        "app/tests/kandel.code-quality.test.ts"
+      ]
+    },
+    {
+      "id": "CODE-COMMENTS",
+      "source": "lecture13",
+      "claim": "Prohibit debugger and commented-out code in production",
+      "evidence": [
+        "app/tests/kandel.code-quality.test.ts"
+      ]
+    }
+  ],
+  "manual": [
+    {
+      "id": "CODE-READABILITY",
+      "source": "lecture13",
+      "criterion": "Descriptive names, small one-purpose functions, meaningful comments, KISS, justified design",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "DOC-SETUP",
+      "source": "lecture13",
+      "criterion": "README commands work for an independent teammate; developer, architecture and end-user instructions agree",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "DOC-DIAGRAMS",
+      "source": "lecture07",
+      "criterion": "Current design diagram/ER accurately matches implemented program; historical P4/P5 clearly labeled",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "REVIEW-QUALITY",
+      "source": "lecture16",
+      "criterion": "Independent reviewer checks correctness, style, architecture, tests, documentation and replies to concerns",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "UX-UNGUIDED",
+      "source": "lecture18",
+      "criterion": "Representative SCU student completes a realistic scenario without coaching while neutral observer records problems",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "UX-ACCESSIBILITY-MANUAL",
+      "source": "lecture18",
+      "criterion": "Keyboard-only and screen-reader checks including 200% zoom and dynamic feedback",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "UX-PERFORMANCE-REAL",
+      "source": "lecture18",
+      "criterion": "Representative deployment timing, load and stress baseline (not local mock capacity)",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "SEC-LIVE-SUPABASE",
+      "source": "lecture18",
+      "criterion": "Authorized live database permissions/restrictions and deployed migration versions verified independently",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "FINAL-PITCH",
+      "source": "finalPresentation",
+      "criterion": "Explain problem and intended users; succinct elevator pitch",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "FINAL-DEMO",
+      "source": "finalPresentation",
+      "criterion": "Demonstrate every feature actually implemented, in 3–6 min",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "FINAL-RESULTS",
+      "source": "finalPresentation",
+      "criterion": "Present usability findings and honest conclusion about success/next steps",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "FINAL-PRESENTATION",
+      "source": "finalPresentation",
+      "criterion": "Rehearsed 7–10 min group presentation and full Q&A preparation",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "FINAL-PEER-NOTES",
+      "source": "finalPresentation",
+      "criterion": "Take and submit notes for every other project presentation",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "EXTRA-CORE",
+      "source": "extraCredit",
+      "criterion": "Core requirements pass and individual 70% Week 9 eligibility checked before bonus claims",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "EXTRA-E2E",
+      "source": "extraCredit",
+      "criterion": "Complete working E2E automation and evidence of CI run, reviewed for award",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "EXTRA-ACCESSIBILITY",
+      "source": "extraCredit",
+      "criterion": "Practical keyboard/screen-reader accessibility proven beyond axe",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "EXTRA-EXTERNAL",
+      "source": "extraCredit",
+      "criterion": "True external-system integration, approved architecture, keys server-side, with user value",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    },
+    {
+      "id": "EXTRA-PUBLISH",
+      "source": "extraCredit",
+      "criterion": "Genuine public host or installable build independently verified",
+      "status": "pending",
+      "procedure": "docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md",
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "evidence": []
+    }
+  ]
+}
