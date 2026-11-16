@@ -13,7 +13,10 @@
     "start": "node dist-server/index.js",
     "test:coverage": "vitest run --coverage",
     "test:mutation:pilot": "node scripts/mutation-interval-pilot.mjs",
-    "test:rubric": "vitest run tests/kandel.rubric-evidence.test.ts tests/kandel.code-quality.test.ts"
+    "test:rubric": "vitest run tests/kandel.rubric-evidence.test.ts tests/kandel.code-quality.test.ts",
+    "test:regression": "npm run test:coverage && npm run test:mutation:pilot && npm run test:rubric && npm run build && npm run test:e2e",
+    "test:regression:contract": "vitest run tests/regression.contract-matrix.test.ts",
+    "test:regression:journeys": "playwright test e2e/regression.journeys.spec.ts --project=chromium"
   },
   "engines": {
     "node": ">=22.12.0"
