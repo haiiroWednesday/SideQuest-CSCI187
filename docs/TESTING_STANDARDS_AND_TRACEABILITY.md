@@ -63,6 +63,12 @@ Measure success (without hints), completion time, false-positive confirmations, 
 
 When a campus-only map is approved, verify student names/aliases, correct entrance, path network geometry, unreachable/crossing gates, closed segments, mobility constraints, shortest-path correctness, duration uncertainty, unknown/off-campus origins, source rights and access-control policy. A travel-inclusive feasibility verdict must remain distinct from existing event-only full fit. See [proposed SCU routing direction in documentation PR #40](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/40); follow its register after merge.
 
+## Kandel course-testing and final-rubric extension (November 16)
+
+[Instructor-based verification checklist](CSCI187_KANDEL_RUBRIC_EVIDENCE.md) now maps Lecture 18's **development, release, and real-user testing** to exact automated and manual evidence. The [manifest](kandel-rubric-evidence.json) tracks 20 runnable categories and 18 criteria requiring observation or team/instructor decisions, with file-existence and status-integrity checks. `npm run test:rubric` runs in CI and also protects additional mechanical clean-code rules from Lectures 07/13/16. The bounded local browser concurrency/outage test adds an informational latency attachment without a guessed deployment SLO.
+
+The instructor materials do **not** expose a complete Gradescope point-by-point grading rubric; team members must verify any additional unpublished grading criteria in their authorized course view. Do not mark presentation, live production security, human usability or bonus eligibility as green based on CI alone.
+
 ## Next hardening work, by measured risk
 
 1. Review highest-risk uncovered code branches in PR #39, especially `src/controller/postEvent.ts` and `server/api.ts`. Prefer meaningful assertions over a fixed 80% percentage gate.
