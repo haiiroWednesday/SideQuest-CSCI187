@@ -462,6 +462,15 @@
 .sq-board-schedule > .sq-trail { grid-column: 1; grid-row: 1; }
 .sq-warn { margin: 0 0 18px; padding: 12px 16px; border-radius: 16px; background: var(--sq-sticky); color: var(--sq-red); font: 600 17px var(--font-sans); }
 .sq-sticker .sq-remove { display: flex; width: 100%; justify-content: center; padding: 16px; border: 1.5px solid var(--sq-rule-strong); border-radius: 999px; text-decoration: none; color: var(--sq-ink); font-size: 18px; }
+/* Schedule cards are containers; only their actual controls should appear clickable. */
+.sq-schedule-page .sq-stub { cursor: default; }
+.sq-schedule-page .sq-stub:not(.sq-stub-selected):hover { transform: none; box-shadow: none; }
+.sq-schedule-page .sq-plan-details { min-width: 0; align-self: stretch; margin-top: 8px; }
+.sq-schedule-page .sq-plan-details summary { width: fit-content; cursor: pointer; color: var(--sq-red-deep); font: 700 15px/1.4 var(--font-sans); text-decoration: underline; text-underline-offset: 3px; }
+.sq-schedule-page .sq-plan-details summary:focus-visible { outline: 3px solid var(--sq-red-deep); outline-offset: 4px; border-radius: 3px; }
+.sq-schedule-page .sq-plan-details dl { margin: 12px 0 0; min-width: 0; }
+.sq-schedule-page .sq-plan-details dt { margin-top: 12px; color: var(--sq-red-deep); font: 800 12px/1.4 var(--font-sans); letter-spacing: .07em; text-transform: uppercase; }
+.sq-schedule-page .sq-plan-details dd { margin: 2px 0 0; color: var(--sq-ink); font: 500 16px/1.45 var(--font-sans); overflow-wrap: anywhere; white-space: pre-wrap; }
 .sq-remove { align-self: flex-start; margin-top: 6px; padding: 4px 0; border: 0; background: none; color: var(--sq-muted); font: 600 15px var(--font-sans); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .sq-remove:hover { color: var(--sq-red); }
 .sq-overlap-note { display: inline-flex; margin-left: 14px; padding: 5px 12px; border-radius: 999px; background: var(--sq-sticky); color: var(--sq-red); font: 700 14px var(--font-sans); font-style: normal; vertical-align: middle; }
