@@ -63,6 +63,8 @@ jobs:
           path: app/coverage/
           if-no-files-found: warn
           retention-days: 14
+      - name: Verify Kandel rubric evidence and clean-code safeguards
+        run: npm run test:rubric
       - name: Verify targeted interval mutation pilot
         run: npm run test:mutation:pilot
       - name: Type-check and build
