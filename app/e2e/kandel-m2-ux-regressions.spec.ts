@@ -67,5 +67,7 @@ test('valid Post input focus is visibly distinct from its validation error', asy
   await title.fill('Faculty art workshop')
   await title.blur()
   await expect(title).not.toHaveAttribute('aria-invalid', 'true')
+  // Compare focused states: a healthy blurred border is intentionally lighter.
+  await title.focus()
   expect(await title.evaluate(field => getComputedStyle(field).borderTopColor)).toBe(validBorder)
 })
