@@ -2,7 +2,7 @@
 
 **Prepared November 16, 2026. Status: proposed for review; no automatic grade or certification.**
 
-This maps the **actual available instructor materials** to runnable evidence and human acceptance checks for SideQuest. It is not a substitute for a detailed Gradescope grading rubric, which is not reproduced in these source files. The companion [machine-readable manifest](kandel-rubric-evidence.json) defines twenty CI-verifiable categories and eighteen explicitly pending human/conditional categories. The [existing test-strategy guide](TESTING_STANDARDS_AND_TRACEABILITY.md) contains the implemented feature-to-test matrix.
+This maps the **available instructor materials and user-supplied M1/M2 Gradescope rubric** to runnable evidence and human acceptance checks for SideQuest. The historical M1/M2 applied rubric is preserved below; a future/final project point-by-point Gradescope rubric has not been supplied. The companion [machine-readable manifest](kandel-rubric-evidence.json) defines twenty-three CI-verifiable categories and eighteen explicitly pending human/conditional categories. The [existing test-strategy guide](TESTING_STANDARDS_AND_TRACEABILITY.md) contains the implemented feature-to-test matrix.
 
 ## Source authority
 
@@ -14,6 +14,34 @@ This maps the **actual available instructor materials** to runnable evidence and
 - [Final project extra-credit eligibility and categories](https://docs.google.com/document/d/12slKo80yu17NZw5nbrB0U1C_nj7mLq6h6uQoSbkCVQk/edit): core first, Week 9 grade >=70%, individual/team agreement, demonstrable feature completion, private server-side keys, E2E/accessibility/external-system/publishing criteria.
 
 This course material names **testing categories** but does not specify universal minimum coverage percentages, CI response-latency budgets, mutation scores or a formal security certification. We must not invent them.
+
+## Actual Gradescope M1/M2 rubrics and instructor feedback
+
+The user supplied the **applied categories and exact instructor remarks**, preserved separately as historical assessment in [kandel-m1-m2-actual-grades.json](kandel-m1-m2-actual-grades.json). These are more authoritative for **M1/M2** than generic lecture examples. They say nothing about the final project's unpublished Gradescope points.
+
+| Category | M1 earned / maximum | M2 earned / maximum |
+| --- | ---: | ---: |
+| User requirements and specifications | 1.50/1.50 | 1.50/1.50 |
+| README setup and style | 0.75/0.75 | **0.50/0.75** |
+| Functional walking skeleton / MVP | **2.75/3.25** | 4.25/4.25 |
+| MVC architecture | **0.50/0.75** | 0.75/0.75 |
+| Testing and CI | 2.00/2.00 | 2.00/2.00 |
+| UX design | 0.75/0.75 | **0.50/0.75** |
+| CRC diagram (four criteria, 0.25 each) | N/A | 1.00/1.00 |
+| ER diagram (0.35 entities, 0.35 relationships, 0.30 attributes) | N/A | 1.00/1.00 |
+| **Total** | **8.25/9.00** | **11.50/12.00** |
+
+### The exact regression risks
+
+- **M1 functional loss:** Historical event posting allowed past dates and did not adequately support description-based event distinction. Current validation must reject historical start times and permit meaningful descriptions. Preserve M1 feedback as history; test actual current behavior with the date-cap, posting and end-to-end suites.
+- **M1 architecture loss:** Some Views originally called Models directly. The [MVC dependency test](../app/tests/architecture.boundaries.test.ts) protects the reviewed separation; independent code review still judges whether the Controller mediates domain logic.
+- **M1 display suggestion (no UX deduction):** Present user-facing dates as `10/27/2026` and times as `2:30pm` rather than raw `2026-10-27` and `14:30`. Keep machine-readable database/date input fields in their required formats.
+- **M2 README loss (0.25):** Dense material and unnecessary details in the README. Keep setup commands at the top, short imperative explanations, and link to the detailed setup, diagrams and testing guides. The command/required-link regression is automated; a teammate must still judge editorial brevity.
+- **M2 UX loss (0.25):** The empty-result actions appeared as `Show all eventsPost an event`. A dedicated action group now enforces separate hit areas, verified in a browser at 320px, 390px and 1280px.
+- **M2 UX loss (same 0.25 category):** Completed free-time inputs and focused valid Post fields previously appeared red; neutral styling now differentiates valid/active state from actual field errors. The browser regression checks the computed CSS, rather than requiring an arbitrary brand color.
+- **M2 CRC/ER full credit:** Instructor applied **all four CRC criteria** (responsibilities in the correct class; dependency arrows trace every action; real classes with values; complete requirements representation) and **all three ER criteria** (entities, labeled relationships and attributes). Any *future* diagrams must be independently reviewed for these exact qualities; a file-existence check cannot establish them.
+
+The new [browser regression](../app/e2e/kandel-m2-ux-regressions.spec.ts) and [historical grade integrity test](../app/tests/kandel.actual-grades.test.ts) guard the recorded M2 concerns. They do **not** retroactively change M1/M2 grades or predict the final award.
 
 ## What CI can verify
 
