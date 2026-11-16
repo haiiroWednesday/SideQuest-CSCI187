@@ -1,0 +1,12 @@
+@keyframes q9blink{50%{opacity:0}}
+@keyframes q9nudge{50%{transform:translateX(3px)}}
+@keyframes q9bob{50%{transform:translateY(-5px)}}
+@keyframes q9ping{0%{transform:scale(1);opacity:.9}100%{transform:scale(3.2);opacity:0}}
+@keyframes q9print{0%{transform:translateY(-46px);opacity:0}30%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes q9flip{0%,72%,100%{transform:rotateX(0)}82%{transform:rotateX(88deg)}}
+@keyframes q9twinkle{50%{opacity:.3}}
+@keyframes q9draw{from{stroke-dashoffset:600}to{stroke-dashoffset:0}}
+@keyframes q9sweep{to{transform:rotate(360deg)}}
+@keyframes q9wobble{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(12deg)}}
+@keyframes q9drift{50%{transform:translateX(10px)}}
+@media (prefers-reduced-motion:reduce){[style*="q9"]{animation:none!important}}
