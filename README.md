@@ -37,10 +37,13 @@ From the `app/` directory:
 
 ```bash
 npm test
+npm run test:coverage
 npm run build
 npx playwright install chromium
 npm run test:e2e
 ```
+
+`npm run test:coverage` measures Vitest statement, branch, function and line coverage for production code under `app/src/` and `app/server/`. Inspect `app/coverage/index.html` for uncovered paths or download the CI coverage artifact. The report excludes Playwright and SQL execution, and no numerical coverage threshold is enforced.
 
 Stop any running development or production server before the Playwright tests. They start isolated test services and must not connect to the team's live database. For production startup and detailed setup, see the [app README](app/README.md).
 

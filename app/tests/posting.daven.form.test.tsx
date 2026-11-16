@@ -11,6 +11,7 @@ import { createEventCatalog, EventCatalogError, type EventCatalogPort, type Even
 import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 import { LOCAL_CATALOG_KEY } from '../src/model/browserEventTable'
 import { STORAGE_KEY as M1_STORAGE_KEY } from '../src/model/events'
+import { campusDateFromToday } from './fixtures/campusDates'
 
 type User = ReturnType<typeof userEvent.setup>
 
@@ -130,10 +131,33 @@ describe('PostEventForm', () => {
     const rows = new Map<string, EventRow>()
     render(<PostEventForm connection={{ catalog: createEventCatalog(createInMemoryEventTable(rows)), shared: true }} />)
     const date = form().getByLabelText('DATE')
-    fireEvent.change(date, { target: { value: '2030-11-08' } })
+    fireEvent.change(date, { target: { value: campusDateFromToday(30) } })
     fireEvent.blur(date)
     expect(date.getAttribute('aria-invalid')).toBeNull()
     fireEvent.change(date, { target: { value: '2020-11-08' } })
+    expect(date.getAttribute('aria-invalid')).toBe('true')
+    expect(rows.size).toBe(0)
+  })
+
+  it('caps the date input one campus year ahead and shows a field error beyond it', async () => {
+    const user = userEvent.setup()
+    const rows = new Map<string, EventRow>()
+    // 12:00 noon in Santa Clara on 2026-11-08; the form and catalog share the clock.
+    const now = () => new Date('2026-11-08T20:00:00Z')
+    render(<PostEventForm now={now} connection={{ catalog: createEventCatalog(createInMemoryEventTable(rows), now), shared: true }} />)
+    const date = form().getByLabelText('DATE')
+    expect(date.getAttribute('min')).toBe('2026-11-08')
+    expect(date.getAttribute('max')).toBe('2027-11-08')
+    fireEvent.change(date, { target: { value: '2027-11-08' } })
+    fireEvent.blur(date)
+    expect(date.getAttribute('aria-invalid')).toBeNull()
+    for (const value of ['2027-11-09', '9999-12-31']) {
+      fireEvent.change(date, { target: { value } })
+      fireEvent.blur(date)
+      expect(date.getAttribute('aria-invalid')).toBe('true')
+      expect(document.getElementById('post-date-error')?.textContent).toContain('Events can be posted up to one year ahead. Choose a date on or before 2027-11-08.')
+    }
+    await user.click(form().getByRole('button', { name: /post event/i }))
     expect(date.getAttribute('aria-invalid')).toBe('true')
     expect(rows.size).toBe(0)
   })

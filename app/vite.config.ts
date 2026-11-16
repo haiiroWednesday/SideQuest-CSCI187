@@ -21,5 +21,14 @@ export default defineConfig(({ mode }) => ({
     // Model/Controller tests run in Node. React tests opt into jsdom
     // using their @vitest-environment jsdom comment at the top of the file.
     environment: 'node',
+    // Only the explicit coverage command instruments tests.
+    // Include untested production files so the totals show real gaps.
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}', 'server/**/*.{ts,tsx}'],
+      exclude: ['**/*.d.ts'],
+      reporter: ['text', 'html', 'lcov', 'json-summary'],
+      reportsDirectory: './coverage',
+    },
   },
 }))

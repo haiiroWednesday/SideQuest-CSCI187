@@ -51,7 +51,9 @@ export async function connectServerEventCatalog(): Promise<ConnectedCatalog> {
   }
 }
 
-export { postingDraftErrors, CATALOG_LIMITS, campusNow } from '../model/eventCatalog'
+export {
+  postingDraftErrors, CATALOG_LIMITS, campusNow, latestPostingDate,
+} from '../model/eventCatalog'
 export { initialCampusWindow } from '../model/eventTiming'
 
 export type PostResult =

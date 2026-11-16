@@ -48,9 +48,21 @@ jobs:
           if ! command -v psql >/dev/null; then sudo apt-get update && sudo apt-get install -y postgresql-client; fi
           psql -v ON_ERROR_STOP=1 -c 'create role anon nologin; create role authenticated nologin;'
           psql -v ON_ERROR_STOP=1 -f ../supabase/migrations/20261103000000_create_events.sql
+          psql -v ON_ERROR_STOP=1 -f ../supabase/migrations/20261108000000_event_date_sanity_bound.sql
+          psql -v ON_ERROR_STOP=1 -f ../supabase/migrations/20261110000000_event_date_posting_horizon.sql
+          psql -v ON_ERROR_STOP=1 -f ../supabase/tests/event_date_sanity_bound.sql
+          psql -v ON_ERROR_STOP=1 -f ../supabase/tests/event_date_posting_horizon.sql
           psql -v ON_ERROR_STOP=1 -f ../supabase/tests/event_catalog_permissions.sql
-      - name: Run unit tests
-        run: npm test
+      - name: Run unit and integration tests with coverage
+        run: npm run test:coverage
+      - name: Upload code coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sidequest-code-coverage
+          path: app/coverage/
+          if-no-files-found: warn
+          retention-days: 14
       - name: Type-check and build
         run: npm run build
       - name: Install Chromium for browser smoke test
