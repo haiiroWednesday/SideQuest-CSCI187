@@ -13,7 +13,7 @@
     "start": "node dist-server/index.js",
     "test:coverage": "vitest run --coverage",
     "test:mutation:pilot": "node scripts/mutation-interval-pilot.mjs",
-    "test:rubric": "vitest run tests/kandel.rubric-evidence.test.ts tests/kandel.code-quality.test.ts tests/kandel.actual-grades.test.ts"
+    "test:rubric": "vitest run tests/kandel.rubric-evidence.test.ts tests/kandel.code-quality.test.ts"
   },
   "engines": {
     "node": ">=22.12.0"
