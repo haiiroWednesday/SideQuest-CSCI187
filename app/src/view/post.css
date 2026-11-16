@@ -14,7 +14,9 @@
   font: 500 19px/1.35 var(--font-sans); background: #fffdf8; color: var(--sq-ink); transition: border-color .15s ease, box-shadow .15s ease; }
 .sq-post-panel textarea { min-height: 120px; resize: vertical; }
 .sq-post-panel :is(input, textarea)::placeholder { color: #9a8f86; font-weight: 400; }
-.sq-post-panel .event-form :is(input, textarea):focus { outline: none; border-color: var(--sq-red); box-shadow: 0 0 0 4px var(--sq-row-selected); }
+/* Focus alone is neutral; only validation errors should paint fields red. */
+.sq-post-panel .event-form :is(input, textarea):focus { outline: none; border-color: var(--sq-ink); box-shadow: 0 0 0 3px var(--sq-gold); }
+.sq-post-panel .event-form [aria-invalid="true"]:focus { border-color: var(--sq-red); }
 .sq-post-panel [aria-invalid="true"] { border-color: var(--sq-red); }
 .sq-post-panel small { font: 600 14px/1.4 var(--font-sans); }
 .sq-post-panel :is(.error, .field-error) { color: var(--sq-red-deep); }
