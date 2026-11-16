@@ -171,6 +171,30 @@
       "evidence": [
         "app/tests/kandel.code-quality.test.ts"
       ]
+    },
+    {
+      "id": "RUBRIC-M2-EMPTY-STATE",
+      "source": "lecture18",
+      "claim": "Actual M2 feedback: no-match actions remain separate and actionable at narrow widths",
+      "evidence": [
+        "app/e2e/kandel-m2-ux-regressions.spec.ts"
+      ]
+    },
+    {
+      "id": "RUBRIC-M2-VALID-COLOR",
+      "source": "lecture18",
+      "claim": "Actual M2 feedback: completed/valid fields use neutral styling; genuine errors remain visually distinct",
+      "evidence": [
+        "app/e2e/kandel-m2-ux-regressions.spec.ts"
+      ]
+    },
+    {
+      "id": "RUBRIC-M2-README",
+      "source": "lecture13",
+      "claim": "Actual M2 feedback: concise README with setup commands first and longer guidance linked",
+      "evidence": [
+        "app/tests/kandel.actual-grades.test.ts"
+      ]
     }
   ],
   "manual": [
@@ -354,5 +378,6 @@
       "verifiedAt": null,
       "evidence": []
     }
-  ]
+  ],
+  "historicalGradeRecord": "docs/kandel-m1-m2-actual-grades.json"
 }
