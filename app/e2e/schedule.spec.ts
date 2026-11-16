@@ -47,6 +47,8 @@ test('Schedule reveals legacy-length event text by keyboard on narrow screens', 
     event_date: '2030-11-08', start_time: '14:30:00', end_time: '15:30:00',
   })
 
+  // Reload to make the application read the localStorage records seeded above.
+  await page.reload()
   await page.goto('/#schedule')
   const details = page.locator('.sq-trail .sq-plan-details').first()
   const summary = details.locator('summary')
