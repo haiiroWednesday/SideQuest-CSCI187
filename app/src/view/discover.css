@@ -203,10 +203,6 @@
 }
 
 .sq-discover-page .sq-text-link { color: var(--sq-red); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
-/* Actions have distinct hit areas even when the message wraps on a phone. */
-.sq-message-actions { display: flex; align-items: center; flex-wrap: wrap; column-gap: 24px; row-gap: 12px; }
-.sq-message-actions .sq-text-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 0; font: 700 19px/1.3 var(--font-sans); }
-
 
 .sq-plan-button {
   font: 700 20px/1.2 var(--font-sans);
@@ -266,9 +262,7 @@
 .sq-free-field span { white-space: nowrap; }
 .sq-free-field input { border: 0; background: transparent; font: 600 17px var(--font-sans); color: var(--sq-ink); padding: 6px 4px; min-width: 0; }
 .sq-free-field input:focus { outline: none; }
-/* Completed, valid fields use neutral styling. Reserve red for actual errors. */
-.sq-free-field.sq-set { background: var(--sq-ticket-bg); border-color: var(--sq-rule-strong); color: var(--sq-ink); }
-.sq-free-field.sq-set:focus-within { border-color: var(--sq-ink); }
+.sq-free-field.sq-set { background: var(--sq-row-selected); border-color: var(--sq-row-selected); color: var(--sq-red); }
 .sq-free-count { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 999px; background: var(--sq-gold); color: var(--sq-ink); font: 700 17px var(--font-sans); }
 .sq-free-clear { border: 0; background: none; color: var(--sq-muted); font: 600 16px var(--font-sans); padding: 10px 6px; cursor: pointer; }
 .sq-free-clear:hover { color: var(--sq-ink); }
