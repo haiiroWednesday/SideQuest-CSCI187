@@ -45,6 +45,28 @@ npm run test:regression
 
 The `app/tests/regression.contract-matrix.test.ts` file groups the new table-driven contract cases under `REG-POST`, `REG-DISCOVER`, and `REG-SCHEDULE`. The `app/e2e/regression.journeys.spec.ts` file provides five end-to-end `REG-UI` scenarios. These operate within the same shared Model/Controller/View rules as the existing tests.
 
+## Kandel Lecture 18, page 17: regression red/green evidence
+
+A test that passes against current code demonstrates **expected behavior**, but does not by itself demonstrate that it would have caught the original bug. When a new defect is reported, follow the instructor's five-step process:
+
+1. Preserve the *actual* triggering input, initial state, environment and incorrect observed output; specify the correct output independently.
+2. Add a deterministic failing unit, component or black-box test that reproduces that defect.
+3. **Verify red:** run it against the affected commit (or an isolated, equivalent defective implementation), recording the failing test name, SHA and logs. A failing test due to a broken fixture, timeout or type error is not valid defect detection.
+4. Fix the root cause without weakening or skipping the test. Keep production code, fixture and test edits separately reviewable.
+5. **Verify green:** show the same test passing on the fixed SHA, then run the full regression and integration suites. Record the PR, both CI results and any change in expected behavior.
+
+| Record for a newly discovered bug | Required evidence |
+| --- | --- |
+| Bug/issue and affected feature | Issue URL, impact and reproducible preconditions |
+| Trigger and expected outcome | Specific user actions/input, seeded catalog/plan IDs, clock/timezone and expected externally visible result |
+| Red confirmation | Broken commit SHA or isolated mutation; failing assertion showing the **defect**, not a setup error |
+| Fix and green confirmation | Fixed commit SHA, passing focused test and full CI run |
+| Regression case | Stable test file/case name and associated requirement ID |
+
+The existing `npm run test:mutation:pilot` is a **bounded example of red/green sensitivity**: it compares the correct event-fit result against four deliberately faulty variants (exclusive boundaries, zero-duration acceptance and missing date check), then fails CI if any mutant is undetected. Its reported **4/4** result proves sensitivity only to these four seeded defects. Do not describe this as codebase-wide mutation testing or historical proof that every M1/M2 bug was reproduced before being fixed.
+
+The `REG-*` cases in this matrix include **preventive contract tests** as well as true bug regressions. Label new cases according to actual provenance; never invent a historical failure log or reopen already-resolved instructor comments. The lecture also separates programmer testing, whole-system release testing and **observed human usability testing** (pages 14–15, 19–26). All three are needed for a credible release review, but a green automation run cannot substitute for the latter.
+
 ## Regression execution and escalation
 
 1. **Every PR:** Run the complete CI suite on the exact integrated commit, not on older independent PR heads. Fix flaky assertions at their cause; do not blanket-disable tests.
