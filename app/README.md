@@ -52,6 +52,23 @@ Playwright browser or PostgreSQL SQL execution. Coverage is informational for
 now: no minimum percentage gate has been set. GitHub Actions uploads the report
 as a `sidequest-code-coverage` artifact after test execution.
 
+## Quality and release-evidence checks
+
+Run `npm run test:mutation:pilot` for an isolated four-mutant regression check of the current time-fit rule. This does not rewrite tracked files or report whole-repository mutation coverage.\n\nThe full Playwright command now runs the regular **Chromium suite** plus the
+`@cross-browser` smoke scenario in **Firefox and WebKit**. Install all three
+engines with `npx playwright install --with-deps chromium firefox webkit`.
+Browser tests start isolated fixtures and must never reuse a developer
+server that might be configured for real Supabase.
+
+Automated `@axe-core/playwright` WCAG A/AA scans run on Discover, Post
+and My Schedule. The visual-layout smoke test captures 320px, 390px and
+1280px screenshots for reviewers and checks horizontal overflow. These are
+**not** golden pixel-diff comparisons or a WCAG certification. See
+[the risk-based test matrix and live acceptance procedures](../docs/TESTING_STANDARDS_AND_TRACEABILITY.md)
+for the requirements mapping, independent database checks, manual accessibility
+and human usability tasks. The CI workflow retains screenshot and failure trace
+artifacts for 14 days when produced.
+
 ## Database and public-write safeguards
 
 The existing reviewed SQL migration creates one public `events` table with anonymous SELECT and bounded INSERT grants. It grants no anonymous UPDATE or DELETE. Apply it only through the team's database process; this code change does not run a live migration.
