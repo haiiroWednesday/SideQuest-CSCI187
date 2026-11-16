@@ -53,12 +53,15 @@ From `app/`, stop existing development or production servers before running Play
 
 ```bash
 npm test
+npm run test:coverage
 npm run build
 npx playwright install chromium
 npm run test:e2e
 ```
 
 The browser suite starts isolated fixture servers and refuses to reuse occupied ports (5173, 5175, 5176 or 5177), preventing test posts from reaching a live project. The [React CI workflow](.github/workflows/react-ci.yml) also tests SQL permissions using isolated PostgreSQL.
+
+`npm run test:coverage` measures Vitest statement, branch, function and line coverage for production files under `app/src/` and `app/server/`, including untested files. It generates an HTML report at `app/coverage/index.html` and uploads the report from React CI. These metrics exclude Playwright and SQL test execution; no coverage threshold is enforced yet.
 
 Run the production Node server from `app/`:
 
