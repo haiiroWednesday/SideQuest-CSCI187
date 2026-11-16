@@ -1,0 +1,19 @@
+
+// ---------- board ----------
+let kept2 = []; try { kept2 = JSON.parse(localStorage.getItem('sq-kept10') || '[]') } catch (e) { }
+document.querySelector('.board').classList.add('wide2')
+const NOPTS = SEC10.reduce((n, s) => n + s.o.length, 0)
+$('#board').innerHTML = `
+  <div style="font:800 13px var(--sans);letter-spacing:.16em;color:var(--red)">SIDEQUEST · OPTIONS BOARD · ROUND 10 · THINGS YOU CAN HOLD</div>
+  <h1>${NOPTS} objects.</h1>
+  <p class="lede">Flat colour, hand-drawn marks and real objects, set in a new typeface. Every screen runs on what the app already stores, unless its caption says otherwise. Phone, the same screen on a bad day, and desktop.</p>
+  <div class="keptbar">Kept: <b id="keptlist">none yet</b></div>
+  ${SEC10.map((s, si) => `<section class="osec" id="sec${si + 1}"><span class="daytag">${s.o.length} OPTIONS</span><h2>${s.h}</h2><p class="say">${s.say}</p>
+    <div class="pgrid">${s.o.map(([id, nm, d]) => `<div class="pair" id="p-${id}" style="align-items:flex-start">${O10[id][0]}<div class="st8" style="display:grid;justify-items:center;gap:12px">${O10[id][2]}<span style="padding:6px 14px;border-radius:999px;background:#302421;color:#fff;font:700 12px var(--sans);white-space:nowrap">Same screen, on ${SAY10[id] || 'a bad day'}</span></div><div class="right">${O10[id][1]}<div class="ocap"><span class="lt">${id}</span><b class="nm">${nm}</b><p>${d}</p><button class="keep" data-id="${id}">☆ Keep</button></div></div></div>`).join('')}</div></section>`).join('')}`
+const paint2 = () => { document.querySelectorAll('.keep').forEach(b => { const on = kept2.includes(b.dataset.id); b.classList.toggle('on', on); b.textContent = on ? '★ Kept' : '☆ Keep' }); $('#keptlist').textContent = kept2.length ? kept2.join(', ') : 'none yet' }
+document.querySelectorAll('.keep').forEach(b => b.onclick = () => { const id = b.dataset.id; kept2 = kept2.includes(id) ? kept2.filter(x => x !== id) : [...kept2, id]; try { localStorage.setItem('sq-kept10', JSON.stringify(kept2)) } catch (e) { } paint2() })
+paint2()
+document.body.dataset.ready = '1'
+</script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+
+// ---------- H4 · the sleeve ----------
+const DOT10 = 'background-image:radial-gradient(rgba(48,36,33,.08) .7px,transparent .8px);background-size:5px 5px'
+const sleeve10 = (w, H, e, o = {}) => { const k = w / 220, sh = H * .66
+  const out = o.gone ? `<div style="position:absolute;left:${w * .13}px;top:${H * .03}px;width:${w * .74}px;height:${H * .5}px;border:2px dashed rgba(48,36,33,.3);border-radius:4px;transform:rotate(-2deg)"></div>`
+    : o.photo ? `<div class="ph-${o.photo}" style="position:absolute;left:${w * .11}px;top:0;width:${w * .78}px;height:${H * .54}px;background-size:cover;background-position:center;border:${5 * k}px solid #fff;box-sizing:border-box;box-shadow:0 6px 14px rgba(48,36,33,.2);transform:rotate(-2deg)"></div>`
+      : `<div style="position:absolute;left:${w * .11}px;top:0;width:${w * .78}px;height:${H * .54}px;background:#fff;box-shadow:0 6px 14px rgba(48,36,33,.2);transform:rotate(2deg);text-align:center;padding-top:${H * .05}px;box-sizing:border-box">${ev10(e[4], w * .5)}</div>`
+  const face = o.inner || `<div style="position:absolute;left:${11 * k}px;top:${18 * k}px">${bk10(e[0] + ' to ' + e[1], 8 * k)}</div><div style="position:absolute;right:${11 * k}px;top:${18 * k}px">${bk10(e[3], 8 * k)}</div>
+    <div style="position:absolute;left:0;right:0;top:${sh * .2}px;text-align:center">${o.photo ? ev10(e[4], 62 * k) : ''}${sf10(e[2], 27 * k, `margin-top:${6 * k}px;padding:0 ${14 * k}px`)}</div>
+    <div style="position:absolute;left:${11 * k}px;bottom:${26 * k}px">${bk10(e[5], 8 * k)}</div><div style="position:absolute;right:${11 * k}px;bottom:${26 * k}px">${bk10(e[6] + ' min', 8 * k)}</div>
+    <div style="position:absolute;left:0;right:0;bottom:${9 * k}px;text-align:center;color:${X10.muted}">${mo10('HOST NAME AS TYPED &middot; NOT VERIFIED', 6.500 * k)}</div>`
+  return `<div style="position:relative;width:${w}px;height:${H}px">${out}<div style="position:absolute;left:0;right:0;bottom:0;height:${sh}px;background-color:${o.bg || X10.butter};box-shadow:0 10px 22px rgba(48,36,33,.16);${DOT10}"><div style="position:absolute;left:0;right:0;top:0;height:${7 * k}px;background:rgba(48,36,33,.13)"></div>${face}</div></div>` }
+O10.H4 = [
+  P10(X10.grey, `${at(18, 8, `<span style="font:700 11px var(--sans)">&larr; Discover</span>`)}${at(30, 34, sleeve10(220, 392, E10.rose, { photo: 'rosegarden' }))}
+    ${at(30, 438, `<div style="width:220px;text-align:center;color:${X10.sage}">${bk10('fits your 2:10 to 4:40', 8.500)}</div>`)}
+    ${at(30, 458, `<div style="width:220px">${B8('Add to My Schedule', X10.ink, '#fff', .9, 1)}</div>`)}`, { nav: null }),
+  D10(X10.grey, `${at(70, 22, sleeve10(310, 524, E10.rose, { photo: 'rosegarden' }))}
+    ${at(440, 36, bk10('Wed Nov 11 &middot; 3:00 to 4:00', 14))}${at(438, 66, sf10('Rose garden sketch', 66))}
+    ${at(440, 150, sn10('Pencils and paper are on the bench by the wisteria. Stay ten minutes or the whole hour.', 23, 500, `width:500px;color:${X10.muted};line-height:1.3`))}
+    ${at(440, 268, `<div style="display:flex;gap:30px">${[['where', 'Mission Gardens'], ['host', 'Art Club, as typed'], ['fits', 'your 2:10 to 4:40']].map(([a, b], i) => `<div>${bk10(a, 13, `color:${X10.muted}`)}${sn10(b, 19, 700, `margin-top:6px;${i === 2 ? `color:${X10.sage}` : ''}`)}</div>`).join('')}</div>`)}
+    ${at(440, 350, B8('Add to My Schedule', X10.ink, '#fff', 1.250))}
+    ${at(440, 440, sleeve10(70, 112, E10.dog, { photo: 'dog', inner: ' ', bg: '#fff' }))}${at(524, 440, sleeve10(70, 112, E10.pot, { inner: ' ', bg: X10.blueT }))}
+    ${at(616, 446, sn10('No photo from the host? A drawing slides out instead, and the event still reads as complete.', 18, 500, `width:340px;color:${X10.muted}`))}`),
+  P10(X10.grey, `${at(18, 8, `<span style="font:700 11px var(--sans)">&larr; My Schedule</span>`)}${at(30, 34, sleeve10(220, 392, E10.rose, { gone: 1, bg: '#fff', inner: `<div style="position:absolute;left:18px;right:18px;top:44px">${ob10('ticket', 64, 'filter:grayscale(1);opacity:.75')}${sf10('This one&rsquo;s gone.', 30, 'margin-top:8px')}${sn10('The post is no longer in the catalog. Your other plans are untouched.', 12, 500, `color:${X10.muted};margin-top:8px`)}</div>` }))}
+    ${at(30, 446, `<div style="width:220px;display:flex;justify-content:space-between;align-items:center">${al10('Back to My Schedule')}<span style="font:700 11.500px var(--sans);padding:9px 12px;border-radius:999px;box-shadow:inset 0 0 0 1.500px ${X10.ink}">Unhang it</span></div>`)}`, { nav: null })]
+
+// ---------- H5 · hang it on the line ----------
+const tag10 = (w, h, bg, inner, o = {}) => { const cc = Math.min(18, w * .13), st = o.str || 0
+  return `<div style="position:relative;width:${w}px;height:${h}px;transform:rotate(${o.rot || 0}deg);transform-origin:50% ${-st}px;filter:drop-shadow(0 6px 8px rgba(48,36,33,.17))">${st ? `<span style="position:absolute;left:50%;margin-left:-.8px;top:${-st}px;width:1.600px;height:${st + cc * .9}px;background:${o.sc || X10.ink}"></span>` : ''}<div style="position:absolute;inset:0;background:${bg};clip-path:polygon(${cc}px 0,calc(100% - ${cc}px) 0,100% ${cc}px,100% 100%,0 100%,0 ${cc}px)"></div><span style="position:absolute;left:50%;top:${cc * .55}px;width:9px;height:9px;margin-left:-4.500px;border-radius:50%;background:${o.hole || X10.paper};box-shadow:inset 0 0 0 1.600px rgba(48,36,33,.55)"></span><div style="position:absolute;left:0;right:0;top:${cc + 12}px;bottom:0;padding:0 ${o.pad || 12}px;box-sizing:border-box;color:${o.col || X10.ink}">${inner}</div></div>` }
+const ly10 = (x, W, sag) => { const t = (x + 10) / (W + 20); return 8 + 4 * sag * t * (1 - t) }
+const rope10 = (W, sag) => hl10(W, sag + 16, `M-10 8Q${W / 2} ${8 + 2 * sag} ${W + 10} 8`, X10.ink, 2.200)
+const hang10 = (xc, top, W, sag, st, w, h, bg, inner, o = {}) => at(xc - w / 2, top + ly10(xc, W, sag) + st, tag10(w, h, bg, inner, Object.assign({ str: st }, o)))
+const mini10 = (t, bg, col = X10.ink) => `<div style="text-align:center;color:${col}">${mo10(t, 8.500)}</div>`
+const plan10 = (e, k, note, d = 1) => `${note ? `<div style="margin-bottom:${5 * k}px">${bk10(note, 7.500 * k)}</div>` : ''}${sf10(e[2], 23 * k)}<div style="margin-top:${6 * k}px;color:${X10.muted}">${mo10(`${e[0]}&ndash;${e[1]}<br>${e[3].toUpperCase()}`, 8 * k)}</div>${d ? `<div style="position:absolute;right:${8 * k}px;bottom:${8 * k}px">${ev10(e[4], 52 * k)}</div>` : ''}`
+const chain10 = n => `${at(0, 20, rope10(280, 12))}${hang10(38, 20, 280, 12, 8, 56, 40, '#fff', mini10('WED 11'), { pad: 4 })}${hang10(140, 20, 280, 12, 8, 58, 40, X10.blue, mini10('TODAY', 0, '#fff'), { pad: 4 })}${hang10(242, 20, 280, 12, 8, 58, 40, X10.butterD, mini10(n), { pad: 4 })}`
+const share10 = fs => `<span style="display:inline-block;background:${X10.kraft};color:${X10.ink};padding:${5 * fs}px ${8 * fs}px;transform:rotate(-3deg);box-shadow:0 2px 5px rgba(48,36,33,.2)">${bk10('these share 30 min', 7.500 * fs)}</span>`
+O10.H5 = [
+  P10(X10.paper, `${chain10('2 LEFT')}
+    ${hang10(188, 20, 280, 12, 118, 124, 178, '#fff', `<div style="margin-left:16px">${plan10(E10.pot, .800, '')}</div>`, { rot: -5 })}
+    ${hang10(96, 20, 280, 12, 72, 150, 196, X10.butter, plan10(E10.rose, 1, 'next up &middot; in 50 min'), { rot: 5 })}
+    ${at(104, 306, share10(1))}
+    ${at(0, 348, rope10(280, 10))}${hang10(84, 348, 280, 10, 14, 128, 100, X10.blueT, `${sf10('Open night', 20)}<div style="margin-top:4px;color:${X10.muted}">${mo10('8:00&ndash;9:30', 8)}</div><div style="position:absolute;right:8px;bottom:6px">${ev10('star', 44)}</div>`, { rot: -2 })}
+    ${hang10(212, 348, 280, 10, 22, 94, 78, '#e4e2dc', `${mo10('ENDED 9:00 AM', 7, `color:${X10.muted}`)}${sn10('Sunrise yoga', 11.500, 700, 'text-decoration:line-through;opacity:.6;margin-top:4px')}`, { rot: 5, pad: 9 })}`, { nav: 2 }),
+  D10(X10.paper, `${at(20, 50, rope10(960, 20))}${[2, 3, 4, 5, 6, 7, 8, 9].map(h => at(20 + (h - 2) * 120 + 6, 18, mo10(h + ' PM', 14, `color:${X10.muted}`))).join('')}
+    ${at(38, 50, `<div style="width:10px;height:30px;border-radius:3px;background:${X10.ink}"></div>`)}${at(56, 90, mo10('NOW 2:10', 14))}
+    ${hang10(200, 50, 960, 20, 130, 180, 250, '#fff', `<div style="margin-left:40px">${plan10(E10.pot, 1.200, '')}</div>`, { rot: -13, pad: 16 })}
+    ${hang10(140, 50, 960, 20, 110, 180, 270, X10.butter, plan10(E10.rose, 1.300, 'next up &middot; in 50 min'), { rot: 9, pad: 16 })}
+    ${hang10(740, 50, 960, 20, 90, 200, 250, X10.blueT, plan10(E10.star, 1.350, ''), { rot: -3, pad: 16 })}
+    ${at(128, 420, share10(1.700))}
+    ${at(392, 150, sf10('2 left today', 62, 'width:230px'))}${at(394, 292, bk10('saved on this device', 13, `color:${X10.muted}`))}${at(394, 328, al10('Browse Discover', 'font-size:18px'))}
+    ${at(394, 384, sn10('The string is a clock. A tag hangs where its event starts. Two that overlap swing apart and say by how much.', 17, 500, `width:236px;color:${X10.muted}`))}`, 'My Schedule'),
+  P10(X10.paper, `${chain10('0 PLANS')}
+    ${hang10(140, 20, 280, 12, 70, 176, 216, '#fff', `${sf10('Nothing hung yet.', 27)}${sn10('Plans you add in Discover hang here, in time order.', 12, 500, `color:${X10.muted};margin:10px 0 16px`)}${al10('Browse Discover')}`, { rot: 5, pad: 16 })}
+    ${at(26, 306, ob10('budgiep', 86))}${at(0, 384, rope10(280, 8))}${at(120, 404, mo10('THE LINE IS FREE', 8, `color:${X10.muted}`))}`, { nav: 2 })]
+
+// ---------- H6 · fill in the tag ----------
+const fld10 = (lab, val, k, cnt = '') => `<div style="margin-top:${9 * k}px"><div style="display:flex;justify-content:space-between;color:${X10.muted}">${bk10(lab, 7.500 * k)}${cnt ? mo10(cnt, 7.500 * k) : ''}</div><div style="border-bottom:1.500px solid ${X10.ink};padding:${4 * k}px 0 ${4 * k}px">${val}</div></div>`
+const bx10 = (t, k, bad) => `<span style="display:inline-block;padding:${6 * k}px ${7 * k}px;border-radius:${6 * k}px;box-shadow:inset 0 0 0 ${bad ? 2 : 1.500}px ${bad ? X10.red : X10.ink};font:500 ${9.500 * k}px/1 ${MO10};white-space:nowrap;${bad ? `color:${X10.red};background:${X10.redT}` : ''}">${t}</span>`
+const form10 = (k, bad) => `${fld10('title', sf10('Rose garden sketch', 25 * k), k, '18 / 80').replace(`margin-top:${9 * k}px`, 'margin-top:0')}
+  <div style="display:grid;grid-template-columns:1fr 1.300fr;gap:${10 * k}px">${fld10('host', sn10('Art Club', 12 * k, 600), k, '8 / 60')}${fld10('where', sn10('Mission Gardens', 12 * k, 600), k, '15 / 120')}</div>
+  <div style="margin-top:${11 * k}px;color:${X10.muted}">${bk10('when', 7.500 * k)}</div><div style="display:flex;gap:${5 * k}px;margin-top:${5 * k}px;position:relative">${bx10('Wed Nov 11', k)}${bx10('3:00 PM', k)}${bx10(bad ? '2:00 PM' : '4:00 PM', k, bad)}${bad ? `<div style="position:absolute;right:${-10 * k}px;top:${-9 * k}px">${hl10(78 * k, 42 * k, `M${38 * k} ${3 * k}C${66 * k} ${3 * k} ${75 * k} ${12 * k} ${75 * k} ${21 * k}S${62 * k} ${39 * k} ${37 * k} ${38 * k} ${3 * k} ${31 * k} ${3 * k} ${20 * k} ${14 * k} ${4 * k} ${42 * k} ${4 * k}`, X10.red, 2.200)}</div>` : ''}</div>
+  ${bad ? `<div style="margin-top:${7 * k}px;color:${X10.red}">${sn10('Ends before it starts.', 11.500 * k, 700)}</div>` : ''}
+  <div style="margin-top:${11 * k}px;display:flex;justify-content:space-between;color:${X10.muted}">${bk10('what to expect', 7.500 * k)}${mo10('86 / 1000', 7.500 * k)}</div>
+  <div style="margin-top:${3 * k}px;font:500 ${11 * k}px/${22 * k}px var(--sans);background:repeating-linear-gradient(transparent 0 ${21 * k}px,rgba(48,36,33,.5) ${21 * k}px ${22 * k}px)">Pencils and paper are on the bench by the wisteria. Stay ten minutes or the hour.</div>`
+const torn10 = (t, bg, k = 1) => `<span style="display:inline-block;padding:${13 * k}px ${22 * k}px;background:${bg};color:${X10.ink};font:800 ${12.500 * k}px/1 var(--sans);letter-spacing:.07em;clip-path:polygon(0 7%,5% 0,96% 4%,100% 14%,98% 93%,92% 100%,4% 96%,1% 86%)">${t}</span>`
+const postP10 = bad => P10(X10.blue, `${at(26, 54, tag10(228, bad ? 348 : 326, '#fff', form10(1, bad), { str: 80, hole: X10.blue, sc: '#fff', pad: 16 }))}
+  ${at(196, bad ? 318 : 296, ob10('pencil', 74, 'transform:rotate(14deg)'))}${at(26, 420, `<div style="width:228px;display:flex;align-items:center;justify-content:space-between">${torn10('HANG IT UP', X10.butterD)}${bad ? mo10('NOTHING YOU TYPED IS LOST', 7, 'color:#fff;width:96px;text-align:right') : `<span style="font:700 12px var(--sans);color:#fff;border-bottom:1.500px solid #fff">Cancel</span>`}</div>`)}`, { nav: 1, dark: 1, light: 1 }).replace('<!--pencil-->', '')
+O10.H6 = [postP10(0),
+  D10(X10.blue, `${at(70, 36, tag10(440, 516, '#fff', form10(1.850, 0), { str: 70, hole: X10.blue, sc: '#fff', pad: 34 }))}
+    ${at(580, 34, mo10('HOW IT WILL HANG IN DISCOVER', 14, 'color:#fff'))}${at(560, 70, hl10(400, 30, 'M-10 8Q200 34 410 8', '#fff', 2.200))}
+    ${at(640, 132, tag10(220, 270, X10.butter, plan10(E10.rose, 1.400, 'today'), { str: 44, rot: 4, hole: X10.blue, sc: '#fff', pad: 16 }))}
+    ${at(580, 426, `<div style="display:flex;align-items:center;gap:22px">${torn10('HANG IT UP', X10.butterD, 1.500)}<span style="font:700 19px var(--sans);color:#fff;border-bottom:2px solid #fff">Cancel</span></div>`)}
+    ${at(580, 498, sn10('Posts are public and can&rsquo;t be edited once they hang.', 18, 500, 'width:380px;color:rgba(255,255,255,.88)'))}`, 'Post', 1),
+  postP10(1)]
+
+// ---------- H8 · one sticker per state ----------
+const ST10 = [['Loading', 'Fetching the catalog', 'Discover'], ['Posted', 'It&rsquo;s up for everyone', 'Post'], ['Nothing fits', 'Try a longer window', 'Discover'], ['Can&rsquo;t reach the catalog', 'Nothing was lost', 'Any page'], ['Not shared', 'This browser only', 'Fallback mode'], ['Schedule full', '100 of 100 plans', 'My Schedule'], ['Event gone', 'No longer posted', 'My Schedule'], ['Saved here', 'On this device only', 'My Schedule']]
+const st10 = (i, s, rot = 0) => { const [t, sub] = ST10[i]
+  const L = [['#fff', X10.ink, `border-radius:${s * .12}px`, .66, `<div style="width:${s * .66}px;height:${s * .075}px;border-radius:99px;background:${X10.grey};overflow:hidden"><div style="width:58%;height:100%;background:linear-gradient(90deg,${X10.blue} 0 22%,${X10.butterD} 22%)"></div></div>`],
+    [X10.sage, '#fff', 'border-radius:50%', 1, dd10('check', s * .34, '', { ink: '#fff' })],
+    [X10.butterD, X10.ink, `border-radius:${s * .2}px`, .92, ob10('fork_and_knife_with_plate', s * .38)],
+    [X10.red, '#fff', 'clip-path:polygon(29% 0,71% 0,100% 29%,100% 71%,71% 100%,29% 100%,0 71%,0 29%)', 1, dd10('plug', s * .32, '#fff', { ink: '#fff', g: X10.red })],
+    [X10.blue, '#fff', 'border-radius:50%', 1, dd10('eye', s * .32, X10.blue, { ink: '#fff', g: X10.blue })],
+    [X10.gold, X10.ink, `border-radius:${s * .1}px`, .86, ob10('clipboard', s * .36)],
+    ['#fff', X10.ink, `border-radius:${s * .1}px;box-shadow:inset 0 0 0 1.600px rgba(48,36,33,.35)`, .74, ob10('ticket', s * .38, 'filter:grayscale(1)')],
+    [X10.paper, X10.ink, 'border-radius:50%', 1, ob10('mobile_phone', s * .34)]][i]
+  return `<div style="transform:rotate(${rot}deg)">${cut10(`<div style="width:${s}px;height:${s * L[3]}px;${L[2]};background:${L[0]};color:${L[1]};display:grid;place-content:center;justify-items:center;text-align:center;gap:${s * .035}px;padding:${s * .13}px;box-sizing:border-box">${L[4]}<div style="font:800 ${s * .105}px/1.1 var(--sans)">${t}</div><div style="font:500 ${s * .082}px/1.15 var(--sans);opacity:.86">${sub}</div></div>`, 4, '0 5px 8px rgba(36,27,25,.2)')}</div>` }
+O10.H8 = [
+  P10(X10.grey, `${at(0, 10, `<div style="text-align:center">${bk10('six of the eight, one sheet', 8)}</div>`, 'right:0')}
+    ${at(16, 40, st10(0, 116, -4))}${at(148, 32, st10(1, 114, 5))}${at(22, 152, st10(2, 112, 3))}${at(146, 174, st10(3, 122, -6))}${at(14, 290, st10(4, 116, -3))}${at(148, 326, st10(5, 112, 4))}
+    ${at(20, 440, st10(6, 100, 2))}${at(150, 446, st10(7, 78, -5))}
+    ${at(0, 528, `<div style="text-align:center;color:${X10.muted}">${mo10('RED IS FOR ERRORS. NOTHING ELSE WEARS IT.', 7.500)}</div>`, 'right:0')}`, { nav: null }),
+  D10(X10.grey, `${ST10.map(([t, sub, where], i) => { const x = 30 + (i % 4) * 238, y = 14 + Math.floor(i / 4) * 262; return `${at(x, y, '', `width:1px;height:246px;background:rgba(48,36,33,.35)`)}${at(x + 180, y, `<span style="font:italic 500 32px/1 var(--sans)">0${i + 1}</span>`)}${at(x + 12, y + 10, bk10(where, 12))}${at(x + 12, y + 36, '', `width:214px;height:1px;background:rgba(48,36,33,.35)`)}${at(x + 38, y + 62, st10(i, 162, [-4, 5, 3, -6, -3, 4, 2, -5][i]))}` }).join('')}
+    ${at(30, 540, mo10('SAGE MEANS DONE. BLUE MEANS FYI. GOLD MEANS A LIMIT. RED MEANS SOMETHING BROKE.', 13, `color:${X10.muted}`))}`),
+  P10(X10.paper, `${at(22, 30, sf10('Wed, Nov 11', 30, 'opacity:.3'))}<div style="opacity:.22">${at(22, 96, r10(E10.dog))}${at(22, 150, r10(E10.rose))}${at(22, 204, r10(E10.pot))}${at(22, 258, r10(E10.dice))}</div>
+    ${at(40, 126, st10(3, 200, -6))}${at(84, 352, B8('Try again', X10.ink, '#fff', .9))}
+    ${at(0, 420, `<div style="text-align:center;color:${X10.muted}">${mo10('YOUR 2 PLANS ARE SAFE ON THIS DEVICE', 8)}</div>`, 'right:0')}`)]
+
+// ---------- H9 · a folder per day ----------
+const frow10 = (e, fit, k) => `<div style="display:flex;align-items:center;gap:${9 * k}px;padding:${6 * k}px 0;border-bottom:1px solid rgba(48,36,33,.16)"><span style="width:${32 * k}px;flex:none">${mo10(e[0], 9.500 * k)}</span><div style="flex:1;min-width:0"><div style="font:700 ${11.500 * k}px/1.2 var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e[2]}</div><div style="color:${X10.muted};margin-top:${2 * k}px">${mo10(e[3].toUpperCase(), 7 * k)}${fit ? ` <span style="color:${X10.sage};margin-left:${4 * k}px">${bk10('fits', 7 * k)}</span>` : ''}</div></div>${ev10(e[4], 26 * k)}</div>`
+const fold10 = (w, h, tabs, front, body, fs = 1) => { const tw = w * .2
+  return `<div style="position:relative;width:${w}px;height:${h}px">${tabs.map(([t, bg, col], i) => `<div style="position:absolute;left:${w * .4 + i * (tw - 4)}px;top:${i * 3 * fs}px;width:${tw}px;height:${46 * fs}px;border-radius:${10 * fs}px ${10 * fs}px 0 0;background:${bg};color:${col || X10.ink};text-align:center;padding-top:${8 * fs}px;box-sizing:border-box">${mo10(t, 8.500 * fs)}</div>`).join('')}
+    <div style="position:absolute;left:0;right:0;top:0;bottom:0;background:${X10.butterD};clip-path:polygon(0 ${12 * fs}px,3% 0,33% 0,39% ${28 * fs}px,100% ${28 * fs}px,100% 100%,0 100%)"></div>
+    <div style="position:absolute;left:${w * .05}px;top:${8 * fs}px">${mo10(front, 9.500 * fs)}</div>
+    <div style="position:absolute;left:10px;right:10px;top:${40 * fs}px;bottom:10px;background:#fffdf3;border-radius:4px;padding:${6 * fs}px ${14 * fs}px;box-sizing:border-box;box-shadow:0 2px 0 rgba(48,36,33,.12)">${body}</div></div>` }
+const TABS10 = [['THU 4', X10.blue, '#fff'], ['FRI 6', X10.sage, '#fff'], ['SAT 2', X10.kraft]]
+const note10 = (t, s, bg, rot, w = 150, fs = 1) => `<div style="width:${w}px;height:${w * .92}px;background:${bg};padding:14px;box-sizing:border-box;transform:rotate(${rot}deg);box-shadow:0 8px 16px rgba(48,36,33,.16)">${mo10(s, 9 * fs)}${sf10(t, 22 * fs, 'margin-top:8px')}</div>`
+O10.H9 = [
+  P10(X10.grey, `${at(16, 18, `<div style="filter:drop-shadow(0 10px 16px rgba(48,36,33,.18))">${fold10(248, 450, TABS10, 'TODAY &middot; 12', `${frow10(E10.dog, 1, 1)}${frow10(E10.rose, 1, 1)}${frow10(E10.pot, 1, 1)}${frow10(E10.dice, 0, 1)}${frow10(E10.bowl, 0, 1)}${frow10(E10.mic, 0, 1)}${frow10(E10.star, 0, 1)}<div style="padding-top:8px">${al10('5 more')}</div>`)}</div>`)}`),
+  D10(X10.grey, `${at(50, 16, `<div style="filter:drop-shadow(0 14px 22px rgba(48,36,33,.18))">${fold10(560, 538, TABS10, 'TODAY &middot; 12', `${frow10(E10.dog, 1, 1.500)}${frow10(E10.rose, 1, 1.500)}${frow10(E10.pot, 1, 1.500)}${frow10(E10.dice, 0, 1.500)}${frow10(E10.bowl, 0, 1.500)}${frow10(E10.mic, 0, 1.500)}${frow10(E10.star, 0, 1.500)}`, 1.600)}</div>`)}
+    ${at(650, 28, bk10('my schedule &middot; on this device', 13, `color:${X10.muted}`))}${at(650, 62, note10('Rose garden sketch', '3:00 TODAY', X10.butter, -3, 164, 1.400))}${at(808, 100, note10('Open night', '8:00 TODAY', X10.blueT, 4, 164, 1.400))}
+    ${at(706, 304, tag10(176, 150, '#fff', `${sf10('Yours?', 30)}<div style="margin-top:10px">${al10('Post an event', 'font-size:16px')}</div>`, { str: 26, rot: -4, hole: X10.grey, pad: 16 }))}
+    ${at(650, 480, sn10('Tabs are the days in the catalog, each with its count.', 18, 500, `width:310px;color:${X10.muted}`))}`),
+  P10(X10.grey, `${at(16, 18, `<div style="filter:drop-shadow(0 10px 16px rgba(48,36,33,.18))">${fold10(248, 450, [['MON 4', X10.blue, '#fff'], ['TUE 7', X10.sage, '#fff'], ['WED 3', X10.kraft]], 'SUN &middot; 0', `<div style="height:300px;margin-top:14px;border:1.600px dashed rgba(48,36,33,.28);border-radius:6px;display:grid;place-content:center;justify-items:center;text-align:center;gap:12px;padding:0 18px">${ob10('file_folder', 70)}${sf10('Nothing filed for Sunday.', 25)}${al10('Jump to Monday, 4 on')}</div>`)}</div>`)}`)]
+
+const SAY10 = { H1: 'a twenty-minute gap', H2: 'a gap with nothing in it', H7: 'a wheel rolled the wrong way', H3: 'a category with nothing today', H4: 'an event that left the catalog', H5: 'a day with no plans', H6: 'an end time before the start', H9: 'a day with nothing filed', H8: 'the catalog out of reach' }
+SEC10.push({ h: 'Finding something', say: 'Four ways to ask the same question: what fits my gap?', o: [
+  ['H1', 'Say it in a sentence', 'Discover opens as one sentence with three blanks: day, from, until. The results finish the sentence, and small objects sit between the words. Why it should work: a sentence reads faster than a form, and the three blanks are the same three inputs the app has now. Needs: nothing new. The pictures come from a keyword guess on the title.'],
+  ['H2', 'The ruler and two clips', 'A ruler marked in hours. Slide two clips to mark your gap. Events are flags stuck along it, each as long as it lasts, and the flags between the clips are in colour. Flags that overlap sit side by side with no warning colour. Why: you see how long things are and how much room is left without doing subtraction. Needs: nothing new.'],
+  ['H7', 'The date stamp', 'The free-time control as a rubber stamp with three wheels. Stamp it and the paper shows your gap and what fits. A wheel rolled wrong gets a red pen ring, and red shows up only then. Why: one object replaces three separate fields, and red keeps the meaning everyone expects. Needs: nothing new.'],
+  ['H3', 'Peel a sticker', 'Categories as die-cut stickers in a pile, cut from real objects and one real dog. Tap the ones you&rsquo;re up for. The count on each label says what you&rsquo;ll get before you commit, so a zero is visible before you tap. Why: recognising a picture is quicker than reading a filter menu. Needs: a category on each event. Until that exists, a keyword guess with Other as the fallback.']] })
+SEC10.push({ h: 'Keeping it', say: 'One event, your plans, and posting your own.', o: [
+  ['H4', 'The sleeve', 'An event is a paper sleeve with its photo sliding out of the top. The facts sit in the four corners, in brackets. Pull the photo up or press the button to plan it. With no photo, a drawing slides out instead. Why: one object holds the picture, the facts and the action. Needs: nothing new. Photos stay optional.'],
+  ['H5', 'Hang it on the line', 'My Schedule as tags on a string, in time order. Two plans that overlap hang overlapped, with a plain label saying by how much. On desktop the string is a clock. Why: overlap looks like overlap, so no warning colour is needed. Needs: nothing new. &ldquo;Ended&rdquo; comes from the clock, and the app never claims you went.'],
+  ['H6', 'Fill in the tag', 'Posting means filling in the tag people will see. Each field sits where it will appear, with a live count against its limit. A mistake gets a red pen ring on that one field. Why: what you type is what gets hung, so there is no separate preview. Needs: nothing new. The counts match the limits in Daven&rsquo;s open PR #38.']] })
+SEC10.push({ h: 'The whole app', say: 'The shell, and every message it can show.', o: [
+  ['H9', 'A folder per day', 'Discover as a folder. Tabs along the top are days with their counts, and the front sheet lists today. The nav is a small dock of three objects, one for each page the app has. Why: the tabs show how much is coming without scrolling. Needs: nothing new.'],
+  ['H8', 'One sticker per state', 'Every message the app can show, drawn as one set: loading, posted, nothing fits, can&rsquo;t reach the catalog, not shared, schedule full, event gone, saved here. Red appears on the error and nowhere else. Why: this is where the professor took points off, and one fixed set stops each page inventing its own. Needs: nothing new. All eight states already exist in the code.']] })
