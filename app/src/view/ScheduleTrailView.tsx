@@ -1,13 +1,30 @@
 // VIEW: draw My Schedule from the Controller's ScheduleScreen. The Schedule
 // controller owns reading and changing plans; this file only shows the result
 // and reports which plan the student wants to remove.
-import { presentSchedule, type ScheduleInput, type ScheduleScreen } from '../controller/presentScreens'
+import { presentSchedule, type PlanStubModel, type ScheduleInput, type ScheduleScreen } from '../controller/presentScreens'
 import { DayBubble, EventStub, SideQuestHeader, useMinuteTick, type SideQuestRoutes } from './DiscoverView'
 
 /** Re-ask the Controller every half minute so Next up and Happening now stay true. */
 export function useScheduleScreen(input: ScheduleInput, now?: Date): ScheduleScreen {
   useMinuteTick()
   return presentSchedule(input, now)
+}
+
+// Compact Schedule cards need a readable path to the full, already-resolved
+// event text, even when the original record exceeds today's posting limits.
+function ScheduleEventDetails({ event }: { event: PlanStubModel }) {
+  return (
+    <details className="sq-plan-details">
+      <summary aria-label={`View full details for ${event.title}`}>View full details</summary>
+      <dl>
+        <dt>Title</dt><dd>{event.title}</dd>
+        {event.host && <><dt>Host</dt><dd>{event.host}</dd></>}
+        <dt>Where</dt><dd>{event.location}</dd>
+        <dt>When</dt><dd>{event.dateText}, {event.start.time}{event.start.ampm} to {event.endText}</dd>
+        <dt>Description</dt><dd>{event.description ?? 'No description was provided.'}</dd>
+      </dl>
+    </details>
+  )
 }
 
 export type ScheduleTrailViewProps = {
@@ -80,6 +97,7 @@ export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes
                     <dt>Where</dt><dd>{next.stub.location}</dd>
                   </dl>
                   {next.stub.overlap && <p className="sq-warn">{next.stub.overlap.text}</p>}
+                  <ScheduleEventDetails event={next.stub} />
                   {remove(next.stub.id, next.stub.title)}
                 </div>
               </aside>
@@ -98,6 +116,7 @@ export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes
                       <li key={stub.id}>
                         <EventStub stub={stub}>
                           {stub.overlap && <span className="sq-pill sq-pill-overlap">{stub.overlap.text}</span>}
+                          <ScheduleEventDetails event={stub} />
                           {remove(stub.id, stub.title)}
                         </EventStub>
                       </li>
@@ -131,7 +150,10 @@ export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes
                   <ol className="sq-stubs">
                     {screen.done.map(stub => (
                       <li key={stub.id}>
-                        <EventStub stub={stub} dim>{remove(stub.id, stub.title)}</EventStub>
+                        <EventStub stub={stub} dim>
+                          <ScheduleEventDetails event={stub} />
+                          {remove(stub.id, stub.title)}
+                        </EventStub>
                       </li>
                     ))}
                   </ol>

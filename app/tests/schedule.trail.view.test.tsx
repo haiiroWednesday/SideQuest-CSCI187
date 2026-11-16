@@ -31,6 +31,59 @@ describe('My Schedule trail view: draws the Controller screen', () => {
     expect(screen.getByText('An event you planned')).toBeTruthy()
   })
 
+  it('reveals complete legacy text in upcoming cards and Next up without losing removal', () => {
+    const title = 'T'.repeat(120)
+    const location = 'L'.repeat(200)
+    const description = 'D'.repeat(2000)
+    const event = { ...ceramics, title, location, description }
+    const onRemove = vi.fn()
+    const current = presentSchedule({
+      ids: [event.id], entries: [{ event, conflict: null }], missingIds: [],
+    }, new Date('2030-11-07T13:00:00-08:00'))
+
+    render(<ScheduleTrailView screen={current} onRemove={onRemove} />)
+
+    const trailDetails = document.querySelector<HTMLDetailsElement>('.sq-trail .sq-plan-details')
+    const nextDetails = document.querySelector<HTMLDetailsElement>('.sq-sticker .sq-plan-details')
+    expect(trailDetails).not.toBeNull()
+    expect(nextDetails).not.toBeNull()
+    expect(trailDetails?.open).toBe(false)
+
+    const summary = within(trailDetails!).getByText('View full details')
+    expect(summary.getAttribute('aria-label')).toBe(`View full details for ${title}`)
+    fireEvent.click(summary)
+    expect(trailDetails?.open).toBe(true)
+    expect(within(trailDetails!).getByText(title)).toBeTruthy()
+    expect(within(trailDetails!).getByText(location)).toBeTruthy()
+    expect(within(trailDetails!).getByText(description)).toBeTruthy()
+
+    fireEvent.click(within(nextDetails!).getByText('View full details'))
+    expect(nextDetails?.open).toBe(true)
+    expect(within(nextDetails!).getByText(location)).toBeTruthy()
+
+    fireEvent.click(screen.getAllByRole('button', { name: `Remove ${title} from plans` })[0])
+    expect(onRemove).toHaveBeenCalledWith(event.id)
+  })
+
+  it('provides full text for past planned events inside the existing disclosure', () => {
+    const event = { ...ceramics, date: '2030-11-06', location: 'Past venue ' + 'L'.repeat(190) }
+    const current = presentSchedule({
+      ids: [event.id], entries: [{ event, conflict: null }], missingIds: [],
+    }, new Date('2030-11-07T13:00:00-08:00'))
+
+    render(<ScheduleTrailView screen={current} />)
+    const pastSection = document.querySelector<HTMLDetailsElement>('.sq-done')
+    expect(pastSection).not.toBeNull()
+    fireEvent.click(within(pastSection!).getByText('Already happened · 1'))
+
+    const details = pastSection!.querySelector<HTMLDetailsElement>('.sq-plan-details')
+    expect(details).not.toBeNull()
+    fireEvent.click(within(details!).getByText('View full details'))
+    expect(details?.open).toBe(true)
+    expect(within(details!).getByText(event.location)).toBeTruthy()
+    expect(within(details!).getByText('No description was provided.')).toBeTruthy()
+  })
+
   it('moves Next up and folds finished plans away as time passes', () => {
     render(draw(new Date('2030-11-07T16:30:00-08:00')))
     expect(within(screen.getByRole('complementary')).getByText('Tomorrow at 7:00pm')).toBeTruthy()

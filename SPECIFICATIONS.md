@@ -44,6 +44,7 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 - `model/schedule.ts`: `sidequest.planned-event-ids.v1` stores **only IDs** in the current browser. Model checks IDs, sorts resolved event details, calculates overlaps and enforces the provisional 100-plan limit.
 - `controller/personalSchedule.ts` preserves synchronous local plan writes. `controller/sharedSchedule.ts` coordinates `getById()` reads, distinguishes missing/failed/timed-out details, and rejects obsolete results without changing saved IDs.
 - `view/ScheduleTrailView.tsx` renders controller-prepared plans, conflicts, error/loading/retry states and remove controls. Removal edits only locally stored planned IDs, never the catalog.
+- Compact Schedule cards retain multi-line clamping for scanning, and provide native keyboard-accessible full-detail disclosures for upcoming and past plans. The disclosure shows complete presenter-supplied title, host, location, date/time and description, including legacy-length records. It does not create another catalog lookup or change saved-plan state.
 - Public M2 event details must pass the M2 field limits (including a 2,000-character description) even though older M1 records used a 500-character limit. Legacy records remain readable where applicable.
 - Consecutive events with end == next start do not overlap; real overlaps warn without blocking the user.
 
