@@ -30,6 +30,51 @@ test('phone Schedule preserves overlap warnings, missing IDs, and public events 
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sidequest.local-catalog.v1')!).length)).toBe(2)
 })
 
+test('Schedule reveals legacy-length event text by keyboard on narrow screens', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.clock.install({ time: new Date('2030-11-07T17:00:00Z') })
+  await page.goto('/')
+
+  const eventId = '33333333-3333-4333-8333-333333333333'
+  const title = 'T'.repeat(120)
+  const location = 'L'.repeat(200)
+  const description = 'D'.repeat(200)
+  await page.evaluate(record => {
+    localStorage.setItem('sidequest.local-catalog.v1', JSON.stringify([record]))
+    localStorage.setItem('sidequest.planned-event-ids.v1', JSON.stringify([record.id]))
+  }, {
+    id: eventId, title, host_name: 'SCU Club', description, location,
+    event_date: '2030-11-08', start_time: '14:30:00', end_time: '15:30:00',
+  })
+
+  await page.goto('/#schedule')
+  const details = page.locator('.sq-trail .sq-plan-details').first()
+  const summary = details.locator('summary')
+  await expect(summary).toBeVisible()
+  await expect(summary).toHaveAttribute('aria-label', `View full details for ${title}`)
+  await expect(details).not.toHaveAttribute('open')
+
+  await summary.focus()
+  await page.keyboard.press('Enter')
+  await expect(details).toHaveAttribute('open')
+  await expect(details.getByText(title, { exact: true })).toBeVisible()
+  await expect(details.getByText(location, { exact: true })).toBeVisible()
+  await expect(details.getByText(description, { exact: true })).toBeVisible()
+  await expect(summary).toBeFocused()
+
+  await page.setViewportSize({ width: 320, height: 812 })
+  await expect(details.getByText(location, { exact: true })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
+  await page.screenshot({ path: test.info().outputPath('schedule-legacy-full-text-320.png'), fullPage: true })
+
+  await page.keyboard.press('Enter')
+  await expect(details).not.toHaveAttribute('open')
+  await expect(summary).toBeFocused()
+  await details.locator('..').getByRole('button', { name: `Remove ${title} from plans` }).click()
+  await expect(page.getByText('Nothing planned yet.')).toBeVisible()
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sidequest.local-catalog.v1') ?? '[]').length)).toBe(1)
+})
+
 test('phone details are hidden while closed, trap keyboard focus, and return focus on Escape', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 })
   await seed(page)
