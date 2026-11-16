@@ -14,9 +14,10 @@ const bk10 = (t, s = 9, ex = '') => `<span style="font:500 ${s}px/1 ${MO10};lett
 const mo10 = (t, s = 10, ex = '') => `<span style="font:500 ${s}px/1.25 ${MO10};letter-spacing:.03em;${ex}">${t}</span>`
 const al10 = (t, ex = '') => `<span style="display:inline-block;font:700 12px/1.2 ${BG10};border-bottom:1.600px solid currentColor;padding-bottom:2px;${ex}">${t} &rarr;</span>`
 // real objects: open-source 3D renders and cut-outs from our own campus photos
-const OB10 = { dog: 'dogp', rose: 'rosep', pot: 'amphora', dice: 'game_die', bowl: 'dumpling', mic: 'microphone', star: 'telescope', ball: 'soccer_ball', mug: 'hot_beverage', cam: 'camera' }
+const OB10 = { dog: 'dogp', rose: 'rosep', mug: 'coffeep', pot: 'vase', dice: 'dicep', bowl: 'dumplings', mic: 'micp', star: 'telescope', ball: 'volleyball', bagel: 'bagel' }
+const obr10 = (n, w, h, ex = '') => `<span class="x-${n}" style="display:inline-block;width:${w}px;height:${h}px;flex:none;${ex}"></span>`
 const ob10 = (n, s, ex = '') => `<span class="x-${n}" style="display:inline-block;width:${s}px;height:${s}px;flex:none;${ex}"></span>`
-const ev10 = (k, s, ex = '') => ob10(OB10[k] || k, s, ex)
+const ev10 = (k, s, ex = '') => OB10[k] ? ob10(OB10[k], s, ex) : dd10(k, s, FC10[k] || X10.butter, { ex })
 const spark10 = (s, c = X10.ink, ex = '') => hl10(s, s, `M${s * .5} ${s * .05}V${s * .32}M${s * .95} ${s * .5}H${s * .68}M${s * .86} ${s * .14}L${s * .68} ${s * .32}`, c, Math.max(2, s * .09), ex)
 // doodles: thick ink outline, one flat fill, a wobble filter so no line is ruler-straight
 const DD10 = {
@@ -52,7 +53,7 @@ const E10 = { dog: ['2:30', '3:00', 'Therapy dogs', 'Library lawn', 'dog', 'SCU 
 const FC10 = { dog: X10.kraft, rose: X10.gold, pot: X10.blue, dice: '#fff', bowl: X10.butterD, mic: X10.blue, star: X10.gold, ball: X10.butterD, cam: X10.kraft }
 const tm10 = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
 
-const nav10 = (on = 0, dark) => `<div style="position:absolute;left:34px;right:34px;bottom:13px;height:60px;border-radius:20px;background:${dark ? 'rgba(255,255,255,.18)' : 'rgba(255,255,255,.88)'};box-shadow:0 8px 22px rgba(36,27,25,.16);display:flex;align-items:center;justify-content:space-around;z-index:6">${[['file_folder', 'Discover'], ['label', 'Post'], ['clipboard', 'My Schedule']].map(([k, t], i) => `<span style="display:grid;justify-items:center;gap:1px;font:700 8.500px/1 ${BG10};color:${dark ? '#fff' : X10.ink};opacity:${i === on ? 1 : .7}">${ob10(k, i === on ? 36 : 28, i === on ? 'margin-top:-8px' : 'filter:grayscale(.55)')}${t}</span>`).join('')}</div>`
+const nav10 = (on = 0, dark) => `<div style="position:absolute;left:38px;right:38px;bottom:13px;height:58px;border-radius:20px;background:${dark ? 'rgba(255,255,255,.16)' : 'rgba(255,255,255,.86)'};box-shadow:0 8px 22px rgba(36,27,25,.16);display:flex;align-items:center;justify-content:space-around;z-index:6">${[['folder', 'Discover'], ['tag', 'Post'], ['line', 'My Schedule']].map(([k, t], i) => `<span style="display:grid;justify-items:center;gap:2px;font:700 8.500px/1 ${BG10};color:${dark ? '#fff' : X10.ink};opacity:${i === on ? 1 : .62}">${dd10(k, 30, i === on ? X10.butterD : '#fff', { sw: 3.600, seed: 5 + i })}${t}</span>`).join('')}</div>`
 const VAR10 = `--sans:${BG10};--serif:${BG10}`
 const P10 = (bg, inner, o = {}) => phoneW(`<div style="position:absolute;inset:0;background:${bg}"></div>`, `<div style="position:absolute;inset:0;${VAR10}"><div style="position:absolute;left:0;right:0;top:44px;bottom:0;color:${o.col || X10.ink}">${inner}</div>${o.nav === null ? '' : nav10(o.nav || 0, o.dark)}</div>`, o.light)
 const D10 = (bg, inner, on = 'Discover', dark) => dk6(bg, `<div style="position:absolute;inset:0;color:${dark ? '#fff' : X10.ink}">${inner}</div>`, on, dark).replace('class="inner" style="', `class="inner" style="${VAR10};`)
@@ -62,7 +63,7 @@ const r10 = (e, fs = 1, ex = '') => `<div style="display:flex;align-items:center
 const card10 = (e, w, h, band = X10.butter, fs = 1) => `<div style="position:relative;width:${w}px;height:${h}px;color:${X10.ink};background:#fff;box-shadow:0 8px 18px rgba(48,36,33,.12);background-image:radial-gradient(rgba(48,36,33,.07) .7px,transparent .8px);background-size:5px 5px"><div style="position:absolute;left:9px;top:10px">${bk10(e[0], 8 * fs)}</div>${fs > 1.200 ? '' : `<div style="position:absolute;right:9px;top:10px">${bk10(e[6] + ' min', 8)}</div>`}<div style="position:absolute;left:0;right:0;top:${h * .17}px;text-align:center">${ev10(e[4], w * .56)}</div><div style="position:absolute;left:8px;right:8px;top:${h * .17 + w * .6}px;text-align:center">${sf10(e[2], Math.max(15, w * .15))}</div><div style="position:absolute;left:0;right:0;bottom:0;height:${h * .2}px;background:${band};display:flex;align-items:center;justify-content:space-between;padding:0 10px">${mo10(e[3].toUpperCase(), 7.500 * fs)}<span style="font:700 ${13 * fs}px var(--sans)">&rarr;</span></div></div>`
 // ---------- H1 · say it in a sentence ----------
 const slot10 = (t, c = X10.ink) => `<span style="display:inline-block;vertical-align:.1em;font:700 .56em/1.5 ${BG10};font-stretch:100%;letter-spacing:0;background:#fff;color:${c};padding:0 .5em;border-radius:.45em;box-shadow:0 .14em 0 ${X10.ink}">${t}</span>`
-const sent10 = (s, until = '4:40') => `<div style="font:800 ${s * .8}px/1.3 ${BG10};font-stretch:80%;letter-spacing:-.03em">I&rsquo;m free ${ob10('hot_beverage', s * .96, 'vertical-align:-.2em')} ${slot10('today')} from ${slot10('2:10')} until ${slot10(until)}.</div>`
+const sent10 = (s, until = '4:40') => `<div style="font:800 ${s * .8}px/1.3 ${BG10};font-stretch:80%;letter-spacing:-.03em">I&rsquo;m free ${ob10('coffeep', s * 1.150, 'vertical-align:-.3em')} ${slot10('today')} from ${slot10('2:10')} until ${slot10(until)}.</div>`
 O10.H1 = [
   P10(X10.butter, `${at(20, 16, bk10('Discover', 8))}${at(0, 16, bk10('12 on today', 8), 'left:auto;right:20px')}
     ${at(22, 44, sent10(52), 'width:244px')}
@@ -78,14 +79,14 @@ O10.H1 = [
     ${at(22, 250, sf10('Nothing fits twenty minutes.', 30, `width:230px`))}
     ${at(22, 322, `<div style="display:flex;align-items:center;gap:10px">${B8('Stretch until 3:00', X10.ink, '#fff', .82)}</div>`)}
     ${at(22, 374, `<div style="display:flex;align-items:center;gap:8px">${ev10('dog', 40)}${sn10('catches Therapy dogs, 2:30 on the Library lawn', 11.500, 500, 'width:180px')}</div>`)}
-    ${at(22, 440, al10('or see all 12'))}${at(176, 392, ob10('fork_and_knife_with_plate', 88))}`)]
+    ${at(22, 440, al10('or see all 12'))}${at(176, 392, ob10('plate', 108))}`)]
 
 // ---------- H2 · the ruler and two clips ----------
 const RUL10 = (len, vert, from, to, ppm, fs = 1) => { let t = ''; const T = 40 * fs; for (let m = from; m <= to; m += 10) { const p = (m - from) * ppm, big = m % 60 === 0, mid = m % 30 === 0, L = (big ? 20 : mid ? 13 : 7) * fs
     t += vert ? `<line x1="${T - L}" x2="${T}" y1="${p}" y2="${p}"/>` : `<line y1="${T - L}" y2="${T}" x1="${p}" x2="${p}"/>`
     if (big) t += vert ? `<text x="4" y="${p + 13 * fs}">${m / 60 % 12 || 12}</text>` : `<text x="${p + 5}" y="${15 * fs}">${m / 60 % 12 || 12} PM</text>` }
   return `<svg width="${vert ? T : len}" height="${vert ? len : T}" style="display:block;background:#fff;border-radius:4px;box-shadow:0 0 0 2px ${X10.ink},0 6px 12px rgba(48,36,33,.14)"><g stroke="${X10.ink}" stroke-width="${1.400 * fs}" font-family="DM Mono,monospace" font-size="${10 * fs}" font-weight="500" fill="${X10.ink}">${t.replace(/<text/g, '<text stroke="none"')}</g></svg>` }
-const clip10 = (t, vert, fs = 1) => `<div style="${vert ? `width:${58 * fs}px;height:${20 * fs}px` : `width:${22 * fs}px;height:${58 * fs}px`};border-radius:${7 * fs}px;background:${X10.blue};box-shadow:0 0 0 2px ${X10.ink},0 4px 8px rgba(47,125,246,.35);display:grid;place-items:center;color:#fff"><span style="font:500 ${10 * fs}px/1 ${MO10};${vert ? '' : 'writing-mode:vertical-rl'}">${t}</span></div>`
+const clip10 = (t, vert, fs = 1) => `<div style="position:relative;width:${62 * fs}px;height:${66 * fs}px;${vert ? '' : 'transform:rotate(-90deg)'}">${ob10('clip', 62 * fs, 'position:absolute;left:0;top:0;filter:drop-shadow(0 3px 4px rgba(48,36,33,.3))')}<span style="position:absolute;left:50%;top:${2 * fs}px;transform:translateX(-50%)${vert ? '' : ' rotate(90deg)'};background:#fff;color:${X10.ink};font:500 ${9 * fs}px/1 ${MO10};padding:${2 * fs}px ${4 * fs}px;border-radius:3px;box-shadow:0 0 0 1.200px ${X10.ink};white-space:nowrap">${t}</span></div>`
 const flag10 = (e, x, y, w, h, on, col = X10.butterD, rot = 0, fs = 1) => `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;box-sizing:border-box;padding:${4 * fs}px ${5 * fs}px ${3 * fs}px ${9 * fs}px;border-radius:2px 9px 9px 2px;transform:rotate(${rot}deg);overflow:hidden;line-height:1;color:${X10.ink};${on ? `background:${col};box-shadow:inset ${4 * fs}px 0 0 rgba(48,36,33,.22),0 4px 8px rgba(48,36,33,.14)` : `background:rgba(255,255,255,.7);box-shadow:inset 0 0 0 1.400px rgba(48,36,33,.3);color:${X10.muted}`}">${mo10(e[0], 8 * fs)}<div style="font:700 ${10.500 * fs}px/1.12 var(--sans);margin-top:${1 * fs}px">${e[2]}</div></div>`
 const vy10 = t => 40 + (tm10(t) - 120) * 1.500
 const rulerP10 = (until, bad) => `${at(0, vy10('2:10'), '', `left:14px;right:10px;height:${vy10(until) - vy10('2:10')}px;background:rgba(244,217,79,.5);border-radius:3px`)}
@@ -96,7 +97,7 @@ O10.H2 = [
   P10(X10.grey, `${at(0, 12, `<div style="text-align:center">${bk10('what sits between the clips', 8)}</div>`, 'right:0')}${rulerP10('4:40')}
     ${at(0, 446, `<div style="display:flex;justify-content:flex-end;align-items:baseline;gap:8px;padding-right:18px">${sf10('3 fit', 30)}${mo10('150 MIN', 9, `color:${X10.muted}`)}</div>`, 'right:0')}`),
   D10(X10.grey, `${at(hx10('2:10'), 96, '', `width:${hx10('4:40') - hx10('2:10')}px;height:336px;background:rgba(244,217,79,.5);border-radius:4px`)}
-    ${at(40, 30, RUL10(920, 0, 120, 480, 2.550, 1.500))}${at(hx10('2:10') - 16, 17, clip10('2:10', 0, 1.500))}${at(hx10('4:40') - 16, 17, clip10('4:40', 0, 1.500))}
+    ${at(40, 30, RUL10(920, 0, 120, 480, 2.550, 1.500))}${at(hx10('2:10') - 11, 11, clip10('2:10', 0, 1.500))}${at(hx10('4:40') - 11, 11, clip10('4:40', 0, 1.500))}
     ${flag10(E10.dog, hx10('2:30'), 112, 76, 76, 1, X10.kraft, -1, 1.450)}${flag10(E10.rose, hx10('3:00') + 2, 112, 151, 76, 1, X10.butterD, .5, 1.450)}${flag10(E10.pot, hx10('3:30'), 198, 153, 76, 1, X10.blueT, -.6, 1.450)}${flag10(E10.dice, hx10('3:45'), 284, 268, 62, 0, '', 0, 1.450)}
     ${flag10(E10.bowl, hx10('6:00'), 112, 151, 76, 0, '', 0, 1.450)}${flag10(E10.mic, hx10('7:00') + 2, 112, 151, 76, 0, '', 0, 1.450)}
     ${at(60, 452, `<div style="display:flex;align-items:baseline;gap:14px">${sf10('3 fit between the clips', 50)}${mo10('150 MIN', 15, `color:${X10.muted}`)}</div>`)}
@@ -122,7 +123,7 @@ O10.H7 = [
     ${at(34, 206, imp10(1, 'FREE &middot; WED NOV 11', '2:10 &rarr; 4:40 PM', '150 MIN &middot; 3 FIT'))}
     ${at(26, 298, r10(E10.dog, .86))}${at(26, 346, r10(E10.rose, .86))}${at(26, 394, r10(E10.pot, .86))}
     ${at(26, 446, mo10('ROLL A WHEEL, STAMP AGAIN', 8, `color:${X10.muted}`))}`),
-  D10(X10.grey, `${at(70, 40, stamp10(1.900, ['WED 11', '2:10', '4:40']))}${at(74, 430, sn10('Three wheels: day, from, until. The same three inputs as now, as one object you can roll with a thumb or the arrow keys.', 19, 500, `width:380px;color:${X10.muted}`))}
+  D10(X10.grey, `${at(70, 40, stamp10(1.900, ['WED 11', '2:10', '4:40']))}${at(338, 352, obr10('datestamp', 150, 84, 'transform:rotate(12deg);filter:drop-shadow(0 6px 6px rgba(48,36,33,.25))'))}${at(74, 440, sn10('Three wheels: day, from, until. The same three inputs as now, as one object you can roll with a thumb or the arrow keys.', 19, 500, `width:380px;color:${X10.muted}`))}
     ${at(510, 22, `<div style="width:440px;height:524px;background:#fff;box-shadow:0 14px 30px rgba(48,36,33,.14);transform:rotate(.7deg);padding:30px 34px;box-sizing:border-box">${imp10(1.700, 'FREE &middot; WED NOV 11', '2:10 &rarr; 4:40 PM', '150 MIN &middot; 3 FIT', { rot: -3 })}<div style="display:grid;gap:22px;margin-top:30px">${r10(E10.dog, 1.600)}${r10(E10.rose, 1.600)}${r10(E10.pot, 1.600)}</div><div style="margin-top:26px">${al10('See the 9 that don&rsquo;t fit', 'font-size:18px')}</div></div>`)}`),
   P10(X10.paper, `${at(42, 14, stamp10(1, ['WED 11', '2:10', '1:50'], 1))}
     ${at(158, 118, hl10(84, 46, 'M42 4C70 4 80 14 80 24S66 43 40 42 4 34 4 22 16 5 46 5', X10.red, 2.400))}
