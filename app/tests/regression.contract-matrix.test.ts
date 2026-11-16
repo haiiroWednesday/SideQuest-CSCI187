@@ -22,7 +22,7 @@ const draft = (patch: Partial<EventDraft> = {}): EventDraft => ({
   ...patch,
 })
 const event = (patch: Partial<CampusEvent> = {}): CampusEvent => ({ id: ID_A, ...draft(), ...patch })
-const ids = (items: CampusEvent[]) => items.map(item => item.id)
+const ids = (items: readonly { id: string }[]) => items.map(item => item.id)
 
 describe('REG-POST: field partitions and Model-level posting', () => {
   it.each([
