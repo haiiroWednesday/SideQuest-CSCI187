@@ -69,6 +69,14 @@ for the requirements mapping, independent database checks, manual accessibility
 and human usability tasks. The CI workflow retains screenshot and failure trace
 artifacts for 14 days when produced.
 
+## Instructor-aligned verification and release evidence
+
+From `app/`, run `npm run test:rubric` to verify the evidence matrix, Controller/View/Model boundaries, TypeScript suppressions, debugger/eval and commented-out code. The same rubric gate runs in CI, in addition to the Vitest suite, coverage report, isolated database tests, mutation pilot and Playwright browser checks.
+
+The new `e2e/release-dependability.spec.ts` measures a **bounded local fixture** with 12 simultaneous catalog reads, an injected upstream failure, and confirmed recovery. Its p50/p95 numbers are recorded for diagnosis, **not** as a production performance or load guarantee.
+
+See [the exact Kandel lecture/final-project criteria and manual acceptance tasks](../docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md), [machine-readable evidence IDs](../docs/kandel-rubric-evidence.json), and [requirements-to-tests matrix](../docs/TESTING_STANDARDS_AND_TRACEABILITY.md). Actual student observations, screen-reader acceptance, deployment checks, code-review judgment, and presentation scoring still require human review.
+
 ## Database and public-write safeguards
 
 The existing reviewed SQL migration creates one public `events` table with anonymous SELECT and bounded INSERT grants. It grants no anonymous UPDATE or DELETE. Apply it only through the team's database process; this code change does not run a live migration.
