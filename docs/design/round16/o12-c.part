@@ -1,14 +1,14 @@
 
 // ---------- K7 · The dial (pick your free time). Hick, Fitts, Jakob.
 const dial12 = (r, a0, a1, ks, o = {}) => { const fs = r / 86, P = (a, rr) => [r + 34 * fs + rr * Math.sin(a * Math.PI / 180), r + 34 * fs - rr * Math.cos(a * Math.PI / 180)], S = (r + 34 * fs) * 2, C = r + 34 * fs
-  const hand = a => { const [x, y] = P(a, r); return `<i style="position:absolute;left:${(x - 14 * fs).toFixed(1)}px;top:${(y - 14 * fs).toFixed(1)}px;width:${28 * fs}px;height:${28 * fs}px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 ${2.400 * fs}px ${K.ink},0 4px 8px rgba(23,23,40,.25)"></i>` }
-  return `<div style="position:relative;width:${S}px;height:${S}px"><i style="position:absolute;left:${34 * fs}px;top:${34 * fs}px;width:${r * 2}px;height:${r * 2}px;border-radius:50%;background:conic-gradient(from ${a0}deg,${o.bad ? '#ffb3bd' : '#8dbbff'} 0deg ${a1 - a0}deg,transparent ${a1 - a0}deg 360deg);filter:blur(${5 * fs}px);opacity:.85"></i>
+  const hand = a => { const [x, y] = P(a, r); return `<i style="position:absolute;left:${(x - 14 * fs).toFixed(1)}px;top:${(y - 14 * fs).toFixed(1)}px;width:${28 * fs}px;height:${28 * fs}px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 ${2.400 * fs}px ${K.pri},0 4px 8px rgba(60,20,24,.25)"></i>` }
+  return `<div style="position:relative;width:${S}px;height:${S}px"><i style="position:absolute;left:${34 * fs}px;top:${34 * fs}px;width:${r * 2}px;height:${r * 2}px;border-radius:50%;background:conic-gradient(from ${a0}deg,${o.bad ? '#ffb3bd' : '#cdbdff'} 0deg ${a1 - a0}deg,transparent ${a1 - a0}deg 360deg);filter:blur(${5 * fs}px);opacity:.85"></i>
     ${at(0, 0, hl10(S, S, `M${C - r} ${C}A${r} ${r} 0 1 1 ${C + r} ${C}A${r} ${r} 0 1 1 ${C - r} ${C}`, K.ink, 2.600 * fs))}
     ${[[0, '12'], [90, '3'], [180, '6'], [270, '9']].map(([a, t]) => { const [x, y] = P(a, r - 15 * fs); return `<span style="position:absolute;left:${(x - 8 * fs).toFixed(1)}px;top:${(y - 5 * fs).toFixed(1)}px;width:${16 * fs}px;text-align:center;font:500 ${8 * fs}px/1.2 ${LXW};color:${K.mut}">${t}</span>` }).join('')}
     ${ks.map(([k, a], i) => { const [x, y] = P(a, r + 19 * fs), w = 36 * fs; return at(x - w / 2, y - w * .45, bird12(k, w, { flip: i % 2 === 1 })) }).join('')}${hand(a0)}${hand(a1)}
     <div style="position:absolute;left:0;right:0;top:${C - 16 * fs}px;text-align:center"><div style="font:600 ${17 * fs}px/1.1 ${LX}">${o.t}</div>${cap12(o.c, 6.500 * fs, o.bad ? K.red : K.mut, `margin-top:${3 * fs}px`)}</div></div>` }
 const pre12 = (on, s = 9) => `<div style="display:flex;gap:${s * .6}px">${['30 min', '1 hour', '2 hours', 'Tonight'].map((t, i) => chip12(t, i === on, s)).join('')}</div>`
-const sheet12 = inner => `<div style="position:absolute;left:0;right:0;top:22px;bottom:0;border-radius:26px 26px 0 0;background:#fff;box-shadow:0 -8px 24px rgba(23,23,40,.10)"><i style="position:absolute;left:50%;top:8px;width:36px;height:4px;margin-left:-18px;border-radius:9px;background:${K.hair}"></i>${inner}</div>`
+const sheet12 = inner => `<div style="position:absolute;left:0;right:0;top:22px;bottom:0;border-radius:26px 26px 0 0;background:#fff;box-shadow:0 -8px 24px rgba(60,20,24,.10)"><i style="position:absolute;left:50%;top:8px;width:36px;height:4px;margin-left:-18px;border-radius:9px;background:${K.hair}"></i>${inner}</div>`
 O12.K7 = [
   P12(sheet12(`${at(0, 26, ttl12('When are you free?', 19, 'width:280px;text-align:center'))}${at(17, 60, pre12(-1))}
     ${at(11, 92, dial12(92, 65, 140, [['dog', 82.500], ['rose', 105], ['pot', 120]], { t: '2:10 to 4:40', c: '150 minutes &middot; PM' }))}
@@ -24,10 +24,10 @@ const srow12 = (l, v, o = {}) => `<div style="display:flex;align-items:center;he
 const sgrp12 = (w, rows, fs = 1) => card12(w, 0, rows.map((r, i) => (i ? `<i style="display:block;height:1px;background:${K.hair};margin:0 ${14 * fs}px"></i>` : '') + srow12(r[0], r[1], { ...(r[2] || {}), fs })).join(''), 'border-radius:16px')
 const G12 = [[['Default free time', '1 hour'], ['Open to', 'Discover']], [['My plans', '4 saved'], ['Clear my plans', '', { red: 1 }]], [['About SideQuest'], ['Send feedback']]]
 O12.K8 = [
-  P12(`${at(20, 12, ttl12('Settings', 23))}${at(204, 2, bird12('dog', 54, { flip: 1 }))}
+  P12(`${at(20, 12, ttl12('Settings', 23))}${at(204, 2, bird12('bronco', 54, { flip: 1 }))}
     ${at(20, 48, tx12('Plans stay on this phone. No account.', 10))}
     ${at(14, 78, sgrp12(252, G12[0]))}${at(14, 182, sgrp12(252, G12[1]))}${at(14, 286, sgrp12(252, G12[2]))}`, { nav: 0 }),
-  D12(`${at(64, 40, ttl12('Settings', 46))}${at(64, 106, tx12('Plans stay on this computer. No account.', 14))}${at(110, 220, stick12(tok12('dog', 200), 5))}
+  D12(`${at(64, 40, ttl12('Settings', 46))}${at(64, 106, tx12('Plans stay on this computer. No account.', 14))}${at(110, 220, stick12(bird12('bronco', 200), 5))}
     ${at(480, 40, sgrp12(440, G12[0], 1.360))}${at(480, 180, sgrp12(440, G12[1], 1.360))}${at(480, 320, sgrp12(440, G12[2], 1.360))}`),
   P12(`${at(20, 12, ttl12('Settings', 23))}
     ${at(14, 50, card12(252, 0, `<div style="display:flex;gap:10px;padding:12px 14px;box-shadow:inset 0 0 0 1.800px ${K.red};border-radius:16px">${dd10('plug', 34, '#fff', { ink: K.red, sw: 3 })}<div><div style="font:600 11.500px/1.3 ${LX};color:${K.red}">This browser is blocking saved plans</div>${tx12('Plans will be gone when you close the tab.', 9.500, K.mut, 'margin-top:2px')}<div style="margin-top:7px">${link12('How to fix it', 10, K.red)}</div></div></div>`, 'border-radius:16px'))}
@@ -35,14 +35,14 @@ O12.K8 = [
 
 // ---------- K9 · First run: one question. Hick, cognitive load.
 const hand12 = (w) => hl10(w, w * .5, `M${w * .02} ${w * .2}C${w * .16} ${w * .19} ${w * .26} ${w * .13} ${w * .4} ${w * .12}L${w * .88} ${w * .1}C${w * .97} ${w * .1} ${w * .97} ${w * .19} ${w * .88} ${w * .2}L${w * .58} ${w * .22}C${w * .66} ${w * .23} ${w * .66} ${w * .3} ${w * .58} ${w * .31}C${w * .64} ${w * .33} ${w * .62} ${w * .39} ${w * .55} ${w * .39}C${w * .59} ${w * .43} ${w * .55} ${w * .47} ${w * .49} ${w * .46}L${w * .26} ${w * .45}C${w * .16} ${w * .45} ${w * .1} ${w * .42} ${w * .02} ${w * .42}`, K.ink, Math.max(2.600, w * .014))
-const first12 = (w, k = 'bowl', o = {}) => `<div style="position:relative;width:${w}px;height:${w * .86}px">${at(w * .5, 0, bird12(o.grey ? 'grey' : k, w * .46, { ex: o.grey ? 'filter:blur(2px);opacity:.75' : '' }))}${at(0, w * .32, hand12(w))}${o.grey ? '' : at(w * .06, w * .02, bird12('dice', w * .2, { pose: 'fly', rot: -10, dof: 2.200 })) + at(w * .26, w * .1, bird12('mic', w * .16, { pose: 'fly', rot: 6, dof: 3 }))}</div>`
+const first12 = (w, k = 'bronco', o = {}) => `<div style="position:relative;width:${w}px;height:${w * .86}px">${at(w * .5, w * .035, bird12(o.grey ? 'grey' : k, w * .46, { ex: o.grey ? 'filter:blur(2px);opacity:.75' : '' }))}${at(0, w * .32, hand12(w))}${o.grey ? '' : at(w * .06, w * .02, bird12('dice', w * .2, { pose: 'fly', rot: -10, dof: 2.200 })) + at(w * .26, w * .1, bird12('mic', w * .16, { pose: 'fly', rot: 6, dof: 3 }))}</div>`
 O12.K9 = [
-  P12(`${at(34, 40, first12(212))}${at(0, 250, ttl12('Got a gap<br>between classes?', 25, 'width:280px;text-align:center'))}
-    ${at(34, 316, tx12('Say when you are free. SideQuest shows what fits.', 10.500, K.mut, 'width:212px;text-align:center'))}
+  P12(`${at(34, 40, first12(212))}${at(26, 232, ink12('Got a gap?', 21, 3, { W: .2 }))}
+    ${at(34, 312, tx12('Between classes? Say when you are free. SideQuest shows what fits.', 10.500, K.mut, 'width:212px;text-align:center'))}
     ${at(14, 372, pri12('I&rsquo;m free now'))}${at(14, 428, sec12('Pick a time', 252, { h: 44 }))}${at(0, 486, `<div style="width:280px;text-align:center">${cap12('No account needed', 6.500)}</div>`)}`, { nav: null }),
-  D12(`${at(80, 110, first12(380))}${at(540, 120, ttl12('Got a gap<br>between classes?', 50))}${at(544, 250, tx12('Say when you are free. SideQuest shows what fits.', 15, K.mut, 'width:380px'))}
+  D12(`${at(80, 110, first12(380))}${at(516, 96, ink12('Got a gap?', 46, 8, { W: .19 }))}${at(544, 250, tx12('Between classes? Say when you are free. SideQuest shows what fits.', 15, K.mut, 'width:380px'))}
     ${at(540, 320, `<div style="display:flex;gap:12px">${pri12('I&rsquo;m free now', 220, { h: 60, fs: 17 })}${sec12('Pick a time', 170, { h: 60, fs: 15 })}</div>`)}${at(544, 406, cap12('No account needed', 10))}`),
-  P12(`${at(34, 40, first12(212, 'bowl', { grey: 1 }))}${at(0, 250, ttl12('Can&rsquo;t reach<br>the catalog', 25, 'width:280px;text-align:center'))}
+  P12(`${at(34, 40, first12(212, 'bronco', { grey: 1 }))}${at(0, 250, ttl12('Can&rsquo;t reach<br>the catalog', 25, 'width:280px;text-align:center'))}
     ${at(34, 316, tx12('Check your connection. Nothing is lost.', 10.500, K.mut, 'width:212px;text-align:center'))}
     ${at(14, 372, pri12('Try again'))}`, { nav: null })]
 SEC12[0].o.push(['K7', 'The dial', 'Free time is a slice of a hand-drawn clock with two big handles. Four presets cover most days. Birds sit on the rim where their events are, and the button says how many fit as you drag. Laws: Hick, Fitts, Jakob. Runs on today&rsquo;s data.'])
