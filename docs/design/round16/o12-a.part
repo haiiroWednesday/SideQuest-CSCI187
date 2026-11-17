@@ -1,0 +1,102 @@
+
+// =================== ROUND 12 (review: Round 16) · soft birds on ink ===================
+// From the Nov 17 second set: airbrushed creatures with one crisp eye, a dark mood app with line drawings,
+// a coffee brand of thick-outline doodles, and the Laws of UX poster.
+// Rule for this round: the laws come first. One main action per screen, in thumb reach. Few choices. Things grouped.
+const SEC12 = [], O12 = {}
+const K = { bg: '#e4e6f1', card: '#ffffff', ink: '#17171c', mut: '#6d7088', hair: '#cfd2e2', blue: '#2f7df6', kraft: '#c98b4f', cream: '#fff6df', red: '#a32035', ok: '#2fa36b' }
+// soft birds: [belly, back, head, cheek, wing, tail, beak]
+const BP12 = { dog: ['#fff3c9', '#a6dbff', '#59b7ff', '#ffe0ea', '#3c98f2', '#2c62e0', '#ff8fa8'], rose: ['#ffe9dc', '#ff9db5', '#ff4f6d', '#ffc7ad', '#f0457f', '#b03a8c', '#ffb14a'], pot: ['#ffecc0', '#ffb46a', '#ff8a2a', '#ffdca6', '#f06a1a', '#b9541a', '#7a4a2a'],
+  dice: ['#f3eaff', '#c3a6ff', '#8e64ff', '#ffd3ee', '#6f48e8', '#4a35c0', '#ff8fa8'], bowl: ['#fff8c4', '#ffe45a', '#ffd21a', '#ffc98a', '#ffb81a', '#ff9a1a', '#ff7a2a'], mic: ['#e6edff', '#7f9bff', '#3554e8', '#ffc9d6', '#2742d0', '#1b2a8a', '#ffb14a'], star: ['#eafff8', '#8fe9d6', '#3fd2c0', '#fff0b0', '#25b3a8', '#177f8a', '#ffb14a'], grey: ['#eef0f6', '#cfd3df', '#b4b9c9', '#e3e6ee', '#a3a9bb', '#8d93a6', '#b9bdca'] }
+const bird12 = (k, w, o = {}) => { const p = BP12[k] || BP12.grey, bl = w / 100, pose = o.pose || 'sit', L = (inner, b) => `<svg viewBox="0 0 100 90" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;${b ? `filter:blur(${(b * bl).toFixed(2)}px)` : ''}">${inner}</svg>`
+  const A = pose === 'front'
+    ? `<ellipse cx="24" cy="56" rx="12" ry="18" fill="${p[4]}" transform="rotate(14 24 56)"/><ellipse cx="76" cy="56" rx="12" ry="18" fill="${p[4]}" transform="rotate(-14 76 56)"/><ellipse cx="50" cy="56" rx="25" ry="26" fill="${p[0]}"/><ellipse cx="50" cy="66" rx="14" ry="12" fill="${p[1]}" opacity=".8"/><circle cx="50" cy="29" r="21" fill="${p[2]}"/><path d="M33 16L30 4L42 12ZM67 16L70 4L58 12Z" fill="${p[2]}"/><circle cx="40" cy="30" r="8" fill="${p[0]}"/><circle cx="60" cy="30" r="8" fill="${p[0]}"/><circle cx="50" cy="40" r="7" fill="${p[3]}"/>`
+    : `<path d="M30 50L3 66L9 52L27 42Z" fill="${p[5]}"/><ellipse cx="46" cy="52" rx="28" ry="24" fill="${p[0]}"/><ellipse cx="39" cy="43" rx="22" ry="13" fill="${p[1]}" transform="rotate(-14 39 43)"/>${pose === 'fly' ? `<path d="M34 50C22 24 36 4 56 0C56 20 54 36 50 50Z" fill="${p[4]}"/><path d="M40 48C36 28 46 14 60 10C58 26 56 38 52 48Z" fill="${p[1]}"/>` : `<ellipse cx="39" cy="53" rx="18" ry="11" fill="${p[4]}" transform="rotate(18 39 53)"/>`}<circle cx="68" cy="32" r="16.500" fill="${p[2]}"/><circle cx="72" cy="39" r="8" fill="${p[3]}"/>`
+  const B = pose === 'front'
+    ? `<path d="M46 35L54 35L50 42Z" fill="${p[6]}"/><path d="M42 80V87M39 88H45M58 80V87M55 88H61" stroke="${p[6]}" stroke-width="1.800" stroke-linecap="round" fill="none"/>`
+    : `<path d="${o.sing ? 'M81 27L93 25L82 32ZM82 34L91 38L81 38Z' : 'M81 28L93 33L81 38Z'}" fill="${p[6]}"/>${pose === 'fly' ? `<path d="M42 73L38 80M52 73L50 81" stroke="${p[6]}" stroke-width="1.600" stroke-linecap="round" fill="none"/>` : `<path d="M43 72L42 84M42 84L36 86M42 84L47 87M54 72L55 84M55 84L49 86M55 84L60 87" stroke="${p[6]}" stroke-width="1.600" stroke-linecap="round" fill="none"/>`}<path d="M28 52L42 58M30 57L44 62M12 60L24 52" stroke="${p[5]}" stroke-width="1" stroke-linecap="round" fill="none" opacity=".45"/>`
+  const eye = (x, y, r = 2.600) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#131318"/><circle cx="${x + r * .34}" cy="${y - r * .34}" r="${r * .32}" fill="#fff"/>`
+  const C = pose === 'front' ? eye(40, 30, 3.200) + eye(60, 30, 3.200) : eye(73, 29)
+  const tf = `${o.rot ? `rotate(${o.rot}deg) ` : ''}${o.flip ? 'scaleX(-1)' : ''}`
+  return `<div style="position:relative;width:${w}px;height:${w * .9}px;flex:none;${tf ? `transform:${tf};` : ''}${o.dof ? `filter:blur(${o.dof}px);opacity:${o.op ?? .85};` : ''}${o.ex || ''}">${L(A, 2.600)}${L(B, .7)}${L(C)}</div>` }
+// ink doodle + a soft bird perched on it. The doodle says what the event is, the bird says it is alive.
+const FC12 = { dog: K.kraft, rose: '#ff8fa3', pot: K.kraft, dice: '#fff', bowl: K.blue, mic: K.blue, star: '#ffe27a' }
+const PERCH12 = { dog: [33, 17], rose: [33, 11], pot: [32, 10], dice: [31, 10], bowl: [20, 32], mic: [23, 11], star: [32, 9] }
+const tok12 = (k, s, o = {}) => { const [px, py] = PERCH12[k], d = s * .7, bw = s * .66, dx = (s - d) / 2, dy = s * 1.120 - d
+  return `<div style="position:relative;width:${s}px;height:${s * 1.120}px;flex:none;${o.ex || ''}">${at(dx, dy, dd10(E10[k][4], d, o.grey ? '#e9ebf2' : FC12[k], { sw: 3, seed: 4 + k.length, ink: o.grey ? '#9a9eb0' : K.ink }))}${at(dx + px / 64 * d - bw * .48, dy + py / 64 * d - bw * .9 * .955, bird12(o.grey ? 'grey' : k, bw, { pose: k === 'star' ? 'front' : 'sit', flip: o.flip, sing: k === 'mic' }))}</div>` }
+const stick12 = (inner, e = 3) => cut10(inner, e, '0 4px 7px rgba(23,23,40,.22)')
+// type
+const cap12 = (t, s = 7, c = K.mut, ex = '') => `<div style="font:500 ${s}px/1.4 ${LXW};letter-spacing:.02em;text-transform:uppercase;color:${c};${ex}">${t}</div>`
+const ttl12 = (t, s, ex = '') => `<div style="font:600 ${s}px/1.08 ${LX};letter-spacing:-.022em;color:${K.ink};${ex}">${t}</div>`
+const tx12 = (t, s = 10.500, c = K.mut, ex = '') => `<div style="font:400 ${s}px/1.45 ${LX};color:${c};${ex}">${t}</div>`
+// one main action: big, full width, low on the screen
+const pri12 = (t, w = 252, o = {}) => `<div style="width:${w}px;height:${o.h || 46}px;border-radius:${(o.h || 46) / 2}px;background:${o.off ? '#b9bccb' : K.ink};color:#fff;display:grid;place-items:center;font:600 ${o.fs || 13}px/1 ${LX};box-shadow:${o.off ? 'none' : '0 6px 14px rgba(23,23,40,.22)'}">${t}</div>`
+const sec12 = (t, w, o = {}) => `<div style="width:${w}px;height:${o.h || 40}px;border-radius:${(o.h || 40) / 2}px;border:1.600px solid ${K.ink};box-sizing:border-box;color:${K.ink};display:grid;place-items:center;font:600 ${o.fs || 12}px/1 ${LX}">${t}</div>`
+const link12 = (t, s = 10.500, c = K.ink) => `<span style="font:500 ${s}px/1 ${LX};color:${c};border-bottom:1.200px solid ${c};padding-bottom:1.500px">${t}</span>`
+const chip12 = (t, on, s = 10, ex = '') => `<span style="display:inline-grid;place-items:center;height:${s * 3}px;padding:0 ${s * 1.300}px;border-radius:99px;font:${on ? 600 : 500} ${s}px/1 ${LX};white-space:nowrap;${on ? `background:${K.ink};color:#fff` : `background:#fff;color:${K.ink};box-shadow:inset 0 0 0 1.200px ${K.hair}`};${ex}">${t}</span>`
+const card12 = (w, h, inner, ex = '') => `<div style="position:relative;width:${w}px;${h ? `height:${h}px;` : ''}border-radius:20px;background:${K.card};box-shadow:0 1px 0 rgba(23,23,40,.04),0 10px 24px rgba(23,23,40,.07);box-sizing:border-box;${ex}">${inner}</div>`
+// familiar tab bar (Jakob): three tabs, icon over word, where thumbs already look
+const nav12 = (on = 0) => `<div style="position:absolute;left:0;right:0;bottom:0;height:58px;background:rgba(255,255,255,.94);box-shadow:0 -1px 0 ${K.hair};display:flex;align-items:flex-start;justify-content:space-around;padding-top:7px;z-index:6">${[['folder', 'Discover'], ['tag', 'Post'], ['line', 'My Schedule']].map(([k, t], i) => `<span style="display:grid;justify-items:center;gap:2px;width:84px;font:${i === on ? 600 : 500} 8.500px/1 ${LX};color:${i === on ? K.ink : K.mut}">${dd10(k, 24, i === on ? '#ffe27a' : '#fff', { sw: 3.400, seed: 5 + i, ink: i === on ? K.ink : K.mut })}${t}</span>`).join('')}</div>`
+const P12 = (inner, o = {}) => phoneW(`<div style="position:absolute;inset:0;background:${o.bg || K.bg}"></div>`, `<div style="position:absolute;inset:0;${VAR11}"><div style="position:absolute;left:0;right:0;top:44px;bottom:0;color:${K.ink};overflow:hidden">${inner}</div>${o.nav === null ? '' : nav12(o.nav || 0)}</div>`)
+const D12 = (inner, on = 'Discover') => dk6(K.bg, `<div style="position:absolute;inset:0;color:${K.ink};overflow:hidden">${inner}</div>`, on).replace('class="inner" style="', `class="inner" style="${VAR11};`)
+// the perch: a hand-drawn line that is your free time. Birds sit at their start times, a soft bar shows how long each lasts.
+const perch12 = (w, ks, o = {}) => { const fs = o.fs || 1, t0 = o.t0 ?? T0, t1 = o.t1 ?? T1, X = t => 14 * fs + (tm10(t) - t0) / (t1 - t0) * (w - 28 * fs), bw = 62 * fs
+  return `<div style="position:relative;width:${w}px;height:${128 * fs}px">${ks.map((k, i) => `<div style="position:absolute;left:${X(E10[k][0]).toFixed(1)}px;width:${(X(E10[k][1]) - X(E10[k][0])).toFixed(1)}px;top:${(92 + i * 9) * fs}px;height:${6 * fs}px;border-radius:${3 * fs}px;background:${BP12[k][2]};filter:blur(${1.600 * fs}px);opacity:.9"></div>`).join('')}
+    ${at(0, 76 * fs, hl10(w, 12 * fs, `M4 ${7 * fs}C${w * .3} ${1 * fs} ${w * .62} ${11 * fs} ${w - 4} ${5 * fs}`, K.ink, 2.600 * fs))}
+    ${(o.ticks || ['2:10', '3:00', '4:00', '4:40']).map(t => `<div style="position:absolute;left:${(X(t) - 12 * fs).toFixed(1)}px;width:${24 * fs}px;top:${(o.ty ?? 116) * fs}px;text-align:center;font:500 ${6.500 * fs}px/1 ${LXW};color:${K.mut}">${t}</div>`).join('')}
+    ${ks.map((k, i) => at((X(E10[k][0]) + X(E10[k][1])) / 2 - bw * .5, (81 - 62 * .9 * .955) * fs, bird12(k, bw, { pose: k === 'star' ? 'front' : 'sit', flip: i % 2 === 1 }))).join('')}${o.body || ''}</div>` }
+const sent12 = (a, b, s = 23) => ttl12(`Free <span style="box-shadow:inset 0 -${s * .34}px 0 #ffe27a">${a}</span> to <span style="box-shadow:inset 0 -${s * .34}px 0 #ffe27a">${b}</span>`, s)
+const back12 = (s = 26) => hl10(s, s, `M${s * .62} ${s * .2}L${s * .3} ${s * .5}L${s * .62} ${s * .8}`, K.ink, 2.600)
+
+// ---------- K1 · The perch (Discover home). Hick, Fitts, common region.
+const k1card = (w, fs, ks, far, msg) => card12(w, 214 * fs, `${at(16 * fs, 14 * fs, cap12(msg, 6.800 * fs, K.ink))}${far.map(([k, x, y, r, d], i) => at(x * fs, y * fs, bird12(k, 44 * fs, { pose: 'fly', rot: r, dof: d * fs, flip: i % 2 === 0 }))).join('')}${at(0, 78 * fs, perch12(w, ks, { fs: fs * (w / (252 * fs)) > 1.200 ? fs : fs, ticks: ks.length ? undefined : ['2:10', '2:30'], t1: ks.length ? T1 : T0 + 20 }))}`)
+O12.K1 = [
+  P12(`${at(20, 12, cap12('Mon 16 Nov'))}${at(20, 28, sent12('2:10', '4:40'))}${at(218, 26, chip12('Change', 0, 8.500))}
+    ${at(14, 68, k1card(252, 1, ['dog', 'rose', 'pot'], [['dice', 150, 30, -12, 2.600], ['star', 206, 46, 8, 3.400]], '3 land in your free time'))}
+    ${at(14, 298, pri12('See the 3 that fit'))}${at(0, 358, `<div style="width:280px;text-align:center">${link12('or browse all 12 today')}</div>`)}
+    ${at(14, 392, card12(252, 62, `<div style="display:flex;align-items:center;gap:8px;padding:6px 12px">${tok12('dog', 44)}<div>${cap12('Soonest &middot; in 20 min', 6.200)}<div style="font:600 12.500px/1.2 ${LX};margin-top:2px">2:30 &nbsp;Therapy dogs</div></div></div>`))}`),
+  D12(`${at(64, 60, cap12('Mon 16 Nov', 11))}${at(64, 86, sent12('2:10', '4:40', 50))}${at(64, 160, chip12('Change', 0, 12))}
+    ${at(64, 300, pri12('See the 3 that fit', 330, { h: 60, fs: 17 }))}${at(64, 384, link12('or browse all 12 today', 14))}
+    ${at(470, 40, k1card(470, 1.860, ['dog', 'rose', 'pot'], [['dice', 150, 30, -12, 2.600], ['star', 206, 46, 8, 3.400]], '3 land in your free time'))}
+    ${at(470, 456, card12(470, 86, `<div style="display:flex;align-items:center;gap:14px;padding:8px 20px">${tok12('dog', 62)}<div>${cap12('Soonest &middot; in 20 min', 9.500)}<div style="font:600 19px/1.2 ${LX};margin-top:3px">2:30 &nbsp;Therapy dogs</div></div></div>`))}`),
+  P12(`${at(20, 12, cap12('Mon 16 Nov'))}${at(20, 28, sent12('2:10', '2:30'))}${at(218, 26, chip12('Change', 0, 8.500))}
+    ${at(14, 68, k1card(252, 1, [], [['dog', 150, 26, -12, 2.200], ['rose', 196, 52, 8, 3], ['pot', 96, 44, -6, 3.600]], 'Nothing lands in 20 minutes'))}
+    ${at(14, 298, pri12('Widen to 1 hour'))}${at(0, 358, `<div style="width:280px;text-align:center">${link12('or browse all 12 today')}</div>`)}
+    ${at(14, 392, card12(252, 62, `<div style="display:flex;align-items:center;gap:8px;padding:6px 12px">${tok12('dog', 44)}<div>${cap12('Soonest &middot; starts as you leave', 6.200)}<div style="font:600 12.500px/1.2 ${LX};margin-top:2px">2:30 &nbsp;Therapy dogs</div></div></div>`))}`)]
+
+// ---------- K2 · Pick one (the short list). Choice overload, chunking, Jakob.
+const k2row = (k, w, fs, o = {}) => card12(w, 88 * fs, `<div style="display:flex;align-items:center;gap:${10 * fs}px;padding:${8 * fs}px ${12 * fs}px;height:100%;box-sizing:border-box;${o.dim ? 'opacity:.62' : ''}">${tok12(k, 62 * fs, { grey: o.dim })}<div style="flex:1;min-width:0"><div style="font:600 ${12.800 * fs}px/1.15 ${LX};white-space:nowrap">${E10[k][2]}</div>${cap12(`${E10[k][0]} to ${E10[k][1]} &middot; ${E10[k][3]}`, 6.200 * fs, K.mut, 'margin-top:3px;white-space:nowrap')}<div style="margin-top:${6 * fs}px;display:flex;align-items:center;gap:${5 * fs}px;font:500 ${8.500 * fs}px/1 ${LX};color:${o.dim ? K.red : K.ok}"><i style="width:${6 * fs}px;height:${6 * fs}px;border-radius:50%;background:currentColor"></i>${o.note}</div></div>${hl10(14 * fs, 22 * fs, `M${4 * fs} ${3 * fs}L${11 * fs} ${11 * fs}L${4 * fs} ${19 * fs}`, K.ink, 2.200 * fs)}</div>`)
+const more12 = (w, fs, t) => `<div style="width:${w}px;height:${40 * fs}px;border-radius:${20 * fs}px;border:1.400px dashed ${K.mut};box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;padding:0 ${16 * fs}px;font:500 ${10 * fs}px/1 ${LX};color:${K.mut}">${t}${hl10(16 * fs, 10 * fs, `M${2 * fs} ${2 * fs}L${8 * fs} ${8 * fs}L${14 * fs} ${2 * fs}`, K.mut, 2 * fs)}</div>`
+O12.K2 = [
+  P12(`${at(14, 8, back12())}${at(46, 12, ttl12('3 fit', 20))}${at(0, 14, `<div style="width:266px;text-align:right">${chip12('2:10 to 4:40', 0, 8.500)}</div>`)}
+    ${at(14, 50, `<div style="display:grid;gap:9px">${k2row('dog', 252, 1, { note: 'Starts in 20 min' })}${k2row('rose', 252, 1, { note: '40 min to spare' })}${k2row('pot', 252, 1, { note: 'Ends 10 min before you go' })}</div>`)}
+    ${at(14, 346, more12(252, 1, '9 more today don&rsquo;t fit'))}`),
+  D12(`${at(64, 40, ttl12('3 fit', 44))}${at(64, 104, chip12('2:10 to 4:40', 0, 12))}${at(64, 470, more12(300, 1.400, '9 more today don&rsquo;t fit'))}
+    ${at(420, 40, `<div style="display:grid;gap:16px">${k2row('dog', 520, 1.660, { note: 'Starts in 20 min' })}${k2row('rose', 520, 1.660, { note: '40 min to spare' })}${k2row('pot', 520, 1.660, { note: 'Ends 10 min before you go' })}</div>`)}`),
+  P12(`${at(14, 8, back12())}${at(46, 12, ttl12('0 fit', 20))}${at(0, 14, `<div style="width:266px;text-align:right">${chip12('2:10 to 2:30', 0, 8.500)}</div>`)}
+    ${at(20, 52, tx12('Two come close. One small change gets you either.', 10.500, K.ink, 'width:240px'))}
+    ${at(14, 92, `<div style="display:grid;gap:9px">${k2row('dog', 252, 1, { note: 'Starts right as you leave', dim: 1 })}${k2row('rose', 252, 1, { note: 'Starts 30 min too late', dim: 1 })}</div>`)}
+    ${at(14, 296, pri12('Stay until 3:00 instead'))}${at(14, 356, more12(252, 1, '10 more today don&rsquo;t fit'))}`)]
+
+// ---------- K3 · One event. Fitts, chunking, cognitive load.
+const fact12 = (l, v, fs = 1) => `<div style="flex:1;padding:${9 * fs}px ${4 * fs}px;text-align:center">${cap12(l, 5.800 * fs)}<div style="font:600 ${10.500 * fs}px/1.2 ${LX};margin-top:${3 * fs}px">${v}</div></div>`
+const facts12 = (w, fs = 1) => card12(w, 0, `<div style="display:flex;align-items:stretch">${fact12('When', '3:00 to 4:00', fs)}<i style="width:1px;background:${K.hair};margin:${9 * fs}px 0"></i>${fact12('Where', 'Mission Gardens', fs)}<i style="width:1px;background:${K.hair};margin:${9 * fs}px 0"></i>${fact12('Host', 'Art Club', fs)}</div>`, 'border-radius:16px')
+O12.K3 = [
+  P12(`${at(14, 8, back12())}${at(72, 14, stick12(tok12('rose', 136), 4))}
+    ${at(0, 186, ttl12('Rose garden sketch', 23, 'width:280px;text-align:center'))}
+    ${at(0, 218, `<div style="width:280px;display:flex;justify-content:center;align-items:center;gap:5px;font:500 9.500px/1 ${LX};color:${K.ok}"><i style="width:7px;height:7px;border-radius:50%;background:${K.ok}"></i>Fits, with 40 minutes to spare</div>`)}
+    ${at(14, 244, facts12(252))}
+    ${at(22, 312, tx12('Bring a pencil. Paper is provided. Sit anywhere in the rose beds.', 10.500, K.mut, 'width:236px'))}
+    ${at(14, 380, `<div style="display:flex;gap:8px">${pri12('Add to My Schedule', 198)}<div style="width:46px;height:46px;border-radius:23px;border:1.600px solid ${K.ink};box-sizing:border-box;display:grid;place-items:center">${hl10(20, 20, 'M10 13V3M5 7L10 2L15 7M3 12V18H17V12', K.ink, 2.200)}</div></div>`)}`, { nav: 0 }),
+  D12(`${at(40, 30, back12(36))}${at(110, 90, stick12(tok12('rose', 280), 6))}
+    ${at(500, 110, ttl12('Rose garden sketch', 48))}
+    ${at(500, 176, `<div style="display:flex;align-items:center;gap:8px;font:500 15px/1 ${LX};color:${K.ok}"><i style="width:10px;height:10px;border-radius:50%;background:${K.ok}"></i>Fits, with 40 minutes to spare</div>`)}
+    ${at(500, 216, facts12(430, 1.500))}${at(504, 312, tx12('Bring a pencil. Paper is provided. Sit anywhere in the rose beds.', 15, K.mut, 'width:420px'))}
+    ${at(500, 400, `<div style="display:flex;gap:12px">${pri12('Add to My Schedule', 300, { h: 60, fs: 17 })}${sec12('Share', 118, { h: 60, fs: 15 })}</div>`)}`),
+  P12(`${at(14, 8, back12())}${at(72, 14, `<div style="filter:blur(2.400px);opacity:.7">${stick12(tok12('rose', 136, { grey: 1 }), 4)}</div>`)}
+    ${at(0, 186, ttl12('This one was taken down', 20, 'width:280px;text-align:center'))}
+    ${at(30, 220, tx12('Rose garden sketch left the catalog, so it is off your schedule too.', 10.500, K.mut, 'width:220px;text-align:center'))}
+    ${at(14, 380, pri12('See what else fits'))}`, { nav: 0 })]
+SEC12.push({ h: 'Discover', say: 'One question, one answer, one big button. The laws on the poster decide the layout before the drawing does.', o: [['K1', 'The perch', 'Your free time is a hand-drawn line. Events that fit are soft birds sitting on it at their start times, with a soft bar for how long each lasts. One main button sits in thumb reach. Laws: Hick, Fitts, Common Region. Runs on today&rsquo;s data.'], ['K2', 'Pick one', 'Only what fits, as three cards, each with one reason in plain words. Everything else folds into one row. Laws: Choice Overload, Chunking, Jakob. Runs on today&rsquo;s data.']] })
+SEC12.push({ h: 'One event', say: 'Three facts, one decision.', o: [['K3', 'One event', 'The event is a die-cut sticker: an ink doodle with its soft bird. When, where and host sit together in one box. The button to add it spans the bottom. Laws: Fitts, Chunking, Cognitive Load. Runs on today&rsquo;s data.']] })
+const SAY12 = { K1: 'a twenty-minute gap', K2: 'a gap where nothing fits', K3: 'an event that left the catalog' }

@@ -1,0 +1,48 @@
+
+// ---------- K4 · My day (My Schedule). Goal-gradient, chunking, Jakob.
+const k4row = (k, st, fs = 1, w = 252) => { const done = st === 'done', next = st === 'next', inner = `<div style="display:flex;align-items:center;gap:${9 * fs}px;padding:${5 * fs}px ${10 * fs}px;${done ? 'opacity:.55' : ''}">${tok12(k, 46 * fs, { grey: done })}<div style="flex:1">${next ? cap12('Next &middot; in 20 min', 6 * fs, K.blue) : ''}<div style="font:600 ${12.500 * fs}px/1.2 ${LX};${done ? 'text-decoration:line-through' : ''}">${E10[k][0]} &nbsp;${E10[k][2]}</div>${cap12(E10[k][3], 6 * fs, K.mut, 'margin-top:2px')}</div>${done ? dd10('check', 20 * fs, '#fff', { ink: K.ok, sw: 3 }) : ''}</div>`
+  return next ? card12(w, 0, inner, 'border-radius:16px') : `<div style="width:${w}px">${inner}</div>` }
+const prog12 = (w, f, fs = 1) => `<div style="position:relative;width:${w}px;height:${9 * fs}px;border-radius:99px;background:#fff"><i style="position:absolute;left:0;top:0;bottom:0;width:${f * 100}%;border-radius:99px;background:${K.blue}"></i></div>`
+O12.K4 = [
+  P12(`${at(20, 12, cap12('My Schedule'))}${at(20, 28, ttl12('Monday', 23))}${at(0, 30, `<div style="width:262px;text-align:right">${chip12('Tue', 0, 8.500)}</div>`)}
+    ${at(20, 66, prog12(240, .25))}${at(20, 81, cap12('1 of 4 done', 6.200))}
+    ${at(20, 104, cap12('Afternoon', 6.800, K.ink))}${at(14, 118, k4row('dog', 'done'))}${at(14, 176, k4row('rose', 'next'))}
+    ${at(20, 252, cap12('Evening', 6.800, K.ink))}${at(14, 266, k4row('bowl', ''))}${at(14, 324, k4row('star', ''))}
+    ${at(14, 396, sec12('Find one more that fits', 252, { h: 42 }))}`, { nav: 2 }),
+  D12(`${at(64, 40, cap12('My Schedule', 11))}${at(64, 66, ttl12('Monday', 50))}${at(64, 150, prog12(300, .25, 1.400))}${at(64, 174, cap12('1 of 4 done', 10))}${at(64, 440, sec12('Find one more that fits', 300, { h: 54, fs: 15 }))}
+    ${at(450, 40, cap12('Afternoon', 11, K.ink))}${at(440, 70, k4row('dog', 'done', 1.500, 470))}${at(440, 158, k4row('rose', 'next', 1.500, 470))}
+    ${at(450, 280, cap12('Evening', 11, K.ink))}${at(440, 310, k4row('bowl', '', 1.500, 470))}${at(440, 398, k4row('star', '', 1.500, 470))}`, 'My Schedule'),
+  P12(`${at(20, 12, cap12('My Schedule'))}${at(20, 28, ttl12('Monday', 23))}${at(0, 30, `<div style="width:262px;text-align:right">${chip12('Tue', 0, 8.500)}</div>`)}
+    ${at(14, 84, card12(252, 190, `${at(16, 14, cap12('Nothing planned', 6.800, K.ink))}${at(0, 46, perch12(252, [], { ticks: ['2:00', '6:00', '10:00'], t0: tm10('2:00'), t1: tm10('10:00') }))}`))}
+    ${at(20, 292, tx12('An empty perch. Three things fit your next free hour.', 10.500, K.ink, 'width:240px'))}${at(14, 344, pri12('Find what fits'))}`, { nav: 2 })]
+
+// ---------- K5 · Post in three small steps. Chunking, goal-gradient, cognitive load.
+const steps12 = (w, n, fs = 1) => `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:${7 * fs}px;width:${w}px">${['What', 'When', 'Where'].map((t, i) => `<div><i style="display:block;height:${5 * fs}px;border-radius:9px;background:${i < n ? K.ink : '#fff'}"></i>${cap12(t, 6 * fs, i < n ? K.ink : K.mut, `margin-top:${4 * fs}px`)}</div>`).join('')}</div>`
+const egg12 = (s) => `<div style="position:relative;width:${96 * s}px;height:${96 * s}px">${at(18 * s, 0, bird12('rose', 62 * s))}<svg viewBox="0 0 96 60" style="position:absolute;left:0;top:${40 * s}px;width:${96 * s}px;height:${60 * s}px;overflow:visible;filter:blur(${1.300 * s}px)"><path d="M6 16L18 6L30 18L42 4L54 18L66 6L78 18L90 12C96 60 70 62 48 62C26 62 0 60 6 16Z" fill="#fffaf0"/><circle cx="30" cy="36" r="3" fill="#f0dcc0"/><circle cx="62" cy="44" r="2.400" fill="#f0dcc0"/><circle cx="52" cy="30" r="1.800" fill="#f0dcc0"/></svg>${at(4 * s, 40 * s, hl10(88 * s, 20 * s, `M${2 * s} ${16 * s}L${14 * s} ${6 * s}L${26 * s} ${18 * s}L${38 * s} ${4 * s}L${50 * s} ${18 * s}L${62 * s} ${6 * s}L${74 * s} ${18 * s}L${86 * s} ${12 * s}`, K.ink, 2.400 * s))}</div>`
+const fld12 = (l, v, o = {}) => `<div style="padding:${9 * (o.fs || 1)}px ${14 * (o.fs || 1)}px;${o.bad ? `box-shadow:inset 0 0 0 1.800px ${K.red};border-radius:12px` : ''}">${cap12(l, 6 * (o.fs || 1), o.bad ? K.red : K.mut)}<div style="font:600 ${13.500 * (o.fs || 1)}px/1.25 ${LX};margin-top:3px;color:${o.bad ? K.red : K.ink}">${v}</div></div>`
+const when12 = (w, bad, fs = 1) => card12(w, 0, `${fld12('Date', 'Mon, Nov 16', { fs })}<i style="display:block;height:1px;background:${K.hair};margin:0 ${14 * fs}px"></i><div style="display:grid;grid-template-columns:1fr 1px 1fr"><div>${fld12('From', '3:00 PM', { fs })}</div><i style="background:${K.hair};margin:${9 * fs}px 0"></i><div>${fld12('Until', bad ? '2:30 PM' : '4:00 PM', { fs, bad })}</div></div>`, 'border-radius:16px')
+O12.K5 = [
+  P12(`${at(14, 8, back12())}${at(46, 13, ttl12('Post an event', 15))}${at(20, 46, steps12(240, 2))}
+    ${at(92, 80, egg12(1))}${at(0, 186, ttl12('When is it?', 22, 'width:280px;text-align:center'))}
+    ${at(14, 222, when12(252))}${at(22, 334, tx12('Up to one year ahead.', 9.500))}${at(14, 366, pri12('Next: where'))}${at(0, 424, `<div style="width:280px;text-align:center">${cap12('One step left', 6.500)}</div>`)}`, { nav: 1 }),
+  D12(`${at(64, 40, ttl12('Post an event', 22))}${at(64, 84, steps12(320, 2, 1.400))}${at(100, 170, egg12(2.300))}
+    ${at(480, 110, ttl12('When is it?', 46))}${at(480, 180, when12(420, 0, 1.500))}${at(486, 350, tx12('Up to one year ahead.', 13))}${at(480, 396, pri12('Next: where', 300, { h: 60, fs: 17 }))}`, 'Post'),
+  P12(`${at(14, 8, back12())}${at(46, 13, ttl12('Post an event', 15))}${at(20, 46, steps12(240, 2))}
+    ${at(92, 80, egg12(1))}${at(0, 186, ttl12('When is it?', 22, 'width:280px;text-align:center'))}
+    ${at(14, 222, when12(252, 1))}${at(22, 334, tx12('Until has to be after 3:00 PM.', 9.500, K.red))}${at(14, 366, pri12('Next: where', 252, { off: 1 }))}`, { nav: 1 })]
+
+// ---------- K6 · Saved, at once. Doherty threshold, flow.
+const fly12 = (fs = 1) => [[168, 92, 14, 0], [226, 446, 34, 3.400]].map(([x, y, r, d], i) => at(x * fs, y * fs, bird12('rose', (58 - i * 20) * fs, { pose: 'fly', rot: r, dof: d * fs, op: 1 - i * .25 }))).join('')
+O12.K6 = [
+  P12(`${at(14, 8, back12())}${at(72, 14, stick12(`<div style="position:relative;width:136px;height:152px">${at(20, 57, dd10('rose', 95, FC12.rose, { sw: 3, seed: 8 }))}</div>`, 4))}${fly12()}
+    ${at(0, 186, ttl12('Rose garden sketch', 23, 'width:280px;text-align:center'))}${at(14, 244, facts12(252))}
+    ${at(14, 380, card12(252, 46, `<div style="display:flex;align-items:center;gap:8px;height:100%;padding:0 14px">${dd10('check', 22, '#fff', { ink: K.ok, sw: 3.400 })}<span style="flex:1;font:600 11.500px/1 ${LX}">Saved for Mon 3:00</span>${link12('Undo', 11)}</div>`, 'border-radius:23px'))}
+    <i style="position:absolute;left:239px;top:505px;width:14px;height:14px;border-radius:50%;background:${K.blue};color:#fff;font:700 8px/14px ${LX};text-align:center;font-style:normal;z-index:7">1</i>`, { nav: 0 }),
+  D12(`${at(40, 30, back12(36))}${at(110, 90, stick12(`<div style="position:relative;width:280px;height:314px">${at(42, 118, dd10('rose', 196, FC12.rose, { sw: 3, seed: 8 }))}</div>`, 6))}
+    ${[[330, 80, -20, 0], [470, 40, -30, 2.400], [620, 16, -34, 4.400], [760, 6, -38, 6.500]].map(([x, y, r, d], i) => at(x, y, bird12('rose', 100 - i * 13, { pose: 'fly', rot: r, dof: d, op: 1 - i * .2 }))).join('')}
+    ${at(500, 150, ttl12('Rose garden sketch', 48))}${at(500, 226, facts12(430, 1.500))}
+    ${at(500, 340, card12(430, 62, `<div style="display:flex;align-items:center;gap:12px;height:100%;padding:0 22px">${dd10('check', 30, '#fff', { ink: K.ok, sw: 3.400 })}<span style="flex:1;font:600 16px/1 ${LX}">Saved for Mon 3:00</span>${link12('Undo', 15)}</div>`, 'border-radius:31px'))}`),
+  P12(`${at(14, 8, back12())}${at(72, 14, stick12(tok12('rose', 136), 4))}
+    ${at(0, 186, ttl12('Rose garden sketch', 23, 'width:280px;text-align:center'))}${at(14, 244, facts12(252))}
+    ${at(14, 322, card12(252, 0, `<div style="padding:12px 14px;box-shadow:inset 0 0 0 1.800px ${K.red};border-radius:16px"><div style="font:600 11.500px/1.3 ${LX};color:${K.red}">Not saved. Your schedule holds 100 plans.</div>${tx12('Remove one and try again.', 9.500, K.mut, 'margin-top:2px')}</div>`, 'border-radius:16px'))}
+    ${at(14, 396, pri12('Open My Schedule'))}`, { nav: 0 })]
