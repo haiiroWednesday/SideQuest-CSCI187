@@ -1,0 +1,77 @@
+
+// =================== ROUND 11 (review: Round 15) · soft focus ===================
+// From the Nov 17 references: frosted translucent shells, heavily blurred saturated colour inside,
+// tiny crisp white type, little stars, and a lot of white. Detail is taken away, not added.
+// Rule for this round: sharpness means something. What fits your free time is in focus.
+const SEC11 = [], O11 = {}
+const J11 = { or: '#ff8a00', pk: '#ff2d87', sky: '#35b4ff', gr: '#2fd060', ye: '#ffe100', rd: '#f2452c', pu: '#7a4dff', cy: '#45e0cf', bl: '#2540e8', br: '#3b2416', li: '#cdb8ff', rose: '#ff86cf', ink: '#0b0b0c', g1: '#b4b4b8', g2: '#8c8c92', card: '#f4f5f7' }
+const LX = "'Lexend','Instrument Sans',sans-serif", LXW = "'Lexend Exa','Lexend',sans-serif"
+const VAR11 = `--sans:${LX};--serif:${LX}`
+const mx11 = (c, p) => `color-mix(in srgb,${c} ${p}%,#fff)`
+const px11 = v => typeof v === 'number' ? v.toFixed(1) + 'px' : v
+const rnd11 = s => { let x = Math.sin(s * 99.13) * 43758.5453; return x - Math.floor(x) }
+// frosted shell + blurred colour core. w,h px. o: r radius, in inset, b core blur, sb shell blur, fill core background, tint shell tint %, body html
+const jel = (w, h, col, o = {}) => { const m = Math.min(w, h), r = o.r ?? m * .2, i = o.in ?? m * .135, b = o.b ?? m * .075, sc = o.sc || col
+  return `<div style="position:relative;width:${w}px;height:${h}px;flex:none;${o.ex || ''}"><div style="position:absolute;inset:0;border-radius:${px11(r)};background:${mx11(sc, o.tint ?? 15)};box-shadow:inset 0 0 0 ${Math.max(1, m * .014).toFixed(1)}px rgba(255,255,255,.75),0 0 ${(m * .1).toFixed(1)}px ${mx11(sc, 26)};opacity:${o.op ?? 1};filter:blur(${o.sb ?? 1.2}px)"></div><div style="position:absolute;inset:${px11(i)};border-radius:${px11(o.cr ?? (typeof r === 'number' ? r * .62 : r))};background:${o.fill || col};filter:blur(${typeof b === 'number' ? b.toFixed(1) : b}px)"></div>${o.body || ''}</div>` }
+const STAR5 = 'M10 .8l2.5 6 6.5.5-5 4.2 1.6 6.3L10 14.4 4.4 17.8 6 11.5 1 7.300l6.500-.5z'
+const sp11 = (x, y, s = 8, bl = .7, op = .95, c = '#fff') => `<svg viewBox="0 0 20 20" style="position:absolute;left:${x.toFixed(1)}px;top:${y.toFixed(1)}px;width:${s}px;height:${s}px;filter:blur(${bl}px);opacity:${op};overflow:visible"><path d="${STAR5}" fill="${c}" stroke="${c}" stroke-width="2.4" stroke-linejoin="round"/></svg>`
+// n stars scattered inside a box (x0,y0,w,h)
+const sps = (x0, y0, w, h, n, seed = 1, k = 1) => Array.from({ length: n }, (_, i) => { const s = (5 + rnd11(seed + i * 3.1) * 9) * k; return sp11(x0 + rnd11(seed + i) * (w - s), y0 + rnd11(seed + i * 7.7) * (h - s), +s.toFixed(1), .4 + rnd11(seed + i * 1.9) * 1.6, .55 + rnd11(seed + i * 5.3) * .45) }).join('')
+// white type that sits on an object
+const wt = (t, s, o = {}) => `<div style="font:${o.w || 500} ${s}px/${o.lh || 1.18} ${o.wide ? LXW : LX};color:${o.c || '#fff'};letter-spacing:${o.ls || '.03em'};text-transform:${o.up === false ? 'none' : 'uppercase'};opacity:${o.op ?? .96};filter:blur(${o.bl ?? .25}px);white-space:nowrap;${o.ex || ''}">${t}</div>`
+const big11 = (t, s, o = {}) => wt(t, s, { w: 300, up: false, ls: '-.02em', lh: 1, op: .82, bl: .5, ...o })
+// tiny grey label block and the grey asterisk, the two fixed marks of every screen
+const lab11 = (a, b, s = 8.5, ex = '') => `<div style="font:500 ${s}px/1.22 ${LXW};letter-spacing:.01em;color:${J11.g1};white-space:nowrap;${ex}"><b style="font-weight:600;text-transform:uppercase">${a}</b>${b ? `<br><span style="font-weight:300">${b}</span>` : ''}</div>`
+const ast11 = (s = 34, c = J11.g1) => `<svg viewBox="0 0 24 24" style="width:${s}px;height:${s}px;display:block"><path d="M12 1.500C12.900 8 16 11.100 22.500 12C16 12.900 12.900 16 12 22.500C11.100 16 8 12.900 1.500 12C8 11.100 11.100 8 12 1.500Z" fill="${c}"/></svg>`
+const cap11 = (t, s = 7, c = J11.ink, ex = '') => `<div style="font:500 ${s}px/1.42 ${LXW};letter-spacing:.02em;text-transform:uppercase;color:${c};${ex}">${t}</div>`
+const ttl11 = (t, s, ex = '') => `<div style="font:600 ${s}px/1.04 ${LX};letter-spacing:-.022em;color:${J11.ink};${ex}">${t}</div>`
+// generic svg jelly from a path in a 100x100 box
+const sj = (w, h, d, col, o = {}) => `<div style="position:relative;width:${w}px;height:${h}px;flex:none;${o.ex || ''}"><svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:blur(${o.sb ?? 2.4}px);opacity:.96"><path d="${d}" fill="${mx11(col, o.tint ?? 13)}" stroke="${mx11(col, o.tint ?? 13)}" stroke-width="${o.sw ?? 10}" stroke-linejoin="round"/></svg><svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:blur(${o.b ?? Math.min(w, h) * .085}px)"><path d="${d}" fill="${o.fill || col}" transform="translate(50 50) scale(${o.k ?? .8}) translate(-50 -50)"/></svg>${o.body || ''}</div>`
+const cen = (inner, ex = '') => `<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;${ex}">${inner}</div>`
+// ---------- the vessels. Each takes an event e = E10[k], a colour, a scale. Label = time big and thin, title tiny.
+let LM11 = 'full'
+const lbl11 = (e, s, o = {}) => LM11 === 'none' ? '' : LM11 === 'time' ? big11(e[0], 26 * s * (o.bk || 1)) : `${big11(e[0], 26 * s * (o.bk || 1), { ex: o.bx || '' })}${wt(`${e[2]}`, Math.max(5.6, 6.2 * s), { ex: `margin-top:${3 * s}px;white-space:normal;max-width:${(o.mw || 84) * s}px;text-align:center` })}${wt(`${e[3]} &middot; ${e[6]} min`, Math.max(5.2, 5.4 * s), { w: 300, ex: `margin-top:${1.5 * s}px` })}`
+const VES = {
+  // a ball, for the dogs
+  ball: (e, c, s) => jel(132 * s, 132 * s, c, { r: '50%', cr: '50%', in: 15 * s, b: 10 * s, fill: `radial-gradient(circle at 40% 36%,${mx11(c, 62)},${c} 64%)`, body: `<svg viewBox="0 0 100 100" style="position:absolute;inset:0;width:100%;height:100%;filter:blur(${1.400 * s}px);opacity:.42"><path d="M9 30C27 42 27 60 10 72M91 28C73 41 73 60 90 74" fill="none" stroke="#fff" stroke-width="2.400" stroke-linecap="round"/></svg>${cen(lbl11(e, s * .9, { mw: 78 }))}${sps(30 * s, 22 * s, 70 * s, 86 * s, 3, e[6], s)}` }),
+  // a ring-bound sketchbook
+  book: (e, c, s) => jel(124 * s, 158 * s, c, { r: 11 * s, in: 14 * s, b: 10 * s, fill: c[1] === 'c' || c[1] === 'a' ? c : `linear-gradient(160deg,${c},${J11.pk} 130%)`, body: `<div style="position:absolute;left:${15 * s}px;right:${15 * s}px;top:${5 * s}px;display:flex;justify-content:space-between;filter:blur(${.5 * s}px)">${Array.from({ length: 8 }, () => `<i style="width:${4.500 * s}px;height:${11 * s}px;border-radius:${3 * s}px;background:#fff;opacity:.92"></i>`).join('')}</div>${cen(lbl11(e, s), `top:${8 * s}px`)}${sps(20 * s, 26 * s, 84 * s, 110 * s, 4, e[6] + 2, s)}` }),
+  // a thrown pot
+  vase: (e, c, s) => `<div style="display:grid;justify-items:center">${jel(54 * s, 40 * s, c, { r: `${9 * s}px ${9 * s}px ${3 * s}px ${3 * s}px`, in: 8 * s, b: 5 * s, tint: 12, fill: mx11(c, 40) })}<div style="margin-top:${-9 * s}px">${jel(128 * s, 146 * s, c, { r: '50% 50% 46% 46% / 38% 38% 62% 62%', cr: '50% 50% 46% 46% / 38% 38% 62% 62%', in: 15 * s, b: 10 * s, fill: `linear-gradient(${mx11(c, 70)},${c} 45%)`, body: cen(lbl11(e, s * .9, { mw: 80 }), `top:${14 * s}px`) + sps(26 * s, 40 * s, 76 * s, 86 * s, 4, e[6] + 4, s) })}</div></div>`,
+  // a die
+  dice: (e, c, s) => jel(124 * s, 124 * s, c, { r: 27 * s, in: 15 * s, b: 10 * s, body: `${[[24, 24], [86, 86]].map(([x, y]) => `<i style="position:absolute;left:${x * s}px;top:${y * s}px;width:${14 * s}px;height:${14 * s}px;border-radius:50%;background:#fff;filter:blur(${1.300 * s}px);opacity:.88"></i>`).join('')}${cen(lbl11(e, s * .86, { mw: 76 }))}` }),
+  // a bowl
+  bowl: (e, c, s) => `<div style="display:grid;justify-items:center">${jel(154 * s, 24 * s, c, { r: 12 * s, in: 6 * s, b: 4 * s, tint: 12, fill: mx11(c, 45) })}<div style="margin-top:${-7 * s}px">${jel(138 * s, 90 * s, c, { r: `${9 * s}px ${9 * s}px ${69 * s}px ${69 * s}px / ${9 * s}px ${9 * s}px ${82 * s}px ${82 * s}px`, cr: `${6 * s}px ${6 * s}px ${56 * s}px ${56 * s}px / ${6 * s}px ${6 * s}px ${66 * s}px ${66 * s}px`, in: `${13 * s}px ${15 * s}px ${14 * s}px`, b: 9 * s, fill: c[1] === 'c' || c[1] === 'a' ? c : `linear-gradient(${c},${J11.or} 150%)`, body: cen(lbl11(e, s * .8, { mw: 84 }), `bottom:${10 * s}px`) + sps(34 * s, 14 * s, 70 * s, 50 * s, 3, e[6] + 6, s) })}</div></div>`,
+  // a microphone
+  mic: (e, c, s) => `<div style="display:grid;justify-items:center">${jel(92 * s, 92 * s, c, { r: '50%', cr: '50%', in: 11 * s, b: 8 * s, body: cen(lbl11(e, s * .66, { mw: 86 })) + sps(18 * s, 16 * s, 56 * s, 56 * s, 3, e[6] + 8, s) })}<div style="width:${34 * s}px;height:${9 * s}px;border-radius:${3 * s}px;background:${mx11(c, 55)};filter:blur(${.8 * s}px);margin-top:${-4 * s}px;position:relative;z-index:1"></div><div style="margin-top:${-3 * s}px">${jel(44 * s, 118 * s, c, { r: `${7 * s}px ${7 * s}px ${22 * s}px ${22 * s}px`, in: `${10 * s}px ${9 * s}px ${12 * s}px`, b: 6 * s, tint: 8, fill: `linear-gradient(${mx11(c, 30)},${mx11(c, 12)})` })}</div></div>`,
+  // a moon
+  moon: (e, c, s) => jel(136 * s, 136 * s, c, { r: '50%', cr: '50%', in: 15 * s, b: 10 * s, fill: `radial-gradient(circle at 32% 34%,${mx11(c, 55)},${c} 50%,${J11.bl} 135%)`, body: cen(lbl11(e, s * .9, { mw: 80 })) + sps(24 * s, 22 * s, 86 * s, 90 * s, 6, e[6] + 10, s) }),
+}
+const EC11 = { dog: J11.sky, rose: J11.rd, pot: J11.or, dice: J11.pu, bowl: '#ffc400', mic: J11.bl, star: J11.cy }
+const EV11 = { dog: 'ball', rose: 'book', pot: 'vase', dice: 'dice', bowl: 'bowl', mic: 'mic', star: 'moon' }
+// place an object: x,y, rotation, scale, dof = extra blur (out of focus)
+const ves = (k, x, y, rot = 0, s = 1, dof = 0, o = {}) => { LM11 = o.lm || 'full'; const h = `<div style="position:absolute;left:${x}px;top:${y}px;transform:rotate(${rot}deg);transform-origin:50% 50%;${dof ? `filter:blur(${dof}px);opacity:${o.op ?? .9};` : ''}${o.ex || ''}">${VES[o.v || EV11[k]](o.e || E10[k], o.c || EC11[k], s, o.cc)}</div>`; LM11 = 'full'; return h }
+const NO11 = ['', '', '', '', '', '', 3]
+const vz = (v, c, s, x, y, ex = '', cc) => { LM11 = 'none'; const h = at(x, y, VES[v](NO11, c, s, cc), ex); LM11 = 'full'; return h }
+// frosted dock
+const nav11 = (on = 0) => `<div style="position:absolute;left:54px;right:54px;bottom:14px;height:44px;border-radius:22px;background:rgba(255,255,255,.72);box-shadow:0 0 0 1px rgba(0,0,0,.05),0 10px 26px rgba(20,20,40,.10);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:6">${[['Discover', J11.or], ['Post', J11.pk], ['My Schedule', J11.sky]].map(([t, c], i) => `<span style="display:flex;align-items:center;gap:5px;font:${i === on ? 600 : 400} 8px/1 ${LX};color:${i === on ? J11.ink : J11.g2}"><i style="width:9px;height:9px;border-radius:50%;background:${c};filter:blur(${i === on ? 1.200 : 2.600}px);opacity:${i === on ? 1 : .7}"></i>${t}</span>`).join('')}</div>`
+const P11 = (inner, o = {}) => phoneW(`<div style="position:absolute;inset:0;background:${o.bg || '#fff'}"></div>`, `<div style="position:absolute;inset:0;${VAR11}"><div style="position:absolute;left:0;right:0;top:44px;bottom:0;color:${J11.ink};overflow:hidden">${inner}</div>${o.nav === null ? '' : nav11(o.nav || 0)}</div>`)
+const D11 = (inner, on = 'Discover', bg = '#fff') => dk6(bg, `<div style="position:absolute;inset:0;color:${J11.ink};overflow:hidden">${inner}</div>`, on).replace('class="inner" style="', `class="inner" style="${VAR11};`)
+const btn11 = (t, c = J11.ink, s = 9, ex = '') => `<span style="display:inline-block;padding:${s * 1.1}px ${s * 2}px;border-radius:99px;background:${c};color:#fff;font:600 ${s}px/1 ${LX};letter-spacing:.01em;white-space:nowrap;${ex}">${t}</span>`
+
+// ---------- J1 · In focus (Discover). What fits is sharp, what doesn't is out of focus.
+O11.J1 = [
+  P11(`${ves('dice', 108, -30, -16, .8, 3.500)}${ves('dog', -30, 10, -14, .98)}${ves('pot', 168, 44, 16, .9)}
+    ${ves('rose', 64, 118, -10, .8)}${ves('mic', -8, 262, 22, .92, 4)}${ves('bowl', 78, 384, 6, .86, 3)}${ves('star', 192, 306, -14, .86, 5)}
+    ${at(0, 252, ttl11('Free from<br>2:10 until<br>4:40', 31, 'text-align:center;width:280px'))}
+    ${at(20, 472, cap11('3 things fit. They are the ones in focus.', 6.6, J11.ink, 'width:240px'))}`),
+  D11(`${ves('dog', 40, 10, -14, 1.500)}${ves('dice', 360, -60, -16, 1.300, 5)}${ves('pot', 770, -10, 16, 1.450)}${ves('rose', 500, 330, -10, 1.250)}
+    ${ves('mic', 30, 290, 22, 1.500, 6)}${ves('bowl', 230, 440, 6, 1.300, 5)}${ves('star', 800, 330, -14, 1.400, 7)}
+    ${at(0, 196, ttl11('Free from 2:10<br>until 4:40', 64, 'text-align:center;width:1000px'))}
+    ${at(60, 530, cap11('3 things fit. They are the ones in focus. Tap one to hold it.', 11, J11.ink))}`),
+  P11(`${ves('dog', -30, 10, -14, .98, 4.500)}${ves('pot', 168, 44, 16, .9, 5)}${ves('rose', 64, 118, -10, .8, 4)}${ves('mic', -8, 262, 22, .92, 5)}${ves('bowl', 78, 384, 6, .86, 4)}${ves('star', 192, 306, -14, .86, 5.500)}
+    ${at(0, 236, ttl11('Nothing<br>fits twenty<br>minutes', 31, 'text-align:center;width:280px'))}
+    ${at(0, 348, `<div style="width:280px;text-align:center">${btn11('Widen my free time')}</div>`)}
+    ${at(20, 472, cap11('The soonest thing starts at 2:30.', 6.6, J11.ink, 'width:240px'))}`)]
+SEC11.push({ h: 'Discover', say: 'Sharpness carries the answer. An event that fits your free time is in focus. One that does not is still there, soft and out of reach.', o: [['J1', 'In focus', 'Your free time is the headline. Events float around it as frosted objects: the three that fit are sharp, with the start time printed on them. The rest blur out. The object and its colour are picked from the event, so this runs on what the app stores today.']] })
+const SAY11 = { J1: 'a twenty-minute gap' }

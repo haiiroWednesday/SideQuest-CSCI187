@@ -1,0 +1,48 @@
+
+// ---------- shapes (a category each). J7 needs a category field the app does not store yet.
+const svg2 = (w, h, vb, shell, core, sb, b, body = '') => `<div style="position:relative;width:${w}px;height:${h}px;flex:none"><svg viewBox="${vb}" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:blur(${sb}px)">${shell}</svg><svg viewBox="${vb}" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:blur(${b}px)">${core}</svg>${body}</div>`
+const petals = (r, R, f) => Array.from({ length: 6 }, (_, i) => `<circle cx="${(50 + R * Math.cos(i * Math.PI / 3)).toFixed(1)}" cy="${(50 + R * Math.sin(i * Math.PI / 3)).toFixed(1)}" r="${r}" fill="${f}"/>`).join('') + `<circle cx="50" cy="50" r="${R}" fill="${f}"/>`
+const SH11 = {
+  flower: (s, c, body) => svg2(s, s, '0 0 100 100', petals(22, 27, mx11(c, 16)), petals(15, 26, c), 1.300, s * .055, body),
+  tri: (s, c, body) => svg2(s, s, '0 0 100 100', `<path d="M50 22L84 80L16 80Z" fill="${mx11(c, 16)}" stroke="${mx11(c, 16)}" stroke-width="28" stroke-linejoin="round"/>`, `<path d="M50 26L80 78L20 78Z" fill="${c}" stroke="${c}" stroke-width="10" stroke-linejoin="round"/>`, 1.300, s * .06, body),
+  ring: (s, c, body) => svg2(s, s, '0 0 100 100', `<circle cx="50" cy="50" r="31" fill="none" stroke="${mx11(c, 16)}" stroke-width="36"/>`, `<circle cx="50" cy="50" r="31" fill="none" stroke="${c}" stroke-width="21"/>`, 1.300, s * .055, body),
+  pill: (s, c, body) => jel(s * 1.500, s * .74, c, { r: s * .37, cr: s * .3, body }),
+  plus: (s, c, body) => svg2(s, s, '0 0 100 100', `<path d="M50 20V80M20 50H80" fill="none" stroke="${mx11(c, 16)}" stroke-width="40" stroke-linecap="round"/>`, `<path d="M50 22V78M22 50H78" fill="none" stroke="${c}" stroke-width="24" stroke-linecap="round"/>`, 1.300, s * .06, body),
+  bubble: (s, c, body) => svg2(s * 1.200, s, '0 0 120 100', `<path d="M22 20H98V64H56L34 84V64H22Z" fill="${mx11(c, 16)}" stroke="${mx11(c, 16)}" stroke-width="24" stroke-linejoin="round"/>`, `<path d="M26 24H94V60H54L38 74V60H26Z" fill="${c}" stroke="${c}" stroke-width="8" stroke-linejoin="round"/>`, 1.300, s * .06, body) }
+const cl11 = (n, c, s) => `<div>${big11(c, 28 * s)}${wt(n, 6.400 * s, { ex: `margin-top:${2 * s}px` })}</div>`
+const CATS11 = [['flower', 'Outdoors', 4, J11.gr], ['tri', 'Make', 3, J11.or], ['ring', 'Food', 2, J11.pk], ['plus', 'Music', 3, J11.sky], ['pill', 'Games', 2, J11.pu], ['bubble', 'Talks', 1, J11.cy]]
+const cat11 = (i, x, y, s, rot, sel, fs = 1) => { const [k, n, c, col] = CATS11[i]; return `<div style="position:absolute;left:${x}px;top:${y}px;transform:rotate(${rot}deg);${sel ? '' : `filter:blur(${1.300 * fs}px);opacity:.86`}">${SH11[k](s, col, cen(k === 'ring' || k === 'bubble' ? wt(`${c} ${n}`, 7 * s / 100, { ex: k === 'bubble' ? `margin-top:${-12 * s / 100}px` : '' }) : cl11(n, c, s / 100)) + sps(s * .25, s * .2, s * .5, s * .45, 3, i + 2, s / 100))}</div>` }
+O11.J7 = [
+  P11(`${at(20, 12, cap11('Pick a shape', 6.6))}${at(0, 12, `<div style="width:260px;text-align:right">${cap11('Today', 6.6, J11.g2)}</div>`)}
+    ${cat11(0, 6, 24, 152, -8, 1)}${cat11(1, 174, 28, 92, 10)}${cat11(2, 176, 150, 92, 0)}${cat11(3, 26, 186, 92, 12)}${cat11(4, 128, 262, 74, -10)}${cat11(5, 22, 286, 62, -6)}
+    ${at(20, 352, ttl11('Outdoors', 23))}${at(132, 362, cap11('2 of 4 fit 2:10 to 4:40', 6.400, J11.g2))}
+    ${at(20, 394, row11('dog', 1))}${at(20, 438, row11('rose', 1))}`),
+  D11(`${at(50, 20, cap11('Pick a shape', 11))}
+    ${cat11(0, 40, 40, 290, -8, 1, 1.600)}${cat11(1, 390, 50, 160, 10, 0, 1.600)}${cat11(2, 400, 300, 170, 0, 0, 1.600)}${cat11(3, 130, 370, 160, 12, 0, 1.600)}${cat11(4, 610, 430, 120, -10, 0, 1.600)}${cat11(5, 590, 50, 110, -6, 0, 1.600)}
+    ${at(690, 190, ttl11('Outdoors', 46))}${at(693, 250, cap11('2 of 4 fit 2:10 to 4:40', 10.500, J11.g2))}${at(690, 290, row11('dog', 1.500))}${at(690, 352, row11('rose', 1.500))}`),
+  P11(`${at(20, 12, cap11('Pick a shape', 6.6))}${at(0, 12, `<div style="width:260px;text-align:right">${cap11('Today', 6.6, J11.g2)}</div>`)}
+    <div style="position:absolute;inset:0;filter:blur(3px);opacity:.8">${cat11(0, 6, 24, 152, -8, 1)}</div>${cat11(1, 174, 28, 92, 10)}${cat11(2, 176, 150, 92, 0)}${cat11(3, 26, 186, 92, 12)}${cat11(4, 128, 262, 74, -10)}${cat11(5, 22, 286, 62, -6)}
+    ${at(20, 352, ttl11('Nothing outdoors<br>fits today', 21))}${at(21, 404, cap11('4 are on, none inside 2:10 to 2:30.<br>2 fit tomorrow.', 6.400, J11.g2))}${at(20, 440, btn11('See tomorrow', J11.ink, 8))}`)]
+
+// ---------- J8 · One soft thing per state
+const st11 = (name, capt, obj, w, h, fs = 1) => `<div style="position:relative;width:${w}px;height:${h}px;background:${J11.card};border-radius:3px;overflow:hidden;flex:none"><div style="position:absolute;left:${w * .08}px;top:${h * .07}px">${nm11(name, 8 * fs)}</div>${obj}<div style="position:absolute;left:${w * .08}px;right:${w * .08}px;bottom:${h * .06}px">${cap11(capt, 5.800 * fs, J11.g2)}</div></div>`
+const STS11 = (w, h, k, fs) => [st11('Loading', 'Coming into focus', vz('ball', J11.sky, .62 * k, w * .3, h * .3, 'filter:blur(7px)'), w, h, fs), st11('Nothing<br>yet', 'No events today', vz('bowl', '#c4cad4', .62 * k, w * .2, h * .36), w, h, fs), st11('Saved', 'In My Schedule', vz('book', J11.rd, .56 * k, w * .36, h * .26, 'transform:rotate(8deg)'), w, h, fs),
+  st11('Removed', 'Undo', vz('dice', J11.pu, .6 * k, w * .34, h * .3, 'filter:blur(4px);opacity:.5'), w, h, fs), st11('Offline', 'Can&rsquo;t reach the catalog', vz('mic', '#aab2c0', .56 * k, w * .44, h * .2, 'transform:rotate(14deg)'), w, h, fs), st11('Over', 'This one has ended', vz('moon', '#8d94a3', .6 * k, w * .32, h * .3, 'filter:blur(2.500px);opacity:.7'), w, h, fs)].join('')
+O11.J8 = [
+  P11(`${at(14, 10, cap11('Six states, six soft things', 6.6))}${at(12, 28, `<div style="display:grid;grid-template-columns:124px 124px;gap:8px">${STS11(124, 150, 1, 1)}</div>`)}`, { nav: null }),
+  D11(`${at(40, 16, cap11('Six states, six soft things', 11))}${at(40, 46, `<div style="display:grid;grid-template-columns:repeat(3,300px);gap:12px">${STS11(300, 250, 1.800, 1.600)}</div>`)}`),
+  P11(`${vz('bowl', J11.pk, 1.560, 20, 110, 'transform:rotate(-6deg)')}${[J11.sky, J11.ye, J11.or, J11.pu, J11.gr, J11.rd, J11.cy, J11.ye, J11.sky, J11.or, J11.pu, J11.rd].map((c, i) => at(64 + (i % 4) * 40 + (i % 3) * 5, 62 + Math.floor(i / 4) * 30 + (i % 2) * 9, `<i style="display:block;width:30px;height:30px;border-radius:50%;background:${c};filter:blur(4px);opacity:.92"></i>`)).join('')}
+    ${at(20, 352, ttl11('The bowl is full', 25))}${at(21, 390, cap11('100 plans is the limit.<br>Remove one before adding another.', 6.6))}${at(20, 432, btn11('Open My Schedule', J11.ink, 8))}`)]
+
+// ---------- J9 · Day cards (My Schedule, the week)
+const dc11 = (day, ks, w, h, s, fs = 1) => `<div style="position:relative;width:${w}px;height:${h}px;background:${J11.card};border-radius:3px;overflow:hidden;flex:none"><div style="position:absolute;left:${w * .08}px;top:${h * .07}px">${nm11(day, 8 * fs, ks.length ? J11.ink : J11.g2)}</div>${ks.slice(0, 2).map((k, i) => ves(k, w * (ks.length > 1 ? (i ? .5 : .1) : .36), h * (ks.length > 1 ? (i ? .3 : .46) : .36), i ? 8 : -6, s * (i ? 1 : .9), 0, { lm: 'time' })).reverse().join('')}<div style="position:absolute;left:${w * .08}px;bottom:${h * .06}px">${cap11(ks.length ? `${ks.length} plan${ks.length > 1 ? 's' : ''}` : 'Clear', 6 * fs, ks.length ? J11.ink : J11.g2)}</div></div>`
+const WK11 = [['Mon<br>16', ['rose', 'pot', 'bowl', 'star']], ['Tue<br>17', ['dog', 'mic']], ['Wed<br>18', []], ['Thu<br>19', ['dice']], ['Fri<br>20', ['bowl', 'star']], ['Sat<br>21', []]]
+O11.J9 = [
+  P11(`${at(14, 10, cap11('This week &middot; 9 plans', 6.6))}${at(12, 28, `<div style="display:grid;grid-template-columns:124px 124px;gap:8px">${WK11.map(([d, ks]) => dc11(d, ks, 124, 150, .62)).join('')}</div>`)}`, { nav: 2 }),
+  D11(`${at(40, 16, cap11('This week &middot; 9 plans', 11))}${at(40, 46, `<div style="display:grid;grid-template-columns:repeat(3,300px);gap:12px">${WK11.map(([d, ks]) => dc11(d, ks, 300, 250, 1.100, 1.600)).join('')}</div>`)}`, 'My Schedule'),
+  P11(`${at(14, 10, cap11('This week', 6.6))}${at(12, 28, `<div style="display:grid;grid-template-columns:124px 124px;gap:8px">${WK11.map(([d]) => dc11(d, [], 124, 150, .62)).join('')}</div>`)}
+    ${at(0, 206, ttl11('A clear week', 27, 'width:280px;text-align:center'))}${at(0, 250, `<div style="width:280px;text-align:center">${cap11('Nothing planned through Saturday.', 6.6)}<div style="margin-top:14px">${btn11('Find what fits')}</div></div>`)}`, { nav: 2 })]
+SEC11[0].o.push(['J7', 'Pick a shape', 'Each kind of event is one soft shape with a count on it. The one you pick comes into focus and its events list below. This one needs a category on each event, which the app does not store yet.'])
+SEC11[2].o.push(['J9', 'Day cards', 'The week as six small cards. Each day shows the things you planned, cropped by the card edge, with the start time on them. A clear day is an empty card that says Clear. Runs on today&rsquo;s data.'])
+SEC11.push({ h: 'Everywhere', say: 'The moments between screens get one soft object each.', o: [['J8', 'One soft thing per state', 'Loading is an object coming into focus. Empty is a clear jar. Saved is sharp and full. Removed fades. Offline and over go grey. Each has its words too. Runs on today&rsquo;s data.']] })
+Object.assign(SAY11, { J7: 'a kind with nothing that fits', J8: 'a schedule at its 100-plan limit', J9: 'a week with nothing planned' })

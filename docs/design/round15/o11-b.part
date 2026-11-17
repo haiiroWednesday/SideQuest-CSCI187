@@ -1,0 +1,89 @@
+
+// ---------- shared bits for J2..J9
+const nm11 = (t, s = 9, c = J11.ink, ex = '') => `<div style="display:inline-block;font:500 ${s}px/1.14 ${LXW};letter-spacing:-.01em;text-align:center;color:${c};${ex}">${t}</div>`
+const row11 = (k, fs = 1, ex = '') => `<div style="display:flex;align-items:center;gap:${9 * fs}px;${ex}">${jel(30 * fs, 30 * fs, EC11[k], { r: 8 * fs })}<div><div style="font:600 ${12 * fs}px/1.1 ${LX};white-space:nowrap">${E10[k][2]}</div>${cap11(`${E10[k][0]} &middot; ${E10[k][3]} &middot; ${E10[k][6]} min`, 6.2 * fs, J11.g2, 'margin-top:2px;white-space:nowrap')}</div></div>`
+const frost11 = (w, h, r, ex = '') => `<div style="position:absolute;inset:0;border-radius:${r};background:rgba(236,240,247,.96);box-shadow:inset 0 0 0 1.500px rgba(255,255,255,.9),0 0 ${Math.min(w, h) * .14}px rgba(150,170,205,.28);filter:blur(1.200px);${ex}"></div>`
+// a frosted container that holds time. Events are layers of colour at their real times. Overlaps mix.
+const tank11 = (w, h, t0, t1, ks, o = {}) => { const ppm = h / (t1 - t0), r = o.r || `${w * .07}px ${w * .07}px ${w * .22}px ${w * .22}px`, pad = o.pad ?? w * .1, fs = o.fs || 1, Y = t => (tm10(t) - t0) * ppm
+  const lay = ks.map(k => { const e = E10[k]; return `<div style="position:absolute;left:${pad}px;right:${pad}px;top:${Y(e[0]).toFixed(1)}px;height:${(Y(e[1]) - Y(e[0])).toFixed(1)}px;border-radius:${w * .09}px;background:${EC11[k]};filter:blur(${(o.b ?? w * .05).toFixed(1)}px);opacity:.92;mix-blend-mode:multiply"></div>` }).join('')
+  const txt = o.lab === false ? '' : ks.map((k, i) => { const e = E10[k], low = i > 0 && tm10(e[0]) < tm10(E10[ks[i - 1]][1]); return `<div style="position:absolute;left:0;right:0;top:${(low ? Y(e[1]) - 40 * fs : Y(e[0]) + 7 * fs).toFixed(1)}px;display:grid;justify-items:center">${big11(e[0], 17 * fs, { op: .92 })}${wt(e[2], 5.8 * fs, { ex: 'margin-top:2px' })}</div>` }).join('')
+  const st = ks.map((k, i) => sps(pad + 4, Y(E10[k][0]) + 6, w - pad * 2 - 12, Y(E10[k][1]) - Y(E10[k][0]) - 14, 3, i * 5 + 3, fs)).join('')
+  const ticks = (o.ticks || []).map(t => `<div style="position:absolute;right:${w + 7}px;top:${(Y(t) - 4.500 * fs).toFixed(1)}px;display:flex;align-items:center;gap:5px;font:400 ${7 * fs}px/1 ${LXW};color:${J11.g2};white-space:nowrap">${t}<i style="width:${8 * fs}px;height:1px;background:${J11.g1}"></i></div>`).join('')
+  return `<div style="position:relative;width:${w}px;height:${h}px;flex:none">${frost11(w, h, r)}${lay}${txt}${st}${ticks}${o.body || ''}</div>` }
+const T0 = tm10('2:10'), T1 = tm10('4:40')
+
+// ---------- J2 · A glass of free time (Discover)
+O11.J2 = [
+  P11(`${at(20, 16, ttl11('A glass of<br>free time', 23))}${at(21, 74, cap11('2:10 to 4:40 &middot; 150 minutes', 6.6, J11.g2))}
+    ${at(112, 104, tank11(146, 376, T0, T1, ['dog', 'rose', 'pot'], { ticks: ['2:10', '3:00', '4:00', '4:40'] }))}
+    ${at(20, 398, lab11('3 fit', 'Tap a layer', 7.500))}${at(20, 438, ast11(30))}`),
+  D11(`${at(70, 70, ttl11('A glass of<br>free time', 58))}${at(73, 208, cap11('2:10 to 4:40 &middot; 150 minutes', 11, J11.g2))}${at(70, 470, ast11(52))}${at(140, 480, lab11('3 fit', 'Tap a layer to hold it', 12))}
+    ${at(470, 28, tank11(210, 510, T0, T1, ['dog', 'rose', 'pot'], { ticks: ['2:10', '3:00', '4:00', '4:40'], fs: 1.450 }))}
+    ${at(716, 150, `<div style="display:grid;gap:26px">${['dog', 'rose', 'pot'].map(k => row11(k, 1.500)).join('')}</div>`)}${at(716, 380, cap11('Rose garden and ceramics share<br>half an hour. The colours mix there.', 9.500, J11.g2))}`),
+  P11(`${at(20, 16, ttl11('A small<br>glass', 23))}${at(21, 74, cap11('2:10 to 2:30 &middot; 20 minutes', 6.6, J11.g2))}
+    ${at(112, 104, tank11(146, 52, T0, T0 + 20, [], { ticks: ['2:10', '2:30'], r: '10px 10px 22px 22px' }))}
+    ${at(112, 170, `<div style="filter:blur(6px);opacity:.75">${tank11(146, 300, T0 + 26, T0 + 146, ['rose', 'pot'], { lab: false })}</div>`)}
+    ${at(20, 190, cap11('Nothing<br>fits in it.<br><br>The day<br>goes on<br>below,<br>out of<br>reach.', 6.6, J11.ink))}
+    ${at(20, 398, btn11('Pour a bigger one', J11.ink, 7.500))}${at(20, 438, ast11(30))}`)]
+
+// ---------- J3 · The menu (Discover, everything today)
+const CV11 = EV11
+const mc11 = (k, w, h, fit, s = .78, o = {}) => `<div style="position:relative;width:${w}px;height:${h}px;background:${J11.card};border-radius:3px;overflow:hidden;flex:none"><div style="position:absolute;left:${w * .08}px;top:${h * .07}px">${nm11(E10[k][2].split(' ').join('<br>'), o.fs || 8, fit ? J11.ink : J11.g2)}</div>${ves(k, o.x ?? w * .36, o.y ?? h * .4, o.rot ?? 0, s, fit ? 0 : 3.200 * s / .78, { lm: 'time' })}${fit ? '' : `<div style="position:absolute;left:${w * .08}px;bottom:${h * .06}px">${cap11('Doesn&rsquo;t fit', (o.fs || 8) * .78, J11.g2)}</div>`}</div>`
+const FIT11 = { dog: 1, rose: 1, pot: 1 }
+O11.J3 = [
+  P11(`${at(14, 10, cap11('Today &middot; 7 on', 6.6))}${at(0, 8, `<div style="width:266px;text-align:right">${cap11('In focus = fits 2:10 to 4:40', 6.6, J11.g2)}</div>`)}
+    ${at(12, 28, `<div style="display:grid;grid-template-columns:124px 124px;gap:8px">${['dog', 'rose', 'pot', 'dice', 'bowl', 'mic'].map(k => mc11(k, 124, 150, FIT11[k])).join('')}</div>`)}`),
+  D11(`${at(40, 16, cap11('Today &middot; 7 on', 11))}${at(0, 16, `<div style="width:960px;text-align:right">${cap11('In focus = fits 2:10 to 4:40', 11, J11.g2)}</div>`)}
+    ${at(40, 46, `<div style="display:grid;grid-template-columns:repeat(4,221px);gap:12px">${['dog', 'rose', 'pot', 'dice', 'bowl', 'mic', 'star'].map(k => mc11(k, 221, 250, FIT11[k], 1.300, { fs: 13 })).join('')}<div style="position:relative;width:221px;height:250px;border-radius:3px;border:1.500px dashed ${J11.g1};box-sizing:border-box;display:grid;place-items:center;text-align:center">${nm11('Post<br>yours', 13, J11.g2)}</div></div>`)}`),
+  P11(`${at(14, 10, cap11('Today', 6.6))}
+    ${at(12, 28, `<div style="display:grid;grid-template-columns:124px 124px;gap:8px;filter:blur(1.500px);opacity:.7">${['dog', 'rose', 'pot', 'dice', 'bowl', 'mic'].map((k, i) => `<div style="position:relative;width:124px;height:150px;background:${J11.card};border-radius:3px;overflow:hidden">${vz(EV11[k], '#c4cad4', .78, 45, 60, 'filter:blur(3px)')}</div>`).join('')}</div>`)}
+    ${at(0, 196, ttl11('Can&rsquo;t reach<br>the catalog', 27, 'width:280px;text-align:center'))}${at(0, 268, `<div style="width:280px;text-align:center">${cap11('Your saved plans are still on this phone.', 6.6, J11.ink)}<div style="margin-top:14px">${btn11('Try again')}</div></div>`)}`)]
+
+// ---------- J4 · Held to the light (event detail)
+const hero11 = (s, dim) => `<div style="transform:rotate(13deg);${dim ? 'filter:blur(13px) saturate(.2);opacity:.45' : ''}">${jel(124 * s, 158 * s, J11.rd, { r: 11 * s, in: 13 * s, b: 9 * s, fill: `linear-gradient(160deg,${J11.rd},${J11.pk} 130%)`, body: dim ? '' : `<div style="position:absolute;left:${15 * s}px;right:${15 * s}px;top:${5 * s}px;display:flex;justify-content:space-between;filter:blur(${.5 * s}px)">${Array.from({ length: 8 }, () => `<i style="width:${4.500 * s}px;height:${11 * s}px;border-radius:${3 * s}px;background:#fff;opacity:.92"></i>`).join('')}</div><span class="x-rosep" style="position:absolute;left:${30 * s}px;bottom:${16 * s}px;width:${66 * s}px;height:${66 * s}px;filter:blur(${2.300 * s}px);opacity:.92"></span><div style="position:absolute;left:${22 * s}px;top:${26 * s}px">${big11('3:00', 34 * s, { op: .94 })}</div>${sps(20 * s, 60 * s, 80 * s, 70 * s, 5, 4, s)}` })}</div>`
+O11.J4 = [
+  P11(`${at(104, -6, hero11(1.750))}
+    ${at(20, 294, ttl11('Rose garden<br>sketch', 29))}
+    ${at(21, 364, cap11('3:00 to 4:00 &middot; Mission Gardens<br>Art Club', 7))}
+    ${at(21, 398, `<div style="font:400 10.500px/1.45 ${LX};color:${J11.g2};width:236px">Bring a pencil. Paper is provided. Fits your free time with 40 minutes to spare.</div>`)}
+    ${at(20, 452, btn11('Add to My Schedule', J11.ink, 8.500))}${at(20, 30, ast11(28))}`),
+  D11(`${at(560, 10, hero11(3.300))}
+    ${at(80, 170, ttl11('Rose garden<br>sketch', 60))}${at(83, 316, cap11('3:00 to 4:00 &middot; Mission Gardens &middot; Art Club', 11))}
+    ${at(82, 354, `<div style="font:400 15px/1.5 ${LX};color:${J11.g2};width:360px">Bring a pencil. Paper is provided. Fits your free time with 40 minutes to spare.</div>`)}
+    ${at(82, 446, btn11('Add to My Schedule', J11.ink, 13))}${at(80, 70, ast11(46))}${at(140, 78, lab11('Held to the light', 'One event and nothing else', 12))}`),
+  P11(`${at(104, -6, hero11(1.750, 1))}
+    ${at(20, 294, ttl11('This one<br>has faded', 29))}
+    ${at(21, 364, cap11('Rose garden sketch left the catalog.', 7))}
+    ${at(21, 388, `<div style="font:400 10.500px/1.45 ${LX};color:${J11.g2};width:236px">The host took it down. It is off your schedule too.</div>`)}
+    ${at(20, 452, btn11('Back to Discover', J11.ink, 8.500))}${at(20, 30, ast11(28))}`)]
+
+// ---------- J5 · The tube (My Schedule, one day)
+const DT0 = tm10('2:00'), DT1 = tm10('10:00')
+const tubeR = w => `${w * .12}px ${w * .12}px ${w / 2}px ${w / 2}px`
+const tlab11 = (k, y, fs = 1, note = '') => `<div style="position:absolute;left:0;top:${y}px;display:flex;align-items:center;gap:${6 * fs}px"><i style="width:${16 * fs}px;height:1px;background:${J11.g1}"></i><div><div style="font:600 ${11 * fs}px/1.1 ${LX};white-space:nowrap">${E10[k][0]} &nbsp;${E10[k][2]}</div>${cap11(E10[k][3] + (note ? ` &middot; ${note}` : ''), 6 * fs, J11.g2, 'margin-top:2px;white-space:nowrap')}</div></div>`
+const dayY = (t, h) => (tm10(t) - DT0) * h / (DT1 - DT0)
+O11.J5 = [
+  P11(`${at(20, 14, cap11('<b style="font-weight:700">Mon 16</b> &nbsp; <span style="color:' + J11.g1 + '">Tue 17 &nbsp; Wed 18 &nbsp; Thu 19</span>', 7))}
+    ${at(20, 34, ttl11('Today,<br>settled', 23))}
+    ${at(22, 100, tank11(76, 384, DT0, DT1, ['rose', 'pot', 'bowl', 'star'], { r: tubeR(76), lab: false, pad: 9, b: 5 }))}
+    ${at(102, 100, `<div style="position:relative;width:150px;height:384px">${tlab11('rose', dayY('3:00', 384) + 2, .92)}${tlab11('pot', dayY('4:00', 384) + 2, .92, 'shares half an hour')}${tlab11('bowl', dayY('6:00', 384) + 10, .92)}${tlab11('star', dayY('8:00', 384) + 22, .92)}</div>`)}
+    ${at(214, 60, ast11(30))}`, { nav: 2 }),
+  D11(`${at(60, 28, ttl11('This week, settled', 38))}${at(0, 44, `<div style="width:940px;text-align:right">${cap11('Each tube is a day. Colour sits at the hour it happens.', 10, J11.g2)}</div>`)}
+    ${[['Mon 16', ['rose', 'pot', 'bowl', 'star']], ['Tue 17', ['dog', 'mic']], ['Wed 18', []], ['Thu 19', ['dice']], ['Fri 20', ['bowl', 'star']]].map(([d, ks], i) => at(64 + i * 180, 100, `<div style="display:grid;justify-items:center;gap:10px;width:120px">${cap11(i === 0 ? `<b style="font-weight:700">${d}</b>` : d, 10, i === 0 ? J11.ink : J11.g2)}${tank11(92, 380, DT0, DT1, ks, { r: tubeR(92), lab: false, pad: 10, b: 5 })}${cap11(ks.length ? `${ks.length} plan${ks.length > 1 ? 's' : ''}` : 'Clear', 9, J11.g2)}</div>`)).join('')}`, 'My Schedule'),
+  P11(`${at(20, 14, cap11('<b style="font-weight:700">Mon 16</b> &nbsp; <span style="color:' + J11.g1 + '">Tue 17 &nbsp; Wed 18 &nbsp; Thu 19</span>', 7))}
+    ${at(20, 34, ttl11('An empty<br>tube', 23))}
+    ${at(22, 100, tank11(76, 384, DT0, DT1, [], { r: tubeR(76) }))}
+    ${at(124, 236, cap11('Nothing has<br>settled today.', 7))}${at(124, 276, btn11('Find what fits', J11.ink, 7.500))}${at(214, 60, ast11(30))}`, { nav: 2 })]
+
+// ---------- J6 · Fill the label (Post)
+const fld11 = (l, v, fs = 1, o = {}) => `<div style="margin-bottom:${9 * fs}px"><div style="font:500 ${5.800 * fs}px/1 ${LXW};letter-spacing:.04em;text-transform:uppercase;color:#fff;opacity:.78">${l}</div><div style="font:${o.ph ? 300 : 500} ${12 * fs}px/1.25 ${LX};color:#fff;opacity:${o.ph ? .6 : 1};padding:${3 * fs}px 0 ${4 * fs}px;border-bottom:${o.bad ? 2 : 1}px solid rgba(255,255,255,${o.bad ? 1 : .55});white-space:nowrap">${v}${o.bad ? `<span style="float:right;background:#fff;color:#a32035;font:700 ${6.500 * fs}px/1 ${LX};padding:${3 * fs}px ${5 * fs}px;border-radius:99px;margin-top:${1 * fs}px">${o.bad}</span>` : ''}</div></div>`
+const postB11 = (s, bad) => jel(236 * s, 396 * s, J11.pk, { r: `${46 * s}px ${46 * s}px ${22 * s}px ${22 * s}px`, in: 15 * s, b: 13 * s, tint: 16, fill: `linear-gradient(175deg,${J11.pu} -10%,${J11.pk} 55%)`, body: `<i style="position:absolute;left:50%;top:${20 * s}px;width:${22 * s}px;height:${22 * s}px;margin-left:${-11 * s}px;border-radius:50%;background:#fff;filter:blur(${.8 * s}px)"></i><div style="position:absolute;left:${30 * s}px;right:${30 * s}px;top:${52 * s}px">${big11('New', 32 * s, { op: .9, ex: `margin-bottom:${10 * s}px` })}${fld11('Title', 'Rose garden sketch', s)}${fld11('Host', 'Art Club', s)}${fld11('Where', 'Mission Gardens', s)}${fld11('Date', 'Mon, Nov 16', s)}<div style="display:grid;grid-template-columns:1fr 1fr;gap:${12 * s}px">${fld11('From', '3:00 PM', s)}${fld11('Until', bad ? '2:30 PM' : '4:00 PM', s, bad ? { bad: 'Before start' } : {})}</div>${fld11('About', 'Bring a pencil', s, { ph: 1 })}</div>${sps(24 * s, 330 * s, 180 * s, 40 * s, 5, 9, s)}` })
+O11.J6 = [
+  P11(`${at(22, 8, postB11(1))}${at(0, 418, `<div style="width:280px;text-align:center">${btn11('Post it', J11.ink, 9)}</div>`)}${at(22, 448, ast11(26))}${at(0, 452, `<div style="width:258px;text-align:right">${lab11('Post', 'Fill the tag', 7)}</div>`)}`, { nav: 1 }),
+  D11(`${at(120, 6, postB11(1.360))}${at(520, 130, ttl11('Fill the tag,<br>then tie it on', 50))}${at(523, 256, cap11('Six fields. The same six the app stores today.', 10.500, J11.g2))}${at(520, 310, btn11('Post it', J11.ink, 14))}${at(520, 450, ast11(50))}${at(590, 460, lab11('Post', 'Goes live for everyone on campus', 12))}`, 'Post'),
+  P11(`${at(22, 8, postB11(1, true))}${at(0, 418, `<div style="width:280px;text-align:center">${btn11('Post it', J11.g1, 9)}</div>`)}${at(0, 452, `<div style="width:280px;text-align:center">${cap11('It ends before it starts. Move Until past 3:00.', 6.400, '#a32035')}</div>`)}`, { nav: 1 })]
+SEC11[0].o.push(['J2', 'A glass of free time', 'Your free time is a frosted glass, as tall as the minutes you have. Events that fit sit inside as layers of colour at their real times. Where two overlap the colours mix, with no warning colour. Runs on today&rsquo;s data.'], ['J3', 'The menu', 'Everything on today as a grid of small cards, each with one object cropped by the card edge. What fits is sharp. What does not is soft and says so in words too. Runs on today&rsquo;s data.'])
+SEC11.push({ h: 'One event', say: 'A single thing, held up to the light, with nothing else on the page.', o: [['J4', 'Held to the light', 'The event is one big frosted sketchbook, cropped by the screen edge, with the start time on it and the rose photo soft inside. Details sit in the white beside it. Runs on today&rsquo;s data.']] })
+SEC11.push({ h: 'My Schedule', say: 'Plans settle like colour in a tube. The hour is the height.', o: [['J5', 'The tube', 'A day is a test tube from 2 PM to 10 PM. Each plan is a band of colour at its hour, with a plain label beside it. Overlapping plans blend where they meet. Desktop lines up the week. Runs on today&rsquo;s data.']] })
+SEC11.push({ h: 'Post', say: 'The form is a tag you fill in and tie on.', o: [['J6', 'Fill the tag', 'The six posting fields are printed in white on a frosted tag. A bad value gets one small white tag with the reason, in words. Runs on today&rsquo;s data.']] })
+Object.assign(SAY11, { J2: 'a twenty-minute gap', J3: 'the catalog out of reach', J4: 'an event that left the catalog', J5: 'a day with no plans', J6: 'an end time before the start' })
