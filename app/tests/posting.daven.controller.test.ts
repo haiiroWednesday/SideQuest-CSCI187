@@ -10,7 +10,7 @@ import {
   connectEventCatalog, loadPostedEvents, postEvent, postingDraftErrors,
   type EventCatalogPort, type EventDraft,
 } from '../src/controller/postEvent'
-import { CATALOG_LIMITS, createEventCatalog, EventCatalogError, type EventRow } from '../src/model/eventCatalog'
+import { CATALOG_LIMITS, POSTING_LIMITS, createEventCatalog, EventCatalogError, type EventRow } from '../src/model/eventCatalog'
 import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 import { createBrowserEventTable, LOCAL_CATALOG_KEY } from '../src/model/browserEventTable'
 import { STORAGE_KEY as M1_STORAGE_KEY } from '../src/model/events'
@@ -116,8 +116,8 @@ describe('form limits match the database migration', () => {
     expect(migrationSql).toContain('check (start_time < end_time)')
   })
 
-  it.each(['title', 'hostName', 'description', 'location'] as const)('%s: accepts the max length, rejects one more', field => {
-    const max = CATALOG_LIMITS[field]
+  it.each(['title', 'hostName', 'description', 'location'] as const)('%s: accepts the posting limit, rejects one more', field => {
+    const max = POSTING_LIMITS[field]
     expect(postingDraftErrors(draft({ [field]: 'x'.repeat(max) }), NOW)[field]).toBeUndefined()
     expect(postingDraftErrors(draft({ [field]: 'x'.repeat(max + 1) }), NOW)[field]).toContain(`${max} characters`)
   })

@@ -74,7 +74,7 @@ describe('PostEventForm', () => {
 
     const title = form().getByLabelText('EVENT NAME')
     expect(title.getAttribute('aria-invalid')).toBe('true')
-    expect(document.getElementById(title.getAttribute('aria-describedby')!)?.textContent).toContain('Please enter the event title.')
+    expect(document.getElementById(title.getAttribute('aria-describedby')!.split(' ')[0])?.textContent).toContain('Please enter the event title.')
     expect(screen.getByRole('alert').textContent).toContain('Please fix the highlighted fields.')
     expect(rows.size).toBe(0)
   })

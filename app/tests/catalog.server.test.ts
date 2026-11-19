@@ -35,7 +35,7 @@ describe('same-origin server API', () => {
     const { url, table } = await setup()
     const fetcher: typeof fetch = (input, init) => fetch(url + String(input), init)
     const poster = createHttpEventCatalog(fetcher), reader = createHttpEventCatalog(fetcher)
-    const created = await poster.create({ ...draft, description: '陶艺 🏺 '.repeat(200) })
+    const created = await poster.create({ ...draft, description: '陶艺 🏺 '.repeat(150) })
     expect(await reader.getById(created.id)).toEqual(created)
     expect(await reader.listUpcoming()).toEqual([created])
     expect(table.rows.size).toBe(1)

@@ -31,6 +31,16 @@ describe('My Schedule trail view: draws the Controller screen', () => {
     expect(screen.getByText('An event you planned')).toBeTruthy()
   })
 
+  it.each([
+    ['Ceramics Workshop', null],
+    ['x'.repeat(41), 'sq-title-long'],
+    ['x'.repeat(81), 'sq-title-xlong'],
+  ])('sizes the Next up title like the details card (%#)', (title, expected) => {
+    const long = { ...ceramics, title }
+    render(<ScheduleTrailView screen={presentSchedule({ ids: ['ceramics'], entries: [{ event: long, conflict: null }], missingIds: [] }, new Date('2030-11-07T13:00:00-08:00'))} />)
+    expect(within(screen.getByRole('complementary')).getByRole('heading', { name: title }).getAttribute('class')).toBe(expected)
+  })
+
   it('moves Next up and folds finished plans away as time passes', () => {
     render(draw(new Date('2030-11-07T16:30:00-08:00')))
     expect(within(screen.getByRole('complementary')).getByText('Tomorrow at 7:00pm')).toBeTruthy()

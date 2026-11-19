@@ -1,7 +1,8 @@
 -- Run after the migration in an isolated PostgreSQL database as its owner.
 -- Every test write is rolled back; this does not provision or alter live roles.
--- Anonymous inserts use a date one week ahead, inside the posting-horizon RLS policy,
--- so the CHECK-violation cases below still reach the CHECK constraints.
+-- Anonymous inserts use a date one week ahead and short text with letters, inside
+-- the posting RLS policy, so the CHECK-violation cases below still reach the CHECK
+-- constraints.
 begin;
 set local role anon;
 do $$
@@ -36,14 +37,19 @@ begin
   exception when check_violation then null; end;
   begin
     insert into public.events (title,host_name,description,location,event_date,start_time,end_time)
-    values ('Invalid length','Club',repeat('x',2001),'Room',(now() at time zone 'America/Los_Angeles')::date + 7,'14:30','15:30');
-    raise exception 'Oversized description unexpectedly succeeded';
-  exception when check_violation then null; end;
-  begin
-    insert into public.events (title,host_name,description,location,event_date,start_time,end_time)
     values ('Invalid interval','Club','Details','Room',(now() at time zone 'America/Los_Angeles')::date + 7,'15:30','14:30');
     raise exception 'Reversed interval unexpectedly succeeded';
   exception when check_violation then null; end;
 end $$;
 reset role;
+-- The posting-text RLS policy rejects descriptions over 1000 characters before
+-- any CHECK runs, so the 2000-character CHECK is tested as the table owner.
+do $$
+begin
+  begin
+    insert into public.events (title,host_name,description,location,event_date,start_time,end_time)
+    values ('Invalid length','Club',repeat('x',2001),'Room',(now() at time zone 'America/Los_Angeles')::date + 7,'14:30','15:30');
+    raise exception 'Oversized description unexpectedly succeeded';
+  exception when check_violation then null; end;
+end $$;
 rollback;
