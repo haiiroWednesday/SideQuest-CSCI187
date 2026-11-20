@@ -24,6 +24,10 @@ function ScheduleEventDetails({ event }: { event: PlanStubModel }) {
         <dt>Where</dt><dd>{event.location}</dd>
         <dt>When</dt><dd>{event.dateText}, {event.start.time}{event.start.ampm} to {event.endText}</dd>
         <dt>Description</dt><dd>{event.description ?? 'No description was provided.'}</dd>
+        {event.calendarUrl && <>
+          <dt>Calendar</dt>
+          <dd><a href={event.calendarUrl} target="_blank" rel="noopener noreferrer">Open Google Calendar draft</a></dd>
+        </>}
       </dl>
     </details>
   )

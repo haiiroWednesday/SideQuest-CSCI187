@@ -48,6 +48,11 @@ function VerifiedEventDetails({ event, onPlan, planningBlocked }: {
         </dl>
         <p className="sq-sticker-desc">{event.description ?? 'No description was provided.'}</p>
       </div>
+      {event.calendarUrl && (
+        <a className="sq-calendar-link" href={event.calendarUrl} target="_blank" rel="noopener noreferrer">
+          Open Google Calendar draft
+        </a>
+      )}
       {onPlan && (
         <button className="sq-plan-button" type="button"
           disabled={event.planned || planningBlocked} onClick={() => onPlan(event.id)}>
