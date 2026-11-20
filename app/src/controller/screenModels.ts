@@ -60,12 +60,20 @@ export type FreeWindowModel = {
   canClear: boolean
 }
 
+export type NearMissModel = {
+  id: string
+  title: string
+  kind: 'overlap' | 'outside' | 'unknown'
+  reason: string
+}
+
 export type DiscoverScreen = {
   status: 'loading' | 'error' | 'empty' | 'ready'
   errorMessage: string | null
   days: (DayModel & { events: StubModel[] })[]
   count: number
   headingText: string
+  nearMisses: NearMissModel[]
   plannedCount: number
   planningBlocked: boolean
   freeWindow: FreeWindowModel | null
