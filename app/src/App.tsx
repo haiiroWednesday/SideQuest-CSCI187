@@ -1,5 +1,5 @@
 // VIEW: compose the shared catalog, posting form and device-local Schedule.
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { connectBrowserEventCatalog, type ConnectedCatalog } from './controller/postEvent'
 import { DiscoverView, SideQuestHeader, useDiscoverScreen } from './view/DiscoverView'
 import { ScheduleTrailView, useScheduleScreen } from './view/ScheduleTrailView'
@@ -10,18 +10,34 @@ import { useBrowseDetail } from './view/useBrowseDetail'
 import { useSharedSchedule } from './view/useSharedSchedule'
 import { useSomeday } from './view/useSomeday'
 import { SomedayView } from './view/SomedayView'
+import { GroupPlanningView } from './view/GroupPlanningView'
+import { createAuthenticatedGroupClient, type GroupAccessTokenProvider } from './controller/groupClient'
 import { presentBrowseDetail, type FreeWindow } from './controller/presentScreens'
 
-const routes = { discover: '#discover', schedule: '#schedule', someday: '#someday', post: '#post' }
+const baseRoutes = { discover: '#discover', schedule: '#schedule', someday: '#someday', post: '#post' }
+export type VerifiedGroupSession = {
+  actorId: string
+  getAccessToken: GroupAccessTokenProvider
+}
 const pageFromHash = () => {
   if (window.location.hash === '#schedule') return 'schedule'
   if (window.location.hash === '#someday') return 'someday'
+  if (window.location.hash === '#groups') return 'groups'
   return ['#post', '#create-heading'].includes(window.location.hash) ? 'post' : 'discover'
 }
 
-export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?: () => Date } = {}) {
+export default function App({ catalog, now, groupSession }: {
+  catalog?: ConnectedCatalog
+  now?: () => Date
+  /** Only a verified login provider can supply this. Never read a user ID or token from localStorage here. */
+  groupSession?: VerifiedGroupSession
+} = {}) {
   const [connection] = useState(() => catalog ?? connectBrowserEventCatalog({}))
   const [page, setPage] = useState(pageFromHash)
+  const routes = groupSession ? { ...baseRoutes, groups: '#groups' } : baseRoutes
+  const groupClient = useMemo(() => groupSession
+    ? createAuthenticatedGroupClient(groupSession.getAccessToken) : null,
+    [groupSession])
   const [freeWindow, setFreeWindow] = useState<FreeWindow>({ date: '', start: '', end: '' })
   const events = useEventCatalog(connection.catalog)
   const plans = useSharedSchedule(connection.catalog)
@@ -88,6 +104,9 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
           onStatus={someday.setStatus} onRecover={someday.recover}
           onPlan={id => { void plans.add(id) }}
         />
+      ) : page === 'groups' && groupSession && groupClient ? (
+        <GroupPlanningView actorId={groupSession.actorId} client={groupClient}
+          events={events.events} routes={routes} />
       ) : page === 'post' ? (
         <div className="sq-discover-page sq-post-page">
           <SideQuestHeader routes={routes} active="post" plannedCount={plans.schedule.ids.length} />

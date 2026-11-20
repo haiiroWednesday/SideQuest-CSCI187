@@ -24,6 +24,7 @@ export type SideQuestRoutes = {
   discover?: string
   schedule?: string
   someday?: string
+  groups?: string
   post?: string
 }
 
@@ -49,7 +50,7 @@ export function SideQuestHeader({
   plannedCount = 0,
 }: {
   routes?: SideQuestRoutes
-  active?: 'discover' | 'schedule' | 'someday' | 'post'
+  active?: 'discover' | 'schedule' | 'someday' | 'groups' | 'post'
   /** Shown as a badge on My Schedule, so a student sees where a planned event went. */
   plannedCount?: number
 }) {
@@ -73,6 +74,11 @@ export function SideQuestHeader({
           {routes.someday && (
             <a aria-current={current('someday')} className="sq-tab sq-tab-someday" href={routes.someday}>
               <span className="sq-someday-symbol" aria-hidden="true">✦</span><span>Someday</span>
+            </a>
+          )}
+          {routes.groups && (
+            <a aria-current={current('groups')} className="sq-tab sq-tab-groups" href={routes.groups}>
+              <span className="sq-groups-symbol" aria-hidden="true">◎</span><span>Groups</span>
             </a>
           )}
           {routes.post && (
