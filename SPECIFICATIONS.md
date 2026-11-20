@@ -101,3 +101,9 @@ Request bodies are limited to 16 KiB, browser cross-origin writes are rejected, 
 - `controller/presentDiscover.ts` applies category and strict full-fit filtering to the same catalog snapshot. Results, fit counts and same-date near-miss explanations are all scoped to the selected category. Category counts describe the upcoming catalog before the optional free-window constraint.
 - `view/CategoryFilters.tsx` renders accessible pressed-state filter controls, responsive horizontal scrolling and an All activities recovery action. Decorative symbols are temporary placeholders for curated illustrated category artwork, pending final design selection.
 - Future server-set or organizer-selected categories require a reviewed, backward-compatible Event contract and SQL migration. Do not silently reinterpret these provisional keyword suggestions as verified event metadata.
+
+## S9 — Google Calendar draft export (new final-project draft)
+- `controller/calendarExport.ts` derives a Google Calendar event-draft link from existing verified CampusEvent title, description, location, date and start/end in `America/Los_Angeles`. It does not require OAuth, read a calendar, issue an API request or mutate attendance.
+- California wall clock resolves to UTC only when unique. Spring DST gaps and autumn repeated local times return no link rather than silently creating a draft at the wrong instant.
+- Event details and expanded Schedule event text expose a separate `Open Google Calendar draft` link with safe encoded fields. The student must review and manually save the draft in Google Calendar; opening it does not register them for the campus event.
+- Reference: [Google Calendar event-draft link guidance](https://developers.google.com/workspace/calendar/api/concepts/inviting-attendees-to-events). Real Calendar free/busy, calendar synchronization and secure OAuth remain independent, approval-gated features.
