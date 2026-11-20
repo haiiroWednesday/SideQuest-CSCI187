@@ -44,7 +44,9 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 - `model/schedule.ts`: `sidequest.planned-event-ids.v1` stores **only IDs** in the current browser. Model checks IDs, sorts resolved event details, calculates overlaps and enforces the provisional 100-plan limit.
 - `controller/personalSchedule.ts` preserves synchronous local plan writes. `controller/sharedSchedule.ts` coordinates `getById()` reads, distinguishes missing/failed/timed-out details, and rejects obsolete results without changing saved IDs.
 - `view/ScheduleTrailView.tsx` renders controller-prepared plans, conflicts, error/loading/retry states and remove controls. Removal edits only locally stored planned IDs, never the catalog.
+- Compact Schedule cards preserve list-text clamping and provide keyboard-accessible disclosures for full upcoming and past event text, including legacy-length records. This uses resolved presenter data without another catalog lookup or changed plan storage.
 - Public M2 event details must pass the M2 storage ceiling (including a 2,000-character description), not the stricter posting limits, even though older M1 records used a 500-character limit. Legacy records remain readable where applicable.
+- The Schedule presenter also calculates exact start/end minutes and disjoint layout lanes for a proportional daily timeline; the View renders a visual overview above the existing accessible event list. Displayed bar height is 1.2 pixels per minute, so 120 minutes has twice the height of 60 minutes. Collision groups share their lane count; adjacent events may reuse lanes. Historical and unresolved plans keep their existing list/retry behavior.
 - Consecutive events with end == next start do not overlap; real overlaps warn without blocking the user.
 
 ## S5 — Persistence, permissions, and failures (R1–R5)
@@ -82,3 +84,14 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 The production Node server serves the built UI and API. GET `/api/catalog` returns only the shared-storage flag; GET `/api/events` lists upcoming records or looks up `?id=...`; POST `/api/events` accepts only the seven EventDraft fields. Public PUT/PATCH/DELETE are rejected. Read deadlines are 10 seconds. The server's upstream fetch aborts at 15 seconds. An uncertain insert is not automatically retried; users are told to check Discover before another submission.
 
 Request bodies are limited to 16 KiB, browser cross-origin writes are rejected, and a per-process 20/minute/IP posting guard applies. The hosting edge should supply durable rate limiting before a real public deployment. This does not add authentication or verified organizer identity.
+
+## S6 — Someday personal intentions (new final-project draft)
+- `model/someday.ts`: separate personal Intention records have stable local IDs, plain-language title and note, explicit status, and nullable linked Event ID. An Idea may exist without an event date, and linking does not RSVP or invite others.
+- `controller/someday.ts`: rejects invalid or corrupt local records and refuses to overwrite unreadable storage without explicit user confirmation. The 100-idea limit prevents new records at capacity.
+- `view/SomedayView.tsx`: create an idea, connect it to a real currently listed Event by ID, defer or revisit it, and use the existing Schedule controller to plan the event. The public Event remains untouched.
+- State is browser-local only. Shared invitations, group permissions and cross-device synchronization require separate reviewed data models and live authorization tests before release.
+
+## S7 — Explain strict event fit (new final-project draft)
+- `model/fitAssessment.ts` reports confirmed full fit, time overlap without confirmed attendance flexibility, non-overlap or unknown end time. An event cannot become a strict M2 match merely because its interval partly overlaps.
+- `controller/presentDiscover.ts` keeps the exact existing `findEvents` filtering/count and additionally prepares up to five same-date nonmatching events with reasons. `DiscoverView` displays them separately, with no eligible-plan claim.
+- Existing catalog records still require valid start and end times. Unknown-end evaluation is additive groundwork for source import and is not evidence that undated or incomplete official events have been ingested.

@@ -90,6 +90,7 @@
 .sq-tab[aria-current="page"] { border-bottom-color: var(--sq-gold); }
 .sq-ic { width: 26px; height: 26px; flex: none; background: currentColor; -webkit-mask-position: center; mask-position: center; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
 .sq-tab-discover .sq-ic { -webkit-mask-image: url('./assets/icon-discover.svg'); mask-image: url('./assets/icon-discover.svg'); }
+.sq-tab-someday .sq-someday-symbol { display: inline-grid; place-items: center; width: 26px; height: 26px; flex: none; font: 700 27px/1 var(--font-display); }
 .sq-tab-schedule .sq-ic { -webkit-mask-image: url('./assets/icon-schedule.svg'); mask-image: url('./assets/icon-schedule.svg'); }
 .sq-post .sq-ic { -webkit-mask-image: url('./assets/icon-plus.svg'); mask-image: url('./assets/icon-plus.svg'); }
 .sq-tab[aria-current="page"] .sq-ic { color: var(--sq-gold); }
@@ -370,7 +371,9 @@
   .sq-tab { flex: 1; flex-direction: column; gap: 5px; padding: 8px 2px 6px; font: 600 12.5px/1.1 var(--font-sans); border-bottom: 0; text-align: center; }
   .sq-tab .sq-ic { width: 28px; height: 28px; }
   .sq-tab[aria-current="page"] { color: var(--sq-gold); }
-  .sq-tab-discover { order: 1; } .sq-post { order: 2; } .sq-tab-schedule { order: 3; }
+  .sq-tab-discover { order: 1; } .sq-post { order: 2; } .sq-tab-someday { order: 3; } .sq-tab-schedule { order: 4; }
+  .sq-nav { white-space: normal; }
+  .sq-tab-someday .sq-someday-symbol { height: 28px; width: 28px; font-size: 30px; }
   .sq-badge { position: absolute; top: 2px; left: calc(50% + 6px); min-width: 20px; height: 20px; font-size: 12px; line-height: 20px; padding: 0 5px; }
   .sq-discover-page .sq-post { flex: 1; margin: -26px 0 0; flex-direction: column; gap: 4px; padding: 0; background: none; border-radius: 0; color: var(--sq-on-red); font: 600 12.5px/1.1 var(--font-sans); }
   .sq-post .sq-ic { width: 62px; height: 62px; border-radius: 50%; background: var(--sq-gold); -webkit-mask: none; mask: none; position: relative; border: 3px solid var(--sq-red-deep); }
@@ -463,6 +466,15 @@
 .sq-board-schedule > .sq-trail { grid-column: 1; grid-row: 1; }
 .sq-warn { margin: 0 0 18px; padding: 12px 16px; border-radius: 16px; background: var(--sq-sticky); color: var(--sq-red); font: 600 17px var(--font-sans); }
 .sq-sticker .sq-remove { display: flex; width: 100%; justify-content: center; padding: 16px; border: 1.5px solid var(--sq-rule-strong); border-radius: 999px; text-decoration: none; color: var(--sq-ink); font-size: 18px; }
+/* Schedule cards are containers; only their actual controls should appear clickable. */
+.sq-schedule-page .sq-stub { cursor: default; }
+.sq-schedule-page .sq-stub:not(.sq-stub-selected):hover { transform: none; box-shadow: none; }
+.sq-schedule-page .sq-plan-details { min-width: 0; align-self: stretch; margin-top: 8px; }
+.sq-schedule-page .sq-plan-details summary { width: fit-content; cursor: pointer; color: var(--sq-red-deep); font: 700 15px/1.4 var(--font-sans); text-decoration: underline; text-underline-offset: 3px; }
+.sq-schedule-page .sq-plan-details summary:focus-visible { outline: 3px solid var(--sq-red-deep); outline-offset: 4px; border-radius: 3px; }
+.sq-schedule-page .sq-plan-details dl { margin: 12px 0 0; min-width: 0; }
+.sq-schedule-page .sq-plan-details dt { margin-top: 12px; color: var(--sq-red-deep); font: 800 12px/1.4 var(--font-sans); letter-spacing: .07em; text-transform: uppercase; }
+.sq-schedule-page .sq-plan-details dd { margin: 2px 0 0; color: var(--sq-ink); font: 500 16px/1.45 var(--font-sans); overflow-wrap: anywhere; white-space: pre-wrap; }
 .sq-remove { align-self: flex-start; margin-top: 6px; padding: 4px 0; border: 0; background: none; color: var(--sq-muted); font: 600 15px var(--font-sans); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .sq-remove:hover { color: var(--sq-red); }
 .sq-overlap-note { display: inline-flex; margin-left: 14px; padding: 5px 12px; border-radius: 999px; background: var(--sq-sticky); color: var(--sq-red); font: 700 14px var(--font-sans); font-style: normal; vertical-align: middle; }
@@ -526,3 +538,12 @@
   .sq-sticker h2 { font-size: 40px; }
 }
 
+
+/* Informational near misses never appear as approved search matches. */
+.sq-near-fit { margin: 26px 0; padding: 22px; border: 1px solid var(--sq-rule-strong); border-radius: 22px; background: var(--sq-ticket-bg); }
+.sq-near-fit h2 { margin: 0 0 8px; font: 400 32px/1.2 var(--font-display); }
+.sq-near-fit > p { max-width: 760px; margin: 0 0 16px; font: 500 15px/1.45 var(--font-sans); color: var(--sq-muted); }
+.sq-near-fit ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.sq-near-fit li { border-top: 1px solid var(--sq-rule); padding-top: 12px; min-width: 0; overflow-wrap: anywhere; font: 500 15px/1.4 var(--font-sans); }
+.sq-near-fit li strong { font-weight: 700; }
+.sq-near-fit li p { margin: 4px 0 0; }
