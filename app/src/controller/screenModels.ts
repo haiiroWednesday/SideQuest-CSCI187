@@ -1,6 +1,7 @@
 // CONTROLLER: share typed presentation models and event/date formatters.
 // Clock-sensitive presenters accept injected time for deterministic tests.
 import type { LegacyCampusEvent } from '../model/events'
+import type { EventCategorySelection } from '../model/eventCategories'
 import { campusNow } from '../model/eventCatalog'
 import { calendarDay, eventDuration, eventPhase, minutesUntilStart } from '../model/eventTiming'
 import { displayDate, displayTime } from './findEvents'
@@ -67,6 +68,11 @@ export type NearMissModel = {
   reason: string
 }
 
+export type CategoryFiltersModel = {
+  selected: EventCategorySelection
+  options: { id: EventCategorySelection; label: string; symbol: string; count: number }[]
+}
+
 export type DiscoverScreen = {
   status: 'loading' | 'error' | 'empty' | 'ready'
   errorMessage: string | null
@@ -74,6 +80,7 @@ export type DiscoverScreen = {
   count: number
   headingText: string
   nearMisses: NearMissModel[]
+  categories: CategoryFiltersModel
   plannedCount: number
   planningBlocked: boolean
   freeWindow: FreeWindowModel | null
