@@ -89,6 +89,8 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
   children?: ReactNode
 }) {
   const classes = ['sq-stub', selected && 'sq-stub-selected', dim && 'sq-stub-dim', stub.live && `sq-stub-${stub.live.kind}`].filter(Boolean).join(' ')
+  // Discover buttons use phrasing content; static Schedule cards may contain disclosures.
+  const BodyTag = onSelect ? 'span' : 'div'
   const body = (
     <>
       <span className="sq-stub-time">
@@ -96,7 +98,7 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
         <small>to {stub.endText}</small>
         <em>{stub.durationText}</em>
       </span>
-      <span className="sq-stub-body">
+      <BodyTag className="sq-stub-body">
         <strong>{stub.title}</strong>
         <span className="sq-by">
           {stub.host && <><b>{stub.host}</b><i> · </i></>}
@@ -104,7 +106,7 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
         </span>
         {stub.live && <span className={`sq-live sq-live-${stub.live.kind}`}>{stub.live.text}</span>}
         {children}
-      </span>
+      </BodyTag>
     </>
   )
   return onSelect ? (
