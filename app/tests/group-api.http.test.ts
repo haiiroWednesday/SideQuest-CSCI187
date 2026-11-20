@@ -1,0 +1,176 @@
+import { createServer, type Server } from 'node:http'
+import type { AddressInfo } from 'node:net'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import {
+  createGroupApi, GroupGatewayError, type AuthenticatedGroupGateway,
+} from '../server/groupApi'
+import { createSupabaseGroupGatewayFromEnv } from '../server/supabaseGroupAccess'
+
+const orgId = '11111111-1111-4111-8111-111111111111'
+const memberId = '22222222-2222-4222-8222-222222222222'
+const outsiderId = '33333333-3333-4333-8333-333333333333'
+const planId = '44444444-4444-4444-8444-444444444444'
+const eventId = '55555555-5555-4555-8555-555555555555'
+const orgToken = 'A'.repeat(40)
+const memberToken = 'B'.repeat(40)
+const outsiderToken = 'C'.repeat(40)
+const invalidToken = 'X'.repeat(40)
+const secretPlan = {
+  id: planId, eventId, organizerId: orgId, status: 'proposed', revision: 2,
+  participants: [
+    { userId: memberId, response: 'if', privateCondition: 'Private exam schedule' },
+    { userId: outsiderId, response: null, privateCondition: null },
+  ],
+  sourceSecret: 'Never expose this',
+}
+
+const servers: Server[] = []
+afterEach(async () => {
+  for (const server of servers.splice(0)) {
+    await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
+  }
+})
+
+async function listen(gateway: AuthenticatedGroupGateway | null) {
+  const api = createGroupApi(gateway)
+  const server = createServer((req, res) => {
+    void api(req, res).then(handled => {
+      if (!handled) { res.statusCode = 404; res.end('Not found') }
+    })
+  })
+  servers.push(server)
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
+  const port = (server.address() as AddressInfo).port
+  return `http://127.0.0.1:${port}`
+}
+
+function mockGateway(): AuthenticatedGroupGateway {
+  return {
+    verify: vi.fn(async token => token === orgToken ? { userId: orgId }
+      : token === memberToken ? { userId: memberId }
+        : token === outsiderToken ? { userId: outsiderId } : null),
+    list: vi.fn(async () => [{ id: planId, eventId, organizerId: orgId, status: 'proposed', revision: 2, participants: ['leak'] }]),
+    create: vi.fn(async () => secretPlan),
+    read: vi.fn(async () => secretPlan),
+    action: vi.fn(async () => secretPlan),
+  }
+}
+
+async function send(base: string, path: string, token = orgToken, body?: unknown, headers?: Record<string,string>) {
+  const hasBody = body !== undefined
+  return fetch(base + path, {
+    method: hasBody ? 'POST' : 'GET',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+      ...headers,
+    },
+    ...(hasBody ? { body: typeof body === 'string' ? body : JSON.stringify(body) } : {}),
+  })
+}
+
+describe('opt-in group HTTP gateway and verified identity contract', () => {
+  it('leaves public catalog routing untouched and group routes unavailable by default', async () => {
+    const base = await listen(null)
+    expect((await send(base, '/api/catalog')).status).toBe(404)
+    const groups = await send(base, '/api/groups')
+    expect(groups.status).toBe(503)
+    expect(await groups.json()).toEqual({ error: 'Group planning is not enabled.' })
+    expect(createSupabaseGroupGatewayFromEnv({ SIDEQUEST_GROUPS_ENABLED: 'false' })).toBeNull()
+    expect(createSupabaseGroupGatewayFromEnv({ SIDEQUEST_GROUPS_ENABLED: 'true' })).toBeNull()
+    expect(() => createSupabaseGroupGatewayFromEnv({
+      SIDEQUEST_GROUPS_ENABLED: 'true',
+      SUPABASE_URL: 'https://example.supabase.co',
+      SUPABASE_PUBLISHABLE_KEY: 'sb_secret_never_allow',
+    })).toThrow(/publishable/)
+  })
+
+  it('requires a real verifier result and never accepts client-provided actor IDs', async () => {
+    const gateway = mockGateway()
+    const base = await listen(gateway)
+    expect((await send(base, '/api/groups', '')).status).toBe(401)
+    expect((await send(base, '/api/groups', invalidToken)).status).toBe(401)
+    expect((await send(base, '/api/groups', orgToken, { eventId, actorId: outsiderId })).status).toBe(400)
+    expect(gateway.create).not.toHaveBeenCalled()
+    const success = await send(base, '/api/groups', orgToken, { eventId })
+    expect(success.status).toBe(201)
+    expect(gateway.create).toHaveBeenCalledWith(orgToken, eventId)
+    expect((await success.json()).participants[0]).not.toHaveProperty('privateCondition')
+  })
+
+  it('never returns another participant\'s private notes or raw SQL columns', async () => {
+    const gateway = mockGateway()
+    const base = await listen(gateway)
+    const orgResult = await (await send(base, '/api/groups/' + planId, orgToken)).json()
+    expect(orgResult.participants[0]).toEqual({ userId: memberId, response: 'if' })
+    expect(orgResult).not.toHaveProperty('sourceSecret')
+
+    const memberResult = await (await send(base, '/api/groups/' + planId, memberToken)).json()
+    expect(memberResult.participants[0].privateCondition).toBe('Private exam schedule')
+    expect(memberResult.participants[1]).not.toHaveProperty('privateCondition')
+
+    // Simulate a faulty upstream RPC returning another group's raw record.
+    // The Node gateway must still refuse to expose its event or participant list.
+    const rogue = { ...secretPlan, participants: [{ userId: memberId, response: 'works', privateCondition: null }] }
+    const otherGateway = { ...gateway, read: vi.fn(async () => rogue) }
+    const otherBase = await listen(otherGateway)
+    const denied = await send(otherBase, '/api/groups/' + planId, outsiderToken)
+    expect(denied.status).toBe(404)
+    expect((await denied.json()).error).toBe('Plan unavailable.')
+  })
+
+  it('allows only validated actions without forged user targets', async () => {
+    const gateway = mockGateway(), base = await listen(gateway)
+    const path = '/api/groups/' + planId + '/actions'
+    const bad = [
+      { expectedRevision: 2, action: 'respond', response: 'works', userId: outsiderId },
+      { expectedRevision: 2, action: 'invite', inviteeId: 'not-uuid' },
+      { expectedRevision: 2, action: 'respond', response: 'if', condition: '' },
+      { expectedRevision: 2, action: 'confirm', inviteeId: memberId },
+      { expectedRevision: -1, action: 'cancel' },
+    ]
+    for (const payload of bad) {
+      expect((await send(base, path, orgToken, payload)).status).toBe(400)
+    }
+    expect(gateway.action).not.toHaveBeenCalled()
+    expect((await send(base, path, orgToken, {
+      expectedRevision: 2, action: 'invite', inviteeId: memberId,
+    })).status).toBe(200)
+    expect(gateway.action).toHaveBeenCalledWith(orgToken, planId, {
+      expectedRevision: 2, action: 'invite', inviteeId: memberId,
+    })
+  })
+
+  it('does not accept cross-site writes, malformed JSON or unexpected paths', async () => {
+    const gateway = mockGateway(), base = await listen(gateway)
+    const path = '/api/groups'
+    expect((await send(base, path, orgToken, { eventId },
+      { Origin: 'https://attacker.example' })).status).toBe(403)
+    expect((await send(base, path, orgToken, '{broken')).status).toBe(400)
+    expect((await send(base, path, orgToken, { eventId, other: 'unexpected' })).status).toBe(400)
+    expect((await send(base, '/api/groups/not-a-uuid', orgToken)).status).toBe(404)
+    expect((await send(base, '/api/groups/' + planId + '/invalid', orgToken)).status).toBe(404)
+    expect(gateway.create).not.toHaveBeenCalled()
+  })
+
+  it('maps stale revisions to a generic conflict and does not leak database errors', async () => {
+    const gateway = { ...mockGateway(),
+      action: vi.fn(async () => { throw new GroupGatewayError(409, 'The group request could not be completed.') }),
+    }
+    const base = await listen(gateway)
+    const result = await send(base, '/api/groups/' + planId + '/actions', orgToken, {
+      expectedRevision: 1, action: 'confirm',
+    })
+    expect(result.status).toBe(409)
+    expect(await result.json()).toEqual({ error: 'The group request could not be completed.' })
+    expect(result.headers.get('cache-control')).toBe('private, no-store')
+  })
+
+  it('lists only explicit public summary fields, not participant roster data', async () => {
+    const gateway = mockGateway(), base = await listen(gateway)
+    const response = await send(base, '/api/groups')
+    expect(response.status).toBe(200)
+    const value = await response.json()
+    expect(value).toEqual([{ id: planId, eventId, organizerId: orgId, status: 'proposed', revision: 2 }])
+  })
+})
