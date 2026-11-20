@@ -34,10 +34,11 @@ create table public.group_participants (
   primary key (plan_id, user_id),
   constraint group_condition_matches_response
     check (
-      (response = 'if' and private_condition is not null
-        and char_length(btrim(private_condition)) between 1 and 280)
-      or
-      (response is distinct from 'if' and private_condition is null)
+      case when response = 'if'
+        then private_condition is not null
+          and char_length(btrim(private_condition)) between 1 and 280
+        else private_condition is null
+      end
     ),
   constraint group_response_time_consistent
     check ((response is null and responded_at is null)
