@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 import { loadEnv } from 'vite'
 import { createCatalogApi } from './server/api.ts'
 import { createGroupApi } from './server/groupApi.ts'
+import { createEmailAuthApi } from './server/emailAuthApi.ts'
+import { createSupabaseEmailOtpGatewayFromEnv } from './server/supabaseEmailAuth.ts'
 import { createSupabaseGroupGatewayFromEnv } from './server/supabaseGroupAccess.ts'
 import { createSupabaseEventCatalogFromEnv } from './src/model/supabaseEventTable.ts'
 
@@ -16,12 +18,15 @@ export default defineConfig(({ mode }) => ({
       const env = {
         ...loadEnv(mode, process.cwd(), 'SUPABASE_'),
         ...loadEnv(mode, process.cwd(), 'SIDEQUEST_GROUPS_'),
+        ...loadEnv(mode, process.cwd(), 'SIDEQUEST_AUTH_'),
         ...process.env,
       }
       const api = createCatalogApi(createSupabaseEventCatalogFromEnv(env))
       const groupApi = createGroupApi(createSupabaseGroupGatewayFromEnv(env))
+      const authApi = createEmailAuthApi(createSupabaseEmailOtpGatewayFromEnv(env))
       server.middlewares.use((req, res, next) => {
         void (async () => {
+          if (await authApi(req, res)) return
           if (await groupApi(req, res)) return
           if (await api(req, res)) return
           next()
