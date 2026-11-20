@@ -29,7 +29,7 @@ These final-project diagrams are editable and intended for team review before th
 | Official SCU map links + route algorithm | `app/src/model/campusRoutes.ts`; `app/src/controller/campusMapLinks.ts`; PR #54 | Draft source; no surveyed live SCU pedestrian graph, thus no internal routing |
 | Email-code sign-in and verified token gateway | `app/server/emailAuthApi.ts`, `app/server/supabaseEmailAuth.ts`, `app/src/view/useGroupEmailAuth.ts`; PR #59 | DRAFT code, feature OFF by default; live email template, provider setup and two-account verification outstanding |
 | Group HTTP operations and participant interface | `app/server/groupApi.ts`, `app/src/view/GroupPlanningView.tsx`; PRs #57–#58 | DRAFT implementation tested with simulated identities; no live group account session yet |
-| SQL `group_plans` / `group_participants` and role-restricted RPCs | `supabase/proposals/`; PR #56 | REVIEW-ONLY, not migrated, RLS/Auth unverified in team database |
+| SQL `group_plans` / `group_participants` and role-restricted RPCs | `supabase/proposals/`; PR #56 | REVIEW-ONLY, NOT MIGRATED, RLS/Auth unverified in team database |
 | Approved real-account invitations and realtime collaboration | Proposed CRC page 2 | NOT IMPLEMENTED: typed UUID invite UI is a technical preview; no production invitation claim/WebSocket flow |
 | External calendar free/busy and AI over app data | Final-project extra-credit proposal | NOT IMPLEMENTED |
 
