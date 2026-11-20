@@ -94,7 +94,10 @@ export function applyGroupCommand(
   expectedRevision: number,
   command: PlanCommand,
 ): RuleResult {
-  if (!validId(actorId)) return reject('forbidden', 'An authenticated identity is required.')
+  if (!validId(actorId) ||
+    (actorId !== plan.organizerId && !plan.participants.some(item => item.userId === actorId))) {
+    return reject('forbidden', 'You do not have access to this plan.')
+  }
   if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0) {
     return reject('invalid', 'A valid plan revision is required.')
   }
