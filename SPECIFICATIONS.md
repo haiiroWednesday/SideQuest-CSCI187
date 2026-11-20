@@ -95,3 +95,9 @@ Request bodies are limited to 16 KiB, browser cross-origin writes are rejected, 
 - `model/fitAssessment.ts` reports confirmed full fit, time overlap without confirmed attendance flexibility, non-overlap or unknown end time. An event cannot become a strict M2 match merely because its interval partly overlaps.
 - `controller/presentDiscover.ts` keeps the exact existing `findEvents` filtering/count and additionally prepares up to five same-date nonmatching events with reasons. `DiscoverView` displays them separately, with no eligible-plan claim.
 - Existing catalog records still require valid start and end times. Unknown-end evaluation is additive groundwork for source import and is not evidence that undated or incomplete official events have been ingested.
+
+## S8 — Suggested category filters (new final-project draft)
+- `model/eventCategories.ts` defines six broad campus-activity groups plus Other. Suggestions use conservative English title/host keyword signals; unknown or unclassified events fall into Other. They are **not organizer-approved labels** and are not written to the public Event table.
+- `controller/presentDiscover.ts` applies category and strict full-fit filtering to the same catalog snapshot. Results, fit counts and same-date near-miss explanations are all scoped to the selected category. Category counts describe the upcoming catalog before the optional free-window constraint.
+- `view/CategoryFilters.tsx` renders accessible pressed-state filter controls, responsive horizontal scrolling and an All activities recovery action. Decorative symbols are temporary placeholders for curated illustrated category artwork, pending final design selection.
+- Future server-set or organizer-selected categories require a reviewed, backward-compatible Event contract and SQL migration. Do not silently reinterpret these provisional keyword suggestions as verified event metadata.
