@@ -1,0 +1,67 @@
+name: Review-only group SQL (isolated fixture)
+
+# This job checks a proposed schema against an ephemeral PostgreSQL container.
+# It never connects to a real Supabase instance or applies team migrations.
+on:
+  push:
+    paths:
+      - 'supabase/proposals/**'
+      - '.github/workflows/group-sql-review-ci.yml'
+  pull_request:
+    paths:
+      - 'supabase/proposals/**'
+      - '.github/workflows/group-sql-review-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  check-proposed-schema:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: sidequest_group_review
+          POSTGRES_PASSWORD: sidequest-review-fixture
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: sidequest-review-fixture
+      PGDATABASE: sidequest_group_review
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install psql if unavailable
+        run: |
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+      - name: Build fake local Auth schema and M2 Event table
+        run: |
+          test "$PGHOST" = "127.0.0.1"
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          create role anon nologin;
+          create role authenticated nologin;
+          create schema auth;
+          create table auth.users(id uuid primary key);
+          -- TEST-ONLY stub. The real Supabase gateway verifies JWT signatures.
+          create function auth.uid() returns uuid language sql stable as $sidequest_fixture$
+            select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
+          $sidequest_fixture$;
+          SQL
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261103000000_create_events.sql
+      - name: Validate proposed group tables, constraints and deny-by-default permissions
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/proposals/20261120000000_group_plan_storage_REVIEW_ONLY.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/proposals/tests/group_plan_storage_review.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/proposals/20261120010000_group_plan_rpcs_REVIEW_ONLY.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/proposals/tests/group_plan_rpc_review.sql

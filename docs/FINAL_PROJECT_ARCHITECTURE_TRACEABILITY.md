@@ -27,9 +27,10 @@ These final-project diagrams are editable and intended for team review before th
 | Google Calendar draft links | `app/src/controller/calendarExport.ts`; PR #52 | Draft; no OAuth, imports, synchronization or calendar write |
 | Categories + calendar + group rule integration | PR #53 | Combined draft, green CI at checked head |
 | Official SCU map links + route algorithm | `app/src/model/campusRoutes.ts`; `app/src/controller/campusMapLinks.ts`; PR #54 | Draft source; no surveyed live SCU pedestrian graph, thus no internal routing |
-| Account authentication and verified sessions | `docs/GROUP_PLAN_SECURITY_CONTRACT.md` | NOT IMPLEMENTED |
-| SQL `group_plans` / `group_participants` with live RLS | Proposed ER page 2 | NOT MIGRATED / NOT VERIFIED |
-| Secure group invitations and real-time collaboration | Proposed CRC page 2 | NOT IMPLEMENTED |
+| Email-code sign-in and verified token gateway | `app/server/emailAuthApi.ts`, `app/server/supabaseEmailAuth.ts`, `app/src/view/useGroupEmailAuth.ts`; PR #59 | DRAFT code, feature OFF by default; live email template, provider setup and two-account verification outstanding |
+| Group HTTP operations and participant interface | `app/server/groupApi.ts`, `app/src/view/GroupPlanningView.tsx`; PRs #57–#58 | DRAFT implementation tested with simulated identities; no live group account session yet |
+| SQL `group_plans` / `group_participants` and role-restricted RPCs | `supabase/proposals/`; PR #56 | REVIEW-ONLY, NOT MIGRATED, RLS/Auth unverified in team database |
+| Approved real-account invitations and realtime collaboration | Proposed CRC page 2 | NOT IMPLEMENTED: typed UUID invite UI is a technical preview; no production invitation claim/WebSocket flow |
 | External calendar free/busy and AI over app data | Final-project extra-credit proposal | NOT IMPLEMENTED |
 
 ## Diagram-to-code invariants for reviewer signoff
@@ -62,3 +63,9 @@ These final-project diagrams are editable and intended for team review before th
 - [ ] Final PR merged only when required checks and reviews pass, without overwriting other contributors' work.
 
 **Historical baseline:** [M2 architecture guide](M2_IMPLEMENTATION_DIAGRAMS.md). **Permissions:** [group-plan security contract](GROUP_PLAN_SECURITY_CONTRACT.md). **Full scope and proposed RACI:** [final-project team role plan](FINAL_PROJECT_TEAM_ROLES_RACI_2026-11.md).
+
+## November 20 expanded integration candidate
+
+Branch `integration/final-full-scope-20261120` combines the previously separate visual/architecture branch (#55 stacked on #54/#53/#49) with the optional authenticated social branch (#59 stacked on #58/#57/#56/#50). It preserves the category-aware Discover presenter, map/calendar View actions, Schedule/Someday, server-only EventCatalog and all associated unit/browser security tests.
+
+**This branch is an integration candidate, not an official final submission or team-approved deployment.** Live Auth, group SQL, verified SCU pedestrian paths, real participants, and optional AI/WebSocket integrations remain incomplete. No account credentials or migrations are applied by merging these draft sources; security flags default to disabled.

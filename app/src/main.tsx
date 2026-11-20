@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App'
+import { AuthenticatedApp } from './view/AuthenticatedApp'
 import { connectServerEventCatalog } from './controller/postEvent'
 import './style.css'
 
@@ -12,5 +12,5 @@ root.textContent = 'Connecting to the event catalog…'
 root.setAttribute('aria-busy', 'true')
 void connectServerEventCatalog().then(catalog => {
   root.setAttribute('aria-busy', 'false')
-  createRoot(root).render(<StrictMode><App catalog={catalog} /></StrictMode>)
+  createRoot(root).render(<StrictMode><AuthenticatedApp catalog={catalog} /></StrictMode>)
 })

@@ -26,6 +26,9 @@ export type SideQuestRoutes = {
   discover?: string
   schedule?: string
   someday?: string
+  groups?: string
+  login?: string
+  onSignOut?: () => void
   post?: string
 }
 
@@ -51,7 +54,7 @@ export function SideQuestHeader({
   plannedCount = 0,
 }: {
   routes?: SideQuestRoutes
-  active?: 'discover' | 'schedule' | 'someday' | 'post'
+  active?: 'discover' | 'schedule' | 'someday' | 'groups' | 'login' | 'post'
   /** Shown as a badge on My Schedule, so a student sees where a planned event went. */
   plannedCount?: number
 }) {
@@ -76,6 +79,21 @@ export function SideQuestHeader({
             <a aria-current={current('someday')} className="sq-tab sq-tab-someday" href={routes.someday}>
               <span className="sq-someday-symbol" aria-hidden="true">✦</span><span>Someday</span>
             </a>
+          )}
+          {routes.groups && (
+            <a aria-current={current('groups')} className="sq-tab sq-tab-groups" href={routes.groups}>
+              <span className="sq-groups-symbol" aria-hidden="true">◎</span><span>Groups</span>
+            </a>
+          )}
+          {routes.login && (
+            <a aria-current={current('login')} className="sq-tab sq-tab-login" href={routes.login}>
+              <span className="sq-login-symbol" aria-hidden="true">◇</span><span>Sign in</span>
+            </a>
+          )}
+          {routes.onSignOut && (
+            <button type="button" className="sq-tab sq-tab-signout" onClick={routes.onSignOut}>
+              <span className="sq-login-symbol" aria-hidden="true">◇</span><span>End session</span>
+            </button>
           )}
           {routes.post && (
             <a aria-current={current('post')} className="sq-post" href={routes.post}>

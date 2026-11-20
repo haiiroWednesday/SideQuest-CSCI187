@@ -65,6 +65,9 @@ describe('final CRC / ER drawing source and course evidence', () => {
     }
     expect(guide).toContain('NOT IMPLEMENTED')
     expect(guide).toContain('NOT MIGRATED')
+    expect(guide).toContain('Email-code sign-in and verified token gateway')
+    expect(guide).toContain('feature OFF by default')
+    expect(guide).toContain('NOT IMPLEMENTED')
     expect(read('docs/diagrams/FINAL_PROJECT_ER_PREVIEW.md')).toContain('not yet deployed')
     expect(read('docs/diagrams/FINAL_PROJECT_CRC_PREVIEW.md')).toContain('not connected yet')
   })

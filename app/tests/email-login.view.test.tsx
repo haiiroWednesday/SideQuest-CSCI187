@@ -1,0 +1,55 @@
+// @vitest-environment jsdom
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { GroupEmailLoginView } from '../src/view/GroupEmailLoginView'
+
+afterEach(cleanup)
+
+describe('group email-code sign-in screen', () => {
+  it('asks for an email code, verifies it and continues without displaying access tokens', async () => {
+    const requestCode = vi.fn(async () => true)
+    const verifyCode = vi.fn(async () => true)
+    const onSuccess = vi.fn()
+    const { container } = render(<GroupEmailLoginView
+      routes={{ discover: '#discover', login: '#login' }}
+      busy={false} error={null} message={null}
+      requestCode={requestCode} verifyCode={verifyCode} onSuccess={onSuccess} />)
+
+    fireEvent.change(screen.getByLabelText('Email address'), {
+      target: { value: 'student@example.edu' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Send sign-in code' }))
+    await waitFor(() => expect(requestCode).toHaveBeenCalledWith('student@example.edu'))
+    await waitFor(() => expect(screen.getByLabelText('Verification code')).toBeTruthy())
+    expect((screen.getByLabelText('Email address') as HTMLInputElement).disabled).toBe(true)
+
+    fireEvent.change(screen.getByLabelText('Verification code'), {
+      target: { value: '123456' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Verify and continue' }))
+    await waitFor(() => expect(verifyCode).toHaveBeenCalledWith('student@example.edu', '123456'))
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledOnce())
+    expect(container.textContent).not.toContain('access_token')
+  })
+
+  it('shows a failure without advancing to a verified session', async () => {
+    const onSuccess = vi.fn()
+    const requestCode = vi.fn(async () => false)
+    const { rerender } = render(<GroupEmailLoginView
+      routes={{ discover: '#discover', login: '#login' }}
+      busy={false} error="The sign-in service is unavailable." message={null}
+      requestCode={requestCode} verifyCode={vi.fn(async () => false)} onSuccess={onSuccess} />)
+    expect(screen.getByRole('alert').textContent).toContain('sign-in service')
+    fireEvent.change(screen.getByLabelText('Email address'), {
+      target: { value: 'student@example.edu' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Send sign-in code' }))
+    await waitFor(() => expect(requestCode).toHaveBeenCalledOnce())
+    expect(screen.queryByLabelText('Verification code')).toBeNull()
+    expect(onSuccess).not.toHaveBeenCalled()
+    rerender(<GroupEmailLoginView routes={{ discover: '#discover', login: '#login' }}
+      busy={true} error={null} message={null} requestCode={requestCode}
+      verifyCode={vi.fn(async () => false)} onSuccess={onSuccess} />)
+    expect((screen.getByRole('button', { name: 'Checking…' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+})
