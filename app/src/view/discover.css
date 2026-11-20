@@ -422,7 +422,7 @@
   .sq-sticker-time i { font-size: 26px; }
   .sq-sticker-time .sq-sticker-until { font-size: 19px; }
   .sq-sticker h2 { font-size: 38px; }
-  .sq-sheet-close { display: block; position: absolute; top: 6px; right: 8px; width: 48px; height: 48px; border: 0; background: none; font: 400 34px/1 var(--font-sans); color: var(--sq-muted); cursor: pointer; }
+  .sq-sheet-close { display: block; position: absolute; z-index: 3; top: 6px; right: 8px; width: 48px; height: 48px; border: 0; background: none; font: 400 34px/1 var(--font-sans); color: var(--sq-muted); cursor: pointer; }
   .sq-scrim { display: block; position: fixed; inset: 0; z-index: 35; background: rgba(48, 36, 33, .38); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
   .sq-scrim.sq-open { opacity: 1; pointer-events: auto; }
   .sq-sticker-placeholder { display: none; }
