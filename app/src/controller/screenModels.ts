@@ -4,6 +4,7 @@ import type { LegacyCampusEvent } from '../model/events'
 import { campusNow } from '../model/eventCatalog'
 import { calendarDay, eventDuration, eventPhase, minutesUntilStart } from '../model/eventTiming'
 import { displayDate, displayTime } from './findEvents'
+import { googleCalendarDraftUrl } from './calendarExport'
 
 /** Keep archived M1 screen fixtures, which lack hostName, readable. */
 export type ScreenEvent = LegacyCampusEvent & { hostName?: string }
@@ -30,6 +31,7 @@ export type StubModel = {
   start: TimeParts
   endText: string
   durationText: string
+  calendarUrl?: string | null
   planned: boolean
   /** null while no complete, valid free-time window is set */
   fit: 'fits' | 'outside' | null
@@ -149,6 +151,15 @@ export function toStub(event: ScreenEvent, now: Date, planned: ReadonlySet<strin
     start: splitTime(event.start),
     endText: displayTime(event.end),
     durationText: spanText(eventDuration(event)),
+    calendarUrl: googleCalendarDraftUrl({
+      id: event.id,
+      title: event.title,
+      description: event.description ?? '',
+      location: event.location,
+      date: event.date,
+      start: event.start,
+      end: event.end,
+    }),
     planned: planned.has(event.id),
     fit: fitting ? (fitting.has(event.id) ? 'fits' : 'outside') : null,
     live: liveNote(event, now),
