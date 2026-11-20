@@ -91,6 +91,12 @@ function projectPlan(raw: unknown, actorId: string): unknown {
       !Array.isArray(plan.participants) || plan.participants.length > 12) {
     throw new GroupGatewayError(503, 'The group response is unavailable.')
   }
+  if (plan.organizerId !== actorId &&
+      !plan.participants.some((entry: unknown) => object(entry)?.userId === actorId)) {
+    // Defense in depth if a future SQL or transport bug returns another
+    // account's group: do not expose its event, roster or metadata.
+    throw new GroupGatewayError(404, 'Plan unavailable.')
+  }
   return {
     id: plan.id, eventId: plan.eventId, organizerId: plan.organizerId,
     status: plan.status, revision: plan.revision,
