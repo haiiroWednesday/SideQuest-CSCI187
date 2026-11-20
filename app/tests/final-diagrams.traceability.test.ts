@@ -55,7 +55,7 @@ describe('final CRC / ER drawing source and course evidence', () => {
     expect(crcPages[0]).toContain('EventCatalog')
     expect(crcPages[0]).toContain('Someday')
     expect(crcPages[1]).toContain('GroupPlanService')
-    expect(crcPages[1]).toContain('authentication')
+    expect(crcPages[1]).toContain('authorization')
 
     const guide = read('docs/FINAL_PROJECT_ARCHITECTURE_TRACEABILITY.md')
     const readme = read('README.md')
