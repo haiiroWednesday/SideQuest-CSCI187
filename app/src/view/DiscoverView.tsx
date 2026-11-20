@@ -234,6 +234,20 @@ export function DiscoverView({
             <EventDetailContent selected={selected} verified={verified} onRetryDetail={onRetryDetail} onPlan={onPlan} planningBlocked={screen.planningBlocked} onClose={closeSheet} />
           </aside>}
         </div>
+        {free?.active && ready && screen.nearMisses.length > 0 && (
+          <section inert={modal || undefined} className="sq-near-fit" aria-labelledby="sq-near-heading">
+            <h2 id="sq-near-heading">Other events on this date</h2>
+            <p>These events are not confirmed full fits. Partly overlapping time does not establish that late arrival or early departure is permitted.</p>
+            <ul>
+              {screen.nearMisses.map(item => (
+                <li key={item.id}>
+                  <strong>{item.title}</strong>
+                  <p>{item.reason}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <div className={`sq-scrim${sheetOpen && selected && ready ? ' sq-open' : ''}`} aria-hidden="true" onClick={closeSheet} />
         {sourceNote && <p className="sq-source-note">{sourceNote}</p>}
       </main>
