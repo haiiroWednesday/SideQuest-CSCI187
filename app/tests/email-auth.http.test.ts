@@ -73,4 +73,24 @@ describe('passwordless email-code HTTP contract', () => {
     expect(session.expiresAt).toBeGreaterThan(Date.now())
     expect(gateway.verifyCode).toHaveBeenCalledWith('person@example.edu', '123456')
   })
+
+  it('rejects cross-origin requests without invoking the provider', async () => {
+    const gateway = sample(), base = await start(gateway)
+    const denied = await post(base, '/api/auth/request-code',
+      { email: 'person@example.edu' }, 'https://unrelated.example')
+    expect(denied.status).toBe(403)
+    expect(gateway.requestCode).not.toHaveBeenCalled()
+  })
+
+  it('caps repeated verification attempts and does not report invalid codes as sessions', async () => {
+    const gateway = sample(), base = await start(gateway)
+    for (let i = 0; i < 10; i++) {
+      const result = await post(base, '/api/auth/verify-code',
+        { email: 'person@example.edu', code: '000000' })
+      expect(result.status).toBe(401)
+    }
+    const limited = await post(base, '/api/auth/verify-code',
+      { email: 'person@example.edu', code: '123456' })
+    expect(limited.status).toBe(429)
+  })
 })
