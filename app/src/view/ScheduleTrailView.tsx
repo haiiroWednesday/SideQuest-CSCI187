@@ -4,6 +4,7 @@
 import { presentSchedule, type PlanStubModel, type ScheduleInput, type ScheduleScreen } from '../controller/presentScreens'
 import { DayBubble, EventStub, SideQuestHeader, useMinuteTick, type SideQuestRoutes } from './DiscoverView'
 import { titleSizeClass } from './titleSize'
+import { OFFICIAL_SCU_CAMPUS_MAP, googleMapsVenueSearchUrl } from '../controller/campusMapLinks'
 import { ScheduleTimeline } from './ScheduleTimeline'
 
 /** Re-ask the Controller every half minute so Next up and Happening now stay true. */
@@ -24,6 +25,13 @@ function ScheduleEventDetails({ event }: { event: PlanStubModel }) {
         <dt>Where</dt><dd>{event.location}</dd>
         <dt>When</dt><dd>{event.dateText}, {event.start.time}{event.start.ampm} to {event.endText}</dd>
         <dt>Description</dt><dd>{event.description ?? 'No description was provided.'}</dd>
+        <dt>Maps</dt><dd>
+          <a href={OFFICIAL_SCU_CAMPUS_MAP} target="_blank" rel="noopener noreferrer">Browse official SCU campus map</a>
+          {googleMapsVenueSearchUrl(event.location) && <>
+            {' · '}
+            <a href={googleMapsVenueSearchUrl(event.location)!} target="_blank" rel="noopener noreferrer">Search this venue in Google Maps</a>
+          </>}
+        </dd>
         {event.calendarUrl && <>
           <dt>Calendar</dt>
           <dd><a href={event.calendarUrl} target="_blank" rel="noopener noreferrer">Open Google Calendar draft</a></dd>

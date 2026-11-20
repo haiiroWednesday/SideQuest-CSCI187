@@ -2,6 +2,16 @@
 
 **Read these before suggesting changes.** This project is a course assignment; a human teammate owns every PR and approves scope. This file provides common context for agents (including Cline); it does **not** launch agents.
 
+## Final-project implementation handoff (November 20)
+
+**Implementation agents and teammates working on the November final-project branches must first read [FINAL_PROJECT_IMPLEMENTATION_ARCHITECTURE.md](docs/FINAL_PROJECT_IMPLEMENTATION_ARCHITECTURE.md).** Its work orders W0–W7 specify module boundaries, reviewed data contracts, exact PR dependencies, campus-map evidence gates, group-plan permission requirements, and release tests. Start with the audited current branch and do **not** implement unapproved speculative features or map routes.
+
+- **Merged `master`:** the established M2 event catalog, same-day strict time fit, public event API and device-local Schedule; posting-only text rules (#38) are merged.
+- **Draft integration:** #49 (Schedule details/timeline, Someday, fit explanations) → #53 (categories/Calendar draft and unexposed group-plan foundation) → #54 (external map links and graph algorithm). These are not yet merged releases. Do not merge the individual constituent branches and the composite integration again.
+- **Map truth:** #54 adds official SCU map/search links plus a pure shortest-path routine on supplied test graphs, **not** a surveyed internal SCU map. Never claim verified walking routes, times, step-free access, or fabricated coordinates before data and human validation.
+- **Group truth:** no deployed identity/session/RLS or exposed multi-user Plan API. Neither a public link nor browser-provided `actorId` is an authorized student.
+- **Testing:** Review the exact integrated SHA using `npm run test:regression`, SQL/permission CI, browser focus/keyboard and mobile checks. Do not treat earlier PR-head tests as proof that the combined product passes.
+
 ## Source of truth
 
 - **[MVP playbook](docs/MVP_TEAM_PLAYBOOK.md)** — authoritative **M2 code contract**, architecture diagrams and tests, plus the separately identified [current P5 coursework ER](docs/MVP_TEAM_PLAYBOOK.md#p5-coursework-er-diagram--current-drawio-and-mermaid), classroom sketch and original Google Docs.
@@ -24,7 +34,7 @@
 - Anyone may post/browse events; **no account, login, or USER table**.
 - Every public Event has `id,title,hostName,description,location,date,start,end`. `hostName` is unverified display text, **not** a user ID.
 - Use M1-compatible `date` (YYYY-MM-DD) and `start,end` (HH:mm) on the **same day**, with `start < end`. No overnight events in this MVP.
-- One **shared public EventCatalog**; the Supabase adapter, event-posting form and integrated catalog/Search/Schedule code are merged (#18–#20). **Live Supabase configuration and cross-browser read/write are not verified.** Without environment configuration, the app uses an explicitly labeled browser-only fallback.
+- One **shared public EventCatalog**; adapter, Post/Discover/Schedule and seven-field schema are merged. There is an isolated PostgreSQL/RLS CI suite and Daven's reported live permission checks, but do not claim a **verified live deployment or cross-browser shared acceptance** until the team records exact environment, migration SHA and independent-browser evidence. Without Node/Supabase configuration, the UI labels the browser-local fallback.
 - **Schedule** stores planned Event IDs **on the current device**. Removing a plan does not delete the public Event.
 - Free-time matching requires the **entire** event to fit, inclusive boundaries. No partial matching or travel feasibility.
 - Out of scope: user profiles, cost, registration enforcement, saved availability, cross-device schedules, and extra tables for anonymous users.
@@ -42,11 +52,12 @@
 ## Current integration and review cautions
 
 - Posting, full-fit search, and My Schedule now consume the same EventCatalog (#20). The app's public sharing still requires a real Supabase project and a two-browser verification; never call the fallback public.
-- Catalog drafts may have descriptions up to 2,000 characters and titles/hosts up to 120; the Schedule must accept these valid M2 records without falling back to the old M1 500-character description guard.
+- **Posting-only rules merged in #38:** new titles 80, hosts 60, descriptions 1,000 and locations 120 characters, with letter/digit validation. **Legacy read/storage limits remain** title/host 120, description 2,000, location 200. Read paths and Schedule must retain valid older data without silent truncation or resetting it. See `POSTING_LIMITS` and `CATALOG_LIMITS` in `app/src/model/eventCatalog.ts`.
 - Posting restrictions belong in the EventCatalog **Model** as well as UI feedback; direct `catalog.create()` calls cannot bypass the rule.
 - The historical PR #13 was based on an M1-only app and is not safe to merge wholesale. Port remaining useful fixes onto current `master`, rerun CI, and prevent regression of #18–#20.
 - PR #16 (Claude team-access documentation) is merged; setting up workspace membership, API keys and actual spending controls is a separate account action, not an effect of Git commits.
 - M2 Part 1 requires current MVP README, requirements, specs, CRC/ER, code and tests. Do not submit obsolete M1 documents as if they describe the current MVP.
+- The final-project conceptual ER/CRC includes future Student/Place/Plan/Intention/Source concepts. Keep current-as-built and proposed entities visually separated; no fabricated storage tables or GIS dataset.
 
 ## Consistent implementation across teammates
 

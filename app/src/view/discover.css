@@ -547,3 +547,7 @@
 .sq-near-fit li { border-top: 1px solid var(--sq-rule); padding-top: 12px; min-width: 0; overflow-wrap: anywhere; font: 500 15px/1.4 var(--font-sans); }
 .sq-near-fit li strong { font-weight: 700; }
 .sq-near-fit li p { margin: 4px 0 0; }
+
+/* Full Schedule details keep external map actions discoverable to keyboard users. */
+.sq-schedule-page .sq-plan-details dd a { color: var(--sq-red-deep); text-decoration: underline !important; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.sq-schedule-page .sq-plan-details dd a:focus-visible { outline: 3px solid var(--sq-red-deep); outline-offset: 3px; border-radius: 4px; }
