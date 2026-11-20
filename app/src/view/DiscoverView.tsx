@@ -15,6 +15,8 @@ import logoUrl from './assets/sidequest-logo-red.svg'
 import drawingUrl from './assets/mission-arcade-trail.svg'
 import { EventDetailContent, type SelectedDetailState } from './EventDetailContent'
 import { FreeWindowForm } from './FreeWindowForm'
+import { CategoryFilters } from './CategoryFilters'
+import type { EventCategorySelection } from '../model/eventCategories'
 import { useMobileDetailFocus, usePhoneViewport } from './useMobileDetailFocus'
 
 export type { FreeWindow } from '../controller/presentScreens'
@@ -140,12 +142,13 @@ export type DiscoverViewProps = {
   onRetryDetail?: () => void
   onPlan?: (eventId: string) => void
   onFreeWindowChange?: (window: FreeWindow) => void
+  onCategoryChange?: (category: EventCategorySelection) => void
   routes?: SideQuestRoutes
   sourceNote?: string
 }
 
 export function DiscoverView({
-  screen, onRetry, onPlan, onFreeWindowChange, routes, sourceNote,
+  screen, onRetry, onPlan, onFreeWindowChange, onCategoryChange, routes, sourceNote,
   detail, onSelectEvent, onRetryDetail,
 }: DiscoverViewProps) {
   const [requestedId, setRequestedId] = useState<string | null>(null)
@@ -184,6 +187,10 @@ export function DiscoverView({
           <img className="sq-campus-drawing" src={drawingUrl} alt="" aria-hidden="true" />
         </section>
 
+        {onCategoryChange && <div inert={modal || undefined}>
+          <CategoryFilters categories={screen.categories} onChange={onCategoryChange} />
+        </div>}
+
         {free && onFreeWindowChange && <FreeWindowForm free={free} ready={ready} onWindowChange={onFreeWindowChange} disabledByDialog={modal} />}
 
         <div className="sq-board">
@@ -199,9 +206,16 @@ export function DiscoverView({
               </div>
             ) : screen.status === 'empty' || (screen.status === 'ready' && screen.count === 0) ? (
               <div className="sq-message sq-message-empty">
-                <h3>{free?.active ? 'No events fit this window.' : 'No events to show yet.'}</h3>
+                <h3>{free?.active ? 'No events fit this window.'
+                  : screen.categories.selected !== 'all' ? 'No events in this category.'
+                  : 'No events to show yet.'}</h3>
                 {free?.active && onFreeWindowChange && <button type="button" className="sq-text-button"
                   onClick={() => onFreeWindowChange({ date: '', start: '', end: '' })}>Show all events</button>}
+                {screen.categories.selected !== 'all' && onCategoryChange && (
+                  <button type="button" className="sq-text-button" onClick={() => onCategoryChange('all')}>
+                    Show all categories
+                  </button>
+                )}
                 {routes?.post && <a className="sq-text-link" href={routes.post}>Post an event</a>}
               </div>
             ) : (
