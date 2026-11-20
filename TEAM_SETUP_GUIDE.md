@@ -66,6 +66,9 @@ Personal plans always remain on the current device. The posting list is public a
 
 ## Automated verification
 
+**Current test-state reference (November 13):** See [status/decision register](docs/CURRENT_STATUS_AND_DECISIONS_2026-11-13.md) before claiming a test count or coverage percentage. `npm test` runs the **merged** Vitest suite; `npm run build` and `npm run test:e2e` exercise TypeScript/build and isolated Chromium. [PR #39](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/39) proposes `npm run test:coverage` and CI-uploaded V8 reports; its measured percentages are verified **only on that unmerged PR head**. [PR #41](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/41) adds axe checks, Chromium/Firefox/WebKit coverage, screenshot/geometry checks, targeted API/property cases, and an isolated four-mutant pilot **on top of #39**. Its PR-branch CI passed 373 Vitest and 24 Playwright checks; this is not yet available on master. Review/merge #39 first and then retarget/review #41. Once #39 merges, update locked packages with `npm ci`, run `npm run test:coverage` and inspect untested high-risk branches. Keep browser tests isolated from real Supabase servers. Human keyboard/accessibility, browser matrix, security and live-backend acceptance are complementary checks, not measured by V8.
+
+
 From `app/`:
 
 ```bash

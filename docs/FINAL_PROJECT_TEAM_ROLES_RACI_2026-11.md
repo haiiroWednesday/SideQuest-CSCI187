@@ -1,6 +1,6 @@
 # SideQuest Final Project: Team Roles, RACI, Integration, and Quality Plan
 
-**Prepared:** November 10, 2026  
+**Prepared:** November 10, 2026; **current proposal review:** November 13, 2026. See [current status and decision register](CURRENT_STATUS_AND_DECISIONS_2026-11-13.md) for merged versus open PRs and updated mapping direction.  
 **Status: PROPOSED FOR FOUR-PERSON TEAM AGREEMENT.** This is the proposed final-project division of work, not evidence that the team accepted every assignment, shipped a feature, or approved a database migration. After agreement, record the decision and any modifications in the team's [HQ decision log](https://docs.google.com/document/d/1LGYSH-m4x2u8DCHyxFrRgzNRxXPLewnNvMufDJPF8jk/edit) with date, participants, affected interfaces, and responsible reviewers.  
 **Scope:** November 11 M2 Part 2 reflection preparation and development toward the December 2 presentation. This document supplements rather than retroactively replaces the [historical M2 MVP work allocation](MVP_TEAM_PLAYBOOK.md). Current implemented M2 remains governed by [REQUIREMENTS.md](../REQUIREMENTS.md), [SPECIFICATIONS.md](../SPECIFICATIONS.md), and reviewed code.
 
@@ -187,7 +187,7 @@ Source: [Final Project Extra Credit Opportunities](https://docs.google.com/docum
 | --- | ---: | --- | --- | --- |
 | Architecture beyond MVC | **1.00** | **Cynthia**, coherence and final design | Sembiyan: pure domain/ports; Daven: real alternate adapters; Devonny: framework-neutral use cases. Real code plus justifiable draw.io architecture | Existing groundwork, implementation proof needed |
 | Real WebSocket collaboration | **1.00** | **Daven** | Sembiyan: response transitions; Devonny: live UI; Cynthia: reconnect, multi-browser and privacy QA | New, dependency-gated |
-| External system or device integration | **0.75 total** | **Sembiyan**, real travel-feasibility feature | Daven: server route adapter; Devonny: maps/travel UX; Cynthia: regression and usability. Calendar free/busy is a separate optional implementation but shares this **one** category cap | New, cost/consent-gated |
+| External system or device integration | **0.75 total** | **Sembiyan**, travel-feasibility feature | SCU-only verified place/entrance and pedestrian-graph prototype first, with external service only where justified; Daven: data/server adapter; Devonny: map/travel UX; Cynthia: regression and usability. Calendar free/busy shares this **one** category cap | PROPOSED; a local graph/URL alone does not establish external API bonus eligibility |
 | Automated E2E testing | **0.50** | **Cynthia**, suite and release gate | EVERY teammate authors tests for their own features; verify CI and independent browsers | Already started; expand |
 | AI API with SideQuest data | **0.50** | **Devonny**, bounded assistant experience | Daven: secret-protected server endpoint; Sembiyan: deterministic validation; Cynthia: integrated QA. Reassign explicitly if Devonny lacks capacity | Optional stretch |
 | Security/authentication | **0.50** | **Daven** | Sembiyan: private plan semantics; Devonny: sign-in/consent UI; Cynthia: adversarial tests | Required if shared plans ship |
@@ -214,13 +214,21 @@ Source: [Final Project Extra Credit Opportunities](https://docs.google.com/docum
 
 This splits implementation work from release accountability. Daven and Sembiyan already have several difficult dependencies, Devonny has extensive user-facing work, and Cynthia has cross-product responsibility. Rebalance only through an explicit team agreement with credible capacity, not by assigning overflow to Cynthia.
 
-### A. Maps: two levels of demonstrated capability
+### A. SCU campus map, pedestrian graph and external directions (revised November 13)
 
-**Simple fallback:** A clearly labeled link to directions in [Google Maps URLs](https://developers.google.com/maps/documentation/urls/get-started), which require no API key. This is genuinely useful but cannot be assumed to meet the upper external-integration credit.
+**Scope decision to review:** The first custom map covers **SCU campus only**, not a general-purpose map service. The proposed value is accurate campus places, student aliases, entrances and independently verified walking routes that help SideQuest evaluate time-bounded activities. This is **not implemented**, and no new migration, official map license or approval is implied. The [current status register](CURRENT_STATUS_AND_DECISIONS_2026-11-13.md) distinguishes implementation from design.
 
-**Real integration after billing approval:** Sembiyan specifies a travel-time port with origin, destination, mode, freshness and unknown/error states. Daven implements the [Google Routes API](https://developers.google.com/maps/documentation/routes/get-api-key) through a rate-limited server adapter; Devonny displays walking/transit time and source; Cynthia checks the full user journey. [Google Routes billing](https://developers.google.com/maps/documentation/routes/usage-and-billing) requires an enabled billing account, a key or OAuth and quota management. Walking/cycling modes have beta quality warnings, and transit capabilities must be tested for real selected routes. Never treat a failed lookup as a zero-minute trip.
+**Learn from three official resources:** [SCU interactive map](https://www.scu.edu/map/) (primary interaction reference, building search and details), [SCU Grad Bash event-specific map](https://www.scu.edu/alumni/events/gradbash/gradbashmaps/) (event-oriented visual wayfinding) and [SCU building information directory](https://university-operations.scu.edu/facilities/space-data/building-information/) (canonical institutional names). Review the [separate static campus map](https://www.scu.edu/parking-and-transportation-services/campus-map/) as further reference. Publication does not establish permission to republish/adapt assets or a documented live map API; contact SCU for data reuse approval and inspect licensing.
 
-Example: An event lasting 3–4 PM fits the student's **event-only** interval 3–4 PM. A verified 15-minute walk from their selected origin may make travel-inclusive attendance impossible. Display these distinct verdicts, rather than changing M2's strict event-time fit or pretending the student is definitely at a chosen origin.
+**Level 1: reliable campus place layer.** Sembiyan specifies place and route domain contracts; Daven reviews ID, provenance and storage/adapter implications; Devonny designs interactive map search, student-friendly aliases, destinations and off-campus fallback; Cynthia owns cross-feature consistency, review and QA. Current `CampusEvent.location` is free text. Introduce optional stable place IDs and entrance data in an explicitly approved contract without breaking existing events or silently changing P5/M2 diagrams.
+
+**Level 2: tested SCU walking network.** Independently derive and verify campus pathways, doors and any restricted or inaccessible segments; model a weighted graph and use Dijkstra/A*. Validate real origin/destination paths and failure states. An estimated shortest graph path is only as good as its verified geometry, access permissions and assumed speed. Handle accessibility, temporary closures and missing route coverage honestly. Source/licensing obligations apply, including ODbL attribution/share-alike conditions if OSM data is used.
+
+**Level 3: planning feasibility.** Let selected origins, event destinations and return/class constraints alter a separate travel-aware verdict. Distinguish the existing strict event-time-only fit from travel-inclusive feasibility. Never infer someone's real-time location or treat unknown as zero-minute travel. A map should serve SideQuest's broader free-time discovery, social coordination, Someday intention and repair flows, not become a standalone navigation competitor.
+
+**Off-campus and fallback.** For trips outside the verified campus graph, provide [Google Maps directions URLs](https://developers.google.com/maps/documentation/urls/get-started) or an explicitly approved third-party route integration with cost, licensing and freshness checks. A Maps URL needs no API key but is not proof of qualifying API integration. [Google Routes API](https://developers.google.com/maps/documentation/routes/overview) remains an **optional external** option, not the default for campus walking. If an off-campus API is used, keep credentials server-side with rate limits/quotas and explicit source labels. Never copy Google's proprietary map geometry into an independent campus routing database.
+
+**Acceptance prototype:** Verify place aliases, entrance matching, graph reachability and restricted paths. Compare real campus shortcuts with general map suggestions on a bounded sample. Demonstrate one **available time → real activity → campus route → feasibility explanation** scenario and negative cases for unknown origin, no path, closure, and off-campus locations. Defer extensive custom artwork until the data rights, accuracy and actual user decision benefits are substantiated.
 
 ### B. Google Calendar: preserve a no-OAuth path
 
@@ -262,7 +270,7 @@ Do not equate imported review-batch IDs with actual provider event occurrence ID
 
 1. **Mandatory foundation:** Maintain the tested M2 post → shared Discover → strict fit → local Schedule path; deliver category filters, explanations, integration quality and a real public deployment.
 2. **Major integrated extension:** One secure shared-plan response with actual WebSockets and authorization, if it passes negative security and real two-browser tests.
-3. **One real external service:** Prefer Routes API when billing/quotas and correct semantics are approved. Always offer the Maps URL fallback. Calendar export is an inexpensive useful extra.
+3. **Campus travel and external service:** Prioritize a verified SCU place/entrance model and campus pedestrian graph as the on-campus routing source. Offer external directions when leaving campus or the graph is incomplete. A paid Routes API is optional, contingent on cost, rights and team approval; do not claim a custom graph or Google Maps URL alone earns the external-integration bonus. Calendar export is an inexpensive useful extra.
 4. **Optional extra features:** One grounded AI interaction; Calendar free/busy with OAuth; official feed import. Add these only when every involved person has time, consent and test coverage.
 5. **Future product:** Two-way Calendar sync, arbitrary external chat bots, full image moderation, advanced plan optimization and native lock-screen widgets. Preserve conceptual architecture, not unfinished public controls.
 
@@ -272,7 +280,7 @@ Do not equate imported review-batch IDs with actual provider event occurrence ID
 | **Nov 13** | Daven proposes auth/realtime/deployment plan; Sembiyan finalizes event-fit, travel and group response contracts; Devonny/Cynthia agree end-to-end acceptance criteria. |
 | **Nov 16–17** | Integrated Discover/fit/Schedule, initial Someday, release smoke and actually implemented architecture boundaries demonstrated. |
 | **Nov 18–20** | Authorized two-browser WebSocket test; negative permission/reconnect tests. If this fails, no public shared-plan editing. |
-| **Nov 20–23** | Conditional Routes API and grounded assistant; Calendar export; free/busy only if OAuth consent and ownership are secured. |
+| **Nov 20–23** | Conditional SCU campus graph/place prototype or bounded external-route API, with source and failure-state tests; grounded assistant only if approved; Calendar export and free/busy subject to OAuth consent and ownership. |
 | **Nov 24** | Realistic usability study and E2E test evidence for complete planned journeys. |
 | **Nov 25** | Feature freeze, disable/unpublish unverified integrations, prioritize correctness. |
 | **Nov 26–29** | Owners repair own code; Cynthia runs integration/release checks; align full ER/CRC and documentation with real code. |

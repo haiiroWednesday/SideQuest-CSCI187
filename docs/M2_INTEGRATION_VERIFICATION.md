@@ -33,7 +33,18 @@ Local Chromium was extracted from a temporary @sparticuz/chromium package outsid
 - The README, M2 specifications, historical walkthrough and course audit now refer to the integrated release.
 - **Exact-commit CI:** React CI for `5226f398920d096c8a59410ddc8c7e0d0c1a8a58` passed 338 Vitest tests, 18 Playwright checks, TypeScript/build, and isolated PostgreSQL permissions checks. [Run details](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions/runs/41963193978). These checks do not replace the pending live-database acceptance test.
 
-## Live shared-catalog acceptance (NOT VERIFIED)
+## November 13 evidence addendum (after the November 4 snapshot)
+
+- **Merged implementation update:** [PR #34](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/34) and its incorporated [PR #37](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/37) add/test a one-year-ahead posting horizon in campus time, including Model/API/date UI/SQL-policy handling. This is now a **merged** posting rule, separate from legacy read/Schedule records.
+- **Unmerged testing enhancement:** [PR #39](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/39) passed both CI workflows on its head `15d8b1076cd1a66866e5db34322ef33c8618bc5a`. React CI recorded **368 Vitest passes across 41 files, 19 Playwright passes, successful build and isolated PostgreSQL checks**. Its V8-only code coverage for app source/server is **92.78% statements / 88.47% branches / 96.19% functions / 95.95% lines**. These checks do not establish that coverage instrumentation is merged into master. [Exact run](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions/runs/43542385069).
+- **Reported live test, with provenance:** Daven's November 7 real Supabase write/read and Firefox/Chrome/Edge exercise was recorded in the shared [Team HQ Google Doc](https://docs.google.com/document/d/1LGYSH-m4x2u8DCHyxFrRgzNRxXPLewnNvMufDJPF8jk/edit). Treat this as **TEAM REPORTED**, not as an independently completed acceptance checklist. Daven additionally reported on [PR #33](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/33#issuecomment-6717127198) that live anonymous SELECT and seven-field INSERT are permitted, while UPDATE/DELETE using the publishable key each failed with 401 and left the row unchanged. This is **TEAM REPORTED PASS** for those negative permissions, rather than missing work. Independent release review still needs exact tester/date, applied migration/version, full two-browser event-ID evidence and reviewer corroboration.
+- [Current status and open PR tracker](CURRENT_STATUS_AND_DECISIONS_2026-11-13.md) distinguishes verified code/CI from pending deployment and future mapping/coordination proposals.
+
+## November 13 automated QA expansion (review branch, not master)
+
+[PR #41](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/41) is stacked on unmerged coverage [PR #39](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/39), and its [exact-commit React CI](https://github.com/haiiroWednesday/SideQuest-CSCI187/actions/runs/43547581025) passed with **373 Vitest tests (42 files), 24 Playwright checks across Chromium plus focused Firefox/WebKit cases, 4/4 selected interval mutations detected, isolated SQL, axe WCAG A/AA checks and build**. V8 instrumentation on PR #41 reports 93.04% statements, 88.75% branches, 96.19% functions and 95.95% lines. A serious Post-navigation text contrast issue discovered by axe was corrected and rerun successfully. Screenshot/layout evidence was uploaded; it is not yet stable pixel-diff golden testing. See the [PR #41 requirements/testing matrix](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/41). All outcomes are **branch-specific**, not live database, deployment or manual WCAG acceptance.
+
+## Live shared-catalog acceptance (PARTIALLY TEAM REPORTED; independent verification pending)
 
 **Record status as of November 4, 2026: pending actual authorized team-run test.** Local Vitest, Chromium, isolated PostgreSQL and a `/api/catalog` `{"shared":true}` response do **not** establish that the current team Supabase instance is provisioned and functioning.
 
@@ -42,7 +53,7 @@ Use the [VS Code server-only Supabase setup and two-browser checklist](SUPABASE_
 | Check | Observed result / evidence | Status |
 | --- | --- | --- |
 | Date, team tester(s), localhost/hosted URL (never credentials) | To be recorded | PENDING |
-| Migration applied; anonymous SELECT and bounded INSERT work; UPDATE/DELETE denied | To be recorded by authorized project owner | PENDING |
+| Existing deployed migration; anonymous SELECT and seven-field INSERT work; UPDATE/DELETE denied | Daven [reported live SELECT/INSERT and HTTP 401 for UPDATE/DELETE](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/33#issuecomment-6717127198), row unchanged; exact migration IDs and independent review not attached | TEAM REPORTED PASS; REVIEW PENDING |
 | Browser A posts one future event; exact event ID recorded | To be recorded | PENDING |
 | Independent Browser B sees same public event ID and full-fit search finds it | To be recorded | PENDING |
 | B adds plan, reloads and retains plan, then removes it without deleting public event | To be recorded | PENDING |
