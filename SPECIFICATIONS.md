@@ -95,3 +95,9 @@ Request bodies are limited to 16 KiB, browser cross-origin writes are rejected, 
 - `model/fitAssessment.ts` reports confirmed full fit, time overlap without confirmed attendance flexibility, non-overlap or unknown end time. An event cannot become a strict M2 match merely because its interval partly overlaps.
 - `controller/presentDiscover.ts` keeps the exact existing `findEvents` filtering/count and additionally prepares up to five same-date nonmatching events with reasons. `DiscoverView` displays them separately, with no eligible-plan claim.
 - Existing catalog records still require valid start and end times. Unknown-end evaluation is additive groundwork for source import and is not evidence that undated or incomplete official events have been ingested.
+
+## S9 — Google Calendar draft export (new final-project draft)
+- `controller/calendarExport.ts` derives a Google Calendar event-draft link from existing verified CampusEvent title, description, location, date and start/end in `America/Los_Angeles`. It does not require OAuth, read a calendar, issue an API request or mutate attendance.
+- California wall clock resolves to UTC only when unique. Spring DST gaps and autumn repeated local times return no link rather than silently creating a draft at the wrong instant.
+- Event details and expanded Schedule event text expose a separate `Open Google Calendar draft` link with safe encoded fields. The student must review and manually save the draft in Google Calendar; opening it does not register them for the campus event.
+- Reference: [Google Calendar event-draft link guidance](https://developers.google.com/workspace/calendar/api/concepts/inviting-attendees-to-events). Real Calendar free/busy, calendar synchronization and secure OAuth remain independent, approval-gated features.
