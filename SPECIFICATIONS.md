@@ -82,3 +82,9 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 The production Node server serves the built UI and API. GET `/api/catalog` returns only the shared-storage flag; GET `/api/events` lists upcoming records or looks up `?id=...`; POST `/api/events` accepts only the seven EventDraft fields. Public PUT/PATCH/DELETE are rejected. Read deadlines are 10 seconds. The server's upstream fetch aborts at 15 seconds. An uncertain insert is not automatically retried; users are told to check Discover before another submission.
 
 Request bodies are limited to 16 KiB, browser cross-origin writes are rejected, and a per-process 20/minute/IP posting guard applies. The hosting edge should supply durable rate limiting before a real public deployment. This does not add authentication or verified organizer identity.
+
+## S6 — Someday personal intentions (new final-project draft)
+- `model/someday.ts`: separate personal Intention records have stable local IDs, plain-language title and note, explicit status, and nullable linked Event ID. An Idea may exist without an event date, and linking does not RSVP or invite others.
+- `controller/someday.ts`: rejects invalid or corrupt local records and refuses to overwrite unreadable storage without explicit user confirmation. The 100-idea limit prevents new records at capacity.
+- `view/SomedayView.tsx`: create an idea, connect it to a real currently listed Event by ID, defer or revisit it, and use the existing Schedule controller to plan the event. The public Event remains untouched.
+- State is browser-local only. Shared invitations, group permissions and cross-device synchronization require separate reviewed data models and live authorization tests before release.
