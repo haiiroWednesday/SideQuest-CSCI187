@@ -36,3 +36,24 @@
   .sq-group-members li { align-items: flex-start; flex-direction: column; }
   .sq-group-members .sq-group-link { margin-left: 0; }
 }
+
+/* Group page is only mounted with a verified session provider. */
+.sq-group-page-layout { display: grid; grid-template-columns: minmax(205px, 290px) minmax(0, 1fr); align-items: start; gap: 22px; margin: 18px 0; }
+.sq-group-sidebar, .sq-group-new { display: grid; gap: 13px; min-width: 0; padding: 22px; border: 1px solid var(--sq-rule-strong); border-radius: 19px; background: var(--sq-ticket-bg); }
+.sq-group-sidebar h2, .sq-group-new h2 { font: 400 29px/1.2 var(--font-display); margin: 0; }
+.sq-group-sidebar ol { display: grid; gap: 7px; list-style: none; padding: 0; margin: 0; }
+.sq-group-list-choice { display: grid; gap: 5px; min-width: 0; width: 100%; border: 1px solid var(--sq-rule-strong); border-radius: 12px; padding: 12px; text-align: left; font: 650 14px/1.4 var(--font-sans); color: var(--sq-ink); background: var(--sq-paper); cursor: pointer; }
+.sq-group-list-choice strong { overflow-wrap: anywhere; }
+.sq-group-list-choice span { color: var(--sq-muted); font-size: 12px; }
+.sq-group-list-choice[aria-current="true"] { border-color: var(--sq-red-deep); box-shadow: inset 0 0 0 1px var(--sq-red-deep); }
+.sq-group-main { min-width: 0; display: grid; gap: 20px; }
+.sq-group-new label { font: 700 14px/1.4 var(--font-sans); }
+.sq-group-new select { min-width: 0; width: 100%; padding: 12px; background: #fff; color: var(--sq-ink); border: 1px solid var(--sq-rule-strong); border-radius: 10px; font: 500 16px/1.4 var(--font-sans); }
+.sq-group-new button { width: fit-content; border: 1px solid var(--sq-red-deep); border-radius: 999px; background: var(--sq-red-deep); color: var(--sq-on-red); padding: 10px 16px; min-height: 44px; font: 700 15px/1.3 var(--font-sans); cursor: pointer; }
+.sq-group-new button:disabled { opacity: .65; cursor: not-allowed; }
+.sq-group-empty { margin: 0; color: var(--sq-muted); }
+@media (max-width: 780px) {
+  .sq-group-page-layout { display: flex; flex-direction: column; }
+  .sq-group-sidebar, .sq-group-main { width: 100%; }
+  .sq-group-sidebar, .sq-group-new { padding: 16px; }
+}
