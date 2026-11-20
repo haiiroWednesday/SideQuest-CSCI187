@@ -1,6 +1,7 @@
 // CONTROLLER: prepare upcoming-event groups and free-window feedback for Discover.
 import { eventPhase } from '../model/eventTiming'
 import { assessEventFit } from '../model/fitAssessment'
+import { EVENT_CATEGORIES, suggestedEventCategory, type EventCategorySelection } from '../model/eventCategories'
 import { findEvents } from './findEvents'
 import { byTime, groupDays, toStub, type ScreenEvent, type FreeWindow, type FreeWindowModel, type DiscoverScreen, type NearMissModel } from './screenModels'
 
@@ -10,6 +11,7 @@ export function presentDiscover(input: {
   events: readonly ScreenEvent[]
   loading?: boolean
   error?: string | null
+  category?: EventCategorySelection
   plannedIds?: readonly string[]
   planningBlocked?: boolean
   /** pass a window to show the "When are you free?" row; omit to hide it */
@@ -21,7 +23,26 @@ export function presentDiscover(input: {
   const plannedCount = planned.size
 
   // An open tab outlives events: drop anything that has ended since the catalog was read.
-  const upcoming = input.events.filter(event => eventPhase(event, now) !== 'ended').sort(byTime)
+  const allUpcoming = input.events.filter(event => eventPhase(event, now) !== 'ended').sort(byTime)
+  const selectedCategory = input.category ?? 'all'
+  const categorized = allUpcoming.map(event => ({ event, category: suggestedEventCategory({
+    title: event.title,
+    hostName: event.hostName ?? '',
+  }) }))
+  const categories = {
+    selected: selectedCategory,
+    options: [
+      { id: 'all' as const, label: 'All activities', symbol: '✧', count: allUpcoming.length },
+      ...EVENT_CATEGORIES.map(item => ({
+        id: item.id,
+        label: item.label,
+        symbol: item.symbol,
+        count: categorized.filter(entry => entry.category === item.id).length,
+      })),
+    ],
+  }
+  const upcoming = categorized.filter(entry => selectedCategory === 'all' || entry.category === selectedCategory)
+    .map(entry => entry.event)
 
   let freeWindow: FreeWindowModel | null = null
   let fitting: Set<string> | null = null
@@ -59,7 +80,7 @@ export function presentDiscover(input: {
     }
   }
 
-  const base = { plannedCount, freeWindow, nearMisses, planningBlocked: Boolean(input.planningBlocked) }
+  const base = { plannedCount, freeWindow, nearMisses, categories, planningBlocked: Boolean(input.planningBlocked) }
   if (input.loading) return { ...base, status: 'loading', errorMessage: null, days: [], count: 0, headingText: 'Coming up' }
   if (input.error) return { ...base, status: 'error', errorMessage: input.error, days: [], count: 0, headingText: 'Coming up' }
   if (upcoming.length === 0) return { ...base, status: 'empty', errorMessage: null, days: [], count: 0, headingText: 'Coming up' }
