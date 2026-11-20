@@ -1,8 +1,7 @@
 // VIEW: category counts and selection come from the Discover presenter.
 // Categories are conservative suggestions until the Event contract gains a
 // validated organizer-selected category field.
-import type { CategoryFiltersModel } from '../controller/presentScreens'
-import type { EventCategorySelection } from '../model/eventCategories'
+import type { CategoryFiltersModel, EventCategorySelection } from '../controller/presentScreens'
 import './categories.css'
 
 export function CategoryFilters({ categories, onChange }: {
