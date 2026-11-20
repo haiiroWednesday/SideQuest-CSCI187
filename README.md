@@ -54,3 +54,9 @@ Stop any running development or production server before the Playwright tests. T
 - [Diagram-to-code guide](docs/M2_IMPLEMENTATION_DIAGRAMS.md) and [M2 integration verification](docs/M2_INTEGRATION_VERIFICATION.md)
 - **Final-project draft:** [architecture & status ledger](docs/FINAL_PROJECT_ARCHITECTURE_TRACEABILITY.md), [final CRC preview](docs/diagrams/FINAL_PROJECT_CRC_PREVIEW.md) ([editable source](docs/diagrams/FINAL_PROJECT_CRC.drawio)), and [final ER preview](docs/diagrams/FINAL_PROJECT_ER_PREVIEW.md) ([editable source](docs/diagrams/FINAL_PROJECT_ER.drawio)). These describe the November 20 unmerged feature branches and proposed future SQL, **not deployed accounts or collaboration**.
 - [Team setup](TEAM_SETUP_GUIDE.md) and [MVP playbook](docs/MVP_TEAM_PLAYBOOK.md)
+
+### Full final-project integration candidate (November 20, 2026)
+
+The unmerged `integration/final-full-scope-20261120` branch combines the recent Discover category filters, strict fit explanations, Someday, proportional Schedule timeline, Google Calendar draft, SCU map links, testable permissioned group workflow, email-code login foundation and [editable final architecture diagrams](docs/FINAL_PROJECT_ARCHITECTURE_TRACEABILITY.md).
+
+**Status:** All these features remain draft until exact-head CI and team review. The public M2 catalog and device-local plans still operate without accounts. Group Auth is deliberately **off by default**; group SQL exists only under `supabase/proposals/`, and real Supabase login and two-browser acceptance have not been performed. See [email sign-in gates](docs/GROUP_EMAIL_OTP_SIGNIN.md), [participant UI handoff](docs/GROUP_PARTICIPANT_UI_HANDOFF.md), and [group SQL security contract](docs/GROUP_PLAN_SECURITY_CONTRACT.md). Do not enable or promote migrations without the backend owner's approval.
