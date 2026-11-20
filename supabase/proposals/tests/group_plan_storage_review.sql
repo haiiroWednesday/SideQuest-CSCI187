@@ -44,14 +44,14 @@ begin
   end if;
   insert into public.group_participants(plan_id,user_id) values (plan_id,first_member);
   if (select response from public.group_participants
-        where plan_id=plan_id and user_id=first_member) is not null then
+        where group_participants.plan_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'::uuid and user_id=first_member) is not null then
     raise exception 'Absent participant response must remain unknown';
   end if;
 
   -- Legitimate conditional response with a private note (still no client access).
   update public.group_participants set response='if',
     private_condition='Need to finish class',responded_at=now()
-    where plan_id=plan_id and user_id=first_member;
+    where group_participants.plan_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'::uuid and user_id=first_member;
 
   begin
     insert into public.group_participants(plan_id,user_id)
