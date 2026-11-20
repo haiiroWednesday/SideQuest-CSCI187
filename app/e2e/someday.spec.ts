@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('save an undated idea, connect a real event, plan it and defer without losing the idea', async ({ page, context }) => {
+test('save an undated idea, connect a real event, plan it and defer without losing the idea', async ({ page, browser }) => {
   await page.setViewportSize({ width: 375, height: 812 })
   await page.clock.install({ time: new Date('2030-11-07T17:00:00Z') })
   await page.goto('/')
@@ -37,9 +37,11 @@ test('save an undated idea, connect a real event, plan it and defer without losi
   await page.screenshot({ path: test.info().outputPath('someday-phone-320.png'), fullPage: true })
 
   // Browser-local ideas and planned event IDs must not become shared accounts.
-  const other = await context.newPage()
+  const otherContext = await browser.newContext()
+  const other = await otherContext.newPage()
   await other.goto('/#someday')
   await expect(other.getByText('Nothing saved yet.')).toBeVisible()
+  await otherContext.close()
 })
 
 test('Someday corrupt storage is preserved unless recovery is explicitly confirmed', async ({ page }) => {
