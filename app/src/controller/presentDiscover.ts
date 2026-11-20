@@ -83,7 +83,7 @@ export function presentDiscover(input: {
   const base = { plannedCount, freeWindow, nearMisses, categories, planningBlocked: Boolean(input.planningBlocked) }
   if (input.loading) return { ...base, status: 'loading', errorMessage: null, days: [], count: 0, headingText: 'Coming up' }
   if (input.error) return { ...base, status: 'error', errorMessage: input.error, days: [], count: 0, headingText: 'Coming up' }
-  if (upcoming.length === 0) return { ...base, status: 'empty', errorMessage: null, days: [], count: 0, headingText: 'Coming up' }
+  if (allUpcoming.length === 0) return { ...base, status: 'empty', errorMessage: null, days: [], count: 0, headingText: 'Coming up' }
 
   const visible = fitting ? upcoming.filter(event => fitting.has(event.id)) : upcoming
   const stubs = visible.map(event => toStub(event, now, planned, fitting))
