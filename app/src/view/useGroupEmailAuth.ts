@@ -104,6 +104,7 @@ export function useGroupEmailAuth() {
     setCredentials(null)
     setMessage('This tab is signed out.')
     setError(null)
+    if (window.location.hash === '#groups') window.location.hash = '#discover'
   }, [])
 
   const session = useMemo<VerifiedGroupSession | null>(() => credentials
