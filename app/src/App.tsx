@@ -1,6 +1,6 @@
 // VIEW: compose the shared catalog, posting form and device-local Schedule.
 import { useEffect, useState } from 'react'
-import type { EventCategorySelection } from './model/eventCategories'
+import type { EventCategorySelection } from './controller/presentScreens'
 import { connectBrowserEventCatalog, type ConnectedCatalog } from './controller/postEvent'
 import { DiscoverView, SideQuestHeader, useDiscoverScreen } from './view/DiscoverView'
 import { ScheduleTrailView, useScheduleScreen } from './view/ScheduleTrailView'
