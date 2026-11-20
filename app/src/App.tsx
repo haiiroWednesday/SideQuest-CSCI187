@@ -8,11 +8,14 @@ import { ToastStack, type ToastItem } from './view/Toasts'
 import { useEventCatalog } from './view/useEventCatalog'
 import { useBrowseDetail } from './view/useBrowseDetail'
 import { useSharedSchedule } from './view/useSharedSchedule'
+import { useSomeday } from './view/useSomeday'
+import { SomedayView } from './view/SomedayView'
 import { presentBrowseDetail, type FreeWindow } from './controller/presentScreens'
 
-const routes = { discover: '#discover', schedule: '#schedule', post: '#post' }
+const routes = { discover: '#discover', schedule: '#schedule', someday: '#someday', post: '#post' }
 const pageFromHash = () => {
   if (window.location.hash === '#schedule') return 'schedule'
+  if (window.location.hash === '#someday') return 'someday'
   return ['#post', '#create-heading'].includes(window.location.hash) ? 'post' : 'discover'
 }
 
@@ -22,6 +25,7 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
   const [freeWindow, setFreeWindow] = useState<FreeWindow>({ date: '', start: '', end: '' })
   const events = useEventCatalog(connection.catalog)
   const plans = useSharedSchedule(connection.catalog)
+  const someday = useSomeday()
   const details = useBrowseDetail(connection.catalog)
   const discover = useDiscoverScreen({
     events: events.events, loading: events.loading, error: events.error,
@@ -71,6 +75,19 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
         <ScheduleTrailView screen={schedule} routes={routes}
           onRemove={id => { void plans.remove(id) }} onRecover={plans.recover}
           onRetry={() => { void plans.refresh() }} />
+      ) : page === 'someday' ? (
+        <SomedayView
+          ideas={someday.items} blocked={someday.blocked} error={someday.error}
+          events={events.events} plannedIds={plans.schedule.ids} routes={routes}
+          onAdd={someday.add}
+          onLink={(id, eventId) => {
+            if (eventId === null || events.events.some(event => event.id === eventId)) {
+              someday.link(id, eventId)
+            }
+          }}
+          onStatus={someday.setStatus} onRecover={someday.recover}
+          onPlan={id => { void plans.add(id) }}
+        />
       ) : page === 'post' ? (
         <div className="sq-discover-page sq-post-page">
           <SideQuestHeader routes={routes} active="post" plannedCount={plans.schedule.ids.length} />
