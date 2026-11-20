@@ -23,6 +23,7 @@ export type DiscoverEvent = ScreenEvent
 export type SideQuestRoutes = {
   discover?: string
   schedule?: string
+  someday?: string
   post?: string
 }
 
@@ -48,7 +49,7 @@ export function SideQuestHeader({
   plannedCount = 0,
 }: {
   routes?: SideQuestRoutes
-  active?: 'discover' | 'schedule' | 'post'
+  active?: 'discover' | 'schedule' | 'someday' | 'post'
   /** Shown as a badge on My Schedule, so a student sees where a planned event went. */
   plannedCount?: number
 }) {
@@ -67,6 +68,11 @@ export function SideQuestHeader({
             <a aria-current={current('schedule')} className="sq-tab sq-tab-schedule" href={routes.schedule}>
               <i className="sq-ic" aria-hidden="true" /><span>My Schedule</span>
               {plannedCount > 0 && <b className="sq-badge" aria-hidden="true">{plannedCount}</b>}
+            </a>
+          )}
+          {routes.someday && (
+            <a aria-current={current('someday')} className="sq-tab sq-tab-someday" href={routes.someday}>
+              <span className="sq-someday-symbol" aria-hidden="true">✦</span><span>Someday</span>
             </a>
           )}
           {routes.post && (
@@ -236,6 +242,20 @@ export function DiscoverView({
             <EventDetailContent selected={selected} verified={verified} onRetryDetail={onRetryDetail} onPlan={onPlan} planningBlocked={screen.planningBlocked} onClose={closeSheet} />
           </aside>}
         </div>
+        {free?.active && ready && screen.nearMisses.length > 0 && (
+          <section inert={modal || undefined} className="sq-near-fit" aria-labelledby="sq-near-heading">
+            <h2 id="sq-near-heading">Other events on this date</h2>
+            <p>These events are not confirmed full fits. Partly overlapping time does not establish that late arrival or early departure is permitted.</p>
+            <ul>
+              {screen.nearMisses.map(item => (
+                <li key={item.id}>
+                  <strong>{item.title}</strong>
+                  <p>{item.reason}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <div className={`sq-scrim${sheetOpen && selected && ready ? ' sq-open' : ''}`} aria-hidden="true" onClick={closeSheet} />
         {sourceNote && <p className="sq-source-note">{sourceNote}</p>}
       </main>
