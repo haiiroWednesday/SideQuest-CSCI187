@@ -52,4 +52,5 @@ Stop any running development or production server before the Playwright tests. T
 - [Requirements](REQUIREMENTS.md) and [technical specifications](SPECIFICATIONS.md)
 - [CRC diagram](docs/diagrams/M2_CRC_PREVIEW.md) ([editable file](docs/diagrams/M2_CRC.drawio)) and [ER diagram](docs/diagrams/M2_ER_PREVIEW.md) ([editable file](docs/diagrams/M2_STORAGE_ER.drawio))
 - [Diagram-to-code guide](docs/M2_IMPLEMENTATION_DIAGRAMS.md) and [M2 integration verification](docs/M2_INTEGRATION_VERIFICATION.md)
+- **Final-project draft:** [architecture & status ledger](docs/FINAL_PROJECT_ARCHITECTURE_TRACEABILITY.md), [final CRC preview](docs/diagrams/FINAL_PROJECT_CRC_PREVIEW.md) ([editable source](docs/diagrams/FINAL_PROJECT_CRC.drawio)), and [final ER preview](docs/diagrams/FINAL_PROJECT_ER_PREVIEW.md) ([editable source](docs/diagrams/FINAL_PROJECT_ER.drawio)). These describe the November 20 unmerged feature branches and proposed future SQL, **not deployed accounts or collaboration**.
 - [Team setup](TEAM_SETUP_GUIDE.md) and [MVP playbook](docs/MVP_TEAM_PLAYBOOK.md)
