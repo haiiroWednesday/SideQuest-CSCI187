@@ -16,7 +16,7 @@ import drawingUrl from './assets/mission-arcade-trail.svg'
 import { EventDetailContent, type SelectedDetailState } from './EventDetailContent'
 import { FreeWindowForm } from './FreeWindowForm'
 import { CategoryFilters } from './CategoryFilters'
-import type { EventCategorySelection } from '../model/eventCategories'
+import type { EventCategorySelection } from '../controller/presentScreens'
 import { useMobileDetailFocus, usePhoneViewport } from './useMobileDetailFocus'
 
 export type { FreeWindow } from '../controller/presentScreens'
