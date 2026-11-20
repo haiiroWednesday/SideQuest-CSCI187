@@ -4,6 +4,7 @@
 import { presentSchedule, type PlanStubModel, type ScheduleInput, type ScheduleScreen } from '../controller/presentScreens'
 import { DayBubble, EventStub, SideQuestHeader, useMinuteTick, type SideQuestRoutes } from './DiscoverView'
 import { titleSizeClass } from './titleSize'
+import { ScheduleTimeline } from './ScheduleTimeline'
 
 /** Re-ask the Controller every half minute so Next up and Happening now stay true. */
 export function useScheduleScreen(input: ScheduleInput, now?: Date): ScheduleScreen {
@@ -112,6 +113,7 @@ export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes
                 <section key={day.date} aria-label={day.long} className={`sq-trail-day${day.isToday ? ' sq-today' : ''}`}>
                   <DayBubble dow={day.dow} dayNumber={day.dayNumber} monthTag={day.monthTag} />
                   <h3 className="sq-day"><span>{day.tag}</span>{day.long}{day.overlapNote && <b className="sq-overlap-note">{day.overlapNote}</b>}</h3>
+                  {day.timeline && <ScheduleTimeline timeline={day.timeline} />}
                   <ol className="sq-stubs">
                     {day.events.map(stub => (
                       <li key={stub.id}>

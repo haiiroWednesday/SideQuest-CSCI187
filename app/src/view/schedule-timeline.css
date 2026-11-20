@@ -1,0 +1,16 @@
+/* A proportional visual overview. The existing semantic event list is the
+   full keyboard/screen-reader interaction and never depends on visual bars. */
+.sq-timeline { min-width: 0; margin: 8px 0 24px; padding: 18px 14px 16px; border: 1px solid var(--sq-rule-strong); border-radius: 18px; background: var(--sq-paper); }
+.sq-timeline-note { margin: 0 0 14px; font: 500 13px/1.45 var(--font-sans); color: var(--sq-muted); }
+.sq-timeline-grid { display: grid; grid-template-columns: 50px minmax(0, 1fr); gap: 7px; min-width: 0; }
+.sq-timeline-hours, .sq-timeline-track { position: relative; min-width: 0; }
+.sq-timeline-hour { position: absolute; right: 1px; transform: translateY(-50%); font: 600 11px/1 var(--font-sans); color: var(--sq-muted); white-space: nowrap; }
+.sq-timeline-track { border-left: 1px solid var(--sq-rule-strong); }
+.sq-timeline-rule { position: absolute; left: 0; right: 0; height: 1px; background: var(--sq-rule-strong); opacity: .65; pointer-events: none; }
+.sq-timeline-block { position: absolute; box-sizing: border-box; min-width: 0; overflow: hidden; padding: 2px 6px; border: 1px solid var(--sq-ink); border-radius: 4px; background: var(--sq-ticket-bg); color: var(--sq-ink); font: 600 12px/1.25 var(--font-sans); }
+.sq-timeline-block span { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; overflow-wrap: anywhere; }
+@media (max-width: 390px) {
+  .sq-timeline { padding: 14px 10px; }
+  .sq-timeline-grid { grid-template-columns: 43px minmax(0, 1fr); gap: 5px; }
+  .sq-timeline-block { padding: 1px 3px; font-size: 11px; }
+}

@@ -77,6 +77,26 @@ test('Schedule reveals legacy-length event text by keyboard on narrow screens', 
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sidequest.local-catalog.v1') ?? '[]').length)).toBe(1)
 })
 
+test('Schedule timeline uses event minutes and prevents horizontal overflow at phone width', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 812 })
+  await seed(page)
+  await page.goto('/#schedule')
+  const first = page.locator('.sq-timeline-block[data-event-id="' + ids[0] + '"]')
+  const second = page.locator('.sq-timeline-block[data-event-id="' + ids[1] + '"]')
+  await expect(first).toBeVisible()
+  await expect(second).toBeVisible()
+  const firstHeight = await first.evaluate(node => node.getBoundingClientRect().height)
+  const secondHeight = await second.evaluate(node => node.getBoundingClientRect().height)
+  expect(firstHeight).toBeCloseTo(72, 1) // 60 actual minutes * 1.2 px
+  expect(secondHeight).toBeCloseTo(72, 1)
+  const firstLeft = await first.evaluate(node => node.getBoundingClientRect().left)
+  const secondLeft = await second.evaluate(node => node.getBoundingClientRect().left)
+  expect(firstLeft).not.toBe(secondLeft) // 30-minute overlap is laid out side by side
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
+  await expect(page.getByText('2 plans have conflicts')).toBeVisible()
+  await expect(page.locator('.sq-trail .sq-plan-details')).toHaveCount(2)
+})
+
 test('phone details are hidden while closed, trap keyboard focus, and return focus on Escape', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 })
   await seed(page)

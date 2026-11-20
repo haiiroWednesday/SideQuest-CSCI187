@@ -46,6 +46,7 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 - `view/ScheduleTrailView.tsx` renders controller-prepared plans, conflicts, error/loading/retry states and remove controls. Removal edits only locally stored planned IDs, never the catalog.
 - Compact Schedule cards preserve list-text clamping and provide keyboard-accessible disclosures for full upcoming and past event text, including legacy-length records. This uses resolved presenter data without another catalog lookup or changed plan storage.
 - Public M2 event details must pass the M2 storage ceiling (including a 2,000-character description), not the stricter posting limits, even though older M1 records used a 500-character limit. Legacy records remain readable where applicable.
+- The Schedule presenter also calculates exact start/end minutes and disjoint layout lanes for a proportional daily timeline; the View renders a visual overview above the existing accessible event list. Displayed bar height is 1.2 pixels per minute, so 120 minutes has twice the height of 60 minutes. Collision groups share their lane count; adjacent events may reuse lanes. Historical and unresolved plans keep their existing list/retry behavior.
 - Consecutive events with end == next start do not overlap; real overlaps warn without blocking the user.
 
 ## S5 — Persistence, permissions, and failures (R1–R5)
