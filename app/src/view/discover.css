@@ -90,6 +90,7 @@
 .sq-tab[aria-current="page"] { border-bottom-color: var(--sq-gold); }
 .sq-ic { width: 26px; height: 26px; flex: none; background: currentColor; -webkit-mask-position: center; mask-position: center; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
 .sq-tab-discover .sq-ic { -webkit-mask-image: url('./assets/icon-discover.svg'); mask-image: url('./assets/icon-discover.svg'); }
+.sq-tab-groups .sq-groups-symbol { display: inline-grid; width: 26px; height: 26px; flex: none; place-items: center; font: 700 26px/1 var(--font-display); }
 .sq-tab-someday .sq-someday-symbol { display: inline-grid; place-items: center; width: 26px; height: 26px; flex: none; font: 700 27px/1 var(--font-display); }
 .sq-tab-schedule .sq-ic { -webkit-mask-image: url('./assets/icon-schedule.svg'); mask-image: url('./assets/icon-schedule.svg'); }
 .sq-post .sq-ic { -webkit-mask-image: url('./assets/icon-plus.svg'); mask-image: url('./assets/icon-plus.svg'); }
@@ -371,9 +372,10 @@
   .sq-tab { flex: 1; flex-direction: column; gap: 5px; padding: 8px 2px 6px; font: 600 12.5px/1.1 var(--font-sans); border-bottom: 0; text-align: center; }
   .sq-tab .sq-ic { width: 28px; height: 28px; }
   .sq-tab[aria-current="page"] { color: var(--sq-gold); }
-  .sq-tab-discover { order: 1; } .sq-post { order: 2; } .sq-tab-someday { order: 3; } .sq-tab-schedule { order: 4; }
+  .sq-tab-discover { order: 1; } .sq-post { order: 2; } .sq-tab-someday { order: 3; } .sq-tab-schedule { order: 4; } .sq-tab-groups { order: 5; }
   .sq-nav { white-space: normal; }
   .sq-tab-someday .sq-someday-symbol { height: 28px; width: 28px; font-size: 30px; }
+  .sq-tab-groups .sq-groups-symbol { height: 28px; width: 28px; font-size: 28px; }
   .sq-badge { position: absolute; top: 2px; left: calc(50% + 6px); min-width: 20px; height: 20px; font-size: 12px; line-height: 20px; padding: 0 5px; }
   .sq-discover-page .sq-post { flex: 1; margin: -26px 0 0; flex-direction: column; gap: 4px; padding: 0; background: none; border-radius: 0; color: var(--sq-on-red); font: 600 12.5px/1.1 var(--font-sans); }
   .sq-post .sq-ic { width: 62px; height: 62px; border-radius: 50%; background: var(--sq-gold); -webkit-mask: none; mask: none; position: relative; border: 3px solid var(--sq-red-deep); }
