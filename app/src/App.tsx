@@ -1,5 +1,6 @@
 // VIEW: compose the shared catalog, posting form and device-local Schedule.
 import { useEffect, useState } from 'react'
+import type { EventCategorySelection } from './model/eventCategories'
 import { connectBrowserEventCatalog, type ConnectedCatalog } from './controller/postEvent'
 import { DiscoverView, SideQuestHeader, useDiscoverScreen } from './view/DiscoverView'
 import { ScheduleTrailView, useScheduleScreen } from './view/ScheduleTrailView'
@@ -23,13 +24,14 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
   const [connection] = useState(() => catalog ?? connectBrowserEventCatalog({}))
   const [page, setPage] = useState(pageFromHash)
   const [freeWindow, setFreeWindow] = useState<FreeWindow>({ date: '', start: '', end: '' })
+  const [category, setCategory] = useState<EventCategorySelection>('all')
   const events = useEventCatalog(connection.catalog)
   const plans = useSharedSchedule(connection.catalog)
   const someday = useSomeday()
   const details = useBrowseDetail(connection.catalog)
   const discover = useDiscoverScreen({
     events: events.events, loading: events.loading, error: events.error,
-    plannedIds: plans.schedule.ids, freeWindow,
+    plannedIds: plans.schedule.ids, freeWindow, category,
     planningBlocked: plans.schedule.blocked || plans.loading,
     ...(now ? { now: now() } : {}),
   })
@@ -105,7 +107,8 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
           <DiscoverView screen={discover} routes={routes} sourceNote={sourceNote}
             detail={selectedDetail} onSelectEvent={details.open} onRetryDetail={details.retry}
             onRetry={() => { void events.refresh() }}
-            onPlan={id => { void plans.add(id) }} onFreeWindowChange={setFreeWindow} />
+            onPlan={id => { void plans.add(id) }} onFreeWindowChange={setFreeWindow}
+            onCategoryChange={setCategory} />
       )
   return (
     <>
