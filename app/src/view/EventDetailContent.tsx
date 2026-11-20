@@ -1,6 +1,7 @@
 // VIEW: display a selected event and its verified catalog state.
 import type { StubModel } from '../controller/presentScreens'
 import { titleSizeClass } from './titleSize'
+import { OFFICIAL_SCU_CAMPUS_MAP, googleMapsVenueSearchUrl } from '../controller/campusMapLinks'
 
 export type SelectedDetailState =
   | { id: string; status: 'loading' }
@@ -47,6 +48,14 @@ function VerifiedEventDetails({ event, onPlan, planningBlocked }: {
           <dt>Date</dt><dd>{event.dateText}</dd>
         </dl>
         <p className="sq-sticker-desc">{event.description ?? 'No description was provided.'}</p>
+        <div className="sq-venue-map-links">
+          <a href={OFFICIAL_SCU_CAMPUS_MAP} target="_blank" rel="noopener noreferrer">Browse official SCU campus map</a>
+          {googleMapsVenueSearchUrl(event.location) && (
+            <a href={googleMapsVenueSearchUrl(event.location)!} target="_blank" rel="noopener noreferrer">
+              Search this venue in Google Maps
+            </a>
+          )}
+        </div>
       </div>
       {event.calendarUrl && (
         <a className="sq-calendar-link" href={event.calendarUrl} target="_blank" rel="noopener noreferrer">
