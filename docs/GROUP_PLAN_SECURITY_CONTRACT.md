@@ -33,3 +33,21 @@ The existing M2 Node server exposes event catalog endpoints. This branch does no
 - [ ] Update live CRC/ER, specifications, security test matrix, human usability evidence and the final presentation with only proven claims.
 
 **Ownership:** Daven owns backend, identity and actual policies; Sembiyan owns domain response rules; Devonny owns invitation and response UI; Cynthia owns cross-feature integration and negative end-to-end evidence. This draft is a proposed interface, subject to teammate review.
+
+## Review-only SQL schema and isolated checks (November 20)
+
+The schema draft is [`supabase/proposals/20261120000000_group_plan_storage_REVIEW_ONLY.sql`](../supabase/proposals/20261120000000_group_plan_storage_REVIEW_ONLY.sql). It creates `group_plans` and `group_participants` with foreign keys to an existing Event and a provider-managed user, response and condition checks, unique membership, nonnegative plan revision, indexes and **no client table grants or RLS allow policies**. It is intentionally outside `supabase/migrations/`.
+
+The [isolated CI workflow](../.github/workflows/group-sql-review-ci.yml) uses a fresh PostgreSQL 16 container with fake Auth accounts, applies the M2 Event migration and the review-only proposal, then asserts table constraints, denied anonymous/authenticated direct reads, duplicate-member rejection, and correct handling of unknown/conditional responses. This test cannot establish correctness of live Supabase Auth, deployed RLS, RPC permissions, or team-owned data.
+
+**Release blocker:** A UI or browser cannot yet read these tables. That is deliberate. Implement a server-verified actor and authorized, redacted read/write RPCs with atomic revision enforcement first, then have the backend owner explicitly approve promotion to an actual migration after negative cross-user tests. `SECURITY DEFINER` functions must use a fixed search path, narrow grants, explicit authorization and careful review. Never unblock the UI with `grant select on group_participants to authenticated`: that would expose other students' private condition text.
+
+References: [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [server identity verification](https://supabase.com/docs/guides/auth/server-side/creating-a-client), and [database function security](https://supabase.com/docs/guides/database/functions).
+
+## Caller-scoped RPC proposal (not yet deployed)
+
+The additional review-only file [`sidequest_group_*` RPC functions](../supabase/proposals/20261120010000_group_plan_rpcs_REVIEW_ONLY.sql) defines a narrowly controlled way for authenticated members to create and list their plans, read an authorized view, invite/remove participants, answer Works/If/Cannot, and confirm/cancel with expected-revision checks. The functions use `auth.uid()`, `SECURITY DEFINER` with an empty search path, explicit membership/organizer checks, and return author-only private condition text. Direct table access remains denied.
+
+The isolated PostgreSQL [RPC regression script](../supabase/proposals/tests/group_plan_rpc_review.sql) simulates three identity subjects and checks outsider denial, private condition redaction, stale updates, organizer authorization and confirmation rules. Its `auth.uid()` is a **test stub using a PostgreSQL session setting**; it does not verify tokens. Running these functions inside a container does not prove Supabase Auth configuration, real access-token expiry, JWT verification, browser-to-server transport or production migration safety.
+
+**Before promotion:** Daven must review the security-definer ownership and grants, production Auth/JWT path and session revocation behavior, live PostgREST/RLS compatibility, absence of leak routes, and invitation identity UX. Carry out one complete two-account browser test with a third unauthorized account in a controlled instance. Do not copy this proposal straight into the team Supabase SQL editor.
