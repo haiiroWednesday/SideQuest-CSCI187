@@ -20,3 +20,12 @@ The bird is our own model, built in three.js (`src/scene4.mjs`) and softened in 
 - Five small animations: hover, sip, rest, tilt, dart. It blinks.
 
 `src/hummingbird-live.html` is the live version. It runs in a browser with three.js and could go into the app as a component.
+
+## Third pass: painted, one body, springs
+
+`hummingbird-v3.gif`, `hummingbird-v3-coats.jpg`, and `src/hummingbird-painted.html`.
+
+- The body is one fused surface now. Head, neck, tail, crest and bill melt into each other, and so do their colours.
+- The wings are painted as soft fans that fade in from the shoulder. They start at the body colour and run through four more colours to the tip.
+- Every movement is a spring: it anticipates, overshoots and settles. The head stays steady while the body bobs. The tail streamers trail. The wire dips when it lands.
+- No library. It is one fragment shader and about a hundred lines of motion code.

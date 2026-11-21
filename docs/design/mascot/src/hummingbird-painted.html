@@ -1,0 +1,175 @@
+<h2 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">An animated, painted hummingbird mascot for SideQuest with five behaviours and three coats.</h2>
+<div id="hb-stage" style="position:relative;width:100%;max-width:600px;margin:0 auto;height:0;padding-top:66.667%;border-radius:16px;background:#f7efe4;overflow:hidden">
+  <svg id="hb-back" viewBox="0 0 600 400" style="position:absolute;inset:0;width:100%;height:100%" aria-hidden="true">
+    <path id="hb-wire" d="" fill="none" stroke="#2b1418" stroke-width="4" stroke-linecap="round" style="opacity:0;transition:opacity .35s"/>
+    <g id="hb-flower" style="opacity:0;transition:opacity .35s" stroke="#2b1418" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M500 228C494 280 506 340 498 404" fill="none"/><path d="M499 318C522 302 542 308 546 316C532 332 512 332 499 318Z" fill="#6cc48a"/><path d="M500 150C520 146 540 160 541 184C542 210 522 230 499 229C476 228 458 210 459 186C460 164 478 152 500 150Z" fill="#ffa6bb"/><path d="M500 190C508 177 524 192 511 204C496 216 478 197 489 180C502 162 531 173 528 196" fill="none"/></g>
+    <g id="hb-speed" style="opacity:0" stroke="#e0683c" stroke-width="4" stroke-linecap="round" fill="none"><path d="M40 168C90 164 150 170 214 166"/><path d="M92 206C150 210 230 202 300 207"/><path d="M34 246C80 242 130 248 186 244"/></g>
+  </svg>
+  <canvas id="hb-c" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+  <svg id="hb-front" viewBox="0 0 600 400" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" aria-hidden="true"></svg>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin:12px auto 0;max-width:600px">
+  <span id="hb-states" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center"></span>
+  <span id="hb-coats" style="display:flex;gap:8px;margin-left:10px"></span>
+</div>
+<script>
+(function () {
+  const stage = document.getElementById('hb-stage'), cv = document.getElementById('hb-c'), gl = cv.getContext('webgl', { premultipliedAlpha: true, antialias: false })
+  if (!gl) { stage.insertAdjacentHTML('beforeend', '<p style="position:absolute;left:16px;top:12px;font:13px sans-serif;color:#2b1418">This view has 3D switched off. The GIF shows the same motion.</p>'); return }
+  const FS = `precision highp float;
+uniform vec2 uRes; uniform vec4 uV; uniform vec3 uB; uniform vec3 uS; uniform vec3 uHc; uniform mat3 uHi; uniform vec4 uTl; uniform vec2 uCl; uniform vec2 uJ[5]; uniform vec4 uWa; uniform vec4 uWp; uniform vec4 uX;
+uniform vec3 cBk; uniform vec3 cHd; uniform vec3 cBl; uniform vec3 cTh; uniform vec3 cBi; uniform vec3 cGd; uniform vec3 cW[5];
+const vec3 CX = vec3(.9613,0.,-.2756); const vec3 CY = vec3(-.01924,.9977,-.0671); const vec3 CZ = vec3(.2750,.0698,.9590);
+mat2 rot(float a){ float c=cos(a), s=sin(a); return mat2(c,s,-s,c); }
+float sdE(vec3 p, vec3 r){ float k0=length(p/r), k1=length(p/(r*r)); return k0*(k0-1.)/k1; }
+float sdC(vec3 p, vec3 a, vec3 b, float ra, float rb){ vec3 pa=p-a, ba=b-a; float h=clamp(dot(pa,ba)/dot(ba,ba),0.,1.); return length(pa-ba*h)-mix(ra,rb,h); }
+void bl(inout float d, inout vec3 c, float d2, vec3 c2, float k){ float h=clamp(.5+.5*(d-d2)/k,0.,1.); c=mix(c,c2,h); d=mix(d,d2,h)-k*h*(1.-h); }
+vec3 pal(float u){ u=clamp(u,0.,1.)*4.; vec3 c=mix(cW[0],cW[1],clamp(u,0.,1.)); c=mix(c,cW[2],clamp(u-1.,0.,1.)); c=mix(c,cW[3],clamp(u-2.,0.,1.)); return mix(c,cW[4],clamp(u-3.,0.,1.)); }
+float mp(vec3 p, out vec3 col){
+  vec3 q = p + .013*vec3(sin(p.y*8.+p.z*5.), sin(p.x*7.+1.7), sin(p.x*6.+p.y*4.));
+  float pf = uX.z;
+  float d = sdE(q, vec3(.46,.37,.35)*pf);
+  d = min(d, d); float d2 = sdE(q-vec3(-.3,-.02,0.), vec3(.34,.25,.25)*pf); float h0 = clamp(.5+.5*(d-d2)/.18,0.,1.); d = mix(d,d2,h0)-.18*h0*(1.-h0);
+  d2 = length(q-vec3(.25,.07,0.))-.27*pf; h0 = clamp(.5+.5*(d-d2)/.15,0.,1.); d = mix(d,d2,h0)-.15*h0*(1.-h0);
+  float t = smoothstep(-.16,.2,-q.y*1.3+q.x*.55-.02+.05*sin(q.x*9.+q.z*6.));
+  col = mix(cBk, cBl, t); col = mix(col, mix(cBk, vec3(1.,.74,.56), .65), .9*t*(1.-t));
+  col = mix(col, cW[1], .35*smoothstep(-.1,-.5,q.x)*(1.-t));
+  vec3 hq = uHi*(q-uHc);
+  float th = smoothstep(.0,-.09,hq.y-.34*hq.x+.07+.02*sin(hq.z*14.))*smoothstep(-.2,-.02,hq.x);
+  vec3 hc = mix(cHd, cTh, th); hc = mix(hc, mix(cHd, vec3(1.,.6,.6), .5), .5*smoothstep(.14,.04,length(hq-vec3(.1,-.03,sign(hq.z)*.2)))*(1.-th));
+  bl(d, col, length(hq)-.275, hc, .12);
+  vec3 b = hq; b.y += .07*pow(clamp((hq.x-.2)/.7,0.,1.),2.);
+  bl(d, col, sdC(b, vec3(.2,-.01,0.), vec3(.9,-.03,0.), .046, .011), cBi, .035);
+  vec3 c0 = vec3(-.07,.2,0.);
+  for (int i=0;i<3;i++){ float e=.42+.37*float(i), L=(i==1)?.28:((i==0)?.2:.17); vec3 tip=c0+L*vec3(-cos(e),sin(e),0.)+vec3(uCl*(L*3.2),0.);
+    float al=clamp(length(hq-c0)/L,0.,1.); bl(d, col, sdC(hq,c0,tip,.052,.02), mix(cHd, (i==1)?cGd:cW[1], smoothstep(.45,1.,al)), .06); }
+  vec3 tq = q-vec3(-.56,-.05,0.); tq.xy = rot(-uTl.x)*tq.xy;
+  for (int j=0;j<3;j++){ vec3 fq=tq; fq.xz = rot((float(j)-1.)*uTl.y)*fq.xz; bl(d, col, sdE(fq-vec3(-.25,0.,0.), vec3(.28,.032,.075)), pal(clamp(-fq.x/.52,0.,1.)*.8), .08); }
+  vec3 pw = vec3(uB.xy + rot(uB.z)*(p.xy*uS.xy), p.z);
+  for (int s=0;s<2;s++){ float z0=(s==0)?.06:-.06; vec3 a3=vec3(uJ[0],z0*.5), j1=vec3(uJ[1+2*s],z0), j2=vec3(uJ[2+2*s],z0);
+    bl(d, col, min(sdC(pw,a3,j1,.02,.014), sdC(pw,j1,j2,.014,.012)), cW[1], .04); bl(d, col, sdE(pw-j2, vec3(.085,.085,.03)), cGd, .025); }
+  if (uTl.w>.5) for (int s=0;s<2;s++){ float z=(s==0)?.1:-.1; bl(d, col, min(sdC(q,vec3(.0,-.28,z),vec3(.06,-.42,z),.022,.018), sdC(q,vec3(.06,-.42,z),vec3(.17,-.435,z),.018,.014)), cBi, .02); }
+  return d;
+}
+vec4 wing(vec2 uv, vec2 S, float ph, float nr){
+  float A=uWp.x, W=uWp.y, b=uWp.z, o=uWp.w; float Lf=mix(.78, (nr>.5)?1.04:.9, o); float pf=uB.z+3.1416+.1;
+  vec2 v=uv-S; if (length(v)>Lf*1.12) return vec4(0.);
+  float acc=0., ua=0.;
+  for (int i=0;i<12;i++){ float pi=ph+b*3.1416*(float(i)/11.*2.-1.); float f=mix(pf, A+W*sin(pi)-((nr>.5)?0.:.2), o); vec2 dr=vec2(cos(f),sin(f)); float a=dot(v,dr), c=dot(v,vec2(-dr.y,dr.x)), u=a/Lf;
+    float s=pow(max(sin(3.1416*pow(clamp(u,0.,1.),.62)),0.),.7); float wt=Lf*mix(.34,.25,o)*s*(1.-.13*abs(sin(u*16.)))+.01, wl=Lf*.06*s+.012;
+    float cv=smoothstep(wt,wt-.04,c)*smoothstep(-wl,-wl+.03,c)*smoothstep(1.02,.93,u)*smoothstep(-.05,.02,u); acc+=cv; ua+=u*cv; }
+  float cov=acc/12.; if (cov<.003) return vec4(0.); float u=ua/acc;
+  float al=clamp(cov*mix(1.,2.7,b),0.,1.)*mix(1.,.9,b);
+  float th=atan(v.y,v.x);
+  vec3 g=pal(u*1.03+.05*sin(th*5.+uX.y*2.)); g*=.94+.06*sin(th*50.+u*9.);
+  if (nr<.5){ g=mix(g,vec3(1.),.26); al*=.8; }
+  al*=smoothstep(0., mix(.16,.26,o), u);
+  return vec4(g*al, al);
+}
+void main(){
+  vec2 uv = uV.xy + (gl_FragCoord.xy/uRes*2.-1.)*uV.zw; vec4 o = vec4(0.);
+  if (length(uv-uB.xy) < 2.2) {
+    o = wing(uv, uWa.zw, uX.w+.5, 0.);
+    vec3 row = CX*uv.x + CY*uv.y + CZ*6.; vec3 rdw = -CZ;
+    vec3 ro = vec3(rot(-uB.z)*(row.xy-uB.xy), row.z)/uS; vec3 rd = normalize(vec3(rot(-uB.z)*rdw.xy, rdw.z)/uS);
+    float t=4.3, md=9., tm=4.3; vec3 c; bool hit=false;
+    for (int i=0;i<56;i++){ float d=mp(ro+rd*t,c); if (d<md){ md=d; tm=t; } if (d<.003){ hit=true; break; } t+=d*.85; if (t>8.6) break; }
+    vec4 bd = vec4(0.); float hm = smoothstep(.36,.27,length(uHi*(ro+rd*tm-uHc)))*smoothstep(.06,.0,md);
+    if (hit) { vec3 p=ro+rd*t, cc; vec2 e=vec2(.004,-.004);
+      vec3 n=normalize(e.xyy*mp(p+e.xyy,cc)+e.yyx*mp(p+e.yyx,cc)+e.yxy*mp(p+e.yxy,cc)+e.xxx*mp(p+e.xxx,cc)); vec3 nw=vec3(rot(uB.z)*n.xy,n.z);
+      float h=pow(dot(nw,normalize(vec3(-.45,.8,.5)))*.5+.5,1.3); vec3 sh=c*mix(vec3(.76,.62,.74), vec3(1.07,1.03,.97), h);
+      sh=mix(sh, vec3(1.), pow(1.-max(dot(nw,CZ),0.),2.2)*.42);
+      vec3 hq=uHi*(p-uHc); vec3 e3=hq-vec3(.135,.065,sign(hq.z)*.232);
+      sh=mix(sh, mix(sh,cBl,.5), smoothstep(.11,.07,length(e3)));
+      sh=mix(sh, vec3(.08,.04,.05), smoothstep(.06,.052,length(e3*vec3(1.,1./max(uX.x,.07),1.))));
+      sh=mix(sh, vec3(1.), smoothstep(.021,.014,length(e3.xy-vec2(.02,.022)))*step(.5,uX.x));
+      bd=vec4(sh,1.);
+    } else { float a=smoothstep(.05,0.,md)*.85; if (a>.004){ vec3 cc; mp(ro+rd*tm,cc); bd=vec4(mix(cc,vec3(1.),.28)*a,a); } }
+    o = o*(1.-bd.a)+bd;
+    vec4 wn = wing(uv, uWa.xy, uX.w, 1.)*(1.-hm*.94); o = o*(1.-wn.a)+wn;
+  }
+  gl_FragColor = o;
+}`
+  const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(o)); return o }
+  const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, 'attribute vec2 a; void main(){ gl_Position = vec4(a,0.,1.); }')); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(pr); gl.useProgram(pr)
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW); gl.enableVertexAttribArray(0); gl.bindAttribLocation(pr, 0, 'a'); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0)
+  const U = {}; ['uRes', 'uV', 'uB', 'uS', 'uHc', 'uHi', 'uTl', 'uCl', 'uJ', 'uWa', 'uWp', 'uX', 'cBk', 'cHd', 'cBl', 'cTh', 'cBi', 'cGd', 'cW'].forEach(n => U[n] = gl.getUniformLocation(pr, n))
+  const hex = h => [1, 3, 5].map(i => Math.pow(parseInt(h.substr(i, 2), 16) / 255, 1))
+  // each coat: back, hood, belly, throat, bill, gold, then five wing stops from the shoulder to the tip
+  const COATS = {
+    A: { c: ['#de4a66', '#a3243f', '#fff4dc', '#ffc94d', '#3a1a20', '#ffc94d'], w: ['#de4a66', '#ff6f86', '#ffa257', '#ffd866', '#a5ecd9'], dot: '#a3243f' },
+    B: { c: ['#63c98d', '#2f9a68', '#fff4dc', '#ff4f8b', '#2a2320', '#ffc94d'], w: ['#63c98d', '#3fd3c2', '#52a9ff', '#a08fff', '#ffd3f0'], dot: '#2f9a68' },
+    C: { c: ['#bca8ff', '#8f2c50', '#fff4dc', '#ff7aa3', '#33202c', '#ffc94d'], w: ['#bca8ff', '#8fb6ff', '#ff9ad2', '#ffcf8a', '#fff3b0'], dot: '#8f66e0' } }
+  let coat = 'A'
+  const paint = () => { const k = COATS[coat];['cBk', 'cHd', 'cBl', 'cTh', 'cBi', 'cGd'].forEach((n, i) => gl.uniform3fv(U[n], hex(k.c[i]))); gl.uniform3fv(U.cW, [].concat(...k.w.map(hex))) }
+  const fit = () => { const w = stage.clientWidth, pr2 = Math.min(window.devicePixelRatio || 1, 1.5); cv.width = Math.round(w * pr2); cv.height = Math.round(w * 2 / 3 * pr2); gl.viewport(0, 0, cv.width, cv.height) }
+  fit(); window.addEventListener('resize', fit)
+  const CXv = [.9613, 0, -.2756], CYv = [-.01924, .9977, -.0671], toUV = (x, y, z) => [x * CXv[0] + z * CXv[2], x * CYv[0] + y * CYv[1] + z * CYv[2]]
+  const PPU = 600 / 3.9, px = x => 300 + x * PPU, py = y => 200 - (y - .85) * PPU
+  // springs
+  const s = { x: -.05, y: .95, psi: .66, sx: 1, puff: 1, hp: -.06, hr: 0, hw: 0, A: 2.22, W: .78, blur: 1, open: 1, tail: .4, fan: .45, dip: 0, cx: 0, cy: 0, fl: 0 }, v = {}; for (const k in s) v[k] = 0
+  const spr = (k, target, K, z, dt) => { v[k] += ((target - s[k]) * K - v[k] * 2 * z * Math.sqrt(K)) * dt; s[k] += v[k] * dt }
+  const R = (a, b) => a + Math.random() * (b - a), clamp = (x, a, b) => Math.max(a, Math.min(b, x))
+  const WIRE = .31, PX = -.12, PY = WIRE + .345, FL = [1.3, 1.07]
+  let mode = 'Hover', tm = 0, t = 0, ph = 0, perched = false, anchor = [-.05, .95], hopT = 1.2, ant = 0, antDir = [0, 0], shuffle = 0, evT = 2, look = 0, lookDir = 1, shake = 0, lid = 1, blinkT = 2.5, blinks = 0, xs = s.x, ys = s.y, J = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], dartSt = 0, dart0 = [0, 0], sparkT = 0, lastTilt = -1
+  const front = document.getElementById('hb-front'), sparks = []
+  const spark = (x, y, col) => { const el = document.createElementNS('http://www.w3.org/2000/svg', 'path'); el.setAttribute('d', 'M0 -7C1 -2 2 -1 7 0C2 1 1 2 0 7C-1 2 -2 1 -7 0C-2 -1 -1 -2 0 -7Z'); el.setAttribute('fill', col); front.appendChild(el); sparks.push({ el, x, y, vx: R(-26, 26), vy: R(-60, -24), life: 0, max: R(.5, .8), r: R(0, 360) }) }
+  const tick = (x, y, n) => { for (let i = 0; i < n; i++) { const el = document.createElementNS('http://www.w3.org/2000/svg', 'path'), a = R(200, 340) * Math.PI / 180; el.setAttribute('d', `M0 0L${(Math.cos(a) * 12).toFixed(1)} ${(-Math.sin(a) * -12).toFixed(1)}`); el.setAttribute('stroke', '#2b1418'); el.setAttribute('stroke-width', '3'); el.setAttribute('stroke-linecap', 'round'); front.appendChild(el); sparks.push({ el, x: x + R(-30, 30), y, vx: Math.cos(a) * 40, vy: 18, life: 0, max: .34, r: 0, line: 1 }) } }
+  const show = (id, on) => { document.getElementById(id).style.opacity = on ? 1 : 0 }
+  const takeoff = () => { if (perched) { perched = false; v.y += 2.6; v.dip -= 1.4; v.puff -= .8; tick(px(s.x + .2), py(WIRE) + 10, 3) } }
+  const setMode = m => { mode = m; tm = 0; dartSt = 0; dart0 = [s.x, s.y]; lastTilt = -1; show('hb-flower', m === 'Sip'); style() }
+  function step(dt, skip) {
+    t += dt; tm += dt
+    const T = { psi: .66, A: 2.22, W: .78, blur: 1, open: 1, tail: .4, fan: .45, sx: 1, hp: -.06, hr: 0, hw: 0, puff: 1 }
+    let tx = s.x, ty = s.y, K = 34, Z = .62, beat = 8, feet = 0, freeX = false
+    const land = () => { const far = Math.hypot(s.x - PX, s.y - (PY + .32)); if (tm < .25 || (far > .1 && s.y > PY + .2 && tm < 1.4)) { tx = PX; ty = PY + .32; T.psi = .86; T.W = 1.12; T.blur = .5; beat = 5.2; T.fan = 1 } else { tx = PX; ty = PY; T.psi = .8; T.W = 1.05; T.blur = .45; beat = 5; T.fan = 1; K = 46; Z = .8; if (Math.abs(s.y - PY) < .035 && Math.abs(s.x - PX) < .06) { perched = true; v.dip -= 1.5; v.puff += 1.1; shuffle = .55; evT = R(1.2, 2.2); tick(px(s.x + .2), py(WIRE) + 12, 3) } } }
+    const idle = () => { tx = PX; ty = PY + s.dip; K = 300; Z = 1; feet = 1; T.open = shuffle > 0 ? .3 * Math.max(0, Math.sin(shuffle * 24)) : 0; shuffle -= dt; T.psi = .52; T.tail = .78; T.fan = .16; T.puff = 1 + .014 * Math.sin(t * 2.4); T.hp = .02 }
+    if (mode === 'Hover') { takeoff(); hopT -= dt; if (hopT < 0) { const n = [R(-.7, .3), R(.8, 1.08)], dx = n[0] - s.x, dy = n[1] - s.y, l = Math.hypot(dx, dy) || 1; antDir = [dx / l, dy / l]; ant = .11; anchor = n; hopT = R(1.7, 3) }
+      if (ant > 0) { ant -= dt; tx = s.x - antDir[0] * .5; ty = s.y - antDir[1] * .5; K = 20 } else { tx = anchor[0] + .05 * Math.sin(t * 1.3); ty = anchor[1] + .04 * Math.sin(t * 6.4) }
+      T.psi = .66 - clamp(v.x * .2, -.4, .4); T.tail = .4 + .2 * Math.sin(t * 6.4 + 1.2); T.W = .78 + clamp(v.y * .08, -.1, .2) }
+    else if (mode === 'Sip') { takeoff(); const pump = Math.sin(t * 12.5); tx = FL[0] - 1.22 + .035 * pump; ty = FL[1] - .41 + .018 * Math.sin(t * 5); T.psi = .42; T.hp = -.12; T.fan = 1; T.tail = .3 + .26 * Math.sin(t * 12.5 + .6); K = 22; Z = .7
+      if (Math.hypot(s.x - tx, s.y - ty) < .09) { sparkT -= dt; if (sparkT < 0) { sparkT = R(.3, .55); spark(px(FL[0]) + R(-26, 26), py(FL[1]) - 30, Math.random() < .5 ? '#ffc94d' : '#ff7aa3') } } }
+    else if (mode === 'Rest' || mode === 'Tilt') { if (!perched) land(); else { idle()
+        if (mode === 'Rest') { evT -= dt; if (evT < 0) { evT = R(1.6, 3); const r = Math.random(); if (r < .45) { look = .9; lookDir = Math.random() < .5 ? 1 : -1 } else if (r < .8) { v.puff += 1.5; shake = .45 } else blinks = 2 } if (look > 0) { look -= dt; T.hw = .5 * lookDir; T.hr = .1 * lookDir } if (shake > 0) { shake -= dt; T.psi += .05 * Math.sin(shake * 60) * shake * 2; T.hr = .12 * Math.sin(shake * 52) } }
+        else { const k = Math.floor(tm / 1.9) % 2; if (k !== lastTilt) { lastTilt = k; blinks = 2 } T.hr = k ? .3 : -.5; T.hw = k ? .2 : -.3; T.psi = .52 + (k ? -.04 : .05); T.hp = .06 } } }
+    else if (mode === 'Dart') { takeoff(); if (dartSt === 0) { tx = dart0[0] - .26; ty = dart0[1] - .04; K = 90; Z = .9; T.psi = 1; T.A = 2.6; T.W = .3; T.sx = .86; if (tm > .2) { dartSt = 1; show('hb-speed', 1); document.getElementById('hb-speed').setAttribute('transform', `translate(0 ${(py(s.y) - 206).toFixed(0)})`) } }
+      else if (dartSt === 1) { freeX = true; v.x += 60 * dt; s.x += v.x * dt; ty = dart0[1]; T.psi = .06; T.A = 2.9; T.W = .2; T.blur = .75; T.sx = 1.34; T.tail = -.1; T.fan = .1; if (s.x > 3.6) { s.x = -3.6; v.x = 9; s.y = anchor[1]; dartSt = 2; show('hb-speed', 0) } }
+      else { tx = anchor[0]; ty = anchor[1]; K = 20; Z = .46; const br = clamp(Math.abs(v.x) / 5, 0, 1); T.psi = .66 + .3 * br; T.W = .78 + .3 * br; T.blur = 1 - .45 * br; beat = 8 - 2.5 * br; T.sx = 1 + .2 * br; T.fan = .45 + .5 * br; if (tm > 2.2) setMode('Hover') } }
+    if (!freeX) spr('x', tx, K, Z, dt); spr('y', ty, K, Z, dt)
+    spr('psi', T.psi, 60, .55, dt); spr('A', T.A, 80, .9, dt); spr('W', T.W, 80, .9, dt); spr('blur', T.blur, 60, 1, dt); spr('open', T.open, 46, .62, dt); spr('tail', T.tail, 70, .4, dt); spr('fan', T.fan, 50, .5, dt); spr('sx', T.sx, 120, .4, dt); spr('puff', T.puff, 90, .3, dt); spr('hp', T.hp, 80, .6, dt); spr('hr', T.hr, 110, .34, dt); spr('hw', T.hw, 60, .5, dt)
+    spr('dip', perched ? -.03 : 0, 150, .2, dt); spr('cx', clamp(-v.x * .03, -.09, .09), 70, .3, dt); spr('cy', clamp(-v.y * .03, -.09, .09), 70, .3, dt)
+    s.open = clamp(s.open, 0, 1.1); s.blur = clamp(s.blur, 0, 1)
+    blinkT -= dt; if (blinkT < 0) { blinks = Math.max(blinks, 1); blinkT = R(2.2, 4) } if (blinks > 0) { s.fl += dt; const u = s.fl / .16; lid = 1 - Math.sin(Math.min(1, u) * Math.PI); if (u >= 1.5) { s.fl = 0; blinks-- } } else lid = 1
+    ph += dt * 6.2832 * (perched ? 0 : beat)
+    xs += (s.x - xs) * (1 - Math.exp(-dt * 5)); ys += (s.y - ys) * (1 - Math.exp(-dt * 5))
+    const c = Math.cos(s.psi), sn = Math.sin(s.psi), sy = s.puff / Math.sqrt(s.sx), S = [s.sx * s.puff, sy, sy]
+    const ox = perched ? 0 : clamp((xs - s.x) * .5, -.08, .08), oy = perched ? 0 : clamp((ys - s.y) * .6, -.08, .08), hc = [.5 + (c * ox + sn * oy), .3 + (-sn * ox + c * oy), 0]
+    const hz = s.hp - s.psi, cz = Math.cos(hz), sz = Math.sin(hz), cxr = Math.cos(s.hr), sxr = Math.sin(s.hr), cyr = Math.cos(s.hw), syr = Math.sin(s.hw)
+    const Rm = [[cz * cyr - sz * sxr * syr, -sz * cxr, cz * syr + sz * sxr * cyr], [sz * cyr + cz * sxr * syr, cz * cxr, sz * syr - cz * sxr * cyr], [-cxr * syr, sxr, cxr * cyr]]
+    const w2 = (bx, by) => [s.x + (c * bx * S[0] - sn * by * S[1]), s.y + (sn * bx * S[0] + c * by * S[1])]
+    const root = w2(-.56, -.05), ta = s.psi + Math.PI + s.tail * 1.1, dir = [Math.cos(ta), Math.sin(ta)]
+    J[0] = root; [0, 1].forEach(i => { const a = 1 + 2 * i, b = 2 + 2 * i, r1 = 1 - Math.exp(-dt * (16 - i * 4)), r2 = 1 - Math.exp(-dt * (8 - i * 2)), g1 = [root[0] + dir[0] * .3, root[1] + dir[1] * .3 - .02]
+      J[a] = [J[a][0] + (g1[0] - J[a][0]) * r1, J[a][1] + (g1[1] - J[a][1]) * r1]; let dx = J[a][0] - root[0], dy = J[a][1] - root[1], l = Math.hypot(dx, dy) || 1; J[a] = [root[0] + dx / l * .3, root[1] + dy / l * .3]
+      const g2 = [J[a][0] + dx / l * .3, J[a][1] + dy / l * .3 - .05 - i * .02]; J[b] = [J[b][0] + (g2[0] - J[b][0]) * r2, J[b][1] + (g2[1] - J[b][1]) * r2]; dx = J[b][0] - J[a][0]; dy = J[b][1] - J[a][1]; l = Math.hypot(dx, dy) || 1; J[b] = [J[a][0] + dx / l * .3, J[a][1] + dy / l * .3] })
+    const sn_ = w2(.08, .15), sf = w2(.1, .2), n2 = toUV(sn_[0], sn_[1], .22), f2 = toUV(sf[0], sf[1], -.2)
+    for (let i = sparks.length - 1; i >= 0; i--) { const p = sparks[i]; p.life += dt; p.x += p.vx * dt; p.y += p.vy * dt; const u = p.life / p.max; if (u >= 1) { p.el.remove(); sparks.splice(i, 1); continue } p.el.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${p.r}) scale(${p.line ? 1 : (.5 + Math.sin(u * Math.PI) * .9).toFixed(2)})`); p.el.setAttribute('opacity', (1 - u * u).toFixed(2)) }
+    if (skip) return
+    gl.uniform2f(U.uRes, cv.width, cv.height); gl.uniform4f(U.uV, 0, .85, 1.95, 1.3); gl.uniform3f(U.uB, s.x, s.y, s.psi); gl.uniform3fv(U.uS, S); gl.uniform3fv(U.uHc, hc)
+    gl.uniformMatrix3fv(U.uHi, false, [Rm[0][0], Rm[0][1], Rm[0][2], Rm[1][0], Rm[1][1], Rm[1][2], Rm[2][0], Rm[2][1], Rm[2][2]])
+    gl.uniform4f(U.uTl, s.tail, .12 + s.fan * .34, 0, feet); gl.uniform2f(U.uCl, s.cx, s.cy); gl.uniform2fv(U.uJ, [].concat(...J)); gl.uniform4f(U.uWa, n2[0], n2[1], f2[0], f2[1]); gl.uniform4f(U.uWp, s.A, s.W, s.blur * s.open, s.open); gl.uniform4f(U.uX, lid, t, 1, ph)
+    gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLES, 0, 3)
+    document.getElementById('hb-wire').style.opacity = (mode === 'Rest' || mode === 'Tilt' || perched) ? 1 : 0
+    const wy = py(WIRE), dp = -s.dip * PPU * 2.2, wx = px(PX + .2); document.getElementById('hb-wire').setAttribute('d', `M-10 ${wy - 4}Q${(wx * .5).toFixed(1)} ${(wy + dp * .5 + 3).toFixed(1)} ${wx.toFixed(1)} ${(wy + dp).toFixed(1)}T610 ${wy - 6}`)
+    document.getElementById('hb-flower').setAttribute('transform', `rotate(${(mode === 'Sip' ? 1.6 * Math.sin(t * 12.5 - .8) * clamp(1 - Math.hypot(s.x - (FL[0] - 1.22), s.y - (FL[1] - .41)) * 4, 0, 1) : 0).toFixed(2)} 500 400)`)
+  }
+  const style = () => { [...document.querySelectorAll('#hb-states button')].forEach(b => { const on = b.textContent === mode; b.setAttribute('aria-pressed', on); b.style.background = on ? '#751728' : 'transparent'; b.style.color = on ? '#fff' : 'var(--text-primary, #2b1418)'; b.style.borderColor = on ? '#751728' : 'var(--border-strong, #c9b9ac)' }); [...document.querySelectorAll('#hb-coats button')].forEach(b => { b.style.boxShadow = b.dataset.k === coat ? '0 0 0 2px var(--surface-2, #fff), 0 0 0 4px ' + COATS[b.dataset.k].dot : 'none' }) }
+  ;['Hover', 'Sip', 'Rest', 'Tilt', 'Dart'].forEach(m => { const b = document.createElement('button'); b.textContent = m; b.style.cssText = 'font:500 13px var(--font-sans, system-ui);padding:7px 14px;border-radius:999px;border:1px solid;cursor:pointer'; b.onclick = () => setMode(m); document.getElementById('hb-states').appendChild(b) })
+  Object.keys(COATS).forEach(k => { const b = document.createElement('button'); b.dataset.k = k; b.setAttribute('aria-label', 'Coat ' + k); b.style.cssText = 'width:22px;height:22px;border-radius:50%;border:0;cursor:pointer;background:' + COATS[k].dot; b.onclick = () => { coat = k; paint(); style() }; document.getElementById('hb-coats').appendChild(b) })
+  paint(); setMode('Hover')
+  let manual = false, last = performance.now()
+  const slow = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches ? .5 : 1
+  function loop(now) { const dt = Math.min(.033, (now - last) / 1000) * slow; last = now; if (!manual) { step(dt / 2, true); step(dt / 2) } requestAnimationFrame(loop) }
+  window.HB = { mode: setMode, coat: k => { coat = k; paint(); style() }, manual: m => { manual = m }, tick: step }
+  requestAnimationFrame(loop)
+})()
+</script>
