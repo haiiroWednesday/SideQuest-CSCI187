@@ -28,7 +28,7 @@ const GROUP_MAX_BODY_BYTES = 8192
 const GROUP_REQUESTS_PER_MINUTE = 40
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const VALID_ACTIONS = new Set(['invite', 'remove', 'respond', 'confirm', 'cancel'])
-const VALID_RESPONSES = new Set<ResponseKind>(['works', 'if', 'cant'])
+const VALID_RESPONSES: ReadonlySet<string> = new Set<ResponseKind>(['works', 'if', 'cant'])
 
 class RequestError extends Error {
   constructor(readonly status: number, message: string) { super(message) }
