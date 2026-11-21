@@ -1,0 +1,44 @@
+# One-time formatting bootstrap for the isolated quality branch.
+# Deletes itself in the formatting commit; master never runs this workflow.
+name: Bootstrap unified clean-code formatting
+on:
+  push:
+    branches:
+      - quality/consistent-clean-code-20261120
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: quality/consistent-clean-code-20261120
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install and lock the style tools
+        working-directory: app
+        run: >
+          npm install --save-dev --save-exact --no-audit --no-fund
+          prettier@3.6.2
+          eslint@9.39.1
+          @eslint/js@9.39.1
+          typescript-eslint@8.48.0
+          eslint-plugin-react-hooks@5.2.0
+      - name: Normalize all authored TypeScript, TSX, CSS, MJS and HTML
+        working-directory: app
+        run: npm run format
+      - name: Remove this one-time workflow
+        run: git rm .github/workflows/quality-bootstrap-once.yml
+      - name: Commit the formatting and locked tooling changes to the feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "style: normalize authored web code and lock quality tools"
+          git push origin HEAD:quality/consistent-clean-code-20261120
