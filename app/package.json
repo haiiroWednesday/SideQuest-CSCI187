@@ -19,7 +19,7 @@
     "test:regression:journeys": "playwright test e2e/regression.journeys.spec.ts --project=chromium",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"server/**/*.ts\" \"tests/**/*.{ts,tsx}\" \"e2e/**/*.{ts,tsx,mjs}\" \"scripts/**/*.mjs\" \"vite.config.ts\" \"playwright.config.ts\" \"eslint.config.mjs\" \"index.html\" \"scenario-lab.html\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"server/**/*.ts\" \"tests/**/*.{ts,tsx}\" \"e2e/**/*.{ts,tsx,mjs}\" \"scripts/**/*.mjs\" \"vite.config.ts\" \"playwright.config.ts\" \"eslint.config.mjs\" \"index.html\" \"scenario-lab.html\"",
-    "lint": "eslint src server tests e2e scripts vite.config.ts playwright.config.ts eslint.config.mjs",
+    "lint": "eslint src server tests e2e scripts vite.config.ts playwright.config.ts eslint.config.mjs --max-warnings 0",
     "check:quality": "npm run format:check && npm run lint && npm run test:rubric"
   },
   "engines": {
