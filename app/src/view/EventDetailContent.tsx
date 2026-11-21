@@ -17,7 +17,11 @@ type DetailProps = {
   onClose: () => void
 }
 
-function VerifiedEventDetails({ event, onPlan, planningBlocked }: {
+function VerifiedEventDetails({
+  event,
+  onPlan,
+  planningBlocked,
+}: {
   event: StubModel
   onPlan?: (eventId: string) => void
   planningBlocked: boolean
@@ -26,10 +30,14 @@ function VerifiedEventDetails({ event, onPlan, planningBlocked }: {
     <>
       <div className="sq-sticker-top">
         <div className="sq-sticker-time">
-          {event.live && <span className={`sq-nx sq-live-${event.live.kind}`}>{event.live.text}</span>}
-          <b>{event.start.time}</b><i>{event.start.ampm}</i>
+          {event.live && (
+            <span className={`sq-nx sq-live-${event.live.kind}`}>{event.live.text}</span>
+          )}
+          <b>{event.start.time}</b>
+          <i>{event.start.ampm}</i>
           <span className="sq-sticker-until">
-            until {event.endText}<em>{event.durationText}</em>
+            until {event.endText}
+            <em>{event.durationText}</em>
           </span>
         </div>
         <div className="sq-sticker-day" aria-hidden="true">
@@ -39,18 +47,28 @@ function VerifiedEventDetails({ event, onPlan, planningBlocked }: {
         </div>
       </div>
       <div className="sq-sticker-body">
-        <h2 id="sq-detail-title" className={titleSizeClass(event.title)}>{event.title}</h2>
+        <h2 id="sq-detail-title" className={titleSizeClass(event.title)}>
+          {event.title}
+        </h2>
         <dl className="sq-facts">
           <dt>Host</dt>
-          <dd className={event.host ? undefined : 'sq-unset'}>{event.host ?? 'Host not provided'}</dd>
-          <dt>Where</dt><dd>{event.location}</dd>
-          <dt>Date</dt><dd>{event.dateText}</dd>
+          <dd className={event.host ? undefined : 'sq-unset'}>
+            {event.host ?? 'Host not provided'}
+          </dd>
+          <dt>Where</dt>
+          <dd>{event.location}</dd>
+          <dt>Date</dt>
+          <dd>{event.dateText}</dd>
         </dl>
         <p className="sq-sticker-desc">{event.description ?? 'No description was provided.'}</p>
       </div>
       {onPlan && (
-        <button className="sq-plan-button" type="button"
-          disabled={event.planned || planningBlocked} onClick={() => onPlan(event.id)}>
+        <button
+          className="sq-plan-button"
+          type="button"
+          disabled={event.planned || planningBlocked}
+          onClick={() => onPlan(event.id)}
+        >
           {event.planned ? 'In My Schedule' : '+ Plan to attend'}
         </button>
       )}
@@ -58,7 +76,14 @@ function VerifiedEventDetails({ event, onPlan, planningBlocked }: {
   )
 }
 
-export function EventDetailContent({ selected, verified, onRetryDetail, onPlan, planningBlocked, onClose }: DetailProps) {
+export function EventDetailContent({
+  selected,
+  verified,
+  onRetryDetail,
+  onPlan,
+  planningBlocked,
+  onClose,
+}: DetailProps) {
   if (!selected) {
     return (
       <div className="sq-sticker-placeholder">
@@ -70,7 +95,9 @@ export function EventDetailContent({ selected, verified, onRetryDetail, onPlan, 
 
   return (
     <div className="sq-sticker-card sq-ticket-scroll" key={selected.id}>
-      <button type="button" className="sq-sheet-close" aria-label="Close details" onClick={onClose}>×</button>
+      <button type="button" className="sq-sheet-close" aria-label="Close details" onClick={onClose}>
+        ×
+      </button>
       {verified?.status === 'loading' ? (
         <div className="sq-detail-verification" role="status">
           <h2 id="sq-detail-title">{selected.title}</h2>
@@ -86,7 +113,9 @@ export function EventDetailContent({ selected, verified, onRetryDetail, onPlan, 
           <h2 id="sq-detail-title">{selected.title}</h2>
           <p>{verified.message}</p>
           {onRetryDetail && (
-            <button type="button" className="sq-text-button" onClick={onRetryDetail}>Retry event details</button>
+            <button type="button" className="sq-text-button" onClick={onRetryDetail}>
+              Retry event details
+            </button>
           )}
         </div>
       ) : (

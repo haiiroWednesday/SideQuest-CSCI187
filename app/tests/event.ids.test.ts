@@ -23,13 +23,9 @@ it('rejects an empty event ID', () => {
 
   expect(result.error).toMatch(/unique event/i)
 
-  expect(result.events).toEqual([
-    { ...draft, id: 'event-1' },
-  ])
+  expect(result.events).toEqual([{ ...draft, id: 'event-1' }])
 
-  expect(events).toEqual([
-    { ...draft, id: 'event-1' },
-  ])
+  expect(events).toEqual([{ ...draft, id: 'event-1' }])
 })
 
 // IDs, unlike event titles, must be unique. A specific ID error matters
@@ -46,13 +42,9 @@ it('rejects an ID that another event already uses', () => {
 
   expect(result.error).toMatch(/unique event/i)
 
-  expect(result.events).toEqual([
-    { ...draft, id: 'event-1' },
-  ])
+  expect(result.events).toEqual([{ ...draft, id: 'event-1' }])
 
-  expect(events).toEqual([
-    { ...draft, id: 'event-1' },
-  ])
+  expect(events).toEqual([{ ...draft, id: 'event-1' }])
 })
 
 it('allows the same title when the event IDs are different', () => {
@@ -67,7 +59,5 @@ it('allows the same title when the event IDs are different', () => {
     { ...draft, id: 'event-2' },
   ])
 
-  expect(events).toEqual([
-    { ...draft, id: 'event-1' },
-  ])
+  expect(events).toEqual([{ ...draft, id: 'event-1' }])
 })

@@ -1,10 +1,20 @@
 // CONTROLLER: expose free-window matching to both M2 Discover and M1 fixtures.
 // Historical M1 posting/storage helpers remain for compatibility.
 import {
-  todayLocalISO, validateEventDraft, validateSearchWindow, matchingEvents,
-  removeEventFromList, restoreEventInList, isPastEventDate,
-  readStoredEvents, readStoredEventsChecked, saveStoredEvents, type CampusEvent, type EventDraft,
-  type StoredEventsState, type RemovedEvent,
+  todayLocalISO,
+  validateEventDraft,
+  validateSearchWindow,
+  matchingEvents,
+  removeEventFromList,
+  restoreEventInList,
+  isPastEventDate,
+  readStoredEvents,
+  readStoredEventsChecked,
+  saveStoredEvents,
+  type CampusEvent,
+  type EventDraft,
+  type StoredEventsState,
+  type RemovedEvent,
 } from '../model/events'
 import { formatEventDate, formatEventTime } from '../presentation/formatEvents'
 
@@ -25,15 +35,25 @@ export function todayLocal(now: Date = new Date()): string {
 }
 
 // Suggest a one-hour event in local time, rolling into tomorrow near midnight.
-export function initialEventWindow(now: Date = new Date()): Pick<EventDraft, 'date' | 'start' | 'end'> {
-  const start = Math.ceil((now.getHours() * 60 + now.getMinutes() + EVENT_DEFAULT_LEAD_MINUTES) / EVENT_DEFAULT_SLOT_MINUTES) * EVENT_DEFAULT_SLOT_MINUTES
+export function initialEventWindow(
+  now: Date = new Date(),
+): Pick<EventDraft, 'date' | 'start' | 'end'> {
+  const start =
+    Math.ceil(
+      (now.getHours() * 60 + now.getMinutes() + EVENT_DEFAULT_LEAD_MINUTES) /
+        EVENT_DEFAULT_SLOT_MINUTES,
+    ) * EVENT_DEFAULT_SLOT_MINUTES
   if (start + EVENT_DEFAULT_DURATION_MINUTES > END_OF_DAY_MINUTES) {
     const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
     return { date: todayLocalISO(tomorrow), start: '14:30', end: '15:30' }
   }
   const hhmm = (minutes: number) =>
     String(Math.floor(minutes / 60)).padStart(2, '0') + ':' + String(minutes % 60).padStart(2, '0')
-  return { date: todayLocalISO(now), start: hhmm(start), end: hhmm(start + EVENT_DEFAULT_DURATION_MINUTES) }
+  return {
+    date: todayLocalISO(now),
+    start: hhmm(start),
+    end: hhmm(start + EVENT_DEFAULT_DURATION_MINUTES),
+  }
 }
 
 // Formatting changes what the user sees but not the date/time values
@@ -80,7 +100,10 @@ export type CreateResult = { events: CampusEvent[]; error: string | null }
 
 // Return an error without running a search when the requested window is invalid.
 export function findEvents(
-  events: CampusEvent[], freeDate: string, freeStart: string, freeEnd: string,
+  events: CampusEvent[],
+  freeDate: string,
+  freeStart: string,
+  freeEnd: string,
 ): SearchResult {
   const window = { date: freeDate, start: freeStart, end: freeEnd }
   const error = validateSearchWindow(window)
@@ -88,7 +111,12 @@ export function findEvents(
 }
 
 // Append only validated events; never mutate the list held by React.
-export function createEvent(events: CampusEvent[], draft: EventDraft, id: string, now: Date = new Date()): CreateResult {
+export function createEvent(
+  events: CampusEvent[],
+  draft: EventDraft,
+  id: string,
+  now: Date = new Date(),
+): CreateResult {
   const { event, error } = validateEventDraft(draft, id, events, now)
   return event ? { events: [...events, event], error: null } : { events, error }
 }

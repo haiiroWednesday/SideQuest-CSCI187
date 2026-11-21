@@ -1,7 +1,15 @@
 // CONTROLLER: prepare upcoming-event groups and free-window feedback for Discover.
 import { eventPhase } from '../model/eventTiming'
 import { findEvents } from './findEvents'
-import { byTime, groupDays, toStub, type ScreenEvent, type FreeWindow, type FreeWindowModel, type DiscoverScreen } from './screenModels'
+import {
+  byTime,
+  groupDays,
+  toStub,
+  type ScreenEvent,
+  type FreeWindow,
+  type FreeWindowModel,
+  type DiscoverScreen,
+} from './screenModels'
 
 // ---------- Discover
 
@@ -35,17 +43,43 @@ export function presentDiscover(input: {
       active: fitting !== null,
       fitCount,
       fitText: fitCount === null ? null : fitCount === 0 ? 'Nothing fits' : `${fitCount} fit`,
-      hint: !complete && Boolean(values.date || values.start || values.end)
-        ? 'Showing all upcoming events. Complete the date and both times to filter.' : null,
+      hint:
+        !complete && Boolean(values.date || values.start || values.end)
+          ? 'Showing all upcoming events. Complete the date and both times to filter.'
+          : null,
       error: search?.error ?? null,
       canClear: Boolean(values.date || values.start || values.end),
     }
   }
 
   const base = { plannedCount, freeWindow, planningBlocked: Boolean(input.planningBlocked) }
-  if (input.loading) return { ...base, status: 'loading', errorMessage: null, days: [], count: 0, headingText: 'Coming up' }
-  if (input.error) return { ...base, status: 'error', errorMessage: input.error, days: [], count: 0, headingText: 'Coming up' }
-  if (upcoming.length === 0) return { ...base, status: 'empty', errorMessage: null, days: [], count: 0, headingText: 'Coming up' }
+  if (input.loading)
+    return {
+      ...base,
+      status: 'loading',
+      errorMessage: null,
+      days: [],
+      count: 0,
+      headingText: 'Coming up',
+    }
+  if (input.error)
+    return {
+      ...base,
+      status: 'error',
+      errorMessage: input.error,
+      days: [],
+      count: 0,
+      headingText: 'Coming up',
+    }
+  if (upcoming.length === 0)
+    return {
+      ...base,
+      status: 'empty',
+      errorMessage: null,
+      days: [],
+      count: 0,
+      headingText: 'Coming up',
+    }
 
   const visible = fitting ? upcoming.filter(event => fitting.has(event.id)) : upcoming
   const stubs = visible.map(event => toStub(event, now, planned, fitting))

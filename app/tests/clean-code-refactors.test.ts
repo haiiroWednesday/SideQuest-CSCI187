@@ -23,12 +23,15 @@ function planOn(date: string, start: string, end: string): ScheduleInput {
 
 describe('clean-code refactors retain observed behavior', () => {
   it('renders next-up labels for today, tomorrow, and future weekdays', () => {
-    expect(presentSchedule(planOn('2026-11-20', '14:00', '15:00'), campusFriday).nextUp?.when)
-      .toBe('in 1 hr')
-    expect(presentSchedule(planOn('2026-11-21', '15:00', '16:00'), campusFriday).nextUp?.when)
-      .toBe('Tomorrow at 3:00pm')
-    expect(presentSchedule(planOn('2026-11-23', '15:00', '16:00'), campusFriday).nextUp?.when)
-      .toBe('Mon 11/23 at 3:00pm')
+    expect(presentSchedule(planOn('2026-11-20', '14:00', '15:00'), campusFriday).nextUp?.when).toBe(
+      'in 1 hr',
+    )
+    expect(presentSchedule(planOn('2026-11-21', '15:00', '16:00'), campusFriday).nextUp?.when).toBe(
+      'Tomorrow at 3:00pm',
+    )
+    expect(presentSchedule(planOn('2026-11-23', '15:00', '16:00'), campusFriday).nextUp?.when).toBe(
+      'Mon 11/23 at 3:00pm',
+    )
   })
 
   it('preserves a currently running event in the next-up view', () => {
@@ -51,8 +54,7 @@ describe('clean-code refactors retain observed behavior', () => {
       end: '22:45',
       description: 'Drop in any time; no sign-up needed.',
     })
-    expect(scenarios('2026-11-20', 187).find(s => s.id === 'busy')?.events)
-      .toHaveLength(8)
+    expect(scenarios('2026-11-20', 187).find(s => s.id === 'busy')?.events).toHaveLength(8)
   })
 
   it('uses one unambiguous recovery confirmation across Schedule implementations', () => {

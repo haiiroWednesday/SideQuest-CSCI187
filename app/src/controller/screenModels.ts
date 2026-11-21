@@ -89,7 +89,9 @@ export function splitTime(time: string): TimeParts {
 export function spanText(minutes: number): string {
   const hours = Math.floor(minutes / 60)
   const mins = minutes % 60
-  return [hours ? `${hours} hr` : '', mins ? `${mins} min` : ''].filter(Boolean).join(' ') || '0 min'
+  return (
+    [hours ? `${hours} hr` : '', mins ? `${mins} min` : ''].filter(Boolean).join(' ') || '0 min'
+  )
 }
 
 export function describeDay(date: string, now: Date): DayModel {
@@ -98,11 +100,16 @@ export function describeDay(date: string, now: Date): DayModel {
   const todayParts = partsOf(today)
   const gap = dayGap(date, today)
   const dow = WEEKDAYS[weekday] ?? ''
-  const tag = gap === 0 ? 'TODAY'
-    : gap === 1 ? 'TOMORROW'
-      : gap >= 2 && gap <= 6 ? dow
-        : gap >= 7 && gap <= 13 ? `IN ${gap} DAYS`
-          : `${MONTHS[month - 1]} ${day}`
+  const tag =
+    gap === 0
+      ? 'TODAY'
+      : gap === 1
+        ? 'TOMORROW'
+        : gap >= 2 && gap <= 6
+          ? dow
+          : gap >= 7 && gap <= 13
+            ? `IN ${gap} DAYS`
+            : `${MONTHS[month - 1]} ${day}`
   return {
     date,
     tag,
@@ -110,20 +117,28 @@ export function describeDay(date: string, now: Date): DayModel {
     isToday: gap === 0,
     dow,
     dayNumber: day,
-    monthTag: month !== todayParts.month || year !== todayParts.year ? MONTHS[month - 1] ?? null : null,
+    monthTag:
+      month !== todayParts.month || year !== todayParts.year ? (MONTHS[month - 1] ?? null) : null,
   }
 }
 
 function liveNote(event: ScreenEvent, now: Date): StubModel['live'] {
   if (event.date !== campusNow(now).date) return null
   const phase = eventPhase(event, now)
-  if (phase === 'live') return { kind: 'now', text: `Happening now · until ${displayTime(event.end)}` }
+  if (phase === 'live')
+    return { kind: 'now', text: `Happening now · until ${displayTime(event.end)}` }
   const until = minutesUntilStart(event, now)
-  if (phase === 'future' && until > 0 && until <= SOON_MINUTES) return { kind: 'soon', text: `Starts in ${spanText(until)}` }
+  if (phase === 'future' && until > 0 && until <= SOON_MINUTES)
+    return { kind: 'soon', text: `Starts in ${spanText(until)}` }
   return null
 }
 
-export function toStub(event: ScreenEvent, now: Date, planned: ReadonlySet<string>, fitting: ReadonlySet<string> | null): StubModel {
+export function toStub(
+  event: ScreenEvent,
+  now: Date,
+  planned: ReadonlySet<string>,
+  fitting: ReadonlySet<string> | null,
+): StubModel {
   const day = describeDay(event.date, now)
   const host = event.hostName?.trim() || null
   const description = event.description?.trim() || null
@@ -148,15 +163,27 @@ export function toStub(event: ScreenEvent, now: Date, planned: ReadonlySet<strin
 }
 
 /** Present a freshly verified Event with the same display contract as Discover. */
-export function presentBrowseDetail(event: ScreenEvent, plannedIds: readonly string[] = [], now: Date = new Date()): StubModel {
+export function presentBrowseDetail(
+  event: ScreenEvent,
+  plannedIds: readonly string[] = [],
+  now: Date = new Date(),
+): StubModel {
   return toStub(event, now, new Set(plannedIds), null)
 }
 
 export function byTime(a: ScreenEvent, b: ScreenEvent): number {
-  return a.date.localeCompare(b.date) || a.start.localeCompare(b.start) || a.end.localeCompare(b.end) || a.id.localeCompare(b.id)
+  return (
+    a.date.localeCompare(b.date) ||
+    a.start.localeCompare(b.start) ||
+    a.end.localeCompare(b.end) ||
+    a.id.localeCompare(b.id)
+  )
 }
 
-export function groupDays<T extends { date: string }>(items: T[], now: Date): (DayModel & { events: T[] })[] {
+export function groupDays<T extends { date: string }>(
+  items: T[],
+  now: Date,
+): (DayModel & { events: T[] })[] {
   const days: (DayModel & { events: T[] })[] = []
   for (const item of items) {
     const last = days[days.length - 1]
@@ -165,4 +192,3 @@ export function groupDays<T extends { date: string }>(items: T[], now: Date): (D
   }
   return days
 }
-

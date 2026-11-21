@@ -2,7 +2,9 @@ import { expect, test } from '@playwright/test'
 
 // The production app now replaces the M1 create/remove-public-event flow.
 // Historical M1 assertions remain in Vitest's LegacyApp fixture.
-test('post, discover, full-fit filter, plan, reload and remove a plan through the real UI', async ({ page }) => {
+test('post, discover, full-fit filter, plan, reload and remove a plan through the real UI', async ({
+  page,
+}) => {
   await page.clock.install({ time: new Date('2030-11-07T17:00:00Z') })
   await page.goto('/')
   await expect(page.getByTestId('catalog-not-shared')).toBeVisible()
@@ -38,11 +40,18 @@ test('post, discover, full-fit filter, plan, reload and remove a plan through th
   await expect(page.getByRole('complementary')).toContainText('Art Workshop')
   await page.reload()
   await expect(page.getByRole('complementary')).toContainText('Art Workshop')
-  await page.getByRole('button', { name: 'Remove Art Workshop from plans', exact: true }).first().click()
+  await page
+    .getByRole('button', { name: 'Remove Art Workshop from plans', exact: true })
+    .first()
+    .click()
   await expect(page.getByText('Nothing planned yet.')).toBeVisible()
   await page.getByRole('link', { name: 'Discover', exact: true }).click()
   await expect(stub).toBeVisible()
-  const saved = await page.evaluate(() => ({ events: JSON.parse(localStorage.getItem('sidequest.local-catalog.v1')!), plans: JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1')!), legacy: localStorage.getItem('sidequest.created-events.v1') }))
+  const saved = await page.evaluate(() => ({
+    events: JSON.parse(localStorage.getItem('sidequest.local-catalog.v1')!),
+    plans: JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1')!),
+    legacy: localStorage.getItem('sidequest.created-events.v1'),
+  }))
   expect(saved.events).toHaveLength(1)
   expect(saved.plans).toEqual([])
   expect(saved.legacy).toBeNull()

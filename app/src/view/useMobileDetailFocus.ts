@@ -3,7 +3,8 @@ import { useEffect, useState, type RefObject } from 'react'
 
 export function usePhoneViewport(): boolean {
   const [phone, setPhone] = useState(
-    () => typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches,
+    () =>
+      typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches,
   )
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') return
@@ -27,8 +28,14 @@ type DetailFocusOptions = {
 }
 
 export function useMobileDetailFocus({
-  phone, sheetOpen, panelRef, returnFocusRef, onClose,
-  selectedId, selectedPlanned, planningBlocked,
+  phone,
+  sheetOpen,
+  panelRef,
+  returnFocusRef,
+  onClose,
+  selectedId,
+  selectedPlanned,
+  planningBlocked,
 }: DetailFocusOptions): void {
   const modal = phone && sheetOpen
 
@@ -46,10 +53,13 @@ export function useMobileDetailFocus({
         return
       }
       if (event.key !== 'Tab') return
-      const controls = [...panel.querySelectorAll<HTMLElement>(
-        'button:not(:disabled), a[href], input:not(:disabled), [tabindex="0"]',
-      )]
-      const first = controls[0], last = controls[controls.length - 1]
+      const controls = [
+        ...panel.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), a[href], input:not(:disabled), [tabindex="0"]',
+        ),
+      ]
+      const first = controls[0],
+        last = controls[controls.length - 1]
       if (!first) return
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault()

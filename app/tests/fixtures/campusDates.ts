@@ -18,5 +18,7 @@ export function useFixtureCampusClock(now: Date = FIXTURE_NOW): void {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(now)
   })
-  afterEach(() => { vi.useRealTimers() })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
 }

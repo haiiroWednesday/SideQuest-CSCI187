@@ -13,16 +13,23 @@ const catalog: CampusEvent[] = [
 function setup(raw?: string) {
   const data = new Map<string, string>([[STORAGE_KEY, JSON.stringify(catalog)]])
   if (raw !== undefined) data.set(PLANNED_IDS_KEY, raw)
-  const storage: PlanStorage = { getItem: key => data.get(key) ?? null, setItem: (key, value) => { data.set(key, value) } }
+  const storage: PlanStorage = {
+    getItem: key => data.get(key) ?? null,
+    setItem: (key, value) => {
+      data.set(key, value)
+    },
+  }
   return { data, storage, controller: createScheduleController(catalog, () => storage) }
 }
 
 it('resolves valid long M2 descriptions from the catalog instead of reporting unavailable', async () => {
   const full = { ...catalog[0], hostName: 'SCU club', description: 'D'.repeat(2000) }
   const api: EventCatalogPort = {
-    create: async () => { throw Error('read-only test') },
+    create: async () => {
+      throw Error('read-only test')
+    },
     listUpcoming: async () => [full],
-    getById: async id => id === 'a' ? full : null,
+    getById: async id => (id === 'a' ? full : null),
   }
   const found = await loadPlannedEvents(api, ['a', 'missing'])
   expect(found.events).toEqual([full])
@@ -35,7 +42,9 @@ describe('personal Schedule Controller', () => {
     const { controller, data, storage } = setup()
     expect(controller.read().schedule.entries).toEqual([])
     expect(controller.add('a').message).toContain('Added')
-    expect(createScheduleController(catalog, () => storage).read().schedule.entries[0].event.id).toBe('a')
+    expect(
+      createScheduleController(catalog, () => storage).read().schedule.entries[0].event.id,
+    ).toBe('a')
     expect(controller.remove('a').message).toContain('original event has not been deleted')
     expect(data.get(PLANNED_IDS_KEY)).toBe('[]')
     expect(data.get(STORAGE_KEY)).toBe(JSON.stringify(catalog))
@@ -90,7 +99,9 @@ describe('personal Schedule Controller', () => {
   })
   it('reports quota failure honestly and retains previous plans on add and remove', () => {
     const { storage, data } = setup('["a"]')
-    storage.setItem = () => { throw new DOMException('full', 'QuotaExceededError') }
+    storage.setItem = () => {
+      throw new DOMException('full', 'QuotaExceededError')
+    }
     const controller = createScheduleController(catalog, () => storage)
     for (const result of [controller.add('b'), controller.remove('a')]) {
       expect(result.error).toContain('could not save')
@@ -100,7 +111,9 @@ describe('personal Schedule Controller', () => {
     expect(data.get(PLANNED_IDS_KEY)).toBe('["a"]')
   })
   it('handles access denied even while acquiring the browser storage object', () => {
-    const controller = createScheduleController(catalog, () => { throw Error('denied') })
+    const controller = createScheduleController(catalog, () => {
+      throw Error('denied')
+    })
     expect(controller.read().schedule.blocked).toBe(true)
     expect(controller.add('a').error).not.toBeNull()
     expect(controller.remove('a').error).not.toBeNull()
@@ -108,7 +121,10 @@ describe('personal Schedule Controller', () => {
 })
 
 it('reports the limit at 100, rejects extra saves without writes, and allows adding after removal', () => {
-  const fullCatalog = Array.from({ length: 100 }, (_, index) => ({ ...catalog[0], id: `plan-${index}` }))
+  const fullCatalog = Array.from({ length: 100 }, (_, index) => ({
+    ...catalog[0],
+    id: `plan-${index}`,
+  }))
   const initialIds = fullCatalog.slice(0, 99).map(event => event.id)
   const { data, storage } = setup(JSON.stringify(initialIds))
   const controller = createScheduleController([...fullCatalog, catalog[1]], () => storage)

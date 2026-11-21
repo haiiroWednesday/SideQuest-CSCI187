@@ -7,23 +7,45 @@ import { createEventCatalog } from '../src/model/eventCatalog'
 import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 
 const HORIZON_ERROR = 'Events can be posted up to one year ahead'
-const draft = { title: 'Server workshop', hostName: 'Art Club', description: 'Paint together', location: 'Library', start: '14:30', end: '15:30' }
+const draft = {
+  title: 'Server workshop',
+  hostName: 'Art Club',
+  description: 'Paint together',
+  location: 'Library',
+  start: '14:30',
+  end: '15:30',
+}
 const servers: Server[] = []
 
 // A same-origin API over an in-memory table, with a fixed catalog clock.
 async function startApi(now: Date) {
   const table = createInMemoryEventTable()
   const api = createCatalogApi(createEventCatalog(table, () => now))
-  const server = createServer((req, res) => { void api(req, res).then(handled => { if (!handled) { res.writeHead(404); res.end() } }) })
+  const server = createServer((req, res) => {
+    void api(req, res).then(handled => {
+      if (!handled) {
+        res.writeHead(404)
+        res.end()
+      }
+    })
+  })
   servers.push(server)
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-  const address = server.address(); if (!address || typeof address === 'string') throw Error('No address')
-  const post = (date: string) => fetch(`http://127.0.0.1:${address.port}/api/events`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...draft, date }),
-  })
+  const address = server.address()
+  if (!address || typeof address === 'string') throw Error('No address')
+  const post = (date: string) =>
+    fetch(`http://127.0.0.1:${address.port}/api/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...draft, date }),
+    })
   return { table, post }
 }
-afterEach(async () => { await Promise.all(servers.splice(0).map(server => new Promise<void>(resolve => server.close(() => resolve())))) })
+afterEach(async () => {
+  await Promise.all(
+    servers.splice(0).map(server => new Promise<void>(resolve => server.close(() => resolve()))),
+  )
+})
 
 describe('server API posting horizon', () => {
   // 12:00 noon in Santa Clara on 2026-11-08.

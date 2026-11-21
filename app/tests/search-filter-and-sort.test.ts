@@ -10,20 +10,36 @@ import type { CampusEvent } from '../src/model/events'
 it('filters a shuffled event list and returns matching events in chronological order', () => {
   const events: CampusEvent[] = [
     {
-      id: 'choir', title: 'Choir Practice', location: 'Music Hall',
-      date: '2026-10-26', start: '16:00', end: '16:30',
+      id: 'choir',
+      title: 'Choir Practice',
+      location: 'Music Hall',
+      date: '2026-10-26',
+      start: '16:00',
+      end: '16:30',
     },
     {
-      id: 'painting', title: 'Painting Workshop', location: 'Arts Building',
-      date: '2026-10-27', start: '14:30', end: '15:30',
+      id: 'painting',
+      title: 'Painting Workshop',
+      location: 'Arts Building',
+      date: '2026-10-27',
+      start: '14:30',
+      end: '15:30',
     },
     {
-      id: 'gaming', title: 'Gaming Club', location: 'Student Center',
-      date: '2026-10-26', start: '16:30', end: '17:30',
+      id: 'gaming',
+      title: 'Gaming Club',
+      location: 'Student Center',
+      date: '2026-10-26',
+      start: '16:30',
+      end: '17:30',
     },
     {
-      id: 'art', title: 'Art Club', location: 'Arts Building',
-      date: '2026-10-26', start: '14:30', end: '15:30',
+      id: 'art',
+      title: 'Art Club',
+      location: 'Arts Building',
+      date: '2026-10-26',
+      start: '14:30',
+      end: '15:30',
     },
   ]
 

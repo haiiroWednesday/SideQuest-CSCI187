@@ -1,14 +1,27 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
-  CATALOG_LIMITS, catalogDraftErrors, catalogPostingErrors, compareEvents,
-  createEventCatalog, firstFieldError, isUpcoming, isCatalogEvent,
-  type CampusEvent, type EventDraft, type EventTable,
+  CATALOG_LIMITS,
+  catalogDraftErrors,
+  catalogPostingErrors,
+  compareEvents,
+  createEventCatalog,
+  firstFieldError,
+  isUpcoming,
+  isCatalogEvent,
+  type CampusEvent,
+  type EventDraft,
+  type EventTable,
 } from '../src/model/eventCatalog'
 import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 import { fitsFully } from '../src/model/events'
 import {
-  addPlannedId, isScheduleEvent, MAX_PLANNED_EVENTS, readPlannedIds,
-  removePlannedId, resolvePlannedEvents, scheduleConflicts,
+  addPlannedId,
+  isScheduleEvent,
+  MAX_PLANNED_EVENTS,
+  readPlannedIds,
+  removePlannedId,
+  resolvePlannedEvents,
+  scheduleConflicts,
 } from '../src/model/schedule'
 import { presentDiscover, presentSchedule } from '../src/controller/presentScreens'
 
@@ -17,21 +30,31 @@ const ID_A = '11111111-1111-4111-8111-111111111111'
 const ID_B = '22222222-2222-4222-8222-222222222222'
 const ID_C = '33333333-3333-4333-8333-333333333333'
 const draft = (patch: Partial<EventDraft> = {}): EventDraft => ({
-  title: 'Art Workshop', hostName: 'SCU Art Club', description: 'Bring a notebook.',
-  location: 'Benson Center', date: '2030-11-08', start: '14:30', end: '15:30',
+  title: 'Art Workshop',
+  hostName: 'SCU Art Club',
+  description: 'Bring a notebook.',
+  location: 'Benson Center',
+  date: '2030-11-08',
+  start: '14:30',
+  end: '15:30',
   ...patch,
 })
-const event = (patch: Partial<CampusEvent> = {}): CampusEvent => ({ id: ID_A, ...draft(), ...patch })
+const event = (patch: Partial<CampusEvent> = {}): CampusEvent => ({
+  id: ID_A,
+  ...draft(),
+  ...patch,
+})
 const ids = (items: readonly { id: string }[]) => items.map(item => item.id)
 
 describe('REG-POST: field partitions and Model-level posting', () => {
-  it.each([
-    'title', 'hostName', 'description', 'location',
-  ] as const)('rejects missing or whitespace-only %s, without relying on browser required', field => {
-    const errors = catalogDraftErrors(draft({ [field]: '  \n ' }))
-    expect(errors[field]).toMatch(/Please enter/)
-    expect(firstFieldError(errors)).toBeTruthy()
-  })
+  it.each(['title', 'hostName', 'description', 'location'] as const)(
+    'rejects missing or whitespace-only %s, without relying on browser required',
+    field => {
+      const errors = catalogDraftErrors(draft({ [field]: '  \n ' }))
+      expect(errors[field]).toMatch(/Please enter/)
+      expect(firstFieldError(errors)).toBeTruthy()
+    },
+  )
 
   it.each([
     ['title', CATALOG_LIMITS.title],
@@ -40,12 +63,14 @@ describe('REG-POST: field partitions and Model-level posting', () => {
     ['location', CATALOG_LIMITS.location],
   ] as const)('%s accepts the exact maximum %i and rejects one character more', (field, max) => {
     expect(catalogDraftErrors(draft({ [field]: 'x'.repeat(max) }))[field]).toBeUndefined()
-    expect(catalogDraftErrors(draft({ [field]: 'x'.repeat(max + 1) }))[field])
-      .toContain(String(max))
+    expect(catalogDraftErrors(draft({ [field]: 'x'.repeat(max + 1) }))[field]).toContain(
+      String(max),
+    )
   })
 
   it.each(['2030-02-29', '2030-11-31', '2030-13-07', '2030-11-7', 'hello'])(
-    'rejects the impossible/noncanonical date %s', date => {
+    'rejects the impossible/noncanonical date %s',
+    date => {
       expect(catalogDraftErrors(draft({ date })).date).toMatch(/valid event date/)
     },
   )
@@ -93,18 +118,25 @@ describe('REG-POST: field partitions and Model-level posting', () => {
     const table = createInMemoryEventTable(new Map(), () => ID_A)
     const catalog = createEventCatalog(table, () => NOW)
     const submitted = draft({
-      title: '  Art Workshop  ', hostName: ' SCU Club ',
-      location: '  Library  ', description: ' Bring paper.  ',
+      title: '  Art Workshop  ',
+      hostName: ' SCU Club ',
+      location: '  Library  ',
+      description: ' Bring paper.  ',
     })
     const original = { ...submitted }
     const created = await catalog.create(submitted)
     expect(created).toMatchObject({
-      id: ID_A, title: 'Art Workshop', hostName: 'SCU Club',
-      location: 'Library', description: 'Bring paper.',
+      id: ID_A,
+      title: 'Art Workshop',
+      hostName: 'SCU Club',
+      location: 'Library',
+      description: 'Bring paper.',
     })
     expect(submitted).toEqual(original)
     expect(table.rows.get(ID_A)).toMatchObject({
-      title: 'Art Workshop', host_name: 'SCU Club', start_time: '14:30:00',
+      title: 'Art Workshop',
+      host_name: 'SCU Club',
+      start_time: '14:30:00',
     })
     expect(await catalog.getById(ID_A)).toEqual(created)
     expect(ids(await catalog.listUpcoming())).toEqual([ID_A])
@@ -123,7 +155,9 @@ describe('REG-POST: field partitions and Model-level posting', () => {
   it('never queries the adapter for malformed IDs or trusts a malformed catalog row', async () => {
     const selectById = vi.fn(async () => null)
     const table: EventTable = {
-      insert: vi.fn(), selectFromDate: vi.fn(async () => []), selectById,
+      insert: vi.fn(),
+      selectFromDate: vi.fn(async () => []),
+      selectById,
     }
     const catalog = createEventCatalog(table, () => NOW)
     await expect(catalog.getById('not-a-uuid')).resolves.toBeNull()
@@ -158,9 +192,12 @@ describe('REG-DISCOVER: calendar, time, filter and state transitions', () => {
   it('rejects mismatched dates and invalid free-time windows without an accidental match', () => {
     const item = event()
     for (const [date, start, end] of [
-      ['2030-11-09', '14:00', '16:00'], ['2030-11-08', '15:00', '14:00'],
-      ['2030-11-08', '14:00', '14:00'], ['2030-11-08', 'bad', '16:00'],
-    ]) expect(fitsFully(item, date, start, end)).toBe(false)
+      ['2030-11-09', '14:00', '16:00'],
+      ['2030-11-08', '15:00', '14:00'],
+      ['2030-11-08', '14:00', '14:00'],
+      ['2030-11-08', 'bad', '16:00'],
+    ])
+      expect(fitsFully(item, date, start, end)).toBe(false)
   })
 
   it('does not mutate input order, merges equal titles or count incomplete filters as active', () => {
@@ -168,7 +205,8 @@ describe('REG-DISCOVER: calendar, time, filter and state transitions', () => {
     const earlier = event({ id: ID_A, title: 'Same title', date: '2030-11-08' })
     const input = [later, earlier]
     const partial = presentDiscover({
-      events: input, now: NOW,
+      events: input,
+      now: NOW,
       freeWindow: { date: '2030-11-08', start: '14:00', end: '' },
     })
     expect(partial.status).toBe('ready')
@@ -193,7 +231,8 @@ describe('REG-DISCOVER: calendar, time, filter and state transitions', () => {
 
   it('shows input validation without filtering the catalog on an invalid window', () => {
     const output = presentDiscover({
-      events: [event()], now: NOW,
+      events: [event()],
+      now: NOW,
       freeWindow: { date: '2030-11-08', start: '16:00', end: '14:00' },
     })
     expect(output.status).toBe('ready')
@@ -205,7 +244,8 @@ describe('REG-DISCOVER: calendar, time, filter and state transitions', () => {
 
 describe('REG-SCHEDULE: identity, damaged persistence, overlaps and history', () => {
   it.each(['{', '{}', 'null', '7', '"a"', '[null,"a","a"]'])(
-    'does not silently repair damaged plan storage (%s)', raw => {
+    'does not silently repair damaged plan storage (%s)',
+    raw => {
       const value = readPlannedIds({ getItem: () => raw })
       expect(value.blocked).toBe(true)
       expect(value.ids).toEqual(raw.startsWith('[null') ? ['a'] : [])
@@ -237,11 +277,17 @@ describe('REG-SCHEDULE: identity, damaged persistence, overlaps and history', ()
   it('keeps a past plan and the currently active next plan in separate groups', () => {
     const ended = event({ id: ID_A, date: '2030-11-06' })
     const future = event({ id: ID_B, date: '2030-11-08' })
-    const display = presentSchedule({
-      ids: [ID_A, ID_B], missingIds: [], entries: [
-        { event: ended, conflict: null }, { event: future, conflict: null },
-      ],
-    }, NOW)
+    const display = presentSchedule(
+      {
+        ids: [ID_A, ID_B],
+        missingIds: [],
+        entries: [
+          { event: ended, conflict: null },
+          { event: future, conflict: null },
+        ],
+      },
+      NOW,
+    )
     expect(display.status).toBe('ready')
     expect(display.plannedCount).toBe(2)
     expect(display.done.map(item => item.id)).toEqual([ID_A])
@@ -254,17 +300,23 @@ describe('REG-SCHEDULE: identity, damaged persistence, overlaps and history', ()
     const nested = event({ id: ID_B, start: '10:00', end: '11:00' })
     const adjacent = event({ id: ID_C, start: '12:00', end: '13:00' })
     const nextDay = event({ id: 'next', date: '2030-11-09', start: '10:00', end: '11:00' })
-    expect([...scheduleConflicts([outer, nested, adjacent, nextDay]).keys()].sort()).toEqual([ID_A, ID_B])
+    expect([...scheduleConflicts([outer, nested, adjacent, nextDay]).keys()].sort()).toEqual([
+      ID_A,
+      ID_B,
+    ])
   })
 
   it('preserves older public records with valid legacy-length fields on saved plans', () => {
     const long = event({
-      title: 'T'.repeat(CATALOG_LIMITS.title), hostName: 'H'.repeat(CATALOG_LIMITS.hostName),
+      title: 'T'.repeat(CATALOG_LIMITS.title),
+      hostName: 'H'.repeat(CATALOG_LIMITS.hostName),
       location: 'L'.repeat(CATALOG_LIMITS.location),
       description: 'D'.repeat(CATALOG_LIMITS.description),
     })
     expect(isScheduleEvent(long)).toBe(true)
     expect(resolvePlannedEvents([ID_A], [long]).events[0]).toEqual(long)
-    expect(isScheduleEvent({ ...long, description: 'D'.repeat(CATALOG_LIMITS.description + 1) })).toBe(false)
+    expect(
+      isScheduleEvent({ ...long, description: 'D'.repeat(CATALOG_LIMITS.description + 1) }),
+    ).toBe(false)
   })
 })

@@ -8,14 +8,23 @@ import { createSupabaseEventCatalogFromEnv } from './src/model/supabaseEventTabl
 // to find unit and integration test files in the tests/ folder.
 export default defineConfig(({ mode }) => ({
   envPrefix: 'SIDEQUEST_PUBLIC_',
-  plugins: [react(), {
-    name: 'sidequest-catalog-api',
-    configureServer(server) {
-      const env = { ...loadEnv(mode, process.cwd(), 'SUPABASE_'), ...process.env }
-      const api = createCatalogApi(createSupabaseEventCatalogFromEnv(env))
-      server.middlewares.use((req, res, next) => { void api(req, res).then(handled => { if (!handled) next() }).catch(next) })
+  plugins: [
+    react(),
+    {
+      name: 'sidequest-catalog-api',
+      configureServer(server) {
+        const env = { ...loadEnv(mode, process.cwd(), 'SUPABASE_'), ...process.env }
+        const api = createCatalogApi(createSupabaseEventCatalogFromEnv(env))
+        server.middlewares.use((req, res, next) => {
+          void api(req, res)
+            .then(handled => {
+              if (!handled) next()
+            })
+            .catch(next)
+        })
+      },
     },
-  }],
+  ],
   test: {
     include: ['tests/**/*.test.{ts,tsx}'],
     // Model/Controller tests run in Node. React tests opt into jsdom

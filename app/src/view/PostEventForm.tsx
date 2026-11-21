@@ -2,13 +2,22 @@
 // Posting validation and storage operations remain behind Controller ports.
 import { useState, type FormEvent } from 'react'
 import {
-  postEvent, postingDraftErrors, initialCampusWindow,
-  type CampusEvent, type CatalogFieldErrors, type ConnectedCatalog, type EventDraft,
+  postEvent,
+  postingDraftErrors,
+  initialCampusWindow,
+  type CampusEvent,
+  type CatalogFieldErrors,
+  type ConnectedCatalog,
+  type EventDraft,
 } from '../controller/postEvent'
 import { PostedEventsList } from './PostedEventsList'
 import { PostEventFields } from './PostEventFields'
 
-type Props = { connection: ConnectedCatalog; now?: () => Date; onPosted?: (event: CampusEvent) => void }
+type Props = {
+  connection: ConnectedCatalog
+  now?: () => Date
+  onPosted?: (event: CampusEvent) => void
+}
 
 // Full posting view: compose an editor, a connection notice, and the catalog list.
 export function PostEventForm({ connection, now, onPosted }: Props) {
@@ -19,11 +28,18 @@ export function PostEventForm({ connection, now, onPosted }: Props) {
   }
   return (
     <>
-      {!connection.shared && <p className="storage-alert" data-testid="catalog-not-shared">
-        Shared catalog not connected. Posts are saved in this browser only, and other people can't see them.
-      </p>}
+      {!connection.shared && (
+        <p className="storage-alert" data-testid="catalog-not-shared">
+          Shared catalog not connected. Posts are saved in this browser only, and other people can't
+          see them.
+        </p>
+      )}
       <PostEventEditor connection={connection} now={now} onPosted={handlePosted} />
-      <PostedEventsList catalog={connection.catalog} shared={connection.shared} revision={revision} />
+      <PostedEventsList
+        catalog={connection.catalog}
+        shared={connection.shared}
+        revision={revision}
+      />
     </>
   )
 }
@@ -36,10 +52,16 @@ export function EmbeddedPostEventForm(props: Props) {
 function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props) {
   const { catalog, shared } = connection
   const [draft, setDraft] = useState<EventDraft>(() => ({
-    title: '', hostName: '', description: '', location: '', ...initialCampusWindow(now()),
+    title: '',
+    hostName: '',
+    description: '',
+    location: '',
+    ...initialCampusWindow(now()),
   }))
   const [fieldErrors, setFieldErrors] = useState<CatalogFieldErrors>({})
-  const [validatedFields, setValidatedFields] = useState<Partial<Record<keyof EventDraft, boolean>>>({})
+  const [validatedFields, setValidatedFields] = useState<
+    Partial<Record<keyof EventDraft, boolean>>
+  >({})
   const [formError, setFormError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -49,8 +71,12 @@ function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props
     const errors = postingDraftErrors(nextDraft, now())
     setFieldErrors(previous => {
       const nextErrors = { ...previous }
-      for (const checkedField of Object.keys({ ...validatedFields, ...previous }) as (keyof EventDraft)[]) {
-        if (validatedFields[checkedField] || previous[checkedField]) nextErrors[checkedField] = errors[checkedField]
+      for (const checkedField of Object.keys({
+        ...validatedFields,
+        ...previous,
+      }) as (keyof EventDraft)[]) {
+        if (validatedFields[checkedField] || previous[checkedField])
+          nextErrors[checkedField] = errors[checkedField]
       }
       return nextErrors
     })
@@ -73,7 +99,15 @@ function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props
     setSubmitting(false)
     if (result.status === 'invalid') {
       setFieldErrors(result.fieldErrors)
-      setValidatedFields({ title: true, hostName: true, description: true, location: true, date: true, start: true, end: true })
+      setValidatedFields({
+        title: true,
+        hostName: true,
+        description: true,
+        location: true,
+        date: true,
+        start: true,
+        end: true,
+      })
       setFormError(result.error)
       return
     }
@@ -92,9 +126,25 @@ function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props
 
   return (
     <>
-      <PostEventFields draft={draft} fieldErrors={fieldErrors} submitting={submitting} now={now} onSubmit={handleSubmit} onChange={update} onBlur={validateOnBlur} />
-      {formError && <p className="error" role="alert">{formError}</p>}
-      {notice && <p className="success" role="status">{notice}</p>}
+      <PostEventFields
+        draft={draft}
+        fieldErrors={fieldErrors}
+        submitting={submitting}
+        now={now}
+        onSubmit={handleSubmit}
+        onChange={update}
+        onBlur={validateOnBlur}
+      />
+      {formError && (
+        <p className="error" role="alert">
+          {formError}
+        </p>
+      )}
+      {notice && (
+        <p className="success" role="status">
+          {notice}
+        </p>
+      )}
     </>
   )
 }

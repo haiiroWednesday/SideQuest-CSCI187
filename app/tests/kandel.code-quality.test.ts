@@ -1,14 +1,16 @@
 import ts from 'typescript'
 import { describe, expect, it } from 'vitest'
 
-const production = import.meta.glob<string>(
-  ['../src/**/*.{ts,tsx}', '../server/**/*.ts'],
-  { query: '?raw', import: 'default', eager: true },
-)
-const controllers = import.meta.glob<string>(
-  '../src/controller/**/*.{ts,tsx}',
-  { query: '?raw', import: 'default', eager: true },
-)
+const production = import.meta.glob<string>(['../src/**/*.{ts,tsx}', '../server/**/*.ts'], {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
+const controllers = import.meta.glob<string>('../src/controller/**/*.{ts,tsx}', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
 const forbiddenDirectives = /\/\/\s*@ts-(?:ignore|nocheck)\b/
 const commentedOutStatement = /^\s*\/\/\s*(?:const|let|var|import|export|function|class)\s+[\w{*]/
 
@@ -23,8 +25,12 @@ describe('Kandel clean-code and MVC mechanical safeguards', () => {
     const violations: string[] = []
     for (const [path, content] of Object.entries(controllers)) {
       for (const declaration of parse(path, content).statements) {
-        if ((!ts.isImportDeclaration(declaration) && !ts.isExportDeclaration(declaration))
-          || !declaration.moduleSpecifier || !ts.isStringLiteral(declaration.moduleSpecifier)) continue
+        if (
+          (!ts.isImportDeclaration(declaration) && !ts.isExportDeclaration(declaration)) ||
+          !declaration.moduleSpecifier ||
+          !ts.isStringLiteral(declaration.moduleSpecifier)
+        )
+          continue
         const dependency = declaration.moduleSpecifier.text
         if (/^react(?:-dom)?(?:\/|$)|(^|\/)view\//.test(dependency)) {
           violations.push(`${path}: imports ${dependency}`)
@@ -38,12 +44,17 @@ describe('Kandel clean-code and MVC mechanical safeguards', () => {
     expect(Object.keys(production).length).toBeGreaterThan(30)
     const violations: string[] = []
     for (const [path, content] of Object.entries(production)) {
-      if (forbiddenDirectives.test(content)) violations.push(`${path}: suppressed TypeScript diagnostic`)
+      if (forbiddenDirectives.test(content))
+        violations.push(`${path}: suppressed TypeScript diagnostic`)
       const source = parse(path, content)
       function inspect(node: ts.Node) {
         if (ts.isDebuggerStatement(node)) violations.push(`${path}: debugger statement`)
-        if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)
-          && node.expression.text === 'eval') violations.push(`${path}: dynamic eval`)
+        if (
+          ts.isCallExpression(node) &&
+          ts.isIdentifier(node.expression) &&
+          node.expression.text === 'eval'
+        )
+          violations.push(`${path}: dynamic eval`)
         ts.forEachChild(node, inspect)
       }
       inspect(source)

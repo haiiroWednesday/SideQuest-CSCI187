@@ -8,17 +8,48 @@ import { STORAGE_KEY, type CampusEvent } from '../src/model/events'
 import { PLANNED_IDS_KEY } from '../src/model/schedule'
 
 const events: CampusEvent[] = [
-  { id: 'late', title: 'Late concert', location: 'Theatre', date: '2030-11-02', start: '14:30', end: '15:30' },
-  { id: 'early', title: 'Early workshop', location: 'Library', date: '2030-11-01', start: '14:30', end: '15:30' },
-  { id: 'overlap', title: 'Choir', location: 'Music', date: '2030-11-01', start: '15:00', end: '16:00' },
-  { id: 'touching', title: 'Too late', location: 'SCU', date: '2030-11-01', start: '16:00', end: '17:00' },
+  {
+    id: 'late',
+    title: 'Late concert',
+    location: 'Theatre',
+    date: '2030-11-02',
+    start: '14:30',
+    end: '15:30',
+  },
+  {
+    id: 'early',
+    title: 'Early workshop',
+    location: 'Library',
+    date: '2030-11-01',
+    start: '14:30',
+    end: '15:30',
+  },
+  {
+    id: 'overlap',
+    title: 'Choir',
+    location: 'Music',
+    date: '2030-11-01',
+    start: '15:00',
+    end: '16:00',
+  },
+  {
+    id: 'touching',
+    title: 'Too late',
+    location: 'SCU',
+    date: '2030-11-01',
+    start: '16:00',
+    end: '17:00',
+  },
 ]
 beforeEach(() => {
   window.location.hash = ''
   window.localStorage.clear()
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(events))
 })
-afterEach(() => { cleanup(); vi.restoreAllMocks() })
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+})
 const chooseSearch = () => {
   fireEvent.change(screen.getByLabelText('Free on date'), { target: { value: '2030-11-01' } })
   fireEvent.change(screen.getByLabelText('Free from'), { target: { value: '14:00' } })
@@ -33,7 +64,9 @@ describe('personal Schedule rendered workflow', () => {
     expect(await screen.findByRole('heading', { name: 'My Schedule' })).toBeTruthy()
     expect(screen.getByRole('heading', { name: 'No events planned yet' })).toBeTruthy()
     expect(screen.queryByLabelText('Free from')).toBeNull()
-    await user.click(within(screen.getByRole('navigation')).getByRole('link', { name: 'Find events' }))
+    await user.click(
+      within(screen.getByRole('navigation')).getByRole('link', { name: 'Find events' }),
+    )
     expect(await screen.findByLabelText('Free from')).toBeTruthy()
   })
   it('adds from full-fit results, warns for overlaps, survives reload, and removes only the plan', async () => {
@@ -41,15 +74,27 @@ describe('personal Schedule rendered workflow', () => {
     render(<App />)
     chooseSearch()
     expect(screen.queryByRole('heading', { name: 'Too late' })).toBeNull()
-    await user.click(within(screen.getByRole('heading', { name: 'Early workshop' }).closest('article')!).getByRole('button', { name: 'Plan to attend Early workshop' }))
+    await user.click(
+      within(screen.getByRole('heading', { name: 'Early workshop' }).closest('article')!).getByRole(
+        'button',
+        { name: 'Plan to attend Early workshop' },
+      ),
+    )
     expect(screen.getByRole('status').textContent).toContain('Added')
-    await user.click(within(screen.getByRole('heading', { name: 'Choir' }).closest('article')!).getByRole('button', { name: 'Plan to attend Choir' }))
+    await user.click(
+      within(screen.getByRole('heading', { name: 'Choir' }).closest('article')!).getByRole(
+        'button',
+        { name: 'Plan to attend Choir' },
+      ),
+    )
     expect(screen.getByRole('alert').textContent).toContain('Schedule overlap')
     expect(JSON.parse(window.localStorage.getItem(PLANNED_IDS_KEY)!)).toEqual(['early', 'overlap'])
     await user.click(screen.getByRole('link', { name: 'My Schedule' }))
     await screen.findByRole('heading', { name: 'My Schedule' })
     expect(screen.getByText('Overlaps “Choir”')).toBeTruthy()
-    expect(screen.getByRole('alert').textContent).toBe("Some planned events overlap. Review their times if this wasn't intentional.")
+    expect(screen.getByRole('alert').textContent).toBe(
+      "Some planned events overlap. Review their times if this wasn't intentional.",
+    )
     cleanup()
     render(<App />)
     expect(screen.getByRole('heading', { name: 'Early workshop' })).toBeTruthy()
@@ -66,11 +111,17 @@ describe('personal Schedule rendered workflow', () => {
     window.localStorage.setItem(PLANNED_IDS_KEY, '["late","missing","early"]')
     render(<App />)
     const list = screen.getByRole('list', { name: 'Planned events' })
-    expect(within(list).getAllByRole('heading').map(item => item.textContent)).toEqual(['Early workshop', 'Late concert', 'Event unavailable'])
+    expect(
+      within(list)
+        .getAllByRole('heading')
+        .map(item => item.textContent),
+    ).toEqual(['Early workshop', 'Late concert', 'Event unavailable'])
   })
   it('reports failed saves and does not claim the event was added', async () => {
     const user = userEvent.setup()
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw Error('quota') })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw Error('quota')
+    })
     render(<App />)
     chooseSearch()
     await user.click(screen.getAllByRole('button', { name: 'Plan to attend Early workshop' })[0])
@@ -94,8 +145,13 @@ describe('personal Schedule rendered workflow', () => {
     window.location.hash = '#schedule'
     render(<App />)
     window.localStorage.setItem(PLANNED_IDS_KEY, '["early"]')
-    fireEvent(window, new StorageEvent('storage', { key: PLANNED_IDS_KEY, storageArea: window.localStorage }))
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Early workshop' })).toBeTruthy())
+    fireEvent(
+      window,
+      new StorageEvent('storage', { key: PLANNED_IDS_KEY, storageArea: window.localStorage }),
+    )
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Early workshop' })).toBeTruthy(),
+    )
     expect(window.localStorage.getItem(PLANNED_IDS_KEY)).toBe('["early"]')
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual(events)
   })

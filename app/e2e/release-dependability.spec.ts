@@ -9,28 +9,34 @@ test('bounded concurrent reads recover after a simulated catalog outage', async 
   test.setTimeout(90_000)
   const event: EventRow = {
     id: '99999999-9999-4999-8999-999999999999',
-    title: 'Reliability workshop', host_name: 'SCU Club',
-    description: 'Bounded read and recovery test', location: 'Library',
-    event_date: campusDateFromToday(30), start_time: '14:30:00', end_time: '15:30:00',
+    title: 'Reliability workshop',
+    host_name: 'SCU Club',
+    description: 'Bounded read and recovery test',
+    location: 'Library',
+    event_date: campusDateFromToday(30),
+    start_time: '14:30:00',
+    end_time: '15:30:00',
   }
   const backend = sharedCatalogHttpFixture([event])
   const context = await browser.newContext()
   const samples: number[] = []
 
   async function checkBatch(count: number, expectedStatus: number) {
-    const statuses = await Promise.all(Array.from({ length: count }, async () => {
-      const started = performance.now()
-      const response = await context.request.get(`${SHARED_APP}/api/events`)
-      samples.push(performance.now() - started)
-      if (response.status() === 200) {
-        const events = await response.json() as EventRow[]
-        expect(events.map(item => item.id)).toEqual([event.id])
-      } else {
-        const error = await response.json() as { error?: string }
-        expect(error.error).toBeTruthy()
-      }
-      return response.status()
-    }))
+    const statuses = await Promise.all(
+      Array.from({ length: count }, async () => {
+        const started = performance.now()
+        const response = await context.request.get(`${SHARED_APP}/api/events`)
+        samples.push(performance.now() - started)
+        if (response.status() === 200) {
+          const events = (await response.json()) as EventRow[]
+          expect(events.map(item => item.id)).toEqual([event.id])
+        } else {
+          const error = (await response.json()) as { error?: string }
+          expect(error.error).toBeTruthy()
+        }
+        return response.status()
+      }),
+    )
     expect(statuses).toEqual(Array.from({ length: count }, () => expectedStatus))
   }
 
@@ -54,7 +60,7 @@ test('bounded concurrent reads recover after a simulated catalog outage', async 
       concurrentBatchSize: 12,
       expectedOutageResponses: 6,
       p50Ms: Math.round(measured[Math.floor(measured.length / 2)]),
-      p95Ms: Math.round(measured[Math.ceil(measured.length * .95) - 1]),
+      p95Ms: Math.round(measured[Math.ceil(measured.length * 0.95) - 1]),
       note: 'Diagnostic only; not a production load, stress, or capacity certification.',
     }
     await test.info().attach('bounded-read-latency.json', {

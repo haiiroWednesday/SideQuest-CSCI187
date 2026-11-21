@@ -7,10 +7,20 @@
 import { describe, expect, it } from 'vitest'
 import migrationSql from '../../supabase/migrations/20261103000000_create_events.sql?raw'
 import {
-  connectEventCatalog, loadPostedEvents, postEvent, postingDraftErrors,
-  type EventCatalogPort, type EventDraft,
+  connectEventCatalog,
+  loadPostedEvents,
+  postEvent,
+  postingDraftErrors,
+  type EventCatalogPort,
+  type EventDraft,
 } from '../src/controller/postEvent'
-import { CATALOG_LIMITS, POSTING_LIMITS, createEventCatalog, EventCatalogError, type EventRow } from '../src/model/eventCatalog'
+import {
+  CATALOG_LIMITS,
+  POSTING_LIMITS,
+  createEventCatalog,
+  EventCatalogError,
+  type EventRow,
+} from '../src/model/eventCatalog'
 import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 import { createBrowserEventTable, LOCAL_CATALOG_KEY } from '../src/model/browserEventTable'
 import { STORAGE_KEY as M1_STORAGE_KEY } from '../src/model/events'
@@ -35,14 +45,21 @@ const memoryCatalog = (rows = new Map<string, EventRow>()) =>
 describe('postEvent: success and read-back', () => {
   it('posts a valid event, reports its ID, and a fresh client reads it back with hostName', async () => {
     const rows = new Map<string, EventRow>()
-    const result = await postEvent(memoryCatalog(rows), draft({ hostName: '  SCU Photography Club ' }), { now: NOW })
+    const result = await postEvent(
+      memoryCatalog(rows),
+      draft({ hostName: '  SCU Photography Club ' }),
+      { now: NOW },
+    )
 
     expect(result.status).toBe('posted')
     if (result.status !== 'posted') return
     expect(result.message).toContain(`Event ID: ${result.event.id}`)
     expect(result.message).toContain('shared catalog')
     // A second catalog over the same storage stands in for a new client.
-    expect(await memoryCatalog(rows).getById(result.event.id)).toEqual({ ...draft(), id: result.event.id })
+    expect(await memoryCatalog(rows).getById(result.event.id)).toEqual({
+      ...draft(),
+      id: result.event.id,
+    })
   })
 
   it('posting the same details twice creates two events with different IDs', async () => {
@@ -52,7 +69,9 @@ describe('postEvent: success and read-back', () => {
 
     if (a.status !== 'posted' || b.status !== 'posted') throw new Error('both posts should succeed')
     expect(a.event.id).not.toBe(b.event.id)
-    expect((await catalog.listUpcoming()).map(event => event.id).sort()).toEqual([a.event.id, b.event.id].sort())
+    expect((await catalog.listUpcoming()).map(event => event.id).sort()).toEqual(
+      [a.event.id, b.event.id].sort(),
+    )
   })
 
   it('says "this browser only" when the catalog is the unshared fallback', async () => {
@@ -73,7 +92,12 @@ describe('postEvent: field-level validation (nothing is stored)', () => {
     ['end before start', { start: '17:00', end: '16:00' }, 'end', 'end later'],
     ['missing start time', { start: '' }, 'start', 'end later'],
     ['date in the past', { date: '2026-11-02' }, 'date', 'past'],
-    ['today, already started', { date: '2026-11-03', start: '11:59', end: '13:00' }, 'start', 'already started'],
+    [
+      'today, already started',
+      { date: '2026-11-03', start: '11:59', end: '13:00' },
+      'start',
+      'already started',
+    ],
   ])('rejects %s on the right field', async (_label, overrides, field, message) => {
     const rows = new Map<string, EventRow>()
     const result = await postEvent(memoryCatalog(rows), draft(overrides), { now: NOW })
@@ -90,13 +114,17 @@ describe('postEvent: field-level validation (nothing is stored)', () => {
   })
 
   it('accepts an event today that starts exactly now (boundary)', () => {
-    expect(postingDraftErrors(draft({ date: '2026-11-03', start: '12:00', end: '13:00' }), NOW)).toEqual({})
+    expect(
+      postingDraftErrors(draft({ date: '2026-11-03', start: '12:00', end: '13:00' }), NOW),
+    ).toEqual({})
   })
 
   it('judges "past" on the Santa Clara clock, not UTC', () => {
     // 05:30 UTC on Nov 4 is still 21:30 on Nov 3 on campus, so a 22:00 event on Nov 3 is fine.
     const lateEvening = new Date('2026-11-04T05:30:00Z')
-    expect(postingDraftErrors(draft({ date: '2026-11-03', start: '22:00', end: '23:00' }), lateEvening)).toEqual({})
+    expect(
+      postingDraftErrors(draft({ date: '2026-11-03', start: '22:00', end: '23:00' }), lateEvening),
+    ).toEqual({})
   })
 })
 
@@ -107,7 +135,9 @@ describe('form limits match the database migration', () => {
     ['description', 'description'],
     ['location', 'location'],
   ] as const)('%s limit equals the CHECK on %s', (field, column) => {
-    const check = new RegExp(`length\\(btrim\\(${column}\\)\\) between 1 and (\\d+)`).exec(migrationSql)
+    const check = new RegExp(`length\\(btrim\\(${column}\\)\\) between 1 and (\\d+)`).exec(
+      migrationSql,
+    )
     expect(check, `no length CHECK for ${column} in the migration`).not.toBeNull()
     expect(CATALOG_LIMITS[field]).toBe(Number(check![1]))
   })
@@ -116,36 +146,66 @@ describe('form limits match the database migration', () => {
     expect(migrationSql).toContain('check (start_time < end_time)')
   })
 
-  it.each(['title', 'hostName', 'description', 'location'] as const)('%s: accepts the posting limit, rejects one more', field => {
-    const max = POSTING_LIMITS[field]
-    expect(postingDraftErrors(draft({ [field]: 'x'.repeat(max) }), NOW)[field]).toBeUndefined()
-    expect(postingDraftErrors(draft({ [field]: 'x'.repeat(max + 1) }), NOW)[field]).toContain(`${max} characters`)
-  })
+  it.each(['title', 'hostName', 'description', 'location'] as const)(
+    '%s: accepts the posting limit, rejects one more',
+    field => {
+      const max = POSTING_LIMITS[field]
+      expect(postingDraftErrors(draft({ [field]: 'x'.repeat(max) }), NOW)[field]).toBeUndefined()
+      expect(postingDraftErrors(draft({ [field]: 'x'.repeat(max + 1) }), NOW)[field]).toContain(
+        `${max} characters`,
+      )
+    },
+  )
 })
 
 describe('server failure', () => {
   const failing = (error: unknown): EventCatalogPort => ({
-    create: async () => { throw error },
-    listUpcoming: async () => { throw error },
-    getById: async () => { throw error },
+    create: async () => {
+      throw error
+    },
+    listUpcoming: async () => {
+      throw error
+    },
+    getById: async () => {
+      throw error
+    },
   })
 
   it('returns the catalog’s "unavailable" message instead of throwing', async () => {
-    const down = failing(new EventCatalogError('unavailable', 'Could not post this event right now.'))
-    await expect(postEvent(down, draft(), { now: NOW })).resolves.toEqual({ status: 'failed', error: 'Could not post this event right now.' })
-    await expect(loadPostedEvents(down)).resolves.toEqual({ events: [], error: 'Could not post this event right now.' })
+    const down = failing(
+      new EventCatalogError('unavailable', 'Could not post this event right now.'),
+    )
+    await expect(postEvent(down, draft(), { now: NOW })).resolves.toEqual({
+      status: 'failed',
+      error: 'Could not post this event right now.',
+    })
+    await expect(loadPostedEvents(down)).resolves.toEqual({
+      events: [],
+      error: 'Could not post this event right now.',
+    })
   })
 
   it('uses a generic message for unexpected errors (no internals leak to the UI)', async () => {
-    const result = await postEvent(failing(new Error('JWT secret abc123 rejected')), draft(), { now: NOW })
-    expect(result).toEqual({ status: 'failed', error: 'Could not post this event right now. Please try again.' })
+    const result = await postEvent(failing(new Error('JWT secret abc123 rejected')), draft(), {
+      now: NOW,
+    })
+    expect(result).toEqual({
+      status: 'failed',
+      error: 'Could not post this event right now. Please try again.',
+    })
   })
 })
 
 describe('browser-only fallback catalog', () => {
   const fakeStorage = () => {
     const items = new Map<string, string>()
-    return { items, getItem: (k: string) => items.get(k) ?? null, setItem: (k: string, v: string) => { items.set(k, v) } }
+    return {
+      items,
+      getItem: (k: string) => items.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        items.set(k, v)
+      },
+    }
   }
 
   it('is used when Supabase env vars are missing, and is labeled not shared', () => {
@@ -155,7 +215,11 @@ describe('browser-only fallback catalog', () => {
 
   it('survives a "refresh" (new catalog, same storage) and never touches the M1 key', async () => {
     const storage = fakeStorage()
-    const result = await postEvent(createEventCatalog(createBrowserEventTable(storage), () => NOW), draft(), { now: NOW })
+    const result = await postEvent(
+      createEventCatalog(createBrowserEventTable(storage), () => NOW),
+      draft(),
+      { now: NOW },
+    )
     if (result.status !== 'posted') throw new Error('post should succeed')
 
     const afterRefresh = createEventCatalog(createBrowserEventTable(storage), () => NOW)
@@ -170,7 +234,10 @@ describe('browser-only fallback catalog', () => {
     const catalog = createEventCatalog(createBrowserEventTable(storage), () => NOW)
 
     expect(await postEvent(catalog, draft(), { now: NOW })).toMatchObject({ status: 'failed' })
-    expect(await loadPostedEvents(catalog)).toMatchObject({ events: [], error: expect.stringContaining('Could not load') })
+    expect(await loadPostedEvents(catalog)).toMatchObject({
+      events: [],
+      error: expect.stringContaining('Could not load'),
+    })
     expect(storage.items.get(LOCAL_CATALOG_KEY)).toBe('{bad json')
   })
 })

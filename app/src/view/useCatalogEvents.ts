@@ -4,7 +4,10 @@ import { loadPostedEvents, type CampusEvent, type EventCatalogPort } from '../co
 // Posting, availability search, and the event list share one catalog snapshot.
 export function useCatalogEvents(catalog: EventCatalogPort, enabled = true, refreshKey = 0) {
   const [state, setState] = useState<{
-    events: CampusEvent[]; error: string | null; loading: boolean; revision: number
+    events: CampusEvent[]
+    error: string | null
+    loading: boolean
+    revision: number
   }>({ events: [], error: null, loading: true, revision: 0 })
   const generation = useRef(0)
   const refresh = useCallback(async () => {
@@ -20,7 +23,9 @@ export function useCatalogEvents(catalog: EventCatalogPort, enabled = true, refr
   useEffect(() => {
     if (!enabled) return
     void refresh()
-    return () => { generation.current++ }
+    return () => {
+      generation.current++
+    }
   }, [enabled, refresh, refreshKey])
 
   return { ...state, refresh }

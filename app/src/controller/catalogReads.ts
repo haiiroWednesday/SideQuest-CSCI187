@@ -15,8 +15,14 @@ export function readCatalogWithDeadline<T>(operation: () => Promise<T>): Promise
     const timer = setTimeout(() => reject(new CatalogReadTimeoutError()), CATALOG_READ_TIMEOUT_MS)
     try {
       operation().then(
-        value => { clearTimeout(timer); resolve(value) },
-        error => { clearTimeout(timer); reject(error) },
+        value => {
+          clearTimeout(timer)
+          resolve(value)
+        },
+        error => {
+          clearTimeout(timer)
+          reject(error)
+        },
       )
     } catch (error) {
       clearTimeout(timer)

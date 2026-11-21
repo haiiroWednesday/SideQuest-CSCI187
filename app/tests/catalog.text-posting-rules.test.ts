@@ -6,8 +6,15 @@ import { createServer, type Server } from 'node:http'
 import textPolicySql from '../../supabase/migrations/20261111000000_event_text_posting_rules.sql?raw'
 import { createCatalogApi } from '../server/api'
 import {
-  CATALOG_LIMITS, POSTING_LIMITS, catalogPostingErrors, createEventCatalog, hasLetterOrDigit,
-  isCatalogEvent, toEventRow, type EventDraft, type EventRow,
+  CATALOG_LIMITS,
+  POSTING_LIMITS,
+  catalogPostingErrors,
+  createEventCatalog,
+  hasLetterOrDigit,
+  isCatalogEvent,
+  toEventRow,
+  type EventDraft,
+  type EventRow,
 } from '../src/model/eventCatalog'
 import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 
@@ -15,8 +22,14 @@ import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 const NOW = new Date('2026-11-08T20:00:00Z')
 const clock = () => NOW
 const draft = (extra: Partial<EventDraft> = {}): EventDraft => ({
-  title: 'Photo Walk', hostName: 'Art Club', description: 'Bring a camera.', location: 'Library',
-  date: '2026-11-15', start: '14:30', end: '15:30', ...extra,
+  title: 'Photo Walk',
+  hostName: 'Art Club',
+  description: 'Bring a camera.',
+  location: 'Library',
+  date: '2026-11-15',
+  start: '14:30',
+  end: '15:30',
+  ...extra,
 })
 const FIELDS = ['title', 'hostName', 'description', 'location'] as const
 const NAMED_FIELDS = ['title', 'hostName', 'location'] as const
@@ -24,18 +37,24 @@ const LETTER_ERROR = 'must include at least one letter or number'
 
 describe('posting limits', () => {
   it('stay at or below the storage ceiling for every field', () => {
-    for (const field of FIELDS) expect(POSTING_LIMITS[field]).toBeLessThanOrEqual(CATALOG_LIMITS[field])
+    for (const field of FIELDS)
+      expect(POSTING_LIMITS[field]).toBeLessThanOrEqual(CATALOG_LIMITS[field])
     expect(POSTING_LIMITS).toEqual({ title: 80, hostName: 60, description: 1000, location: 120 })
   })
 
   it.each(FIELDS)('%s: accepts the posting limit and rejects one more', field => {
     const max = POSTING_LIMITS[field]
     expect(catalogPostingErrors(draft({ [field]: 'x'.repeat(max) }), NOW)).toEqual({})
-    expect(catalogPostingErrors(draft({ [field]: 'x'.repeat(max + 1) }), NOW)[field]).toContain(`must be ${max} characters or fewer`)
+    expect(catalogPostingErrors(draft({ [field]: 'x'.repeat(max + 1) }), NOW)[field]).toContain(
+      `must be ${max} characters or fewer`,
+    )
   })
 
   it.each(FIELDS)('%s: shows the posting limit, not the storage ceiling, above both', field => {
-    const message = catalogPostingErrors(draft({ [field]: 'x'.repeat(CATALOG_LIMITS[field] + 1) }), NOW)[field]
+    const message = catalogPostingErrors(
+      draft({ [field]: 'x'.repeat(CATALOG_LIMITS[field] + 1) }),
+      NOW,
+    )[field]
     expect(message).toContain(`${POSTING_LIMITS[field]} characters`)
   })
 
@@ -43,14 +62,23 @@ describe('posting limits', () => {
     expect(catalogPostingErrors(draft({ title: `  ${'x'.repeat(80)}  ` }), NOW)).toEqual({})
   })
 
-  it.each(FIELDS)('%s: create() rejects one over the posting limit and stores nothing', async field => {
-    const table = createInMemoryEventTable()
-    const catalog = createEventCatalog(table, clock)
-    await expect(catalog.create(draft({ [field]: 'x'.repeat(POSTING_LIMITS[field] + 1) })))
-      .rejects.toMatchObject({ kind: 'invalid', message: expect.stringContaining(`${POSTING_LIMITS[field]} characters`) })
-    expect(table.rows.size).toBe(0)
-    await expect(catalog.create(draft({ [field]: 'x'.repeat(POSTING_LIMITS[field]) }))).resolves.toMatchObject({ [field]: 'x'.repeat(POSTING_LIMITS[field]) })
-  })
+  it.each(FIELDS)(
+    '%s: create() rejects one over the posting limit and stores nothing',
+    async field => {
+      const table = createInMemoryEventTable()
+      const catalog = createEventCatalog(table, clock)
+      await expect(
+        catalog.create(draft({ [field]: 'x'.repeat(POSTING_LIMITS[field] + 1) })),
+      ).rejects.toMatchObject({
+        kind: 'invalid',
+        message: expect.stringContaining(`${POSTING_LIMITS[field]} characters`),
+      })
+      expect(table.rows.size).toBe(0)
+      await expect(
+        catalog.create(draft({ [field]: 'x'.repeat(POSTING_LIMITS[field]) })),
+      ).resolves.toMatchObject({ [field]: 'x'.repeat(POSTING_LIMITS[field]) })
+    },
+  )
 })
 
 describe('letter-or-digit rule', () => {
@@ -68,7 +96,8 @@ describe('letter-or-digit rule', () => {
   })
 
   it.each(NAMED_FIELDS)('%s: accepts Unicode letters and emoji mixed with text', field => {
-    for (const text of ['読書会', 'Café Night', '🎉 Party 2']) expect(catalogPostingErrors(draft({ [field]: text }), NOW)).toEqual({})
+    for (const text of ['読書会', 'Café Night', '🎉 Party 2'])
+      expect(catalogPostingErrors(draft({ [field]: text }), NOW)).toEqual({})
   })
 
   it('does not apply to the description', () => {
@@ -76,30 +105,48 @@ describe('letter-or-digit rule', () => {
   })
 
   it('keeps the "Please enter" message for a blank field', () => {
-    expect(catalogPostingErrors(draft({ title: '   ' }), NOW).title).toBe('Please enter the event title.')
+    expect(catalogPostingErrors(draft({ title: '   ' }), NOW).title).toBe(
+      'Please enter the event title.',
+    )
   })
 
   it('is enforced by create() so direct Model callers cannot bypass it', async () => {
     const table = createInMemoryEventTable()
-    await expect(createEventCatalog(table, clock).create(draft({ title: '&&&&' })))
-      .rejects.toMatchObject({ kind: 'invalid', message: expect.stringContaining(LETTER_ERROR) })
+    await expect(
+      createEventCatalog(table, clock).create(draft({ title: '&&&&' })),
+    ).rejects.toMatchObject({ kind: 'invalid', message: expect.stringContaining(LETTER_ERROR) })
     expect(table.rows.size).toBe(0)
   })
 })
 
 describe('server API text rules', () => {
   const servers: Server[] = []
-  afterEach(async () => { await Promise.all(servers.splice(0).map(server => new Promise<void>(resolve => server.close(() => resolve())))) })
+  afterEach(async () => {
+    await Promise.all(
+      servers.splice(0).map(server => new Promise<void>(resolve => server.close(() => resolve()))),
+    )
+  })
   async function startApi() {
     const table = createInMemoryEventTable()
     const api = createCatalogApi(createEventCatalog(table, clock))
-    const server = createServer((req, res) => { void api(req, res).then(handled => { if (!handled) { res.writeHead(404); res.end() } }) })
+    const server = createServer((req, res) => {
+      void api(req, res).then(handled => {
+        if (!handled) {
+          res.writeHead(404)
+          res.end()
+        }
+      })
+    })
     servers.push(server)
     await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-    const address = server.address(); if (!address || typeof address === 'string') throw Error('No address')
-    const post = (body: EventDraft) => fetch(`http://127.0.0.1:${address.port}/api/events`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-    })
+    const address = server.address()
+    if (!address || typeof address === 'string') throw Error('No address')
+    const post = (body: EventDraft) =>
+      fetch(`http://127.0.0.1:${address.port}/api/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
     return { table, post }
   }
 
@@ -127,21 +174,32 @@ describe('server API text rules', () => {
 // this keeps the policy text in step with the Model during a local `npm test`.
 describe('database text posting policy', () => {
   const sql = textPolicySql.replace(/\s+/g, ' ')
-  it.each([['title', 'title'], ['hostName', 'host_name'], ['description', 'description'], ['location', 'location']] as const)(
-    '%s limit equals the policy bound on %s', (field, column) => {
-      const bound = new RegExp(`char_length\\(btrim\\(${column}\\)\\) <= (\\d+)`).exec(sql)
-      expect(bound, `no posting bound for ${column}`).not.toBeNull()
-      expect(Number(bound![1])).toBe(POSTING_LIMITS[field])
-    })
-  it.each(['title', 'host_name', 'location'])('requires a letter or digit in %s with the ICU collation', column => {
-    expect(sql).toContain(`${column} collate "und-x-icu" ~ '[[:alnum:]]'`)
+  it.each([
+    ['title', 'title'],
+    ['hostName', 'host_name'],
+    ['description', 'description'],
+    ['location', 'location'],
+  ] as const)('%s limit equals the policy bound on %s', (field, column) => {
+    const bound = new RegExp(`char_length\\(btrim\\(${column}\\)\\) <= (\\d+)`).exec(sql)
+    expect(bound, `no posting bound for ${column}`).not.toBeNull()
+    expect(Number(bound![1])).toBe(POSTING_LIMITS[field])
   })
+  it.each(['title', 'host_name', 'location'])(
+    'requires a letter or digit in %s with the ICU collation',
+    column => {
+      expect(sql).toContain(`${column} collate "und-x-icu" ~ '[[:alnum:]]'`)
+    },
+  )
   it('does not require a letter or digit in the description', () => {
     expect(sql).not.toContain(`description collate`)
   })
   it('repeats the posting-horizon date window, since ALTER POLICY replaces it', () => {
-    expect(sql).toContain(`alter policy "Anyone may submit a valid event" on public.events with check (`)
-    expect(sql).toContain(`event_date between (now() at time zone 'America/Los_Angeles')::date and ((now() at time zone 'America/Los_Angeles')::date + interval '1 year')::date`)
+    expect(sql).toContain(
+      `alter policy "Anyone may submit a valid event" on public.events with check (`,
+    )
+    expect(sql).toContain(
+      `event_date between (now() at time zone 'America/Los_Angeles')::date and ((now() at time zone 'America/Los_Angeles')::date + interval '1 year')::date`,
+    )
   })
   it('adds or changes no CHECK constraint', () => {
     expect(sql).not.toMatch(/\bconstraint\b|\bcheck \(length/i)
@@ -149,10 +207,15 @@ describe('database text posting policy', () => {
 })
 
 describe('stored events above the posting limits stay readable', () => {
-  const oversized = (): Omit<EventRow, 'id'> => toEventRow(draft({
-    title: '&'.repeat(CATALOG_LIMITS.title), hostName: 'H'.repeat(CATALOG_LIMITS.hostName),
-    description: 'D'.repeat(CATALOG_LIMITS.description), location: 'L'.repeat(CATALOG_LIMITS.location),
-  }))
+  const oversized = (): Omit<EventRow, 'id'> =>
+    toEventRow(
+      draft({
+        title: '&'.repeat(CATALOG_LIMITS.title),
+        hostName: 'H'.repeat(CATALOG_LIMITS.hostName),
+        description: 'D'.repeat(CATALOG_LIMITS.description),
+        location: 'L'.repeat(CATALOG_LIMITS.location),
+      }),
+    )
 
   it('lists and opens a row at the storage ceiling', async () => {
     const rows = new Map<string, EventRow>()

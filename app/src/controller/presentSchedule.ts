@@ -1,6 +1,15 @@
 // CONTROLLER: prepare a device-local Schedule screen from resolved plan entries.
 import { calendarDay, eventPhase, minutesUntilStart, overlapSpan } from '../model/eventTiming'
-import { byTime, describeDay, groupDays, spanText, toStub, type ScreenEvent, type StubModel, type DayModel } from './screenModels'
+import {
+  byTime,
+  describeDay,
+  groupDays,
+  spanText,
+  toStub,
+  type ScreenEvent,
+  type StubModel,
+  type DayModel,
+} from './screenModels'
 
 // ---------- My Schedule
 
@@ -40,7 +49,11 @@ export type ScheduleScreen = {
   missing: { id: string }[]
 }
 
-function presentNextUp(stub: PlanStubModel, event: ScreenEvent | undefined, now: Date): NextUpModel {
+function presentNextUp(
+  stub: PlanStubModel,
+  event: ScreenEvent | undefined,
+  now: Date,
+): NextUpModel {
   if (stub.live?.kind === 'now') {
     return { stub, kind: 'now', when: stub.live.text }
   }
@@ -68,7 +81,13 @@ export function presentSchedule(input: ScheduleInput, now: Date = new Date()): S
     const span = conflict ? overlapSpan(event, conflict) : null
     return {
       ...toStub(event, now, ids, null),
-      overlap: conflict && span ? { title: conflict.title, text: `Overlaps ${conflict.title} by ${spanText(span.to - span.from)}` } : null,
+      overlap:
+        conflict && span
+          ? {
+              title: conflict.title,
+              text: `Overlaps ${conflict.title} by ${spanText(span.to - span.from)}`,
+            }
+          : null,
       done: eventPhase(event, now) === 'ended',
     }
   })
@@ -85,7 +104,13 @@ export function presentSchedule(input: ScheduleInput, now: Date = new Date()): S
   const nextUp = first ? presentNextUp(first, firstEvent, now) : null
 
   return {
-    status: input.blocked ? 'blocked' : input.loading ? 'loading' : input.ids.length === 0 ? 'empty' : 'ready',
+    status: input.blocked
+      ? 'blocked'
+      : input.loading
+        ? 'loading'
+        : input.ids.length === 0
+          ? 'empty'
+          : 'ready',
     plannedCount: input.ids.length,
     overlapCount: upcoming.filter(stub => stub.overlap).length,
     missingCount: input.missingIds.length,

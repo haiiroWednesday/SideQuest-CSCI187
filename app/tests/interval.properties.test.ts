@@ -15,7 +15,12 @@ function random(seed: number) {
 const hhmm = (minute: number) =>
   `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`
 const base: CampusEvent = {
-  id: 'a', title: 'Workshop', location: 'Library', date: '2030-11-07', start: '10:00', end: '11:00',
+  id: 'a',
+  title: 'Workshop',
+  location: 'Library',
+  date: '2030-11-07',
+  start: '10:00',
+  end: '11:00',
 }
 
 describe('deterministic interval properties and mutation-sensitive boundaries', () => {
@@ -28,16 +33,20 @@ describe('deterministic interval properties and mutation-sensitive boundaries', 
       const eventEnd = eventStart + 1 + next(1439 - eventStart)
       const event = { ...base, start: hhmm(eventStart), end: hhmm(eventEnd) }
       const expected = eventStart >= freeStart && eventEnd <= freeEnd
-      expect(fitsFully(event, base.date, hhmm(freeStart), hhmm(freeEnd)),
-        `seed 0x5eed187 case ${i}: free [${freeStart},${freeEnd}] event [${eventStart},${eventEnd}]`).toBe(expected)
+      expect(
+        fitsFully(event, base.date, hhmm(freeStart), hhmm(freeEnd)),
+        `seed 0x5eed187 case ${i}: free [${freeStart},${freeEnd}] event [${eventStart},${eventEnd}]`,
+      ).toBe(expected)
     }
   })
 
   it('expanding a valid availability window cannot exclude a fitting event', () => {
     const next = random(0xc0ffee)
     for (let i = 0; i < 300; i++) {
-      const eventStart = 1 + next(1378), eventEnd = eventStart + 1 + next(1439 - eventStart)
-      const before = next(eventStart + 1), after = eventEnd + next(1440 - eventEnd)
+      const eventStart = 1 + next(1378),
+        eventEnd = eventStart + 1 + next(1439 - eventStart)
+      const before = next(eventStart + 1),
+        after = eventEnd + next(1440 - eventEnd)
       const event = { ...base, start: hhmm(eventStart), end: hhmm(eventEnd) }
       expect(fitsFully(event, base.date, event.start, event.end)).toBe(true)
       expect(fitsFully(event, base.date, hhmm(before), hhmm(after))).toBe(true)
@@ -50,6 +59,9 @@ describe('deterministic interval properties and mutation-sensitive boundaries', 
     expect(fitsFully(event, base.date, '14:01', '15:00')).toBe(false)
     expect(fitsFully(event, base.date, '14:00', '14:59')).toBe(false)
     expect(overlapSpan(event, { ...event, id: 'b', start: '15:00', end: '16:00' })).toBeNull()
-    expect(overlapSpan(event, { ...event, id: 'b', start: '14:59', end: '16:00' })).toEqual({ from: 899, to: 900 })
+    expect(overlapSpan(event, { ...event, id: 'b', start: '14:59', end: '16:00' })).toEqual({
+      from: 899,
+      to: 900,
+    })
   })
 })

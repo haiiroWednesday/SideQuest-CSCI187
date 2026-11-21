@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createSharedScheduleController, type SharedScheduleResult } from '../controller/sharedSchedule'
+import {
+  createSharedScheduleController,
+  type SharedScheduleResult,
+} from '../controller/sharedSchedule'
 import type { EventCatalogPort } from '../controller/postEvent'
 import { SCHEDULE_RECOVERY_CONFIRMATION } from './scheduleRecovery'
 
@@ -22,12 +25,19 @@ export function useSharedSchedule(catalog: EventCatalogPort) {
   const refresh = useCallback(() => run(() => controller.read()), [controller, run])
   useEffect(() => {
     void refresh()
-    const onStorage = (event: StorageEvent) => { if (controller.handlesStorageChange(event)) void refresh() }
+    const onStorage = (event: StorageEvent) => {
+      if (controller.handlesStorageChange(event)) void refresh()
+    }
     window.addEventListener('storage', onStorage)
-    return () => { generation.current++; window.removeEventListener('storage', onStorage) }
+    return () => {
+      generation.current++
+      window.removeEventListener('storage', onStorage)
+    }
   }, [controller, refresh])
   return {
-    ...result, revision: revision.current, refresh,
+    ...result,
+    revision: revision.current,
+    refresh,
     add: (id: string) => run(() => controller.add(id)),
     remove: (id: string) => run(() => controller.remove(id)),
     recover: () => {

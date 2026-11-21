@@ -17,4 +17,3 @@ export function formatEventTime(time: string): string {
   const minute = String(minutes % 60).padStart(2, '0')
   return `${hour % 12 || 12}:${minute}${hour < 12 ? 'am' : 'pm'}`
 }
-

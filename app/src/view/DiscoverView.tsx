@@ -2,7 +2,11 @@
 // clock reads, date or time comparisons, or Model imports belong here.
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import {
-  presentDiscover, type DiscoverScreen, type FreeWindow, type ScreenEvent, type StubModel,
+  presentDiscover,
+  type DiscoverScreen,
+  type FreeWindow,
+  type ScreenEvent,
+  type StubModel,
 } from '../controller/presentScreens'
 import '@fontsource/instrument-serif/400.css'
 import '@fontsource/instrument-serif/400-italic.css'
@@ -60,18 +64,33 @@ export function SideQuestHeader({
           <img src={logoUrl} alt="SideQuest" width={158} height={86} />
         </a>
         <nav aria-label="SideQuest primary" className="sq-nav">
-          <a aria-current={current('discover')} className="sq-tab sq-tab-discover" href={routes.discover ?? '/discover-preview.html'}>
-            <i className="sq-ic" aria-hidden="true" /><span>Discover</span>
+          <a
+            aria-current={current('discover')}
+            className="sq-tab sq-tab-discover"
+            href={routes.discover ?? '/discover-preview.html'}
+          >
+            <i className="sq-ic" aria-hidden="true" />
+            <span>Discover</span>
           </a>
           {routes.schedule && (
-            <a aria-current={current('schedule')} className="sq-tab sq-tab-schedule" href={routes.schedule}>
-              <i className="sq-ic" aria-hidden="true" /><span>My Schedule</span>
-              {plannedCount > 0 && <b className="sq-badge" aria-hidden="true">{plannedCount}</b>}
+            <a
+              aria-current={current('schedule')}
+              className="sq-tab sq-tab-schedule"
+              href={routes.schedule}
+            >
+              <i className="sq-ic" aria-hidden="true" />
+              <span>My Schedule</span>
+              {plannedCount > 0 && (
+                <b className="sq-badge" aria-hidden="true">
+                  {plannedCount}
+                </b>
+              )}
             </a>
           )}
           {routes.post && (
             <a aria-current={current('post')} className="sq-post" href={routes.post}>
-              <i className="sq-ic" aria-hidden="true" /><span>Post an event</span>
+              <i className="sq-ic" aria-hidden="true" />
+              <span>Post an event</span>
             </a>
           )}
         </nav>
@@ -81,25 +100,46 @@ export function SideQuestHeader({
 }
 
 /** One ticket stub. Shared by Discover and My Schedule. */
-export function EventStub({ stub, selected = false, dim = false, onSelect, children }: {
+export function EventStub({
+  stub,
+  selected = false,
+  dim = false,
+  onSelect,
+  children,
+}: {
   stub: StubModel
   selected?: boolean
   dim?: boolean
   onSelect?: () => void
   children?: ReactNode
 }) {
-  const classes = ['sq-stub', selected && 'sq-stub-selected', dim && 'sq-stub-dim', stub.live && `sq-stub-${stub.live.kind}`].filter(Boolean).join(' ')
+  const classes = [
+    'sq-stub',
+    selected && 'sq-stub-selected',
+    dim && 'sq-stub-dim',
+    stub.live && `sq-stub-${stub.live.kind}`,
+  ]
+    .filter(Boolean)
+    .join(' ')
   const body = (
     <>
       <span className="sq-stub-time">
-        <b>{stub.start.time}<i>{stub.start.ampm}</i></b>
+        <b>
+          {stub.start.time}
+          <i>{stub.start.ampm}</i>
+        </b>
         <small>to {stub.endText}</small>
         <em>{stub.durationText}</em>
       </span>
       <span className="sq-stub-body">
         <strong>{stub.title}</strong>
         <span className="sq-by">
-          {stub.host && <><b>{stub.host}</b><i> · </i></>}
+          {stub.host && (
+            <>
+              <b>{stub.host}</b>
+              <i> · </i>
+            </>
+          )}
           <span>{stub.location}</span>
         </span>
         {stub.live && <span className={`sq-live sq-live-${stub.live.kind}`}>{stub.live.text}</span>}
@@ -108,16 +148,34 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
     </>
   )
   return onSelect ? (
-    <button type="button" className={classes} aria-pressed={selected} aria-label={`View details for ${stub.title}`} onClick={onSelect}>{body}</button>
+    <button
+      type="button"
+      className={classes}
+      aria-pressed={selected}
+      aria-label={`View details for ${stub.title}`}
+      onClick={onSelect}
+    >
+      {body}
+    </button>
   ) : (
     <div className={classes}>{body}</div>
   )
 }
 
-export function DayBubble({ dow, dayNumber, monthTag }: { dow: string; dayNumber: number; monthTag: string | null }) {
+export function DayBubble({
+  dow,
+  dayNumber,
+  monthTag,
+}: {
+  dow: string
+  dayNumber: number
+  monthTag: string | null
+}) {
   return (
     <div className="sq-bubble" aria-hidden="true">
-      <small>{dow}</small><b>{dayNumber}</b>{monthTag && <small className="sq-bubble-month">{monthTag}</small>}
+      <small>{dow}</small>
+      <b>{dayNumber}</b>
+      {monthTag && <small className="sq-bubble-month">{monthTag}</small>}
     </div>
   )
 }
@@ -137,8 +195,15 @@ export type DiscoverViewProps = {
 }
 
 export function DiscoverView({
-  screen, onRetry, onPlan, onFreeWindowChange, routes, sourceNote,
-  detail, onSelectEvent, onRetryDetail,
+  screen,
+  onRetry,
+  onPlan,
+  onFreeWindowChange,
+  routes,
+  sourceNote,
+  detail,
+  onSelectEvent,
+  onRetryDetail,
 }: DiscoverViewProps) {
   const [requestedId, setRequestedId] = useState<string | null>(null)
   // Phones show the ticket as a sheet; it opens when a stub is picked.
@@ -159,49 +224,96 @@ export function DiscoverView({
     if (screen.status !== 'ready' || screen.count === 0) setSheetOpen(false)
   }, [screen.status, screen.count])
   useMobileDetailFocus({
-    phone, sheetOpen, panelRef: sheet, returnFocusRef: trigger, onClose: closeSheet,
-    selectedId: selected?.id, selectedPlanned: selected?.planned, planningBlocked: screen.planningBlocked,
+    phone,
+    sheetOpen,
+    panelRef: sheet,
+    returnFocusRef: trigger,
+    onClose: closeSheet,
+    selectedId: selected?.id,
+    selectedPlanned: selected?.planned,
+    planningBlocked: screen.planningBlocked,
   })
   const ready = screen.status === 'ready'
   const free = screen.freeWindow
 
-
   return (
     <div className="sq-discover-page">
-      <div inert={modal || undefined}><SideQuestHeader routes={routes} plannedCount={screen.plannedCount} /></div>
+      <div inert={modal || undefined}>
+        <SideQuestHeader routes={routes} plannedCount={screen.plannedCount} />
+      </div>
       <main className="sq-main" id="content">
         <section inert={modal || undefined} className="sq-hero" aria-labelledby="sq-discover-title">
-          <h1 id="sq-discover-title">More to do. <em>Right here.</em></h1>
+          <h1 id="sq-discover-title">
+            More to do. <em>Right here.</em>
+          </h1>
           {/* Original drawing, not an SCU mark. The red trail ending in an X is the side quest. */}
           <img className="sq-campus-drawing" src={drawingUrl} alt="" aria-hidden="true" />
         </section>
 
-        {free && onFreeWindowChange && <FreeWindowForm free={free} ready={ready} onWindowChange={onFreeWindowChange} disabledByDialog={modal} />}
+        {free && onFreeWindowChange && (
+          <FreeWindowForm
+            free={free}
+            ready={ready}
+            onWindowChange={onFreeWindowChange}
+            disabledByDialog={modal}
+          />
+        )}
 
         <div className="sq-board">
-          <section inert={modal || undefined} className="sq-results" aria-labelledby="sq-events-heading">
-            <h2 id="sq-events-heading" className="sq-visually-hidden">{screen.headingText}</h2>
+          <section
+            inert={modal || undefined}
+            className="sq-results"
+            aria-labelledby="sq-events-heading"
+          >
+            <h2 id="sq-events-heading" className="sq-visually-hidden">
+              {screen.headingText}
+            </h2>
             {screen.status === 'loading' ? (
-              <p className="sq-message" role="status"><span className="sq-spinner" aria-hidden="true" />Loading campus events…</p>
+              <p className="sq-message" role="status">
+                <span className="sq-spinner" aria-hidden="true" />
+                Loading campus events…
+              </p>
             ) : screen.status === 'error' ? (
               <div className="sq-message sq-message-error" role="alert">
                 <h3>Events could not be loaded.</h3>
                 <p>{screen.errorMessage}</p>
-                {onRetry && <button type="button" className="sq-text-button" onClick={onRetry}>Try again</button>}
+                {onRetry && (
+                  <button type="button" className="sq-text-button" onClick={onRetry}>
+                    Try again
+                  </button>
+                )}
               </div>
             ) : screen.status === 'empty' || (screen.status === 'ready' && screen.count === 0) ? (
               <div className="sq-message sq-message-empty">
                 <h3>{free?.active ? 'No events fit this window.' : 'No events to show yet.'}</h3>
-                {free?.active && onFreeWindowChange && <button type="button" className="sq-text-button"
-                  onClick={() => onFreeWindowChange({ date: '', start: '', end: '' })}>Show all events</button>}
-                {routes?.post && <a className="sq-text-link" href={routes.post}>Post an event</a>}
+                {free?.active && onFreeWindowChange && (
+                  <button
+                    type="button"
+                    className="sq-text-button"
+                    onClick={() => onFreeWindowChange({ date: '', start: '', end: '' })}
+                  >
+                    Show all events
+                  </button>
+                )}
+                {routes?.post && (
+                  <a className="sq-text-link" href={routes.post}>
+                    Post an event
+                  </a>
+                )}
               </div>
             ) : (
               <div className="sq-trail">
                 {screen.days.map(day => (
-                  <section key={day.date} aria-label={day.long} className={`sq-trail-day${day.isToday ? ' sq-today' : ''}`}>
+                  <section
+                    key={day.date}
+                    aria-label={day.long}
+                    className={`sq-trail-day${day.isToday ? ' sq-today' : ''}`}
+                  >
                     <DayBubble dow={day.dow} dayNumber={day.dayNumber} monthTag={day.monthTag} />
-                    <h3 className="sq-day" id={`sq-day-${day.date}`}><span>{day.tag}</span>{day.long}</h3>
+                    <h3 className="sq-day" id={`sq-day-${day.date}`}>
+                      <span>{day.tag}</span>
+                      {day.long}
+                    </h3>
                     <ol className="sq-stubs">
                       {day.events.map(stub => (
                         <li key={stub.id}>
@@ -216,7 +328,9 @@ export function DiscoverView({
                               onSelectEvent?.(stub.id)
                             }}
                           >
-                            {stub.fit === 'fits' && <span className="sq-pill sq-pill-fit">Fits your window</span>}
+                            {stub.fit === 'fits' && (
+                              <span className="sq-pill sq-pill-fit">Fits your window</span>
+                            )}
                             {stub.planned && <span className="sq-pill">In My Schedule</span>}
                           </EventStub>
                         </li>
@@ -225,16 +339,44 @@ export function DiscoverView({
                   </section>
                 ))}
                 {routes?.post && (
-                  <p className="sq-endcap"><a href={routes.post}><span className="sq-endcap-lead">That's everything coming up.</span> <span className="sq-endcap-cta">Post something<span className="sq-endcap-arrow" aria-hidden="true" /></span></a></p>
+                  <p className="sq-endcap">
+                    <a href={routes.post}>
+                      <span className="sq-endcap-lead">That's everything coming up.</span>{' '}
+                      <span className="sq-endcap-cta">
+                        Post something
+                        <span className="sq-endcap-arrow" aria-hidden="true" />
+                      </span>
+                    </a>
+                  </p>
                 )}
               </div>
             )}
           </section>
-          {ready && <aside ref={sheet} className={`sq-sticker${sheetOpen ? ' sq-open' : ''}`} hidden={phone && !sheetOpen} role={modal ? 'dialog' : undefined} aria-modal={modal || undefined} aria-labelledby="sq-detail-title">
-            <EventDetailContent selected={selected} verified={verified} onRetryDetail={onRetryDetail} onPlan={onPlan} planningBlocked={screen.planningBlocked} onClose={closeSheet} />
-          </aside>}
+          {ready && (
+            <aside
+              ref={sheet}
+              className={`sq-sticker${sheetOpen ? ' sq-open' : ''}`}
+              hidden={phone && !sheetOpen}
+              role={modal ? 'dialog' : undefined}
+              aria-modal={modal || undefined}
+              aria-labelledby="sq-detail-title"
+            >
+              <EventDetailContent
+                selected={selected}
+                verified={verified}
+                onRetryDetail={onRetryDetail}
+                onPlan={onPlan}
+                planningBlocked={screen.planningBlocked}
+                onClose={closeSheet}
+              />
+            </aside>
+          )}
         </div>
-        <div className={`sq-scrim${sheetOpen && selected && ready ? ' sq-open' : ''}`} aria-hidden="true" onClick={closeSheet} />
+        <div
+          className={`sq-scrim${sheetOpen && selected && ready ? ' sq-open' : ''}`}
+          aria-hidden="true"
+          onClick={closeSheet}
+        />
         {sourceNote && <p className="sq-source-note">{sourceNote}</p>}
       </main>
       <footer className="sq-footer">

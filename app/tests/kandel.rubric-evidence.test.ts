@@ -7,19 +7,46 @@ import rubric from '../../docs/kandel-rubric-evidence.json'
 const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url))
 const absolute = (file: string) => join(repositoryRoot, file)
 const expectedAutomated = [
-  'DEV-UNIT', 'DEV-COMPONENT', 'DEV-SYSTEM', 'DEV-WHITEBOX',
-  'DEV-REGRESSION', 'DEV-BOUNDARIES', 'RELEASE-BLACKBOX',
-  'RELEASE-BUILD', 'NF-PERFORMANCE', 'NF-LOAD', 'NF-STRESS',
-  'NF-SECURITY', 'NF-RELIABILITY', 'NF-ACCESSIBILITY',
-  'NF-RESPONSIVE', 'NF-PRIVACY', 'CODE-MVC',
-  'CODE-CONVENTIONS', 'CODE-SUPPRESSIONS', 'CODE-COMMENTS',
+  'DEV-UNIT',
+  'DEV-COMPONENT',
+  'DEV-SYSTEM',
+  'DEV-WHITEBOX',
+  'DEV-REGRESSION',
+  'DEV-BOUNDARIES',
+  'RELEASE-BLACKBOX',
+  'RELEASE-BUILD',
+  'NF-PERFORMANCE',
+  'NF-LOAD',
+  'NF-STRESS',
+  'NF-SECURITY',
+  'NF-RELIABILITY',
+  'NF-ACCESSIBILITY',
+  'NF-RESPONSIVE',
+  'NF-PRIVACY',
+  'CODE-MVC',
+  'CODE-CONVENTIONS',
+  'CODE-SUPPRESSIONS',
+  'CODE-COMMENTS',
 ]
 const expectedManual = [
-  'CODE-READABILITY', 'DOC-SETUP', 'DOC-DIAGRAMS', 'REVIEW-QUALITY',
-  'UX-UNGUIDED', 'UX-ACCESSIBILITY-MANUAL', 'UX-PERFORMANCE-REAL',
-  'SEC-LIVE-SUPABASE', 'FINAL-PITCH', 'FINAL-DEMO', 'FINAL-RESULTS',
-  'FINAL-PRESENTATION', 'FINAL-PEER-NOTES', 'EXTRA-CORE',
-  'EXTRA-E2E', 'EXTRA-ACCESSIBILITY', 'EXTRA-EXTERNAL', 'EXTRA-PUBLISH',
+  'CODE-READABILITY',
+  'DOC-SETUP',
+  'DOC-DIAGRAMS',
+  'REVIEW-QUALITY',
+  'UX-UNGUIDED',
+  'UX-ACCESSIBILITY-MANUAL',
+  'UX-PERFORMANCE-REAL',
+  'SEC-LIVE-SUPABASE',
+  'FINAL-PITCH',
+  'FINAL-DEMO',
+  'FINAL-RESULTS',
+  'FINAL-PRESENTATION',
+  'FINAL-PEER-NOTES',
+  'EXTRA-CORE',
+  'EXTRA-E2E',
+  'EXTRA-ACCESSIBILITY',
+  'EXTRA-EXTERNAL',
+  'EXTRA-PUBLISH',
 ]
 
 describe('Kandel rubric traceability and release-evidence integrity', () => {
@@ -34,7 +61,9 @@ describe('Kandel rubric traceability and release-evidence integrity', () => {
 
   it('references real, nonempty tests or production verification scripts', () => {
     for (const item of rubric.automated) {
-      expect(rubric.sources[item.source as keyof typeof rubric.sources], item.id).toMatch(/^https:\/\//)
+      expect(rubric.sources[item.source as keyof typeof rubric.sources], item.id).toMatch(
+        /^https:\/\//,
+      )
       expect(item.evidence.length, item.id).toBeGreaterThan(0)
       for (const file of item.evidence) {
         expect(file, item.id).toMatch(/^(app\/(?:tests|e2e|scripts)\/|supabase\/tests\/)/)
@@ -43,7 +72,9 @@ describe('Kandel rubric traceability and release-evidence integrity', () => {
         const source = readFileSync(absolute(file), 'utf8')
         expect(source.trim().length, `${item.id}: empty ${file}`).toBeGreaterThan(20)
         if (/\.(?:test\.[jt]sx?|spec\.[jt]s)$/.test(file)) {
-          expect(source, `${item.id}: test has no assertions/specs`).toMatch(/\b(?:it|test)(?:\.\w+)?\s*\(/)
+          expect(source, `${item.id}: test has no assertions/specs`).toMatch(
+            /\b(?:it|test)(?:\.\w+)?\s*\(/,
+          )
         }
       }
     }
@@ -52,7 +83,9 @@ describe('Kandel rubric traceability and release-evidence integrity', () => {
   it('never silently marks subjective or live-service requirements complete', () => {
     const guide = readFileSync(absolute('docs/CSCI187_KANDEL_RUBRIC_EVIDENCE.md'), 'utf8')
     for (const item of rubric.manual) {
-      expect(rubric.sources[item.source as keyof typeof rubric.sources], item.id).toMatch(/^https:\/\//)
+      expect(rubric.sources[item.source as keyof typeof rubric.sources], item.id).toMatch(
+        /^https:\/\//,
+      )
       expect(existsSync(absolute(item.procedure)), item.id).toBe(true)
       expect(guide, `manual criterion ${item.id} missing from review guide`).toContain(item.id)
       expect(['pending', 'verified']).toContain(item.status)

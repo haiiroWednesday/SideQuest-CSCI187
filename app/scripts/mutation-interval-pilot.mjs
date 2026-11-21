@@ -19,24 +19,69 @@ function predicateFrom(text) {
 }
 function changeOne(before, after) {
   const occurrences = source.split(before).length - 1
-  if (occurrences !== 1) throw Error(`Expected one occurrence of "${before}", saw ${occurrences}. Review the pilot after source edits.`)
+  if (occurrences !== 1)
+    throw Error(
+      `Expected one occurrence of "${before}", saw ${occurrences}. Review the pilot after source edits.`,
+    )
   return source.replace(before, after)
 }
 const cases = [
-  { name: 'inclusive start', eventStart: '14:00', eventEnd: '15:00', freeStart: '14:00', freeEnd: '16:00', eventDate: '2030-11-07', expected: true },
-  { name: 'inclusive end', eventStart: '14:00', eventEnd: '15:00', freeStart: '13:00', freeEnd: '15:00', eventDate: '2030-11-07', expected: true },
-  { name: 'zero-length event invalid', eventStart: '14:00', eventEnd: '14:00', freeStart: '13:00', freeEnd: '15:00', eventDate: '2030-11-07', expected: false },
-  { name: 'different calendar date', eventStart: '14:00', eventEnd: '15:00', freeStart: '13:00', freeEnd: '16:00', eventDate: '2030-11-08', expected: false },
+  {
+    name: 'inclusive start',
+    eventStart: '14:00',
+    eventEnd: '15:00',
+    freeStart: '14:00',
+    freeEnd: '16:00',
+    eventDate: '2030-11-07',
+    expected: true,
+  },
+  {
+    name: 'inclusive end',
+    eventStart: '14:00',
+    eventEnd: '15:00',
+    freeStart: '13:00',
+    freeEnd: '15:00',
+    eventDate: '2030-11-07',
+    expected: true,
+  },
+  {
+    name: 'zero-length event invalid',
+    eventStart: '14:00',
+    eventEnd: '14:00',
+    freeStart: '13:00',
+    freeEnd: '15:00',
+    eventDate: '2030-11-07',
+    expected: false,
+  },
+  {
+    name: 'different calendar date',
+    eventStart: '14:00',
+    eventEnd: '15:00',
+    freeStart: '13:00',
+    freeEnd: '16:00',
+    eventDate: '2030-11-08',
+    expected: false,
+  },
 ]
 function observed(fn, spec) {
-  return fn({
-    id: 'event', title: 'Workshop', location: 'Library', date: spec.eventDate,
-    start: spec.eventStart, end: spec.eventEnd,
-  }, '2030-11-07', spec.freeStart, spec.freeEnd)
+  return fn(
+    {
+      id: 'event',
+      title: 'Workshop',
+      location: 'Library',
+      date: spec.eventDate,
+      start: spec.eventStart,
+      end: spec.eventEnd,
+    },
+    '2030-11-07',
+    spec.freeStart,
+    spec.freeEnd,
+  )
 }
 const original = predicateFrom(source)
 for (const spec of cases) {
-  if (observed(original, spec) !== spec.expected) throw Error(`Original predicate did not meet independent oracle: ${spec.name}`)
+  if (observed(original, spec) !== spec.expected)
+    throw Error(`Original predicate did not meet independent oracle: ${spec.name}`)
 }
 const mutants = [
   ['incorrect strict lower boundary', 'start <= eventStart', 'start < eventStart'],
@@ -47,7 +92,9 @@ const mutants = [
 let killed = 0
 for (const [name, before, after] of mutants) {
   const mutated = predicateFrom(changeOne(before, after))
-  const failing = cases.filter(spec => observed(mutated, spec) !== spec.expected).map(spec => spec.name)
+  const failing = cases
+    .filter(spec => observed(mutated, spec) !== spec.expected)
+    .map(spec => spec.name)
   if (failing.length) {
     killed++
     console.log(`KILLED ${name} by: ${failing.join(', ')}`)

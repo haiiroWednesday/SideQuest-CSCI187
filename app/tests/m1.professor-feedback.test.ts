@@ -1,15 +1,28 @@
 // Historical M1 regression tests for posting, event display and MVC boundaries.
 import { describe, expect, it } from 'vitest'
 import {
-  createEvent, displayDate, displayTime, loadEvents, persistEvents,
-  removeEvent, removeEventWithReceipt, restoreRemovedEvent, loadEventsChecked, todayLocal, initialEventWindow,
+  createEvent,
+  displayDate,
+  displayTime,
+  loadEvents,
+  persistEvents,
+  removeEvent,
+  removeEventWithReceipt,
+  restoreRemovedEvent,
+  loadEventsChecked,
+  todayLocal,
+  initialEventWindow,
 } from '../src/controller/findEvents'
 import type { CampusEvent, EventDraft } from '../src/model/events'
 import { STORAGE_KEY } from '../src/model/events'
 
 const draft: EventDraft = {
-  title: ' Campus Choir ', description: '  Learn new arrangements with friends.  ',
-  location: ' Music Hall ', date: '2026-10-29', start: '14:30', end: '15:30',
+  title: ' Campus Choir ',
+  description: '  Learn new arrangements with friends.  ',
+  location: ' Music Hall ',
+  date: '2026-10-29',
+  start: '14:30',
+  end: '15:30',
 }
 // A frozen test clock keeps past/future checks predictable even years
 // later. The argument order is year, zero-based month, day, hour, minute.
@@ -24,19 +37,40 @@ describe('M1 regressions: no past event dates', () => {
   })
 
   it('rejects a same-day event that has already started', () => {
-    const result = createEvent([], { ...draft, date: '2026-10-28', start: '09:00', end: '10:00' }, 'today', localNow)
+    const result = createEvent(
+      [],
+      { ...draft, date: '2026-10-28', start: '09:00', end: '10:00' },
+      'today',
+      localNow,
+    )
     expect(result.error).toMatch(/already started/i)
     expect(result.events).toEqual([])
   })
 
   it('accepts a same-day start at the current minute and one later in the day', () => {
-    expect(createEvent([], { ...draft, date: '2026-10-28', start: '20:58', end: '21:59' }, 'now', localNow).error).toBeNull()
-    expect(createEvent([], { ...draft, date: '2026-10-28', start: '21:00', end: '22:00' }, 'later', localNow).error).toBeNull()
+    expect(
+      createEvent(
+        [],
+        { ...draft, date: '2026-10-28', start: '20:58', end: '21:59' },
+        'now',
+        localNow,
+      ).error,
+    ).toBeNull()
+    expect(
+      createEvent(
+        [],
+        { ...draft, date: '2026-10-28', start: '21:00', end: '22:00' },
+        'later',
+        localNow,
+      ).error,
+    ).toBeNull()
   })
 
   it('accepts a future day and rejects an impossible date', () => {
     expect(createEvent([], { ...draft, date: '2026-11-01' }, 'future', localNow).error).toBeNull()
-    expect(createEvent([], { ...draft, date: '2026-02-30' }, 'bad', localNow).error).toMatch(/valid event date/i)
+    expect(createEvent([], { ...draft, date: '2026-02-30' }, 'bad', localNow).error).toMatch(
+      /valid event date/i,
+    )
   })
 
   it('uses the local date instead of a UTC conversion', () => {
@@ -52,16 +86,21 @@ describe('M1 regressions: descriptive event records', () => {
     expect(created.error).toBeNull()
     expect(created.events).toEqual([
       {
-        id: 'choir-1', title: 'Campus Choir',
+        id: 'choir-1',
+        title: 'Campus Choir',
         description: 'Learn new arrangements with friends.',
-        location: 'Music Hall', date: '2026-10-29',
-        start: '14:30', end: '15:30',
+        location: 'Music Hall',
+        date: '2026-10-29',
+        start: '14:30',
+        end: '15:30',
       },
     ])
     const saved = new Map<string, string>()
     const storage = {
       getItem: (key: string) => saved.get(key) ?? null,
-      setItem: (key: string, value: string) => { saved.set(key, value) },
+      setItem: (key: string, value: string) => {
+        saved.set(key, value)
+      },
     }
     expect(persistEvents(storage, created.events)).toBe(true)
     expect(saved.get(STORAGE_KEY)).toContain('Learn new arrangements')
@@ -82,10 +121,12 @@ describe('M1 regressions: descriptive event records', () => {
   })
 
   it('rejects descriptions beyond the maximum and permits an empty optional description', () => {
-    expect(createEvent([], { ...draft, description: 'x'.repeat(501) }, 'long', localNow).error)
-      .toMatch(/500 characters/)
-    expect(createEvent([], { ...draft, description: '  ' }, 'empty', localNow).events[0])
-      .not.toHaveProperty('description')
+    expect(
+      createEvent([], { ...draft, description: 'x'.repeat(501) }, 'long', localNow).error,
+    ).toMatch(/500 characters/)
+    expect(
+      createEvent([], { ...draft, description: '  ' }, 'empty', localNow).events[0],
+    ).not.toHaveProperty('description')
   })
 })
 
@@ -104,10 +145,14 @@ describe('M1 regressions: consistent visible dates and times', () => {
 describe('Default event form time window', () => {
   it('chooses a future start time in daytime and tomorrow if too close to midnight', () => {
     expect(initialEventWindow(new Date(2026, 9, 28, 11, 10))).toEqual({
-      date: '2026-10-28', start: '11:45', end: '12:45',
+      date: '2026-10-28',
+      start: '11:45',
+      end: '12:45',
     })
     expect(initialEventWindow(new Date(2026, 9, 28, 23, 40))).toEqual({
-      date: '2026-10-29', start: '14:30', end: '15:30',
+      date: '2026-10-29',
+      start: '14:30',
+      end: '15:30',
     })
   })
 })
@@ -117,7 +162,12 @@ describe('M1 persistence robustness and input limits', () => {
   // original string. Only an explicit user recovery action may replace it.
   it('does not overwrite a corrupted stored value on read', () => {
     let raw = '{bad json'
-    const storage = { getItem: () => raw, setItem: (_key: string, value: string) => { raw = value } }
+    const storage = {
+      getItem: () => raw,
+      setItem: (_key: string, value: string) => {
+        raw = value
+      },
+    }
     const status = loadEventsChecked(storage)
     expect(status.blocked).toBe(true)
     expect(status.events).toEqual([])
@@ -133,8 +183,12 @@ describe('M1 persistence robustness and input limits', () => {
   })
 
   it('enforces length limits in the controller, not only in HTML', () => {
-    expect(createEvent([], { ...draft, title: 'a'.repeat(101) }, 'long-title', localNow).error).toMatch(/100/)
-    expect(createEvent([], { ...draft, location: 'x'.repeat(101) }, 'long-location', localNow).error).toMatch(/100/)
+    expect(
+      createEvent([], { ...draft, title: 'a'.repeat(101) }, 'long-title', localNow).error,
+    ).toMatch(/100/)
+    expect(
+      createEvent([], { ...draft, location: 'x'.repeat(101) }, 'long-location', localNow).error,
+    ).toMatch(/100/)
   })
 
   it('removal can be restored at the original list position', () => {
