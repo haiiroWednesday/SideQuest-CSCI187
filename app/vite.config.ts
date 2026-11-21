@@ -4,7 +4,7 @@ import { loadEnv } from 'vite'
 import { createCatalogApi } from './server/api.ts'
 import { createSupabaseEventCatalogFromEnv } from './src/model/supabaseEventTable.ts'
 
-// 🧪 Vite runs the React development app; Vitest reuses this config
+// Vite runs the React development app; Vitest reuses this config
 // to find unit and integration test files in the tests/ folder.
 export default defineConfig(({ mode }) => ({
   envPrefix: 'SIDEQUEST_PUBLIC_',
