@@ -1,8 +1,5 @@
 # M2 combined release verification
 
-> **M2 SNAPSHOT ONLY:** This file records the earlier November 4 M2 release state. For the latest final-project milestones, owner assignments, extra-credit gate evidence and PRs #60–#64, read [the November 21 current status](FINAL_PROJECT_CURRENT_STATUS_2026-11-21.md). A historical M2 status remains useful evidence but must not be read as the current final-project readiness report.
-
-
 Updated November 4, 2026. This release combines the current master release-audit fixes from PR #22 (`94055d1`) with the supplied Discover/Schedule views and PR #21's failure regressions. The merge preserves both histories and the newer M2 documents. No history rewrite is required.
 
 ## Resolved issues
