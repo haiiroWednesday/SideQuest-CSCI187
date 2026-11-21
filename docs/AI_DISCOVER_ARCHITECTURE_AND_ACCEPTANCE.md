@@ -13,7 +13,7 @@ The existing free-time form and ordinary Discover remain fully usable without th
 1. React `AiDiscoverPanel` asks `controller/aiDiscovery.ts` whether the AI server is available.
 2. A deliberate user submit sends `{query}` to the same-origin `POST /api/ai/discover`. The request excludes personal plans, private contacts, calendar data, browser storage and credentials.
 3. The **Node-only** `server/aiDiscover.ts` validates origin, size and rate, reads the trusted `EventCatalogPort`, and limits candidates to the first 40 upcoming records.
-4. The Node server calls OpenAI's **Responses API** with `OPENAI_API_KEY` in a private Authorization header, `store:false`, no tools, a fixed structured-output JSON schema, and a nine-second deadline.
+4. The Node server calls OpenAI's **Responses API** with `OPENAI_API_KEY` in a private Authorization header, `store:false`, no tools, a fixed structured-output JSON schema, and a nine-second deadline and low-latency `reasoning.effort: none`.
 5. The model proposes **existing event IDs** and optionally an explicit date/full time window. The server discards unknown/duplicate IDs, checks known event dates, applies the existing `findEvents` strict full-fit matcher when all validated date/time fields are present, and returns only safe public event summaries.
 6. The browser Controller validates the server response. The View renders matching suggestions as links into the **existing** Event Detail interaction. Suggestions outside an active user-entered free-time filter remain unselectable until that filter is cleared.
 
@@ -46,6 +46,23 @@ Configure `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and optionally `OPENAI_API
 Keep `OPENAI_API_KEY` out of React, committed files, browser-prefixed variables, images and logs. Set project spending/rate limits and restrict access before a public deployment. The API is deliberately disabled with no key.
 
 Official API references: [Responses create](https://platform.openai.com/docs/api-reference/responses/create), [Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs). This integration performs a genuine API request when configured; mocked tests alone do not meet live API acceptance.
+
+## One-command live provider verification
+
+After creating your OpenAI Platform API key, copy it directly into **your own** `app/.env.local` (ignored by Git), along with the existing Supabase configuration. From `app/` run:
+
+```bash
+npm ci
+npm run test:ai:live
+```
+
+The command invokes Node's `--env-file=.env.local` support (Node 22.12+), then executes one opt-in Vitest smoke test against the **actual SideQuest Node AI route** with a synthetic public watercolor event. It makes **one real paid Responses API call** and asserts that the returned ID belongs to the known catalog. The test does not log the key or use private student information.
+
+Expected successful output contains `LIVE AI SMOKE PASS`. A failure means the real-provider acceptance gate has **not** passed; investigate API account billing/model access or the server integration without publishing the secret. This verifies the external API integration on a local Node service, **not** an internet deployment or real Supabase production permissions.
+
+The smoke test is skipped in regular CI, even if a secret is configured, unless explicitly opted in using `SIDEQUEST_AI_LIVE_SMOKE=1`. A host with the key available as a protected environment variable may run `node scripts/verify-ai-live.mjs` without an `.env.local` file.
+
+Once a live request succeeds, separately test the real React UI, server-hosted AI panel, keyboard access, and deployed `/api/ai/discover` using public events. Never put the key in a browser console, a screenshot, a PR comment, or chat.
 
 ## Regression and extra-credit evidence
 
