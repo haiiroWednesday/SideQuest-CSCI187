@@ -73,15 +73,19 @@ export function GroupPlanningView({ actorId, client, events, routes }: GroupPlan
 
   const create = async () => {
     if (!eventId || busy || !events.some(event => event.id === eventId)) return
+    const current = generation.current
     setBusy(true)
     setError(null)
     try {
       const plan = await client.create(eventId)
-      setSelected(plan)
-      setActiveId(plan.id)
-      setGroups(old => [plan, ...old.filter(item => item.id !== plan.id)])
+      // A completed write must not replace a newer selection.
+      if (generation.current === current) {
+        setSelected(plan)
+        setActiveId(plan.id)
+        setGroups(old => [plan, ...old.filter(item => item.id !== plan.id)])
+      }
     } catch (problem) {
-      setError(displayError(problem))
+      if (generation.current === current) setError(displayError(problem))
     } finally {
       setBusy(false)
     }
@@ -90,18 +94,19 @@ export function GroupPlanningView({ actorId, client, events, routes }: GroupPlan
   const act = async (command: GroupAction) => {
     const plan = selected
     if (!plan || busy || !activeId || plan.id !== activeId) return
+    const current = generation.current
     setBusy(true)
     setError(null)
     try {
       const latest = await client.act(plan.id, command)
-      // An old reply must not replace a newer selection.
-      if (generation.current >= 0 && activeId === latest.id) {
+      // An old reply must not replace a newer selection or tab session.
+      if (generation.current === current && activeId === latest.id) {
         setSelected(latest)
         setGroups(old => old.map(row => row.id === latest.id ? latest : row))
       }
     } catch (problem) {
-      // Stale/denied updates remain visible; never silently re-submit actions.
-      setError(displayError(problem))
+      // Stale/denied updates remain visible only while this plan is current.
+      if (generation.current === current) setError(displayError(problem))
     } finally {
       setBusy(false)
     }
