@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
       const env = { ...loadEnv(mode, process.cwd(), 'SUPABASE_'), ...process.env }
       const catalog = createSupabaseEventCatalogFromEnv(env)
       const api = createCatalogApi(catalog)
-      const aiEnv = { ...loadEnv(mode, process.cwd(), 'OPENAI_'), ...process.env }
+      const aiEnv = { ...loadEnv(mode, process.cwd(), 'OPENAI_'), ...loadEnv(mode, process.cwd(), 'SIDEQUEST_AI_'), ...process.env }
       const ai = createAiDiscoverApi(catalog, { apiKey: aiEnv.OPENAI_API_KEY, model: aiEnv.SIDEQUEST_AI_MODEL })
       server.middlewares.use((req, res, next) => { void ai(req, res).then(handled => handled ? true : api(req, res)).then(handled => { if (!handled) next() }).catch(next) })
     },
