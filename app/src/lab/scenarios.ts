@@ -198,7 +198,9 @@ export function randomWeek(base: string, seed: number): ScreenEvent[] {
   ]
   return Array.from({ length: 6 + randomIndex(9) }, (_, i) => {
     const eventIndex = randomIndex(eventTitles.length)
-    const start = (7 + randomIndex(15)) * 60 + START_MINUTE_OFFSETS[randomIndex(START_MINUTE_OFFSETS.length)]
+    const startHour = 7 + randomIndex(15)
+    const minuteOffset = START_MINUTE_OFFSETS[randomIndex(START_MINUTE_OFFSETS.length)]
+    const start = startHour * 60 + minuteOffset
     const end = Math.min(start + 30 + randomIndex(6) * 30, 23 * 60 + 59)
     return createScenarioEvent(base, {
       id: `rand-${seed}-${i}`,
