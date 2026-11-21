@@ -138,11 +138,16 @@ function busyWeek(base: string): ScreenEvent[] {
   ]
 }
 
+// Park-Miller constants keep seeded lab scenarios repeatable across browsers.
+const RANDOM_MULTIPLIER = 16_807
+const RANDOM_MODULUS = 2_147_483_647
+const START_MINUTE_OFFSETS = [0, 15, 30, 45] as const
+
 /** A seeded week of believable campus events, so every Shuffle is new but repeatable. */
 export function randomWeek(base: string, seed: number): ScreenEvent[] {
   let randomState = seed || 1
   const randomIndex = (upperBound: number) => {
-    randomState = (randomState * 16807) % 2147483647
+    randomState = (randomState * RANDOM_MULTIPLIER) % RANDOM_MODULUS
     return randomState % upperBound
   }
   const eventTitles = [
@@ -193,7 +198,7 @@ export function randomWeek(base: string, seed: number): ScreenEvent[] {
   ]
   return Array.from({ length: 6 + randomIndex(9) }, (_, i) => {
     const eventIndex = randomIndex(eventTitles.length)
-    const start = (7 + randomIndex(15)) * 60 + [0, 15, 30, 45][randomIndex(4)]
+    const start = (7 + randomIndex(15)) * 60 + START_MINUTE_OFFSETS[randomIndex(START_MINUTE_OFFSETS.length)]
     const end = Math.min(start + 30 + randomIndex(6) * 30, 23 * 60 + 59)
     return createScenarioEvent(base, {
       id: `rand-${seed}-${i}`,
