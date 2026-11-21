@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { isCatalogChanged } from '../model/catalogChanged'
+import { isPublicCatalogRefreshNotice } from '../controller/catalogRealtime'
 
 // The shared EventCatalog remains authoritative. WebSocket messages only ask
 // Discover to re-read it, so we never trust push payloads as event records.
@@ -46,7 +46,7 @@ export function useCatalogLiveUpdates(enabled: boolean, refresh: () => Promise<v
       current.onmessage = message => {
         if (typeof message.data !== 'string') return
         try {
-          if (isCatalogChanged(JSON.parse(message.data))) requestRefresh()
+          if (isPublicCatalogRefreshNotice(JSON.parse(message.data))) requestRefresh()
         } catch { /* Ignore malformed notifications; manual refresh remains available. */ }
       }
       current.onerror = () => { current.close() }
