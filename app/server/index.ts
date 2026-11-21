@@ -4,13 +4,15 @@ import { readFile } from 'node:fs/promises'
 import { resolve, sep, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createCatalogApi } from './api'
+import { attachCatalogRealtime } from './catalogRealtime'
 import { createSupabaseEventCatalogFromEnv } from '../src/model/supabaseEventTable'
 
-const api = createCatalogApi(createSupabaseEventCatalogFromEnv(process.env))
+let realtime: ReturnType<typeof attachCatalogRealtime> | null = null
+const api = createCatalogApi(createSupabaseEventCatalogFromEnv(process.env), Date.now, eventId => realtime?.publish(eventId))
 const root = resolve(fileURLToPath(new URL('../dist/', import.meta.url)))
 const mime: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff': 'font/woff', '.woff2': 'font/woff2', '.png': 'image/png' }
 const port = Number(process.env.PORT ?? 3000)
-createServer({ requestTimeout: 15_000, headersTimeout: 10_000 }, async (req, res) => {
+const server = createServer({ requestTimeout: 15_000, headersTimeout: 10_000 }, async (req, res) => {
   if (await api(req, res)) return
   if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); res.end(); return }
   try {
@@ -22,4 +24,6 @@ createServer({ requestTimeout: 15_000, headersTimeout: 10_000 }, async (req, res
     res.writeHead(200, { 'Content-Type': mime[extname(path)] ?? 'application/octet-stream', 'X-Content-Type-Options': 'nosniff', 'Cache-Control': extname(path) === '.html' ? 'no-store' : 'public, max-age=3600' })
     res.end(req.method === 'HEAD' ? undefined : body)
   } catch { res.writeHead(404); res.end('Not found') }
-}).listen(port, '0.0.0.0', () => console.log(`SideQuest listening on port ${port}`))
+})
+realtime = attachCatalogRealtime(server)
+server.listen(port, '0.0.0.0', () => console.log(`SideQuest listening on port ${port}`))

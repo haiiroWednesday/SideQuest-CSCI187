@@ -10,7 +10,7 @@ class HttpError extends Error {
   constructor(status: number, message: string) { super(message); this.status = status }
 }
 
-export function createCatalogApi(catalog: EventCatalogPort | null, clock: () => number = Date.now) {
+export function createCatalogApi(catalog: EventCatalogPort | null, clock: () => number = Date.now, publish?: (eventId: string) => void) {
   const limits = new Map<string, { count: number; until: number }>()
   const reply = (res: ServerResponse, status: number, value: unknown) => {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' })
@@ -57,7 +57,10 @@ export function createCatalogApi(catalog: EventCatalogPort | null, clock: () => 
         const limit = limits.get(ip) ?? { count: 0, until: now + 60_000 }
         if (limit.count >= POSTS_PER_MINUTE) throw new HttpError(429, 'Too many event submissions. Wait a minute before trying again.')
         limit.count++; limits.set(ip, limit)
-        reply(res, 201, await catalog.create(await draftFrom(req)))
+        const created = await catalog.create(await draftFrom(req))
+        reply(res, 201, created)
+        // A notification is best effort and never changes the confirmed write response.
+        try { publish?.(created.id) } catch { /* Readers can always refresh manually. */ }
       }
     } catch (error) {
       if (error instanceof HttpError) reply(res, error.status, { error: error.message })

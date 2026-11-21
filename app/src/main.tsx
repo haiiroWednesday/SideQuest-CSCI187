@@ -12,5 +12,5 @@ root.textContent = 'Connecting to the event catalog…'
 root.setAttribute('aria-busy', 'true')
 void connectServerEventCatalog().then(catalog => {
   root.setAttribute('aria-busy', 'false')
-  createRoot(root).render(<StrictMode><App catalog={catalog} /></StrictMode>)
+  createRoot(root).render(<StrictMode><App catalog={catalog} realtimeEnabled /></StrictMode>)
 })
