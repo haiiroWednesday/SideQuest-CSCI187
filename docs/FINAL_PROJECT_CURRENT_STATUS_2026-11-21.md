@@ -97,6 +97,15 @@ The instructor awards extra points **individually**, with team agreement, class 
 
 All four independently test the complete Post → Discover → full fit → personal Schedule journey, and audit another person's work. Divide [manual QA issue #36](https://github.com/haiiroWednesday/SideQuest-CSCI187/issues/36) by owner and risk instead of claiming all 200 cases have been run. Record **PASS / PROBLEM / BLOCKED**, exact branch and screenshot or short reproduction; incomplete fixtures are BLOCKED.
 
+### Open owner work packets (created Nov 21, unassigned until accepted)
+
+- [Daven backend, Auth, WebSocket and deployment issue #66](https://github.com/haiiroWednesday/SideQuest-CSCI187/issues/66)
+- [Sembiyan plan rules, Calendar times and verified campus Places issue #67](https://github.com/haiiroWednesday/SideQuest-CSCI187/issues/67)
+- [Devonny custom map View, Discover/AI UX and usability issue #68](https://github.com/haiiroWednesday/SideQuest-CSCI187/issues/68)
+- [Cynthia release integration and final evidence issue #69](https://github.com/haiiroWednesday/SideQuest-CSCI187/issues/69)
+
+These issues describe proposed deliverables and review partners. GitHub assignments were intentionally left empty until the named teammates acknowledge them; writing an issue does not confirm that work started or that its due date was accepted.
+
 ## 7. Release decisions and freeze
 
 **Before Nov 24:** assign owner/reviewer and record approval or deferral for (a) two-account group flow, (b) authentic campus map data + UI, (c) WebSocket public event live deployment, (d) AI provider and model, (e) optional Calendar OAuth/free-busy, (f) final hosting. Mark anything untested as blocked instead of silently proceeding.
@@ -140,5 +149,7 @@ Record agreement in this repository through a reviewed change or in the [team HQ
 - [PR #60 diagram/traceability](https://github.com/haiiroWednesday/SideQuest-CSCI187/blob/integration/final-full-scope-20261120/docs/FINAL_PROJECT_ARCHITECTURE_TRACEABILITY.md) describes only through that branch; #61, #62, #63, #64 postdate it. The final as-built diagrams must be refreshed after integration.
 - [PR #61 extra-credit plan](https://github.com/haiiroWednesday/SideQuest-CSCI187/blob/feat/public-catalog-websocket-20261120/docs/FINAL_EXTRA_CREDIT_EXECUTION_PLAN_2026-11-20.md) predates #62 AI and #64 fixes, so use the nine-row evidence table above for current status.
 - Existing older M1 and M2 materials remain available to show historical architecture and course decisions; do not overwrite those with invented hindsight.
+
+**Selected official API references:** [Google Maps URLs, no API key required](https://developers.google.com/maps/documentation/urls/get-started); [Google Calendar Freebusy.query (authorized availability endpoint)](https://developers.google.com/workspace/calendar/api/v3/reference/freebusy/query); [Calendar Events.insert (authorized calendar write)](https://developers.google.com/workspace/calendar/api/v3/reference/events/insert). A prefilled Calendar browser link does not call either API.
 
 **Next update owner: Cynthia as integration lead. Next evidence gate: November 24, 2026.**
