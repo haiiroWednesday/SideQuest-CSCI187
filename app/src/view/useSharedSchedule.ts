@@ -23,6 +23,10 @@ export function useSharedSchedule(catalog: EventCatalogPort) {
     }
   }, [])
   const refresh = useCallback(() => run(() => controller.read()), [controller, run])
+  // Close out older asynchronous operations before unmount or controller replacement.
+  const invalidatePendingActions = useCallback(() => {
+    generation.current += 1
+  }, [])
   useEffect(() => {
     void refresh()
     const onStorage = (event: StorageEvent) => {
@@ -30,10 +34,10 @@ export function useSharedSchedule(catalog: EventCatalogPort) {
     }
     window.addEventListener('storage', onStorage)
     return () => {
-      generation.current++
+      invalidatePendingActions()
       window.removeEventListener('storage', onStorage)
     }
-  }, [controller, refresh])
+  }, [controller, refresh, invalidatePendingActions])
   return {
     ...result,
     revision: revision.current,
