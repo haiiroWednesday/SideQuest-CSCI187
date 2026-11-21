@@ -120,4 +120,64 @@ describe('group proposal privacy, role and response view', () => {
     fireEvent.click(approve)
     expect(action).toHaveBeenCalledWith({ action: 'confirm', expectedRevision: 3 })
   })
+
+  it('requires an explicit answer on a new invitation instead of preselecting Works', () => {
+    const action = vi.fn()
+    render(<GroupPlanPanel plan={fixture({
+      participants: [{ userId: amy, response: null, privateCondition: null }],
+    })} actorId={amy} eventTitle="Jazz workshop" onAction={action} onRefresh={vi.fn()} />)
+    expect((screen.getByRole('radio', { name: 'Works for me' }) as HTMLInputElement).checked).toBe(false)
+    expect((screen.getByRole('radio', { name: "Can't make it" }) as HTMLInputElement).checked).toBe(false)
+    expect((screen.getByRole('button', { name: 'Save response' }) as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.click(screen.getByRole('radio', { name: "Can't make it" }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save response' }))
+    expect(action).toHaveBeenCalledWith({
+      action: 'respond', expectedRevision: 3, response: 'cant',
+    })
+  })
+
+  it('restores a saved reply and updates it after a server refresh', () => {
+    const action = vi.fn()
+    const initial = fixture({
+      participants: [{ userId: amy, response: 'cant', privateCondition: null }],
+    })
+    const { rerender } = render(<GroupPlanPanel plan={initial} actorId={amy}
+      eventTitle="Jazz workshop" onAction={action} onRefresh={vi.fn()} />)
+    expect((screen.getByRole('radio', { name: "Can't make it" }) as HTMLInputElement).checked).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Save response' }))
+    expect(action).toHaveBeenLastCalledWith({
+      action: 'respond', expectedRevision: 3, response: 'cant',
+    })
+    rerender(<GroupPlanPanel plan={{
+      ...initial, revision: 4,
+      participants: [{ userId: amy, response: 'works', privateCondition: null }],
+    }} actorId={amy} eventTitle="Jazz workshop" onAction={action} onRefresh={vi.fn()} />)
+    expect((screen.getByRole('radio', { name: 'Works for me' }) as HTMLInputElement).checked).toBe(true)
+    expect((screen.getByRole('radio', { name: "Can't make it" }) as HTMLInputElement).checked).toBe(false)
+  })
+
+  it('preserves overlong pasted condition text and blocks saving until corrected', () => {
+    const action = vi.fn()
+    render(<GroupPlanPanel plan={fixture({
+      participants: [{ userId: amy, response: 'if', privateCondition: 'After class' }],
+    })} actorId={amy} eventTitle="Jazz workshop" onAction={action} onRefresh={vi.fn()} />)
+    const field = screen.getByLabelText('Your private condition') as HTMLTextAreaElement
+    expect(field.value).toBe('After class')
+    expect(field.getAttribute('aria-describedby')).toBeTruthy()
+    const pasted = 'x'.repeat(300)
+    fireEvent.change(field, { target: { value: pasted } })
+    expect(field.value).toBe(pasted)
+    expect(field.maxLength).toBe(-1)
+    expect(field.getAttribute('aria-invalid')).toBe('true')
+    expect(screen.getByRole('alert').textContent).toContain('280 characters')
+    expect((screen.getByRole('button', { name: 'Save response' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(action).not.toHaveBeenCalled()
+    fireEvent.change(field, { target: { value: 'x'.repeat(280) } })
+    expect(field.getAttribute('aria-invalid')).toBe('false')
+    expect((screen.getByRole('button', { name: 'Save response' }) as HTMLButtonElement).disabled).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: 'Save response' }))
+    expect(action).toHaveBeenLastCalledWith({
+      action: 'respond', expectedRevision: 3, response: 'if', condition: 'x'.repeat(280),
+    })
+  })
 })

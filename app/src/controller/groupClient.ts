@@ -1,8 +1,11 @@
 // CONTROLLER: a typed, same-origin group transport bound to a REAL authenticated
 // session provider. No token input, browser storage or guessed account IDs here.
 // The app's eventual sign-in module must supply the provider and verified actor.
-export type GroupResponse = 'works' | 'if' | 'cant'
-export type GroupStatus = 'proposed' | 'confirmed' | 'cancelled'
+import { MAX_GROUP_INVITEES, type ResponseKind, type PlanStatus } from '../model/groupPlans'
+
+export { MAX_GROUP_INVITEES, MAX_PRIVATE_CONDITION } from '../model/groupPlans'
+export type GroupResponse = ResponseKind
+export type GroupStatus = PlanStatus
 export type GroupAction =
   | { action: 'respond'; expectedRevision: number; response: GroupResponse; condition?: string }
   | { action: 'invite' | 'remove'; expectedRevision: number; inviteeId: string }
@@ -55,7 +58,7 @@ function summary(v: unknown): GroupSummary {
 }
 function detail(v: unknown): GroupDetail {
   const value = record(v), base = summary(v)
-  if (!value || !Array.isArray(value.participants) || value.participants.length > 12) {
+  if (!value || !Array.isArray(value.participants) || value.participants.length > MAX_GROUP_INVITEES) {
     throw new GroupClientError(503, 'The group service returned invalid data.')
   }
   return {

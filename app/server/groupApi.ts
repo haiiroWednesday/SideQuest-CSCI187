@@ -1,13 +1,14 @@
 // HTTP CONTROLLER: an opt-in, bearer-authenticated gateway to caller-scoped
 // group RPCs. This controller never accepts a client-supplied acting user ID.
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { MAX_GROUP_INVITEES, MAX_PRIVATE_CONDITION, type ResponseKind } from '../src/model/groupPlans'
 
 export type VerifiedGroupActor = { userId: string }
 export type GroupActionInput = {
   expectedRevision: number
   action: 'invite' | 'remove' | 'respond' | 'confirm' | 'cancel'
   inviteeId?: string | null
-  response?: 'works' | 'if' | 'cant' | null
+  response?: ResponseKind | null
   condition?: string | null
 }
 
@@ -27,7 +28,7 @@ const GROUP_MAX_BODY_BYTES = 8192
 const GROUP_REQUESTS_PER_MINUTE = 40
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const VALID_ACTIONS = new Set(['invite', 'remove', 'respond', 'confirm', 'cancel'])
-const VALID_RESPONSES = new Set(['works', 'if', 'cant'])
+const VALID_RESPONSES: ReadonlySet<string> = new Set<ResponseKind>(['works', 'if', 'cant'])
 
 class RequestError extends Error {
   constructor(readonly status: number, message: string) { super(message) }
@@ -68,7 +69,7 @@ function validatedAction(value: JsonObject): GroupActionInput {
     input.response = value.response as GroupActionInput['response']
     if (input.response === 'if') {
       if (typeof value.condition !== 'string' || value.condition.trim().length === 0 ||
-          value.condition.length > 280) {
+          value.condition.length > MAX_PRIVATE_CONDITION) {
         throw new RequestError(400, 'A conditional response needs up to 280 characters of text.')
       }
       input.condition = value.condition.trim()
@@ -88,7 +89,7 @@ function projectPlan(raw: unknown, actorId: string): unknown {
   if (!plan || typeof plan.id !== 'string' || typeof plan.eventId !== 'string' ||
       typeof plan.organizerId !== 'string' || !Number.isSafeInteger(plan.revision) ||
       !['proposed', 'confirmed', 'cancelled'].includes(String(plan.status)) ||
-      !Array.isArray(plan.participants) || plan.participants.length > 12) {
+      !Array.isArray(plan.participants) || plan.participants.length > MAX_GROUP_INVITEES) {
     throw new GroupGatewayError(503, 'The group response is unavailable.')
   }
   if (plan.organizerId !== actorId &&

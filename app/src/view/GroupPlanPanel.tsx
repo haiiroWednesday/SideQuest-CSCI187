@@ -1,7 +1,7 @@
 // VIEW: participant and organizer controls for an authorized plan projection.
 // Caller identity is supplied by a verified session layer, never entered here.
-import { useState, type FormEvent } from 'react'
-import type { GroupAction, GroupDetail, GroupResponse } from '../controller/groupClient'
+import { useEffect, useState, type FormEvent } from 'react'
+import { MAX_GROUP_INVITEES, MAX_PRIVATE_CONDITION, type GroupAction, type GroupDetail, type GroupResponse } from '../controller/groupClient'
 import './group-planning.css'
 
 const responseText: Record<GroupResponse, string> = {
@@ -35,18 +35,27 @@ export function GroupPlanPanel({
   plan, actorId, eventTitle, participantName = id => id,
   busy = false, error, onAction, onRefresh,
 }: GroupPlanPanelProps) {
-  const [choice, setChoice] = useState<GroupResponse>('works')
-  const [condition, setCondition] = useState('')
-  const [invitee, setInvitee] = useState('')
   const organizer = plan.organizerId === actorId
   const self = plan.participants.find(participant => participant.userId === actorId)
+  // No response must remain unselected until the participant explicitly chooses.
+  const [choice, setChoice] = useState<GroupResponse | null>(self?.response ?? null)
+  const [condition, setCondition] = useState(self?.response === 'if' ? self.privateCondition ?? '' : '')
+  const [invitee, setInvitee] = useState('')
+  // When a refresh or another browser changes our saved answer, show the server's
+  // current value. Unrelated participants' changes do not reset an unsaved draft.
+  useEffect(() => {
+    setChoice(self?.response ?? null)
+    setCondition(self?.response === 'if' ? self.privateCondition ?? '' : '')
+  }, [actorId, plan.id, self?.response, self?.privateCondition])
+  const conditionLength = condition.trim().length
+  const conditionInvalid = choice === 'if' && (conditionLength === 0 || conditionLength > MAX_PRIVATE_CONDITION)
   const member = organizer || Boolean(self)
   const actionable = plan.status === 'proposed' && !busy
   const allWork = plan.participants.length > 0 &&
     plan.participants.every(participant => participant.response === 'works')
   const onRespond = (event: FormEvent) => {
     event.preventDefault()
-    if (!actionable || !self) return
+    if (!actionable || !self || !choice || conditionInvalid) return
     onAction({
       action: 'respond',
       expectedRevision: plan.revision,
@@ -120,11 +129,20 @@ export function GroupPlanPanel({
             </div>
             {choice === 'if' && <>
               <label htmlFor={'group-condition-' + plan.id}>Your private condition</label>
-              <textarea id={'group-condition-' + plan.id} required maxLength={280}
+              <p id={'group-condition-hint-' + plan.id} className="sq-group-privacy">
+                Up to {MAX_PRIVATE_CONDITION} characters. Overlong text stays editable but cannot be submitted.
+              </p>
+              <textarea id={'group-condition-' + plan.id} required
+                aria-describedby={'group-condition-hint-' + plan.id}
+                aria-invalid={conditionLength > MAX_PRIVATE_CONDITION}
                 value={condition} onChange={e => setCondition(e.target.value)}
                 placeholder="I can come after my class ends" />
+              <p className="sq-group-privacy">{conditionLength}/{MAX_PRIVATE_CONDITION} characters</p>
+              {conditionLength > MAX_PRIVATE_CONDITION && <p role="alert" className="sq-group-error">
+                Shorten your condition to {MAX_PRIVATE_CONDITION} characters before saving.
+              </p>}
             </>}
-            <button type="submit" disabled={choice === 'if' && !condition.trim()}>
+            <button type="submit" disabled={!choice || conditionInvalid}>
               {busy ? 'Saving response…' : 'Save response'}
             </button>
           </fieldset>
@@ -136,7 +154,7 @@ export function GroupPlanPanel({
           <form className="sq-group-form" onSubmit={onInvite}>
             <h3>Invite a participant</h3>
             <p>Invitations must refer to a verified member account. A shareable link cannot impersonate someone.</p>
-            <fieldset disabled={!actionable || plan.participants.length >= 12}>
+            <fieldset disabled={!actionable || plan.participants.length >= MAX_GROUP_INVITEES}>
               <label htmlFor={'group-invite-' + plan.id}>Verified participant account ID</label>
               <input id={'group-invite-' + plan.id} value={invitee}
                 onChange={e => setInvitee(e.target.value)} required
