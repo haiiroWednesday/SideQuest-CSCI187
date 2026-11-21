@@ -7,7 +7,6 @@ import { isValidDate, toMinutes, type LegacyCampusEvent } from './events'
 // Saved plans resolve current catalog records and archived browser-local records.
 export type ScheduleEvent = LegacyCampusEvent & { hostName?: string }
 
-
 // Schedule accepts catalog events using the M2 field limits. Legacy M1
 // events lack hostName and may lack description; they remain readable.
 // Do not reuse the M1 isCampusEvent guard: its 500-character description
@@ -16,21 +15,29 @@ export function isScheduleEvent(value: unknown): value is ScheduleEvent {
   if (typeof value !== 'object' || value === null) return false
   const item = value as Record<string, unknown>
   const text = (key: string, max: number) =>
-    typeof item[key] === 'string' && (item[key] as string).trim().length > 0 &&
+    typeof item[key] === 'string' &&
+    (item[key] as string).trim().length > 0 &&
     (item[key] as string).length <= max
   const date = item.date
   const start = item.start
   const end = item.end
   const first = typeof start === 'string' ? toMinutes(start) : null
   const last = typeof end === 'string' ? toMinutes(end) : null
-  return typeof item.id === 'string' && item.id.trim().length > 0 &&
+  return (
+    typeof item.id === 'string' &&
+    item.id.trim().length > 0 &&
     text('title', CATALOG_LIMITS.title) &&
     text('location', CATALOG_LIMITS.location) &&
     (item.hostName === undefined || text('hostName', CATALOG_LIMITS.hostName)) &&
     (item.description === undefined ||
-      (typeof item.description === 'string' && item.description.length <= CATALOG_LIMITS.description)) &&
-    typeof date === 'string' && isValidDate(date) &&
-    first !== null && last !== null && first < last
+      (typeof item.description === 'string' &&
+        item.description.length <= CATALOG_LIMITS.description)) &&
+    typeof date === 'string' &&
+    isValidDate(date) &&
+    first !== null &&
+    last !== null &&
+    first < last
+  )
 }
 
 export const PLANNED_IDS_KEY = 'sidequest.planned-event-ids.v1'
@@ -50,7 +57,11 @@ export function readPlannedIds(storage: Pick<Storage, 'getItem'>): PlannedIdsSta
     if (saved === null) return { ids: [], blocked: false }
     const parsed: unknown = JSON.parse(saved)
     if (!Array.isArray(parsed)) return { ids: [], blocked: true }
-    const ids = [...new Set(parsed.filter((id): id is string => typeof id === 'string' && id.trim().length > 0))]
+    const ids = [
+      ...new Set(
+        parsed.filter((id): id is string => typeof id === 'string' && id.trim().length > 0),
+      ),
+    ]
     // Older schedules may exceed the new cap. Preserve them and allow removal;
     // the add rule prevents further additions until they are below the limit.
     return { ids, blocked: ids.length !== parsed.length }
@@ -68,7 +79,10 @@ export function savePlannedIds(storage: Pick<Storage, 'setItem'>, ids: readonly 
   }
 }
 
-export function addPlannedId(ids: string[], id: string): { ids: string[]; added: boolean; error: string | null } {
+export function addPlannedId(
+  ids: string[],
+  id: string,
+): { ids: string[]; added: boolean; error: string | null } {
   if (!id.trim()) return { ids, added: false, error: 'An event ID is required.' }
   // Already planned is an idempotent success, even at capacity.
   if (ids.includes(id)) return { ids, added: false, error: null }
@@ -81,14 +95,18 @@ export function removePlannedId(ids: readonly string[], id: string): string[] {
 }
 
 export function compareEventTime(a: ScheduleEvent, b: ScheduleEvent): number {
-  return a.date.localeCompare(b.date) || a.start.localeCompare(b.start) ||
-    a.end.localeCompare(b.end) || a.id.localeCompare(b.id)
+  return (
+    a.date.localeCompare(b.date) ||
+    a.start.localeCompare(b.start) ||
+    a.end.localeCompare(b.end) ||
+    a.id.localeCompare(b.id)
+  )
 }
 
 export function resolvePlannedEvents(ids: readonly string[], catalog: readonly ScheduleEvent[]) {
   const byId = new Map(catalog.filter(isScheduleEvent).map(event => [event.id, event]))
   return {
-    events: ids.flatMap(id => byId.has(id) ? [byId.get(id)!] : []).sort(compareEventTime),
+    events: ids.flatMap(id => (byId.has(id) ? [byId.get(id)!] : [])).sort(compareEventTime),
     missingIds: ids.filter(id => !byId.has(id)),
   }
 }

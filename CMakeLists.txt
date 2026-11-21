@@ -1,3 +1,5 @@
+# Historical C++/Qt course template. SideQuest's production web app lives in app/.
+# Retain this target while the course's original CI workflow requires it.
 cmake_minimum_required(VERSION 3.16)
 
 project(MyProject)

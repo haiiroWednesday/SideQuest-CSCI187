@@ -3,8 +3,14 @@
 //   "A created event is readable again from shared catalog storage."
 import { describe, expect, it } from 'vitest'
 import {
-  createEventCatalog, campusNow, EventCatalogError, fromEventRow, toEventRow,
-  type EventDraft, type EventRow, type EventTable,
+  createEventCatalog,
+  campusNow,
+  EventCatalogError,
+  fromEventRow,
+  toEventRow,
+  type EventDraft,
+  type EventRow,
+  type EventTable,
 } from '../src/model/eventCatalog'
 import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 import { createSupabaseEventCatalogFromEnv } from '../src/model/supabaseEventTable'
@@ -71,23 +77,35 @@ describe('EventCatalog.create', () => {
     const attempt = catalog.create(draft(overrides))
 
     await expect(attempt).rejects.toBeInstanceOf(EventCatalogError)
-    await expect(attempt).rejects.toMatchObject({ kind: 'invalid', message: expect.stringContaining(message) })
+    await expect(attempt).rejects.toMatchObject({
+      kind: 'invalid',
+      message: expect.stringContaining(message),
+    })
     expect(table.rows.size).toBe(0)
   })
 
   it('rejects past calendar dates and already-started events at the Model boundary', async () => {
     const catalog = createEventCatalog(createInMemoryEventTable(), clock)
-    await expect(catalog.create(draft({ date: '2026-11-02' })))
-      .rejects.toMatchObject({ kind: 'invalid', message: expect.stringContaining('past') })
-    await expect(catalog.create(draft({ date: '2026-11-03', start: '11:59', end: '13:00' })))
-      .rejects.toMatchObject({ kind: 'invalid', message: expect.stringContaining('already started') })
-    await expect(catalog.create(draft({ date: '2026-11-03', start: '12:00', end: '13:00' })))
-      .resolves.toMatchObject({ start: '12:00' })
+    await expect(catalog.create(draft({ date: '2026-11-02' }))).rejects.toMatchObject({
+      kind: 'invalid',
+      message: expect.stringContaining('past'),
+    })
+    await expect(
+      catalog.create(draft({ date: '2026-11-03', start: '11:59', end: '13:00' })),
+    ).rejects.toMatchObject({
+      kind: 'invalid',
+      message: expect.stringContaining('already started'),
+    })
+    await expect(
+      catalog.create(draft({ date: '2026-11-03', start: '12:00', end: '13:00' })),
+    ).resolves.toMatchObject({ start: '12:00' })
   })
 
   it('accepts a title of exactly 80 characters (posting boundary)', async () => {
     const catalog = createEventCatalog(createInMemoryEventTable(), clock)
-    await expect(catalog.create(draft({ title: 'x'.repeat(80) }))).resolves.toMatchObject({ title: 'x'.repeat(80) })
+    await expect(catalog.create(draft({ title: 'x'.repeat(80) }))).resolves.toMatchObject({
+      title: 'x'.repeat(80),
+    })
   })
 
   it('does not overwrite an existing event if the store hands out a duplicate ID', async () => {
@@ -95,7 +113,9 @@ describe('EventCatalog.create', () => {
     const catalog = createEventCatalog(table, clock)
     const first = await catalog.create(draft({ title: 'First' }))
 
-    await expect(catalog.create(draft({ title: 'Second' }))).rejects.toMatchObject({ kind: 'unavailable' })
+    await expect(catalog.create(draft({ title: 'Second' }))).rejects.toMatchObject({
+      kind: 'unavailable',
+    })
     expect(await catalog.getById(first.id)).toMatchObject({ title: 'First' })
   })
 })
@@ -104,9 +124,15 @@ describe('EventCatalog.listUpcoming', () => {
   it('orders by date, then start time, and hides events that already ended (campus time)', async () => {
     const table = createInMemoryEventTable()
     const catalog = createEventCatalog(table, clock)
-    const later = await catalog.create(draft({ title: 'Nov 6', date: '2026-11-06', start: '09:00', end: '10:00' }))
-    const afternoon = await catalog.create(draft({ title: 'Nov 5 pm', date: '2026-11-05', start: '15:00', end: '16:00' }))
-    const morning = await catalog.create(draft({ title: 'Nov 5 am', date: '2026-11-05', start: '08:00', end: '09:00' }))
+    const later = await catalog.create(
+      draft({ title: 'Nov 6', date: '2026-11-06', start: '09:00', end: '10:00' }),
+    )
+    const afternoon = await catalog.create(
+      draft({ title: 'Nov 5 pm', date: '2026-11-05', start: '15:00', end: '16:00' }),
+    )
+    const morning = await catalog.create(
+      draft({ title: 'Nov 5 am', date: '2026-11-05', start: '08:00', end: '09:00' }),
+    )
     // Historical records must remain readable. Seed them directly into storage
     // instead of bypassing the new-post rule through catalog.create().
     const historical = [
@@ -125,12 +151,17 @@ describe('EventCatalog.listUpcoming', () => {
   })
 
   it('returns an empty list for an empty catalog', async () => {
-    await expect(createEventCatalog(createInMemoryEventTable(), clock).listUpcoming()).resolves.toEqual([])
+    await expect(
+      createEventCatalog(createInMemoryEventTable(), clock).listUpcoming(),
+    ).resolves.toEqual([])
   })
 
   it('uses the Santa Clara date, not the UTC date', () => {
     // 05:30 UTC on Nov 4 is still 21:30 on Nov 3 in Santa Clara.
-    expect(campusNow(new Date('2026-11-04T05:30:00Z'))).toEqual({ date: '2026-11-03', time: '21:30' })
+    expect(campusNow(new Date('2026-11-04T05:30:00Z'))).toEqual({
+      date: '2026-11-03',
+      time: '21:30',
+    })
   })
 })
 
@@ -146,15 +177,23 @@ describe('EventCatalog.getById', () => {
 describe('storage failures', () => {
   it('rejects with kind "unavailable" so the UI can show an honest error', async () => {
     const down: EventTable = {
-      insert: async () => { throw new Error('fetch failed') },
-      selectFromDate: async () => { throw new Error('fetch failed') },
-      selectById: async () => { throw new Error('fetch failed') },
+      insert: async () => {
+        throw new Error('fetch failed')
+      },
+      selectFromDate: async () => {
+        throw new Error('fetch failed')
+      },
+      selectById: async () => {
+        throw new Error('fetch failed')
+      },
     }
     const catalog = createEventCatalog(down, clock)
 
     await expect(catalog.create(draft())).rejects.toMatchObject({ kind: 'unavailable' })
     await expect(catalog.listUpcoming()).rejects.toMatchObject({ kind: 'unavailable' })
-    await expect(catalog.getById('33333333-3333-4333-8333-333333333333')).rejects.toMatchObject({ kind: 'unavailable' })
+    await expect(catalog.getById('33333333-3333-4333-8333-333333333333')).rejects.toMatchObject({
+      kind: 'unavailable',
+    })
   })
 })
 
@@ -162,14 +201,26 @@ describe('database mapping and configuration', () => {
   it('maps contract fields to SQL column names and back', () => {
     const row = toEventRow(draft())
     expect(row).toEqual({
-      title: 'Photo Walk', host_name: 'SCU Photography Club', description: 'Bring any camera, phones welcome.',
-      location: 'Mission Gardens', event_date: '2026-11-05', start_time: '14:00', end_time: '15:30',
+      title: 'Photo Walk',
+      host_name: 'SCU Photography Club',
+      description: 'Bring any camera, phones welcome.',
+      location: 'Mission Gardens',
+      event_date: '2026-11-05',
+      start_time: '14:00',
+      end_time: '15:30',
     })
-    expect(fromEventRow({ ...row, id: 'abc', start_time: '14:00:00', end_time: '15:30:00' })).toEqual({ id: 'abc', ...draft() })
+    expect(
+      fromEventRow({ ...row, id: 'abc', start_time: '14:00:00', end_time: '15:30:00' }),
+    ).toEqual({ id: 'abc', ...draft() })
   })
 
   it('returns null instead of a fake catalog when Supabase is not configured', () => {
     expect(createSupabaseEventCatalogFromEnv({})).toBeNull()
-    expect(createSupabaseEventCatalogFromEnv({ SUPABASE_URL: 'https://x.supabase.co', SUPABASE_PUBLISHABLE_KEY: '  ' })).toBeNull()
+    expect(
+      createSupabaseEventCatalogFromEnv({
+        SUPABASE_URL: 'https://x.supabase.co',
+        SUPABASE_PUBLISHABLE_KEY: '  ',
+      }),
+    ).toBeNull()
   })
 })

@@ -1,12 +1,28 @@
 import { describe, expect, it } from 'vitest'
 import { campusNow } from '../src/model/eventCatalog'
-import { presentDiscover, presentSchedule, describeDay, type ScreenEvent } from '../src/controller/presentScreens'
+import {
+  presentDiscover,
+  presentSchedule,
+  describeDay,
+  type ScreenEvent,
+} from '../src/controller/presentScreens'
 
 // Explicit California winter instants, independent of the test runner's zone.
 const at = (date: string, time: string) => new Date(`${date}T${time}:00-08:00`)
 let n = 0
-const ev = (date: string, start: string, end: string, extra: Partial<ScreenEvent> = {}): ScreenEvent => ({
-  id: `e${++n}`, title: `Event ${n}`, location: 'Library', date, start, end, ...extra,
+const ev = (
+  date: string,
+  start: string,
+  end: string,
+  extra: Partial<ScreenEvent> = {},
+): ScreenEvent => ({
+  id: `e${++n}`,
+  title: `Event ${n}`,
+  location: 'Library',
+  date,
+  start,
+  end,
+  ...extra,
 })
 
 describe('presentDiscover: the clock decides the labels', () => {
@@ -30,7 +46,10 @@ describe('presentDiscover: the clock decides the labels', () => {
     const screen = presentDiscover({ events, now: at('2026-11-05', '16:00') })
     expect(screen.days.map(d => d.tag)).toEqual(['TODAY', 'SAT', 'IN 8 DAYS', 'DEC 2'])
     expect(screen.days[0].events.map(e => e.title)).toEqual(['Study Jam'])
-    expect(screen.days[0].events[0].live).toEqual({ kind: 'now', text: 'Happening now · until 5:00pm' })
+    expect(screen.days[0].events[0].live).toEqual({
+      kind: 'now',
+      text: 'Happening now · until 5:00pm',
+    })
   })
 
   it('drops events that ended earlier today, excludes one at its end boundary, and says when one starts soon', () => {
@@ -87,7 +106,10 @@ describe('presentDiscover: the clock decides the labels', () => {
   })
 
   it('reports missing host and description as null rather than inventing text', () => {
-    const screen = presentDiscover({ events: [ev('2026-11-06', '10:00', '11:15', { hostName: '  ', description: '' })], now: at('2026-11-04', '09:00') })
+    const screen = presentDiscover({
+      events: [ev('2026-11-06', '10:00', '11:15', { hostName: '  ', description: '' })],
+      now: at('2026-11-04', '09:00'),
+    })
     const stub = screen.days[0].events[0]
     expect([stub.host, stub.description, stub.durationText]).toEqual([null, null, '1 hr 15 min'])
   })
@@ -99,25 +121,55 @@ describe('presentDiscover: the clock decides the labels', () => {
   })
 
   it('filters to full fits only once the whole window is set and valid', () => {
-    const list = [ev('2026-11-04', '14:30', '15:30', { id: 'in' }), ev('2026-11-04', '15:00', '16:30', { id: 'out' })]
+    const list = [
+      ev('2026-11-04', '14:30', '15:30', { id: 'in' }),
+      ev('2026-11-04', '15:00', '16:30', { id: 'out' }),
+    ]
     const now = at('2026-11-04', '09:00')
-    const partial = presentDiscover({ events: list, now, freeWindow: { date: '2026-11-04', start: '14:00', end: '' } })
-    expect(partial.freeWindow).toMatchObject({ active: false, fitText: null, error: null, canClear: true })
+    const partial = presentDiscover({
+      events: list,
+      now,
+      freeWindow: { date: '2026-11-04', start: '14:00', end: '' },
+    })
+    expect(partial.freeWindow).toMatchObject({
+      active: false,
+      fitText: null,
+      error: null,
+      canClear: true,
+    })
     expect(partial.days[0].events.map(e => e.fit)).toEqual([null, null])
 
-    const full = presentDiscover({ events: list, now, freeWindow: { date: '2026-11-04', start: '14:00', end: '16:00' } })
+    const full = presentDiscover({
+      events: list,
+      now,
+      freeWindow: { date: '2026-11-04', start: '14:00', end: '16:00' },
+    })
     expect(full.freeWindow).toMatchObject({ active: true, fitCount: 1, fitText: '1 fit' })
     expect(full.days[0].events.map(e => e.fit)).toEqual(['fits'])
 
     // Inclusive edges: an event that exactly fills the window fits.
-    const edge = presentDiscover({ events: list, now, freeWindow: { date: '2026-11-04', start: '14:30', end: '15:30' } })
+    const edge = presentDiscover({
+      events: list,
+      now,
+      freeWindow: { date: '2026-11-04', start: '14:30', end: '15:30' },
+    })
     expect(edge.days[0].events[0].fit).toBe('fits')
 
-    const backwards = presentDiscover({ events: list, now, freeWindow: { date: '2026-11-04', start: '16:00', end: '14:00' } })
-    expect(backwards.freeWindow?.error).toBe('Please choose an end time later than your start time.')
+    const backwards = presentDiscover({
+      events: list,
+      now,
+      freeWindow: { date: '2026-11-04', start: '16:00', end: '14:00' },
+    })
+    expect(backwards.freeWindow?.error).toBe(
+      'Please choose an end time later than your start time.',
+    )
     expect(backwards.days[0].events.map(e => e.fit)).toEqual([null, null])
 
-    const none = presentDiscover({ events: list, now, freeWindow: { date: '2026-11-05', start: '09:00', end: '10:00' } })
+    const none = presentDiscover({
+      events: list,
+      now,
+      freeWindow: { date: '2026-11-05', start: '09:00', end: '10:00' },
+    })
     expect(none.freeWindow?.fitText).toBe('Nothing fits')
     expect(none.days).toEqual([])
   })
@@ -126,32 +178,51 @@ describe('presentDiscover: the clock decides the labels', () => {
     const now = at('2026-11-04', '09:00')
     const values = { date: '2026-11-04', start: '14:00', end: '16:00' }
     for (let mask = 1; mask < 7; mask++) {
-      const freeWindow = { date: mask & 1 ? values.date : '', start: mask & 2 ? values.start : '', end: mask & 4 ? values.end : '' }
+      const freeWindow = {
+        date: mask & 1 ? values.date : '',
+        start: mask & 2 ? values.start : '',
+        end: mask & 4 ? values.end : '',
+      }
       const result = presentDiscover({ events, now, freeWindow })
-      expect(result.freeWindow).toMatchObject({ active: false, error: null,
-        hint: 'Showing all upcoming events. Complete the date and both times to filter.' })
+      expect(result.freeWindow).toMatchObject({
+        active: false,
+        error: null,
+        hint: 'Showing all upcoming events. Complete the date and both times to filter.',
+      })
       expect(result.count).toBe(6)
     }
-    expect(presentDiscover({ events, now, freeWindow: { date: '', start: '', end: '' } }).freeWindow?.hint).toBeNull()
+    expect(
+      presentDiscover({ events, now, freeWindow: { date: '', start: '', end: '' } }).freeWindow
+        ?.hint,
+    ).toBeNull()
     expect(presentDiscover({ events, now, freeWindow: values }).freeWindow?.hint).toBeNull()
   })
 
   it('keeps every event exactly once, in time order, under the right day, for 300 random catalogs', () => {
     let seed = 7
-    const rand = (k: number) => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % k }
+    const rand = (k: number) => {
+      seed = (seed * 1103515245 + 12345) % 2147483648
+      return seed % k
+    }
     for (let run = 0; run < 300; run++) {
-      const now = at('2026-11-04', `${String(rand(24)).padStart(2, '0')}:${String(rand(60)).padStart(2, '0')}`)
+      const now = at(
+        '2026-11-04',
+        `${String(rand(24)).padStart(2, '0')}:${String(rand(60)).padStart(2, '0')}`,
+      )
       const events = Array.from({ length: rand(25) }, () => {
         const day = 1 + rand(40)
         const date = `2026-${day > 30 ? 12 : 11}-${String(day > 30 ? day - 30 : day).padStart(2, '0')}`
         const start = rand(23 * 4) * 15
         const end = Math.min(start + 15 + rand(8) * 15, 23 * 60 + 59)
-        const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+        const hhmm = (m: number) =>
+          `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
         return ev(date, hhmm(start), hhmm(end))
       })
       const screen = presentDiscover({ events, now })
       const shown = screen.days.flatMap(d => d.events)
-      const expected = events.filter(e => e.date > '2026-11-04' || (e.date === '2026-11-04' && e.end > campusNow(now).time))
+      const expected = events.filter(
+        e => e.date > '2026-11-04' || (e.date === '2026-11-04' && e.end > campusNow(now).time),
+      )
       expect(new Set(shown.map(s => s.id))).toEqual(new Set(expected.map(e => e.id)))
       expect(shown.map(s => s.date + s.id)).toHaveLength(expected.length)
       screen.days.forEach((day, i) => {
@@ -165,12 +236,19 @@ describe('presentDiscover: the clock decides the labels', () => {
 })
 
 describe('presentSchedule: Next up, overlaps and missing plans', () => {
-  const ceramics = ev('2026-11-07', '14:30', '15:30', { id: 'ceramics', title: 'Ceramics Workshop' })
+  const ceramics = ev('2026-11-07', '14:30', '15:30', {
+    id: 'ceramics',
+    title: 'Ceramics Workshop',
+  })
   const poetry = ev('2026-11-07', '15:00', '16:00', { id: 'poetry', title: 'Poetry Reading' })
   const mic = ev('2026-11-08', '19:00', '21:00', { id: 'mic', title: 'Open Mic Night' })
   const input = {
     ids: ['mic', 'poetry', 'gone-1', 'ceramics'],
-    entries: [{ event: mic, conflict: null }, { event: poetry, conflict: ceramics }, { event: ceramics, conflict: poetry }],
+    entries: [
+      { event: mic, conflict: null },
+      { event: poetry, conflict: ceramics },
+      { event: ceramics, conflict: poetry },
+    ],
     missingIds: ['gone-1'],
   }
 
@@ -179,25 +257,38 @@ describe('presentSchedule: Next up, overlaps and missing plans', () => {
     expect(screen.nextUp).toMatchObject({ kind: 'today', when: 'in 1 hr 30 min' })
     expect(screen.nextUp?.stub.title).toBe('Ceramics Workshop')
     expect(screen.days[0].overlapNote).toBe('2 plans have conflicts')
-    expect(screen.days[0].events.map(e => e.overlap?.text)).toEqual(['Overlaps Poetry Reading by 30 min', 'Overlaps Ceramics Workshop by 30 min'])
+    expect(screen.days[0].events.map(e => e.overlap?.text)).toEqual([
+      'Overlaps Poetry Reading by 30 min',
+      'Overlaps Ceramics Workshop by 30 min',
+    ])
     expect([screen.plannedCount, screen.overlapCount, screen.missingCount]).toEqual([4, 2, 1])
     // Plans store IDs only, so a missing plan has no title or time to show.
     expect(screen.missing).toEqual([{ id: 'gone-1' }])
   })
 
   it('moves Next up along as the clock passes each plan', () => {
-    expect(presentSchedule(input, at('2026-11-07', '14:40')).nextUp).toMatchObject({ kind: 'now', when: 'Happening now · until 3:30pm' })
-    expect(presentSchedule(input, at('2026-11-07', '15:45')).nextUp?.stub.title).toBe('Poetry Reading')
+    expect(presentSchedule(input, at('2026-11-07', '14:40')).nextUp).toMatchObject({
+      kind: 'now',
+      when: 'Happening now · until 3:30pm',
+    })
+    expect(presentSchedule(input, at('2026-11-07', '15:45')).nextUp?.stub.title).toBe(
+      'Poetry Reading',
+    )
     const evening = presentSchedule(input, at('2026-11-07', '16:30'))
     expect(evening.nextUp).toMatchObject({ kind: 'tomorrow', when: 'Tomorrow at 7:00pm' })
     expect(evening.done.map(d => d.title)).toEqual(['Ceramics Workshop', 'Poetry Reading'])
     expect(evening.overlapCount).toBe(0)
-    expect(presentSchedule(input, at('2026-11-04', '09:00')).nextUp).toMatchObject({ kind: 'later', when: 'Sat 11/7 at 2:30pm' })
+    expect(presentSchedule(input, at('2026-11-04', '09:00')).nextUp).toMatchObject({
+      kind: 'later',
+      when: 'Sat 11/7 at 2:30pm',
+    })
     expect(presentSchedule(input, at('2026-11-09', '09:00')).nextUp).toBeNull()
   })
 
   it('separates empty from unreadable storage', () => {
     expect(presentSchedule({ ids: [], entries: [], missingIds: [] }).status).toBe('empty')
-    expect(presentSchedule({ ids: [], entries: [], missingIds: [], blocked: true }).status).toBe('blocked')
+    expect(presentSchedule({ ids: [], entries: [], missingIds: [], blocked: true }).status).toBe(
+      'blocked',
+    )
   })
 })

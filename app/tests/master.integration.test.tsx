@@ -14,12 +14,21 @@ import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 function futureDate(): string {
   const d = new Date()
   d.setDate(d.getDate() + 7)
-  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, '0'),
+    String(d.getDate()).padStart(2, '0'),
+  ].join('-')
 }
 
 const workshop = (overrides: Partial<CampusEvent> = {}): CampusEvent => ({
-  id: 'm1-workshop-1', title: 'Art Workshop', location: 'Arts Building',
-  date: futureDate(), start: '14:30', end: '15:30', ...overrides,
+  id: 'm1-workshop-1',
+  title: 'Art Workshop',
+  location: 'Arts Building',
+  date: futureDate(),
+  start: '14:30',
+  end: '15:30',
+  ...overrides,
 })
 
 // Put M1 events in browser storage the way the M1 form used to.
@@ -28,9 +37,19 @@ function seed(events: CampusEvent[]) {
 }
 
 function sharedCatalog(events: CampusEvent[]) {
-  const rows = new Map(events.map(event => [
-    event.id, { ...toEventRow({ ...event, hostName: 'SCU club', description: event.description ?? 'Campus event' }), id: event.id },
-  ]))
+  const rows = new Map(
+    events.map(event => [
+      event.id,
+      {
+        ...toEventRow({
+          ...event,
+          hostName: 'SCU club',
+          description: event.description ?? 'Campus event',
+        }),
+        id: event.id,
+      },
+    ]),
+  )
   return { catalog: createEventCatalog(createInMemoryEventTable(rows)), shared: true }
 }
 
@@ -83,18 +102,24 @@ describe('M1 rendered user workflow', () => {
 
   it('R3/R4: displays both empty-search states and an invalid-search message', async () => {
     render(<App />)
-    expect(await screen.findByText('No upcoming events to match. Post an event above!')).toBeTruthy()
+    expect(
+      await screen.findByText('No upcoming events to match. Post an event above!'),
+    ).toBeTruthy()
     cleanup()
 
     render(<App catalog={sharedCatalog([workshop()])} />)
     searchOn(futureDate())
     fireEvent.change(screen.getByLabelText('Free from'), { target: { value: '17:00' } })
     fireEvent.change(screen.getByLabelText('Free until'), { target: { value: '18:00' } })
-    expect(await screen.findByText('No upcoming events fit this date and time. Try a different window.')).toBeTruthy()
+    expect(
+      await screen.findByText('No upcoming events fit this date and time. Try a different window.'),
+    ).toBeTruthy()
 
     fireEvent.change(screen.getByLabelText('Free until'), { target: { value: '16:00' } })
     expect(screen.getByRole('alert').textContent).toContain('Please choose an end time later')
-    expect(screen.getByText('Correct your available date or time to see matching events.')).toBeTruthy()
+    expect(
+      screen.getByText('Correct your available date or time to see matching events.'),
+    ).toBeTruthy()
 
     fireEvent.change(screen.getByLabelText('Free until'), { target: { value: '18:00' } })
     fireEvent.change(screen.getByLabelText('Free on date'), { target: { value: '' } })
@@ -116,7 +141,18 @@ describe('M1 rendered user workflow', () => {
 
   it('R1/R3: shows catalog descriptions and human-readable dates and times', async () => {
     const date = futureDate()
-    render(<App catalog={sharedCatalog([workshop({ title: 'Two Choirs', description: 'A cappella rehearsals', location: 'Music Hall', date })])} />)
+    render(
+      <App
+        catalog={sharedCatalog([
+          workshop({
+            title: 'Two Choirs',
+            description: 'A cappella rehearsals',
+            location: 'Music Hall',
+            date,
+          }),
+        ])}
+      />,
+    )
     searchOn(date)
 
     expect(await screen.findByText('A cappella rehearsals')).toBeTruthy()
@@ -151,7 +187,16 @@ describe('M1 rendered user workflow', () => {
     const user = userEvent.setup()
     seed([workshop()])
     render(<App />)
-    const remote = [{ id: 'tab-b', title: 'Other Tab', location: 'Library', date: futureDate(), start: '09:00', end: '10:00' }]
+    const remote = [
+      {
+        id: 'tab-b',
+        title: 'Other Tab',
+        location: 'Library',
+        date: futureDate(),
+        start: '09:00',
+        end: '10:00',
+      },
+    ]
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(remote))
     // Do not deliver a storage event yet: the View still has stale state.
     await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
@@ -162,9 +207,21 @@ describe('M1 rendered user workflow', () => {
 
   it('R2: reflects changes from another browser tab without clobbering the write', () => {
     render(<App />)
-    const remote = [{ id: 'remote', title: 'Remote', location: 'SCU', date: futureDate(), start: '14:30', end: '15:30' }]
+    const remote = [
+      {
+        id: 'remote',
+        title: 'Remote',
+        location: 'SCU',
+        date: futureDate(),
+        start: '14:30',
+        end: '15:30',
+      },
+    ]
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(remote))
-    fireEvent(window, new StorageEvent('storage', { key: STORAGE_KEY, storageArea: window.localStorage }))
+    fireEvent(
+      window,
+      new StorageEvent('storage', { key: STORAGE_KEY, storageArea: window.localStorage }),
+    )
     expect(screen.getByRole('button', { name: 'Remove Remote' })).toBeTruthy()
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '[]')).toEqual(remote)
   })
@@ -180,7 +237,9 @@ describe('M1 rendered user workflow', () => {
     const user = userEvent.setup()
     seed([workshop()])
     render(<App />)
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw Error('quota') })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw Error('quota')
+    })
     await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
     expect(screen.getByRole('status').textContent).toContain('removed temporarily')
     expect(window.localStorage.getItem(STORAGE_KEY)).toContain('Art Workshop')
@@ -191,7 +250,9 @@ describe('M1 rendered user workflow', () => {
     seed([workshop()])
     render(<App />)
     await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw Error('quota') })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw Error('quota')
+    })
     await user.click(screen.getByRole('button', { name: 'Undo removal' }))
     expect(screen.getByRole('status').textContent).toContain('restored temporarily')
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe('[]')
@@ -201,7 +262,9 @@ describe('M1 rendered user workflow', () => {
     const user = userEvent.setup()
     seed([workshop(), workshop({ id: 'second', title: 'Choir Practice' })])
     render(<App />)
-    const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => { throw Error('quota once') })
+    const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
+      throw Error('quota once')
+    })
     await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
     write.mockRestore()
     await user.click(screen.getByRole('button', { name: 'Remove Choir Practice' }))
@@ -213,14 +276,23 @@ describe('M1 rendered user workflow', () => {
     const user = userEvent.setup()
     seed([workshop()])
     render(<App />)
-    const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => { throw Error('quota once') })
+    const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
+      throw Error('quota once')
+    })
     await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
     write.mockRestore()
     const remote = [workshop({ id: 'remote', title: 'Remote Change' })]
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(remote))
-    fireEvent(window, new StorageEvent('storage', { key: STORAGE_KEY, storageArea: window.localStorage }))
+    fireEvent(
+      window,
+      new StorageEvent('storage', { key: STORAGE_KEY, storageArea: window.localStorage }),
+    )
     expect(screen.queryByRole('button', { name: 'Remove Remote Change' })).toBeNull()
-    expect(screen.getAllByRole('alert').some(alert => alert.textContent?.includes('Another tab changed saved events'))).toBe(true)
+    expect(
+      screen
+        .getAllByRole('alert')
+        .some(alert => alert.textContent?.includes('Another tab changed saved events')),
+    ).toBe(true)
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual(remote)
   })
 })

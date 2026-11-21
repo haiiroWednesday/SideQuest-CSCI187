@@ -1,6 +1,15 @@
 // CONTROLLER: prepare a device-local Schedule screen from resolved plan entries.
-import { eventPhase, minutesUntilStart, overlapSpan } from '../model/eventTiming'
-import { byTime, describeDay, groupDays, spanText, toStub, type ScreenEvent, type StubModel, type DayModel } from './screenModels'
+import { calendarDay, eventPhase, minutesUntilStart, overlapSpan } from '../model/eventTiming'
+import {
+  byTime,
+  describeDay,
+  groupDays,
+  spanText,
+  toStub,
+  type ScreenEvent,
+  type StubModel,
+  type DayModel,
+} from './screenModels'
 
 // ---------- My Schedule
 
@@ -40,6 +49,31 @@ export type ScheduleScreen = {
   missing: { id: string }[]
 }
 
+function presentNextUp(
+  stub: PlanStubModel,
+  event: ScreenEvent | undefined,
+  now: Date,
+): NextUpModel {
+  if (stub.live?.kind === 'now') {
+    return { stub, kind: 'now', when: stub.live.text }
+  }
+
+  const day = describeDay(stub.date, now)
+  const startTime = `${stub.start.time}${stub.start.ampm}`
+  if (day.isToday) {
+    // Use the unformatted event time rather than parsing text displayed by the View.
+    const remainingMinutes = event ? minutesUntilStart(event, now) : 0
+    return { stub, kind: 'today', when: `in ${spanText(remainingMinutes)}` }
+  }
+  if (day.tag === 'TOMORROW') {
+    return { stub, kind: 'tomorrow', when: `Tomorrow at ${startTime}` }
+  }
+
+  const { month, day: dayOfMonth } = calendarDay(stub.date)
+  const shortWeekday = day.dow[0] + day.dow.slice(1).toLowerCase()
+  return { stub, kind: 'later', when: `${shortWeekday} ${month}/${dayOfMonth} at ${startTime}` }
+}
+
 export function presentSchedule(input: ScheduleInput, now: Date = new Date()): ScheduleScreen {
   const ids = new Set(input.entries.map(entry => entry.event.id))
   const sorted = [...input.entries].sort((a, b) => byTime(a.event, b.event))
@@ -47,7 +81,13 @@ export function presentSchedule(input: ScheduleInput, now: Date = new Date()): S
     const span = conflict ? overlapSpan(event, conflict) : null
     return {
       ...toStub(event, now, ids, null),
-      overlap: conflict && span ? { title: conflict.title, text: `Overlaps ${conflict.title} by ${spanText(span.to - span.from)}` } : null,
+      overlap:
+        conflict && span
+          ? {
+              title: conflict.title,
+              text: `Overlaps ${conflict.title} by ${spanText(span.to - span.from)}`,
+            }
+          : null,
       done: eventPhase(event, now) === 'ended',
     }
   })
@@ -59,24 +99,18 @@ export function presentSchedule(input: ScheduleInput, now: Date = new Date()): S
     return { ...day, overlapNote }
   })
 
-  let nextUp: NextUpModel | null = null
   const first = upcoming[0]
-  if (first) {
-    const day = describeDay(first.date, now)
-    // Use the source record for duration calculations, not formatted display strings.
-    const firstEvent = sorted.find(entry => entry.event.id === first.id)?.event
-    const until = firstEvent ? minutesUntilStart(firstEvent, now) : 0
-    nextUp = first.live?.kind === 'now'
-      ? { stub: first, kind: 'now', when: first.live.text }
-      : day.isToday
-        ? { stub: first, kind: 'today', when: `in ${spanText(until)}` }
-        : day.tag === 'TOMORROW'
-          ? { stub: first, kind: 'tomorrow', when: `Tomorrow at ${first.start.time}${first.start.ampm}` }
-          : { stub: first, kind: 'later', when: `${day.long.split(',')[0].slice(0, 3)} ${first.dateText.slice(0, -5)} at ${first.start.time}${first.start.ampm}` }
-  }
+  const firstEvent = first ? sorted.find(entry => entry.event.id === first.id)?.event : undefined
+  const nextUp = first ? presentNextUp(first, firstEvent, now) : null
 
   return {
-    status: input.blocked ? 'blocked' : input.loading ? 'loading' : input.ids.length === 0 ? 'empty' : 'ready',
+    status: input.blocked
+      ? 'blocked'
+      : input.loading
+        ? 'loading'
+        : input.ids.length === 0
+          ? 'empty'
+          : 'ready',
     plannedCount: input.ids.length,
     overlapCount: upcoming.filter(stub => stub.overlap).length,
     missingCount: input.missingIds.length,

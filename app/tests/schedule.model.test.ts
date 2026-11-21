@@ -1,14 +1,28 @@
 // Sembiyan: domain rules and real storage boundaries for the local Schedule.
 import { describe, expect, it } from 'vitest'
 import {
-  addPlannedId, canAddPlanCount, eventsOverlap, MAX_PLANNED_EVENTS,
-  PLANNED_IDS_KEY, readPlannedIds, removePlannedId, resolvePlannedEvents,
-  savePlannedIds, scheduleConflicts, isScheduleEvent,
+  addPlannedId,
+  canAddPlanCount,
+  eventsOverlap,
+  MAX_PLANNED_EVENTS,
+  PLANNED_IDS_KEY,
+  readPlannedIds,
+  removePlannedId,
+  resolvePlannedEvents,
+  savePlannedIds,
+  scheduleConflicts,
+  isScheduleEvent,
 } from '../src/model/schedule'
 import { type CampusEvent } from '../src/model/events'
 
-const event = (id: string, start = '10:00', end = '11:00', date = '2030-11-01'): CampusEvent =>
-  ({ id, title: id, location: 'SCU', date, start, end })
+const event = (id: string, start = '10:00', end = '11:00', date = '2030-11-01'): CampusEvent => ({
+  id,
+  title: id,
+  location: 'SCU',
+  date,
+  start,
+  end,
+})
 
 describe('personal Schedule Model', () => {
   it('reads a new schedule as empty without writing anything', () => {
@@ -24,7 +38,11 @@ describe('personal Schedule Model', () => {
     expect(addPlannedId([], ' ').error).not.toBeNull()
   })
   it('resolves current catalog details, keeps identical titles distinct, sorts across days, and reports missing IDs', () => {
-    const catalog = [event('later', '09:00', '10:00', '2030-11-02'), event('b', '12:00', '13:00'), event('a')]
+    const catalog = [
+      event('later', '09:00', '10:00', '2030-11-02'),
+      event('b', '12:00', '13:00'),
+      event('a'),
+    ]
     catalog[1].title = catalog[2].title = 'Same title'
     const ids = ['later', 'b', 'missing', 'a']
     const resolved = resolvePlannedEvents(ids, catalog)
@@ -36,21 +54,51 @@ describe('personal Schedule Model', () => {
     expect(catalog.map(item => item.id)).toEqual(['later', 'b', 'a'])
   })
   it('uses end time then ID to make simultaneous starts deterministic', () => {
-    const resolved = resolvePlannedEvents(['b', 'long', 'a'], [event('b'), event('long', '10:00', '12:00'), event('a')])
+    const resolved = resolvePlannedEvents(
+      ['b', 'long', 'a'],
+      [event('b'), event('long', '10:00', '12:00'), event('a')],
+    )
     expect(resolved.events.map(item => item.id)).toEqual(['a', 'b', 'long'])
   })
-  it.each(['{broken', '{}', 'null', '"text"', '[1,null,"a","a",""]'])('preserves damaged storage and blocks changes for %s', raw => {
-    const state = readPlannedIds({ getItem: () => raw })
-    expect(state.blocked).toBe(true)
-    expect(state.ids).toEqual(raw.startsWith('[1') ? ['a'] : [])
-  })
+  it.each(['{broken', '{}', 'null', '"text"', '[1,null,"a","a",""]'])(
+    'preserves damaged storage and blocks changes for %s',
+    raw => {
+      const state = readPlannedIds({ getItem: () => raw })
+      expect(state.blocked).toBe(true)
+      expect(state.ids).toEqual(raw.startsWith('[1') ? ['a'] : [])
+    },
+  )
   it('handles disabled browser storage and quota failures without throwing', () => {
-    expect(readPlannedIds({ getItem: () => { throw Error('denied') } }).blocked).toBe(true)
-    expect(savePlannedIds({ setItem: () => { throw Error('quota') } }, ['a'])).toBe(false)
+    expect(
+      readPlannedIds({
+        getItem: () => {
+          throw Error('denied')
+        },
+      }).blocked,
+    ).toBe(true)
+    expect(
+      savePlannedIds(
+        {
+          setItem: () => {
+            throw Error('quota')
+          },
+        },
+        ['a'],
+      ),
+    ).toBe(false)
   })
   it('stores IDs alone in a separate key, not event copies or the public catalog', () => {
     const writes: [string, string][] = []
-    expect(savePlannedIds({ setItem: (key, value) => { writes.push([key, value]) } }, ['a', 'b'])).toBe(true)
+    expect(
+      savePlannedIds(
+        {
+          setItem: (key, value) => {
+            writes.push([key, value])
+          },
+        },
+        ['a', 'b'],
+      ),
+    ).toBe(true)
     expect(writes).toEqual([[PLANNED_IDS_KEY, '["a","b"]']])
   })
   it('enforces the provisional 100-event limit', () => {
@@ -62,10 +110,19 @@ describe('personal Schedule Model', () => {
     expect(canAddPlanCount(0)).toBe(true)
   })
   it('round-trips and resolves a full 100-event schedule without losing records', () => {
-    const catalog = Array.from({ length: MAX_PLANNED_EVENTS }, (_, index) => event(`event-${index}`))
+    const catalog = Array.from({ length: MAX_PLANNED_EVENTS }, (_, index) =>
+      event(`event-${index}`),
+    )
     const ids = catalog.map(item => item.id)
     let saved = ''
-    savePlannedIds({ setItem: (_key, value) => { saved = value } }, ids)
+    savePlannedIds(
+      {
+        setItem: (_key, value) => {
+          saved = value
+        },
+      },
+      ids,
+    )
     const read = readPlannedIds({ getItem: () => saved })
     expect(read).toEqual({ ids, blocked: false })
     expect(resolvePlannedEvents(read.ids, catalog).events).toHaveLength(MAX_PLANNED_EVENTS)
@@ -94,11 +151,16 @@ it('accepts catalog-size event fields in Schedule without weakening validity che
 
 describe('Schedule overlap warnings', () => {
   it.each([
-    ['10:00', '11:00', true], ['10:30', '11:30', true],
-    ['09:00', '12:00', true], ['10:15', '10:45', true],
-    ['11:00', '12:00', false], ['09:00', '10:00', false],
-    ['12:00', '13:00', false], ['11:00', '11:00', false],
-    ['23:00', '01:00', false], ['bad', '11:00', false],
+    ['10:00', '11:00', true],
+    ['10:30', '11:30', true],
+    ['09:00', '12:00', true],
+    ['10:15', '10:45', true],
+    ['11:00', '12:00', false],
+    ['09:00', '10:00', false],
+    ['12:00', '13:00', false],
+    ['11:00', '11:00', false],
+    ['23:00', '01:00', false],
+    ['bad', '11:00', false],
   ])('compares 10:00-11:00 with %s-%s as %s', (start, end, expected) => {
     expect(eventsOverlap(event('a'), event('b', start, end))).toBe(expected)
   })
@@ -107,10 +169,20 @@ describe('Schedule overlap warnings', () => {
     expect(eventsOverlap(event('a'), event('b', '10:00', '11:00', '2030-11-02'))).toBe(false)
   })
   it('marks every affected event in nested and chained overlaps, without marking adjacent or next-day events', () => {
-    const events = [event('outer', '09:00', '14:00'), event('short', '10:00', '11:00'),
-      event('nested', '12:00', '13:00'), event('chain', '13:30', '15:00'),
-      event('adjacent', '15:00', '16:00'), event('tomorrow', '10:00', '11:00', '2030-11-02')]
-    expect([...scheduleConflicts(events).keys()].sort()).toEqual(['chain', 'nested', 'outer', 'short'])
+    const events = [
+      event('outer', '09:00', '14:00'),
+      event('short', '10:00', '11:00'),
+      event('nested', '12:00', '13:00'),
+      event('chain', '13:30', '15:00'),
+      event('adjacent', '15:00', '16:00'),
+      event('tomorrow', '10:00', '11:00', '2030-11-02'),
+    ]
+    expect([...scheduleConflicts(events).keys()].sort()).toEqual([
+      'chain',
+      'nested',
+      'outer',
+      'short',
+    ])
   })
 })
 

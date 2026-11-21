@@ -16,7 +16,10 @@ const pageFromHash = () => {
   return ['#post', '#create-heading'].includes(window.location.hash) ? 'post' : 'discover'
 }
 
-export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?: () => Date } = {}) {
+export default function App({
+  catalog,
+  now,
+}: { catalog?: ConnectedCatalog; now?: () => Date } = {}) {
   const [connection] = useState(() => catalog ?? connectBrowserEventCatalog({}))
   const [page, setPage] = useState(pageFromHash)
   const [freeWindow, setFreeWindow] = useState<FreeWindow>({ date: '', start: '', end: '' })
@@ -24,20 +27,32 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
   const plans = useSharedSchedule(connection.catalog)
   const details = useBrowseDetail(connection.catalog)
   const discover = useDiscoverScreen({
-    events: events.events, loading: events.loading, error: events.error,
-    plannedIds: plans.schedule.ids, freeWindow,
+    events: events.events,
+    loading: events.loading,
+    error: events.error,
+    plannedIds: plans.schedule.ids,
+    freeWindow,
     planningBlocked: plans.schedule.blocked || plans.loading,
     ...(now ? { now: now() } : {}),
   })
   // Revalidate details when a student selects a ticket. The presenter
   // converts confirmed catalog records into the same view model as the trail.
-  const selectedDetail = details.state?.status === 'ready'
-    ? { id: details.state.id, status: 'ready' as const,
-        stub: presentBrowseDetail(details.state.event, plans.schedule.ids, now?.()) }
-    : details.state
-  const schedule = useScheduleScreen({
-    ...plans.schedule, loading: plans.loading, unresolvedIds: plans.unresolvedIds,
-  }, now?.())
+  const selectedDetail =
+    details.state?.status === 'ready'
+      ? {
+          id: details.state.id,
+          status: 'ready' as const,
+          stub: presentBrowseDetail(details.state.event, plans.schedule.ids, now?.()),
+        }
+      : details.state
+  const schedule = useScheduleScreen(
+    {
+      ...plans.schedule,
+      loading: plans.loading,
+      unresolvedIds: plans.unresolvedIds,
+    },
+    now?.(),
+  )
   useEffect(() => {
     const navigate = () => setPage(pageFromHash())
     window.addEventListener('hashchange', navigate)
@@ -52,44 +67,115 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
   // that failed to load, the plan limit), so those are not repeated there.
   const toasts: ToastItem[] = []
   const feedbackRevision = plans.revision
-  if (!connection.shared) toasts.push({ key: 'connection', tone: 'info', testId: 'catalog-not-shared',
-    text: 'Not connected to the shared catalog. Posts are saved in this browser only.' })
+  if (!connection.shared)
+    toasts.push({
+      key: 'connection',
+      tone: 'info',
+      testId: 'catalog-not-shared',
+      text: 'Not connected to the shared catalog. Posts are saved in this browser only.',
+    })
   // An overlap warning already says the plan was added, so it replaces the success message.
   const showWarning = page !== 'schedule' && Boolean(plans.warning)
   // After planning from Discover, offer a quiet way to My Schedule. It is a link in the toast, never a redirect.
   const added = page !== 'schedule' && Boolean(plans.message?.startsWith('Added'))
   const toSchedule = { label: 'See My Schedule', href: routes.schedule }
-  if (plans.message && !showWarning) toasts.push({ key: `message-${feedbackRevision}`, tone: 'success', text: plans.message, action: added ? toSchedule : undefined })
-  if (showWarning && plans.warning) toasts.push({ key: `warning-${feedbackRevision}`, tone: 'warning', text: plans.warning, action: { label: 'Check My Schedule', href: routes.schedule } })
-  if (plans.error && !(page === 'schedule' && plans.schedule.blocked)) toasts.push({ key: `error-${feedbackRevision}`, tone: 'error', text: plans.error,
-    action: plans.schedule.blocked ? { label: 'Recover valid plans', onClick: plans.recover } : undefined })
-  else if (page !== 'schedule' && plans.lookupError) toasts.push({ key: `lookup-${feedbackRevision}`, tone: 'error', text: plans.lookupError,
-    action: { label: 'Try again', onClick: () => { void plans.refresh() } } })
-  if (page !== 'schedule' && plans.schedule.capacityMessage) toasts.push({ key: `capacity-${feedbackRevision}`, tone: 'info', text: plans.schedule.capacityMessage })
+  if (plans.message && !showWarning)
+    toasts.push({
+      key: `message-${feedbackRevision}`,
+      tone: 'success',
+      text: plans.message,
+      action: added ? toSchedule : undefined,
+    })
+  if (showWarning && plans.warning)
+    toasts.push({
+      key: `warning-${feedbackRevision}`,
+      tone: 'warning',
+      text: plans.warning,
+      action: { label: 'Check My Schedule', href: routes.schedule },
+    })
+  if (plans.error && !(page === 'schedule' && plans.schedule.blocked))
+    toasts.push({
+      key: `error-${feedbackRevision}`,
+      tone: 'error',
+      text: plans.error,
+      action: plans.schedule.blocked
+        ? { label: 'Recover valid plans', onClick: plans.recover }
+        : undefined,
+    })
+  else if (page !== 'schedule' && plans.lookupError)
+    toasts.push({
+      key: `lookup-${feedbackRevision}`,
+      tone: 'error',
+      text: plans.lookupError,
+      action: {
+        label: 'Try again',
+        onClick: () => {
+          void plans.refresh()
+        },
+      },
+    })
+  if (page !== 'schedule' && plans.schedule.capacityMessage)
+    toasts.push({
+      key: `capacity-${feedbackRevision}`,
+      tone: 'info',
+      text: plans.schedule.capacityMessage,
+    })
 
-  const content = page === 'schedule' ? (
-        <ScheduleTrailView screen={schedule} routes={routes}
-          onRemove={id => { void plans.remove(id) }} onRecover={plans.recover}
-          onRetry={() => { void plans.refresh() }} />
-      ) : page === 'post' ? (
-        <div className="sq-discover-page sq-post-page">
-          <SideQuestHeader routes={routes} active="post" plannedCount={plans.schedule.ids.length} />
-          <main className="sq-main" id="content">
-            <section className="sq-post-panel" aria-labelledby="post-heading">
-              <h1 id="post-heading">Post an <em>event.</em></h1>
-              <p>Share a campus activity. Dates and times use California time.{!connection.shared && ' Posts are saved in this browser only.'}</p>
-              <EmbeddedPostEventForm connection={connection} now={now}
-                onPosted={() => { void events.refresh() }} />
-              <a className="sq-text-link" href="#discover">Back to Discover →</a>
-            </section>
-          </main>
-        </div>
-      ) : (
-          <DiscoverView screen={discover} routes={routes} sourceNote={sourceNote}
-            detail={selectedDetail} onSelectEvent={details.open} onRetryDetail={details.retry}
-            onRetry={() => { void events.refresh() }}
-            onPlan={id => { void plans.add(id) }} onFreeWindowChange={setFreeWindow} />
-      )
+  const content =
+    page === 'schedule' ? (
+      <ScheduleTrailView
+        screen={schedule}
+        routes={routes}
+        onRemove={id => {
+          void plans.remove(id)
+        }}
+        onRecover={plans.recover}
+        onRetry={() => {
+          void plans.refresh()
+        }}
+      />
+    ) : page === 'post' ? (
+      <div className="sq-discover-page sq-post-page">
+        <SideQuestHeader routes={routes} active="post" plannedCount={plans.schedule.ids.length} />
+        <main className="sq-main" id="content">
+          <section className="sq-post-panel" aria-labelledby="post-heading">
+            <h1 id="post-heading">
+              Post an <em>event.</em>
+            </h1>
+            <p>
+              Share a campus activity. Dates and times use California time.
+              {!connection.shared && ' Posts are saved in this browser only.'}
+            </p>
+            <EmbeddedPostEventForm
+              connection={connection}
+              now={now}
+              onPosted={() => {
+                void events.refresh()
+              }}
+            />
+            <a className="sq-text-link" href="#discover">
+              Back to Discover →
+            </a>
+          </section>
+        </main>
+      </div>
+    ) : (
+      <DiscoverView
+        screen={discover}
+        routes={routes}
+        sourceNote={sourceNote}
+        detail={selectedDetail}
+        onSelectEvent={details.open}
+        onRetryDetail={details.retry}
+        onRetry={() => {
+          void events.refresh()
+        }}
+        onPlan={id => {
+          void plans.add(id)
+        }}
+        onFreeWindowChange={setFreeWindow}
+      />
+    )
   return (
     <>
       {content}

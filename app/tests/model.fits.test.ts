@@ -3,8 +3,12 @@ import { describe, expect, it } from 'vitest'
 import { fitsFully, isValidDate, toMinutes, type CampusEvent } from '../src/model/events'
 
 const event: CampusEvent = {
-  id: 'art-1', title: 'Art Workshop', location: 'Arts Building',
-  date: '2026-10-19', start: '14:30', end: '15:30',
+  id: 'art-1',
+  title: 'Art Workshop',
+  location: 'Arts Building',
+  date: '2026-10-19',
+  start: '14:30',
+  end: '15:30',
 }
 
 describe('Model: time and calendar matching', () => {

@@ -5,19 +5,31 @@ import { describe, expect, it } from 'vitest'
 import dateBoundSql from '../../supabase/migrations/20261108000000_event_date_sanity_bound.sql?raw'
 import horizonPolicySql from '../../supabase/migrations/20261110000000_event_date_posting_horizon.sql?raw'
 import {
-  latestPostingDate as controllerLatest, postEvent, postingDraftErrors, type EventDraft,
+  latestPostingDate as controllerLatest,
+  postEvent,
+  postingDraftErrors,
+  type EventDraft,
 } from '../src/controller/postEvent'
 import {
-  catalogPostingErrors, createEventCatalog, EventCatalogError,
-  isWithinPostingHorizon, latestPostingDate, MAX_POSTING_YEARS_AHEAD,
+  catalogPostingErrors,
+  createEventCatalog,
+  EventCatalogError,
+  isWithinPostingHorizon,
+  latestPostingDate,
+  MAX_POSTING_YEARS_AHEAD,
 } from '../src/model/eventCatalog'
 import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 
 // 12:00 noon in Santa Clara on 2026-11-08 (PST, UTC-8).
 const NOW = new Date('2026-11-08T20:00:00Z')
 const draft = (date: string): EventDraft => ({
-  title: 'Photo Walk', hostName: 'SCU Photography Club', description: 'Bring any camera.',
-  location: 'Mission Gardens', date, start: '14:00', end: '15:30',
+  title: 'Photo Walk',
+  hostName: 'SCU Photography Club',
+  description: 'Bring any camera.',
+  location: 'Mission Gardens',
+  date,
+  start: '14:00',
+  end: '15:30',
 })
 const HORIZON_ERROR = 'Events can be posted up to one year ahead.'
 
@@ -66,7 +78,9 @@ describe('Model posting rule', () => {
   })
   it('keeps the existing past-date and today rules', () => {
     expect(catalogPostingErrors(draft('2026-11-08'), NOW)).toEqual({})
-    expect(catalogPostingErrors(draft('2026-11-07'), NOW).date).toContain('cannot be posted in the past')
+    expect(catalogPostingErrors(draft('2026-11-07'), NOW).date).toContain(
+      'cannot be posted in the past',
+    )
   })
   it('applies the Feb 29 boundary to posting', () => {
     const leapDay = new Date('2028-02-29T20:00:00Z')
@@ -87,7 +101,11 @@ describe('Model posting rule', () => {
   })
   it('the posting Controller reports the cap as a date field error without a write', async () => {
     const table = createInMemoryEventTable()
-    const result = await postEvent(createEventCatalog(table, () => NOW), draft('9999-12-31'), { now: NOW })
+    const result = await postEvent(
+      createEventCatalog(table, () => NOW),
+      draft('9999-12-31'),
+      { now: NOW },
+    )
     expect(result.status).toBe('invalid')
     if (result.status === 'invalid') expect(result.fieldErrors.date).toContain(HORIZON_ERROR)
     expect(postingDraftErrors(draft('9999-12-31'), NOW).date).toContain(HORIZON_ERROR)
@@ -97,7 +115,9 @@ describe('Model posting rule', () => {
 
 describe('database sanity bound', () => {
   it('adds a NOT VALID CHECK so existing rows cannot fail the migration', () => {
-    expect(dateBoundSql).toMatch(/add constraint event_date_sanity_bound check \(event_date < date '2100-01-01'\) not valid;/)
+    expect(dateBoundSql).toMatch(
+      /add constraint event_date_sanity_bound check \(event_date < date '2100-01-01'\) not valid;/,
+    )
   })
   it('is looser than the app rule, so every date the app accepts also fits the database', () => {
     // The latest date the app can ever accept before the bound is 2099-12-31.
@@ -110,7 +130,11 @@ describe('database sanity bound', () => {
 describe('database posting-horizon policy', () => {
   it('limits anonymous inserts to today through one year ahead in campus time', () => {
     const sql = horizonPolicySql.replace(/\s+/g, ' ')
-    expect(sql).toContain(`alter policy "Anyone may submit a valid event" on public.events with check (`)
-    expect(sql).toContain(`event_date between (now() at time zone 'America/Los_Angeles')::date and ((now() at time zone 'America/Los_Angeles')::date + interval '1 year')::date`)
+    expect(sql).toContain(
+      `alter policy "Anyone may submit a valid event" on public.events with check (`,
+    )
+    expect(sql).toContain(
+      `event_date between (now() at time zone 'America/Los_Angeles')::date and ((now() at time zone 'America/Los_Angeles')::date + interval '1 year')::date`,
+    )
   })
 })

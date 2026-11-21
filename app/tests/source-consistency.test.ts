@@ -4,22 +4,27 @@ import ts from 'typescript'
 import { describe, expect, it } from 'vitest'
 import { toSqlTime } from '../src/model/eventCatalog'
 
-const productionSources = import.meta.glob<string>(
-  ['../src/**/*.{ts,tsx}', '../server/**/*.ts'],
-  { query: '?raw', import: 'default', eager: true },
-)
+const productionSources = import.meta.glob<string>(['../src/**/*.{ts,tsx}', '../server/**/*.ts'], {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
 
-const testSources = import.meta.glob<string>(
-  ['../tests/**/*.{ts,tsx}', '../e2e/**/*.{ts,mjs}'],
-  { query: '?raw', import: 'default', eager: true },
-)
+const testSources = import.meta.glob<string>(['../tests/**/*.{ts,tsx}', '../e2e/**/*.{ts,mjs}'], {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
 
 function staticModules(path: string, content: string): string[] {
   const kind = path.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
   const source = ts.createSourceFile(path, content, ts.ScriptTarget.Latest, true, kind)
   return source.statements.flatMap(statement => {
-    if ((ts.isImportDeclaration(statement) || ts.isExportDeclaration(statement))
-      && statement.moduleSpecifier && ts.isStringLiteral(statement.moduleSpecifier)) {
+    if (
+      (ts.isImportDeclaration(statement) || ts.isExportDeclaration(statement)) &&
+      statement.moduleSpecifier &&
+      ts.isStringLiteral(statement.moduleSpecifier)
+    ) {
       return [statement.moduleSpecifier.text]
     }
     return []
@@ -64,8 +69,10 @@ describe('shared production conventions', () => {
     for (const [path, source] of Object.entries(productionSources)) {
       source.split('\n').forEach((line, index) => {
         if (!/^\s*\/\//.test(line)) return
-        if (/\b(?:professor|instructor|grader)\b/i.test(line)
-          || /[\u{1F300}-\u{1FAFF}]/u.test(line)) {
+        if (
+          /\b(?:professor|instructor|grader)\b/i.test(line) ||
+          /[\u{1F300}-\u{1FAFF}]/u.test(line)
+        ) {
           violations.push(`${path}:${index + 1}`)
         }
       })

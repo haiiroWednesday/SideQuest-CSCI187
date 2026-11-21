@@ -89,6 +89,25 @@ Use the same conventions in every contribution, regardless of which teammate own
 - **Comments and credit:** Explain constraints, invariants and non-obvious decisions. Avoid tutorials about ordinary syntax, decorative emoji and comments addressed to an instructor. Keep individual contributions visible through commits, PR descriptions and genuine review records.
 - **Reviews:** Run `npm test`, `npm run build` and `npm run test:e2e` from `app/`. Verify every significant UI change on a narrow screen and with keyboard controls. Never claim that fixture-based tests prove live Supabase acceptance.
 
+Run the shared style tools from `app/` before requesting review:
+
+```sh
+npm ci
+npm run format           # Apply Prettier to authored app, tests, and development scripts.
+npm run check:quality    # Check formatting, ESLint/React Hooks and course safeguards.
+npm run build            # Verify strict TypeScript and production bundles.
+```
+
+CI also runs `format:check` and `lint`. Prettier enforces two spaces, single quotes,
+no JavaScript statement-ending semicolons, and consistent CSS declaration layout.
+The root EditorConfig covers the repository; historical C++ keeps four-space indentation.
+Do not reformat the vendored `doctest.h`, generated lockfile, SQL migrations or asset files
+with the web formatter. Keep intentional third-party and legacy boundaries labeled.
+
+Use one focused refactor per behavior change, with tests proving preserved output.
+A formatter cannot decide whether a name is meaningful or a function has too many responsibilities;
+a teammate must review those judgments against the professor's Clean Code and Code Review slides.
+
 Apply these standards to files you change. Historical fixtures and existing saved-event formats remain intact unless a migration is deliberately reviewed and tested.
 
 ## Troubleshooting

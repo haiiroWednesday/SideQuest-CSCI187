@@ -6,16 +6,39 @@ async function seed(page: Page) {
   await page.goto('/')
   await page.evaluate(ids => {
     const records = [
-      { id: ids[0], title: 'Campus photography and creative storytelling workshop', host_name: 'Art Club', description: 'Bring a camera.', location: 'Student Center', event_date: '2030-11-07', start_time: '14:30:00', end_time: '15:30:00' },
-      { id: ids[1], title: 'Choir rehearsal', host_name: 'Music Club', description: 'Sing together.', location: 'Music Hall', event_date: '2030-11-07', start_time: '15:00:00', end_time: '16:00:00' },
+      {
+        id: ids[0],
+        title: 'Campus photography and creative storytelling workshop',
+        host_name: 'Art Club',
+        description: 'Bring a camera.',
+        location: 'Student Center',
+        event_date: '2030-11-07',
+        start_time: '14:30:00',
+        end_time: '15:30:00',
+      },
+      {
+        id: ids[1],
+        title: 'Choir rehearsal',
+        host_name: 'Music Club',
+        description: 'Sing together.',
+        location: 'Music Hall',
+        event_date: '2030-11-07',
+        start_time: '15:00:00',
+        end_time: '16:00:00',
+      },
     ]
     localStorage.setItem('sidequest.local-catalog.v1', JSON.stringify(records))
-    localStorage.setItem('sidequest.planned-event-ids.v1', JSON.stringify([ids[1], 'missing', ids[0]]))
+    localStorage.setItem(
+      'sidequest.planned-event-ids.v1',
+      JSON.stringify([ids[1], 'missing', ids[0]]),
+    )
   }, ids)
   await page.reload()
 }
 
-test('phone Schedule preserves overlap warnings, missing IDs, and public events after removal', async ({ page }) => {
+test('phone Schedule preserves overlap warnings, missing IDs, and public events after removal', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 375, height: 812 })
   await seed(page)
   await page.goto('/#schedule')
@@ -27,10 +50,16 @@ test('phone Schedule preserves overlap warnings, missing IDs, and public events 
   await expect(page.getByText('An event you planned')).toHaveCount(0)
   await page.reload()
   await expect(page.getByText('2 plans have conflicts')).toBeVisible()
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sidequest.local-catalog.v1')!).length)).toBe(2)
+  expect(
+    await page.evaluate(
+      () => JSON.parse(localStorage.getItem('sidequest.local-catalog.v1')!).length,
+    ),
+  ).toBe(2)
 })
 
-test('phone details are hidden while closed, trap keyboard focus, and return focus on Escape', async ({ page }) => {
+test('phone details are hidden while closed, trap keyboard focus, and return focus on Escape', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 375, height: 812 })
   await seed(page)
   await expect(page.getByRole('dialog')).toHaveCount(0)
@@ -46,7 +75,10 @@ test('phone details are hidden while closed, trap keyboard focus, and return foc
   await expect(close).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(close).toBeFocused()
-  await page.screenshot({ path: test.info().outputPath('discover-phone-sheet.png'), fullPage: true })
+  await page.screenshot({
+    path: test.info().outputPath('discover-phone-sheet.png'),
+    fullPage: true,
+  })
   await page.keyboard.press('Escape')
   await expect(dialog).toHaveCount(0)
   await expect(trigger).toBeFocused()
@@ -54,7 +86,9 @@ test('phone details are hidden while closed, trap keyboard focus, and return foc
   expect(await page.evaluate(() => document.body.style.overflow)).toBe('')
 })
 
-test('an event ending while its sheet is open releases the modal and the page', async ({ page }) => {
+test('an event ending while its sheet is open releases the modal and the page', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 375, height: 812 })
   await seed(page)
   await page.getByRole('button', { name: 'View details for Choir rehearsal' }).click()
@@ -67,7 +101,13 @@ test('an event ending while its sheet is open releases the modal and the page', 
 })
 
 test('blocked storage does not crash startup', async ({ page }) => {
-  await page.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('blocked', 'SecurityError') } }))
+  await page.addInitScript(() =>
+    Object.defineProperty(window, 'localStorage', {
+      get() {
+        throw new DOMException('blocked', 'SecurityError')
+      },
+    }),
+  )
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'More to do. Right here.' })).toBeVisible()
   await expect(page.getByText('Events could not be loaded.')).toBeVisible()
@@ -94,20 +134,26 @@ test('a browser in Tokyo still uses the California date and time', async ({ brow
   await context.close()
 })
 
-
 test('corrupt plans remain untouched until recovery is confirmed', async ({ page }) => {
   await seed(page)
-  await page.evaluate(id => localStorage.setItem('sidequest.planned-event-ids.v1', JSON.stringify([id, 7, id])), ids[0])
+  await page.evaluate(
+    id => localStorage.setItem('sidequest.planned-event-ids.v1', JSON.stringify([id, 7, id])),
+    ids[0],
+  )
   await page.goto('/#schedule')
   await page.reload()
   await expect(page.getByText('Your saved plans could not be read.')).toBeVisible()
   page.once('dialog', dialog => dialog.dismiss())
   await page.getByRole('button', { name: 'Recover valid plans' }).click()
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1')!))).toEqual([ids[0], 7, ids[0]])
+  expect(
+    await page.evaluate(() => JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1')!)),
+  ).toEqual([ids[0], 7, ids[0]])
   page.once('dialog', dialog => dialog.accept())
   await page.getByRole('button', { name: 'Recover valid plans' }).click()
   await expect(page.getByText('Valid plans recovered.')).toBeVisible()
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1')!))).toEqual([ids[0]])
+  expect(
+    await page.evaluate(() => JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1')!)),
+  ).toEqual([ids[0]])
 })
 
 test('scenario lab uses the same campus clock and Schedule conflict rules', async ({ browser }) => {
@@ -120,7 +166,9 @@ test('scenario lab uses the same campus clock and Schedule conflict rules', asyn
   await context.close()
 })
 
-test('phone keyboard focus stays in the sheet when planning disables the focused button', async ({ page }) => {
+test('phone keyboard focus stays in the sheet when planning disables the focused button', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 375, height: 812 })
   await seed(page)
   await page.evaluate(() => localStorage.setItem('sidequest.planned-event-ids.v1', '[]'))

@@ -2,7 +2,9 @@ import { expect, test } from '@playwright/test'
 
 // @cross-browser deliberately selects this test in Firefox/WebKit projects.
 // All other E2E tests remain full Chromium coverage with isolated local servers.
-test('core pages, invalid posting feedback and phone layout work @cross-browser', async ({ page }) => {
+test('core pages, invalid posting feedback and phone layout work @cross-browser', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.clock.install({ time: new Date('2030-11-07T17:00:00Z') })
 
@@ -19,5 +21,7 @@ test('core pages, invalid posting feedback and phone layout work @cross-browser'
 
   await page.getByRole('link', { name: 'My Schedule', exact: true }).click()
   await expect(page.getByText('Nothing planned yet.')).toBeVisible()
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  )
 })

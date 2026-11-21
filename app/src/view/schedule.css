@@ -1,14 +1,95 @@
 /* Sembiyan's Schedule controls reuse the existing visual system. */
-.page-nav{display:flex;gap:10px;flex-wrap:wrap;padding:18px 0}
-.page-nav a{padding:10px 15px;border-radius:9px;color:var(--scu-maroon);text-decoration:none;border:1px solid #dfddd5;font-weight:700}
-.page-nav a[aria-current="page"]{background:var(--scu-maroon);color:white;border-color:var(--scu-maroon)}
-.plan-button{padding:9px 12px;border:1px solid var(--scu-maroon);border-radius:8px;background:var(--scu-maroon);color:white;cursor:pointer;font-size:13px;font-weight:700}
-.plan-button:disabled{background:#f0f1ed;color:#526252;border-color:#d6dbd2;cursor:default}
-.plan-button:not(:disabled):hover{background:var(--scu-maroon-dark)}
-.page-nav a:focus-visible,.plan-button:focus-visible{outline:3px solid var(--scu-gold);outline-offset:3px}
-.saved-list .event-actions{display:flex;flex-direction:row;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.schedule-page{margin:24px 0 52px}.schedule-page h1{font-size:38px;margin:10px 0 18px}
-.schedule-list h2{font-size:17px;margin:0;overflow-wrap:anywhere}.schedule-list li{align-items:flex-start;padding:20px}
-.schedule-overlap{padding:13px 16px;background:#fff3d3;border:1px solid #96661c;border-radius:9px;color:#654006;line-height:1.6;font-size:14px}
-.saved-list li .schedule-conflict{color:#7c4d00;font-weight:700}
-@media(max-width:600px){.schedule-list li{flex-direction:column;align-items:stretch}.saved-list .event-actions{justify-content:flex-start}.schedule-page .section-title{flex-wrap:wrap}.schedule-page h1{font-size:32px}}
+.page-nav {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 18px 0;
+}
+.page-nav a {
+  padding: 10px 15px;
+  border-radius: 9px;
+  color: var(--scu-maroon);
+  text-decoration: none;
+  border: 1px solid #dfddd5;
+  font-weight: 700;
+}
+.page-nav a[aria-current='page'] {
+  background: var(--scu-maroon);
+  color: white;
+  border-color: var(--scu-maroon);
+}
+.plan-button {
+  padding: 9px 12px;
+  border: 1px solid var(--scu-maroon);
+  border-radius: 8px;
+  background: var(--scu-maroon);
+  color: white;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+.plan-button:disabled {
+  background: #f0f1ed;
+  color: #526252;
+  border-color: #d6dbd2;
+  cursor: default;
+}
+.plan-button:not(:disabled):hover {
+  background: var(--scu-maroon-dark);
+}
+.page-nav a:focus-visible,
+.plan-button:focus-visible {
+  outline: 3px solid var(--scu-gold);
+  outline-offset: 3px;
+}
+.saved-list .event-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.schedule-page {
+  margin: 24px 0 52px;
+}
+.schedule-page h1 {
+  font-size: 38px;
+  margin: 10px 0 18px;
+}
+.schedule-list h2 {
+  font-size: 17px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.schedule-list li {
+  align-items: flex-start;
+  padding: 20px;
+}
+.schedule-overlap {
+  padding: 13px 16px;
+  background: #fff3d3;
+  border: 1px solid #96661c;
+  border-radius: 9px;
+  color: #654006;
+  line-height: 1.6;
+  font-size: 14px;
+}
+.saved-list li .schedule-conflict {
+  color: #7c4d00;
+  font-weight: 700;
+}
+@media (max-width: 600px) {
+  .schedule-list li {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .saved-list .event-actions {
+    justify-content: flex-start;
+  }
+  .schedule-page .section-title {
+    flex-wrap: wrap;
+  }
+  .schedule-page h1 {
+    font-size: 32px;
+  }
+}

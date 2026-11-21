@@ -50,7 +50,7 @@
 
 ## Consistent implementation across teammates
 
-Follow the [shared coding conventions](TEAM_SETUP_GUIDE.md#shared-coding-conventions). Preserve the Model–Controller–View separation and the M2 EventCatalogPort contract. Use explicit M2 versus legacy event types, named constants, extensionless imports, two-space indentation, and comments about decisions rather than authors. Protect asynchronous reads against stale responses. Keep contributor credit in Git and PR reviews. Do not introduce new domain rules or source formats without tests and team approval.
+Follow the [shared coding conventions](TEAM_SETUP_GUIDE.md#shared-coding-conventions). Run `npm run format` for edited app code and `npm run check:quality` before review; CI rejects inconsistent formatting and lint errors. Preserve the Model–Controller–View separation and the M2 EventCatalogPort contract. Use explicit M2 versus legacy event types, named constants, extensionless imports, two-space indentation, and comments about decisions rather than authors. Protect asynchronous reads against stale responses. Keep contributor credit in Git and PR reviews. Do not introduce new domain rules or source formats without tests and team approval.
 
 ## Safe development protocol
 

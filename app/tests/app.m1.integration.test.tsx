@@ -18,12 +18,21 @@ import { STORAGE_KEY, type CampusEvent } from '../src/model/events'
 function futureDate(): string {
   const d = new Date()
   d.setDate(d.getDate() + 7)
-  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, '0'),
+    String(d.getDate()).padStart(2, '0'),
+  ].join('-')
 }
 
 const workshop = (overrides: Partial<CampusEvent> = {}): CampusEvent => ({
-  id: 'm1-workshop-1', title: 'Art Workshop', location: 'Arts Building',
-  date: futureDate(), start: '14:30', end: '15:30', ...overrides,
+  id: 'm1-workshop-1',
+  title: 'Art Workshop',
+  location: 'Arts Building',
+  date: futureDate(),
+  start: '14:30',
+  end: '15:30',
+  ...overrides,
 })
 
 // Put M1 events in browser storage the way the M1 form used to.
@@ -87,11 +96,15 @@ describe('M1 rendered user workflow', () => {
     searchOn(futureDate())
     fireEvent.change(screen.getByLabelText('Free from'), { target: { value: '17:00' } })
     fireEvent.change(screen.getByLabelText('Free until'), { target: { value: '18:00' } })
-    expect(screen.getByText('No created events fit this date and time. Try a different window.')).toBeTruthy()
+    expect(
+      screen.getByText('No created events fit this date and time. Try a different window.'),
+    ).toBeTruthy()
 
     fireEvent.change(screen.getByLabelText('Free until'), { target: { value: '16:00' } })
     expect(screen.getByRole('alert').textContent).toContain('Please choose an end time later')
-    expect(screen.getByText('Correct your available date or time to see matching events.')).toBeTruthy()
+    expect(
+      screen.getByText('Correct your available date or time to see matching events.'),
+    ).toBeTruthy()
 
     fireEvent.change(screen.getByLabelText('Free until'), { target: { value: '18:00' } })
     fireEvent.change(screen.getByLabelText('Free on date'), { target: { value: '' } })
@@ -113,7 +126,14 @@ describe('M1 rendered user workflow', () => {
 
   it('R1/R3: shows stored descriptions and human-readable dates and times', () => {
     const date = futureDate()
-    seed([workshop({ title: 'Two Choirs', description: 'A cappella rehearsals', location: 'Music Hall', date })])
+    seed([
+      workshop({
+        title: 'Two Choirs',
+        description: 'A cappella rehearsals',
+        location: 'Music Hall',
+        date,
+      }),
+    ])
     render(<App />)
     searchOn(date)
 
@@ -149,7 +169,16 @@ describe('M1 rendered user workflow', () => {
     const user = userEvent.setup()
     seed([workshop()])
     render(<App />)
-    const remote = [{ id: 'tab-b', title: 'Other Tab', location: 'Library', date: futureDate(), start: '09:00', end: '10:00' }]
+    const remote = [
+      {
+        id: 'tab-b',
+        title: 'Other Tab',
+        location: 'Library',
+        date: futureDate(),
+        start: '09:00',
+        end: '10:00',
+      },
+    ]
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(remote))
     // Do not deliver a storage event yet: the View still has stale state.
     await user.click(screen.getByRole('button', { name: 'Remove Art Workshop' }))
@@ -160,9 +189,21 @@ describe('M1 rendered user workflow', () => {
 
   it('R2: reflects changes from another browser tab without clobbering the write', () => {
     render(<App />)
-    const remote = [{ id: 'remote', title: 'Remote', location: 'SCU', date: futureDate(), start: '14:30', end: '15:30' }]
+    const remote = [
+      {
+        id: 'remote',
+        title: 'Remote',
+        location: 'SCU',
+        date: futureDate(),
+        start: '14:30',
+        end: '15:30',
+      },
+    ]
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(remote))
-    fireEvent(window, new StorageEvent('storage', { key: STORAGE_KEY, storageArea: window.localStorage }))
+    fireEvent(
+      window,
+      new StorageEvent('storage', { key: STORAGE_KEY, storageArea: window.localStorage }),
+    )
     expect(screen.getByRole('button', { name: 'Remove Remote' })).toBeTruthy()
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '[]')).toEqual(remote)
   })

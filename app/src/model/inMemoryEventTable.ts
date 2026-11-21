@@ -17,8 +17,14 @@ export function createInMemoryEventTable(
     async insert(row: NewEventRow) {
       const id = newId()
       // A real primary key rejects a reused ID instead of overwriting the row.
-      if (rows.has(id)) throw new Error(`duplicate key value violates unique constraint "events_pkey" (${id})`)
-      const stored: EventRow = { ...row, id, start_time: toSqlTime(row.start_time), end_time: toSqlTime(row.end_time) }
+      if (rows.has(id))
+        throw new Error(`duplicate key value violates unique constraint "events_pkey" (${id})`)
+      const stored: EventRow = {
+        ...row,
+        id,
+        start_time: toSqlTime(row.start_time),
+        end_time: toSqlTime(row.end_time),
+      }
       rows.set(id, stored)
       return { ...stored }
     },

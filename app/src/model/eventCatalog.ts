@@ -9,9 +9,9 @@ export type CampusEvent = {
   hostName: string
   description: string
   location: string
-  date: string  // YYYY-MM-DD in America/Los_Angeles
+  date: string // YYYY-MM-DD in America/Los_Angeles
   start: string // HH:mm on date
-  end: string   // HH:mm on date, strictly after start
+  end: string // HH:mm on date, strictly after start
 }
 
 export type EventDraft = Omit<CampusEvent, 'id'>
@@ -85,8 +85,15 @@ const FIELD_LABELS: Record<keyof typeof CATALOG_LIMITS, string> = {
 export type CatalogFieldErrors = Partial<Record<keyof EventDraft, string>>
 
 // The order in which fields are checked. It is also the order of the form.
-export const DRAFT_FIELD_ORDER: readonly (keyof EventDraft)[] =
-  ['title', 'hostName', 'description', 'location', 'date', 'start', 'end']
+export const DRAFT_FIELD_ORDER: readonly (keyof EventDraft)[] = [
+  'title',
+  'hostName',
+  'description',
+  'location',
+  'date',
+  'start',
+  'end',
+]
 
 export function trimDraft(draft: EventDraft): EventDraft {
   return {
@@ -112,14 +119,16 @@ export function catalogDraftErrors(draft: EventDraft): CatalogFieldErrors {
   for (const field of Object.keys(CATALOG_LIMITS) as (keyof typeof CATALOG_LIMITS)[]) {
     if (!trimmed[field]) errors[field] = `Please enter the ${FIELD_LABELS[field]}.`
     else if (trimmed[field].length > CATALOG_LIMITS[field]) {
-      errors[field] = `The ${FIELD_LABELS[field]} must be ${CATALOG_LIMITS[field]} characters or fewer.`
+      errors[field] =
+        `The ${FIELD_LABELS[field]} must be ${CATALOG_LIMITS[field]} characters or fewer.`
     }
   }
   if (!isValidDate(trimmed.date)) errors.date = 'Please choose a valid event date.'
   const start = toMinutes(trimmed.start)
   const end = toMinutes(trimmed.end)
   if (start === null || end === null || start >= end) {
-    errors[start === null ? 'start' : 'end'] = 'The event must end later than it starts, on the same day.'
+    errors[start === null ? 'start' : 'end'] =
+      'The event must end later than it starts, on the same day.'
   }
   return errors
 }
@@ -141,7 +150,9 @@ export function firstFieldError(errors: CatalogFieldErrors): string | null {
 }
 
 // Check a draft against the shared contract and return a trimmed copy.
-export function validateCatalogDraft(draft: EventDraft): { draft: EventDraft; error: null } | { draft: null; error: string } {
+export function validateCatalogDraft(
+  draft: EventDraft,
+): { draft: EventDraft; error: null } | { draft: null; error: string } {
   const error = firstFieldError(catalogDraftErrors(draft))
   return error === null ? { draft: trimDraft(draft), error: null } : { draft: null, error }
 }
@@ -154,11 +165,19 @@ export const CAMPUS_TIME_ZONE = 'America/Los_Angeles'
 
 export function campusNow(now: Date = new Date()): { date: string; time: string } {
   const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: CAMPUS_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    timeZone: CAMPUS_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
   }).formatToParts(now)
   const get = (type: string) => parts.find(part => part.type === type)?.value ?? ''
-  return { date: `${get('year')}-${get('month')}-${get('day')}`, time: `${get('hour')}:${get('minute')}` }
+  return {
+    date: `${get('year')}-${get('month')}-${get('day')}`,
+    time: `${get('hour')}:${get('minute')}`,
+  }
 }
 
 // Posting horizon: an event date may be at most this many years after the
@@ -187,7 +206,10 @@ export function isWithinPostingHorizon(date: string, now: Date = new Date()): bo
 // The same posting-time rule must protect every catalog caller, including
 // scripts or future controllers that do not use the React posting form.
 // Use the Santa Clara wall-clock, not the browser's arbitrary timezone.
-export function catalogPostingErrors(draft: EventDraft, now: Date = new Date()): CatalogFieldErrors {
+export function catalogPostingErrors(
+  draft: EventDraft,
+  now: Date = new Date(),
+): CatalogFieldErrors {
   const errors = catalogDraftErrors(draft)
   const value = trimDraft(draft)
   const campus = campusNow(now)
@@ -195,8 +217,12 @@ export function catalogPostingErrors(draft: EventDraft, now: Date = new Date()):
   for (const field of Object.keys(POSTING_LIMITS) as (keyof typeof POSTING_LIMITS)[]) {
     if (!value[field]) continue
     if (value[field].length > POSTING_LIMITS[field]) {
-      errors[field] = `The ${FIELD_LABELS[field]} must be ${POSTING_LIMITS[field]} characters or fewer.`
-    } else if ((REQUIRES_LETTER_OR_DIGIT as readonly string[]).includes(field) && !hasLetterOrDigit(value[field])) {
+      errors[field] =
+        `The ${FIELD_LABELS[field]} must be ${POSTING_LIMITS[field]} characters or fewer.`
+    } else if (
+      (REQUIRES_LETTER_OR_DIGIT as readonly string[]).includes(field) &&
+      !hasLetterOrDigit(value[field])
+    ) {
       errors[field] = `The ${FIELD_LABELS[field]} must include at least one letter or number.`
     }
   }
@@ -204,15 +230,23 @@ export function catalogPostingErrors(draft: EventDraft, now: Date = new Date()):
     errors.date = 'Events cannot be posted in the past. Choose today or a future date.'
   } else if (!errors.date && !isWithinPostingHorizon(value.date, now)) {
     errors.date = `Events can be posted up to one year ahead. Choose a date on or before ${latestPostingDate(now)}.`
-  } else if (!errors.date && !errors.start && !errors.end &&
-    value.date === campus.date && value.start < campus.time) {
+  } else if (
+    !errors.date &&
+    !errors.start &&
+    !errors.end &&
+    value.date === campus.date &&
+    value.start < campus.time
+  ) {
     errors.start = 'This event has already started. Choose a future start time.'
   }
   return errors
 }
 
 // An event is upcoming until it ends. One that is still running counts too.
-export function isUpcoming(event: Pick<CampusEvent, 'date' | 'end'>, now: Date = new Date()): boolean {
+export function isUpcoming(
+  event: Pick<CampusEvent, 'date' | 'end'>,
+  now: Date = new Date(),
+): boolean {
   const campus = campusNow(now)
   return event.date > campus.date || (event.date === campus.date && event.end > campus.time)
 }
@@ -295,9 +329,16 @@ export function isCatalogId(id: string): boolean {
 // ---------------------------------------------------------------------------
 // The one EventCatalog implementation. Every adapter shares the same
 // validation, mapping, ordering and error behavior.
-export function createEventCatalog(table: EventTable, clock: () => Date = () => new Date()): EventCatalogPort {
+export function createEventCatalog(
+  table: EventTable,
+  clock: () => Date = () => new Date(),
+): EventCatalogPort {
   const unavailable = (action: string, cause: unknown) =>
-    new EventCatalogError('unavailable', `Could not ${action} right now. Please check your connection and try again.`, { cause })
+    new EventCatalogError(
+      'unavailable',
+      `Could not ${action} right now. Please check your connection and try again.`,
+      { cause },
+    )
 
   return {
     async create(draft) {
@@ -306,24 +347,40 @@ export function createEventCatalog(table: EventTable, clock: () => Date = () => 
       const result = validateCatalogDraft(draft)
       if (result.error !== null) throw new EventCatalogError('invalid', result.error)
       let row: EventRow
-      try { row = await table.insert(toEventRow(result.draft)) }
-      catch (cause) { throw new EventCatalogError('unavailable', 'Could not confirm this post. Check Discover before trying again.', { cause }) }
+      try {
+        row = await table.insert(toEventRow(result.draft))
+      } catch (cause) {
+        throw new EventCatalogError(
+          'unavailable',
+          'Could not confirm this post. Check Discover before trying again.',
+          { cause },
+        )
+      }
       return fromEventRow(row)
     },
 
     async listUpcoming() {
       const now = clock()
       let rows: EventRow[]
-      try { rows = await table.selectFromDate(campusNow(now).date) }
-      catch (cause) { throw unavailable('load events', cause) }
-      return rows.map(fromEventRow).filter(event => isUpcoming(event, now)).sort(compareEvents)
+      try {
+        rows = await table.selectFromDate(campusNow(now).date)
+      } catch (cause) {
+        throw unavailable('load events', cause)
+      }
+      return rows
+        .map(fromEventRow)
+        .filter(event => isUpcoming(event, now))
+        .sort(compareEvents)
     },
 
     async getById(id) {
       if (!isCatalogId(id)) return null
       let row: EventRow | null
-      try { row = await table.selectById(id) }
-      catch (cause) { throw unavailable('load this event', cause) }
+      try {
+        row = await table.selectById(id)
+      } catch (cause) {
+        throw unavailable('load this event', cause)
+      }
       return row ? fromEventRow(row) : null
     },
   }

@@ -4,10 +4,22 @@ import { expect, it } from 'vitest'
 import { readStoredEvents, STORAGE_KEY, type CampusEvent } from '../src/model/events'
 
 it('keeps only the valid events from a partly corrupted saved list', () => {
-  const art: CampusEvent = { id: 'art', title: 'Art Club', location: 'Studio',
-    date: '2026-10-23', start: '14:00', end: '15:00' }
-  const choir: CampusEvent = { id: 'choir', title: 'Choir', location: 'Hall',
-    date: '2026-10-24', start: '16:00', end: '17:00' }
+  const art: CampusEvent = {
+    id: 'art',
+    title: 'Art Club',
+    location: 'Studio',
+    date: '2026-10-23',
+    start: '14:00',
+    end: '15:00',
+  }
+  const choir: CampusEvent = {
+    id: 'choir',
+    title: 'Choir',
+    location: 'Hall',
+    date: '2026-10-24',
+    start: '16:00',
+    end: '17:00',
+  }
 
   // Simulate bad JSON records mixed with valid ones. The old reader
   // should return the valid events and skip entries it cannot trust.

@@ -1,14 +1,25 @@
 // CONTROLLER: prepare posting feedback and delegate validation and storage
 // to the shared EventCatalogPort. The View never writes directly to storage.
 import {
-  createEventCatalog, EventCatalogError, firstFieldError, postingDraftErrors,
-  type CampusEvent, type CatalogFieldErrors, type EventCatalogPort, type EventDraft,
+  createEventCatalog,
+  EventCatalogError,
+  firstFieldError,
+  postingDraftErrors,
+  type CampusEvent,
+  type CatalogFieldErrors,
+  type EventCatalogPort,
+  type EventDraft,
 } from '../model/eventCatalog'
 import { createBrowserEventTable, type CatalogStorage } from '../model/browserEventTable'
 import { readCatalogWithDeadline, CatalogReadTimeoutError } from './catalogReads'
 import { createHttpEventCatalog } from '../model/httpEventCatalog'
 
-export type { CampusEvent, CatalogFieldErrors, EventCatalogPort, EventDraft } from '../model/eventCatalog'
+export type {
+  CampusEvent,
+  CatalogFieldErrors,
+  EventCatalogPort,
+  EventDraft,
+} from '../model/eventCatalog'
 
 // ---------------------------------------------------------------------------
 // Which catalog the app talks to. `shared` is false for the browser-only
@@ -21,8 +32,13 @@ export function localEventCatalog(storage: CatalogStorage): ConnectedCatalog {
   return { catalog: createEventCatalog(createBrowserEventTable(storage)), shared: false }
 }
 
-export function connectEventCatalog(env: Readonly<Record<string, unknown>>, storage: CatalogStorage): ConnectedCatalog {
-  return env.shared === true ? { catalog: createHttpEventCatalog(), shared: true } : localEventCatalog(storage)
+export function connectEventCatalog(
+  env: Readonly<Record<string, unknown>>,
+  storage: CatalogStorage,
+): ConnectedCatalog {
+  return env.shared === true
+    ? { catalog: createHttpEventCatalog(), shared: true }
+    : localEventCatalog(storage)
 }
 
 // Acquire storage only inside guarded Model reads/writes. A blocked getter must
@@ -34,16 +50,26 @@ export function browserStorage(): CatalogStorage {
   }
 }
 
-export function connectBrowserEventCatalog(env: Readonly<Record<string, unknown>> = {}): ConnectedCatalog {
+export function connectBrowserEventCatalog(
+  env: Readonly<Record<string, unknown>> = {},
+): ConnectedCatalog {
   return connectEventCatalog(env, browserStorage())
 }
 
 export async function connectServerEventCatalog(): Promise<ConnectedCatalog> {
   try {
-    const response = await readCatalogWithDeadline(() => fetch('/api/catalog', { credentials: 'same-origin' }))
+    const response = await readCatalogWithDeadline(() =>
+      fetch('/api/catalog', { credentials: 'same-origin' }),
+    )
     if (!response.ok) throw new Error('configuration unavailable')
     const config: unknown = await response.json()
-    if (!config || typeof config !== 'object' || !('shared' in config) || typeof config.shared !== 'boolean') throw new Error('invalid configuration')
+    if (
+      !config ||
+      typeof config !== 'object' ||
+      !('shared' in config) ||
+      typeof config.shared !== 'boolean'
+    )
+      throw new Error('invalid configuration')
     return connectBrowserEventCatalog({ shared: config.shared })
   } catch {
     // A network error never silently turns shared data into browser-only data.
@@ -52,7 +78,12 @@ export async function connectServerEventCatalog(): Promise<ConnectedCatalog> {
 }
 
 export {
-  postingDraftErrors, trimDraft, CATALOG_LIMITS, POSTING_LIMITS, campusNow, latestPostingDate,
+  postingDraftErrors,
+  trimDraft,
+  CATALOG_LIMITS,
+  POSTING_LIMITS,
+  campusNow,
+  latestPostingDate,
 } from '../model/eventCatalog'
 export { initialCampusWindow } from '../model/eventTiming'
 
@@ -62,15 +93,25 @@ export type PostResult =
   | { status: 'failed'; error: string }
 
 export async function postEvent(
-  catalog: EventCatalogPort, draft: EventDraft, options: { now?: Date; shared?: boolean } = {},
+  catalog: EventCatalogPort,
+  draft: EventDraft,
+  options: { now?: Date; shared?: boolean } = {},
 ): Promise<PostResult> {
   const fieldErrors = postingDraftErrors(draft, options.now)
   const first = firstFieldError(fieldErrors)
-  if (first !== null) return { status: 'invalid', fieldErrors, error: 'Please fix the highlighted fields.' }
+  if (first !== null)
+    return { status: 'invalid', fieldErrors, error: 'Please fix the highlighted fields.' }
   try {
     const event = await catalog.create(draft)
-    const where = options.shared === false ? 'in this browser only (shared catalog not connected)' : 'to the shared catalog'
-    return { status: 'posted', event, message: `Posted “${event.title}” ${where}. Event ID: ${event.id}` }
+    const where =
+      options.shared === false
+        ? 'in this browser only (shared catalog not connected)'
+        : 'to the shared catalog'
+    return {
+      status: 'posted',
+      event,
+      message: `Posted “${event.title}” ${where}. Event ID: ${event.id}`,
+    }
   } catch (error) {
     // The catalog re-checks against its own current clock. A request can cross
     // a minute boundary while in flight; preserve its validation message.
@@ -81,10 +122,18 @@ export async function postEvent(
 
 // The "Posted events" list next to the form. Errors become a message,
 // never an exception, so the View can always show something honest.
-export async function loadPostedEvents(catalog: EventCatalogPort): Promise<{ events: CampusEvent[]; error: string | null }> {
+export async function loadPostedEvents(
+  catalog: EventCatalogPort,
+): Promise<{ events: CampusEvent[]; error: string | null }> {
   try {
     return { events: await readCatalogWithDeadline(() => catalog.listUpcoming()), error: null }
   } catch (error) {
-    return { events: [], error: error instanceof EventCatalogError || error instanceof CatalogReadTimeoutError ? error.message : 'Could not load posted events.' }
+    return {
+      events: [],
+      error:
+        error instanceof EventCatalogError || error instanceof CatalogReadTimeoutError
+          ? error.message
+          : 'Could not load posted events.',
+    }
   }
 }

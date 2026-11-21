@@ -1,0 +1,17 @@
+# Vendor, build output, generated artifacts and historical coursework.
+**/node_modules/
+**/dist/
+**/dist-server/
+**/coverage/
+**/test-results/
+**/playwright-report/
+**/*.drawio
+**/*.svg
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/package-lock.json
+tests/doctest.h
+src/
+supabase/
+docs/

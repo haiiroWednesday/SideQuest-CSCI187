@@ -11,8 +11,16 @@ export type CatalogStorage = Pick<Storage, 'getItem' | 'setItem'>
 function isEventRow(value: unknown): value is EventRow {
   if (typeof value !== 'object' || value === null) return false
   const row = value as Record<string, unknown>
-  return ['id', 'title', 'host_name', 'description', 'location', 'event_date', 'start_time', 'end_time']
-    .every(key => typeof row[key] === 'string')
+  return [
+    'id',
+    'title',
+    'host_name',
+    'description',
+    'location',
+    'event_date',
+    'start_time',
+    'end_time',
+  ].every(key => typeof row[key] === 'string')
 }
 
 // Throw on unreadable data instead of treating it as empty. The catalog then
@@ -37,7 +45,12 @@ export function createBrowserEventTable(
       const rows = readRows(storage)
       const id = newId()
       if (rows.some(existing => existing.id === id)) throw new Error(`Duplicate event ID ${id}`)
-      const stored: EventRow = { ...row, id, start_time: toSqlTime(row.start_time), end_time: toSqlTime(row.end_time) }
+      const stored: EventRow = {
+        ...row,
+        id,
+        start_time: toSqlTime(row.start_time),
+        end_time: toSqlTime(row.end_time),
+      }
       storage.setItem(LOCAL_CATALOG_KEY, JSON.stringify([...rows, stored]))
       return stored
     },
