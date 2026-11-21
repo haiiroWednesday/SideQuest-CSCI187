@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && vite build && vite build --ssr server/index.ts --outDir dist-server && node scripts/check-browser-bundle.mjs",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:ai:live": "node --env-file=.env.local scripts/verify-ai-live.mjs",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "start": "node dist-server/index.js",

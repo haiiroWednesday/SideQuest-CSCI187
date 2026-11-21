@@ -4,13 +4,17 @@ import { readFile } from 'node:fs/promises'
 import { resolve, sep, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createCatalogApi } from './api'
+import { createAiDiscoverApi } from './aiDiscover'
 import { createSupabaseEventCatalogFromEnv } from '../src/model/supabaseEventTable'
 
-const api = createCatalogApi(createSupabaseEventCatalogFromEnv(process.env))
+const catalog = createSupabaseEventCatalogFromEnv(process.env)
+const api = createCatalogApi(catalog)
+const ai = createAiDiscoverApi(catalog, { apiKey: process.env.OPENAI_API_KEY, model: process.env.SIDEQUEST_AI_MODEL })
 const root = resolve(fileURLToPath(new URL('../dist/', import.meta.url)))
 const mime: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff': 'font/woff', '.woff2': 'font/woff2', '.png': 'image/png' }
 const port = Number(process.env.PORT ?? 3000)
 createServer({ requestTimeout: 15_000, headersTimeout: 10_000 }, async (req, res) => {
+  if (await ai(req, res)) return
   if (await api(req, res)) return
   if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); res.end(); return }
   try {

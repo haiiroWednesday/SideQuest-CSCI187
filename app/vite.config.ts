@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { loadEnv } from 'vite'
 import { createCatalogApi } from './server/api.ts'
+import { createAiDiscoverApi } from './server/aiDiscover.ts'
 import { createSupabaseEventCatalogFromEnv } from './src/model/supabaseEventTable.ts'
 
 // 🧪 Vite runs the React development app; Vitest reuses this config
@@ -12,8 +13,11 @@ export default defineConfig(({ mode }) => ({
     name: 'sidequest-catalog-api',
     configureServer(server) {
       const env = { ...loadEnv(mode, process.cwd(), 'SUPABASE_'), ...process.env }
-      const api = createCatalogApi(createSupabaseEventCatalogFromEnv(env))
-      server.middlewares.use((req, res, next) => { void api(req, res).then(handled => { if (!handled) next() }).catch(next) })
+      const catalog = createSupabaseEventCatalogFromEnv(env)
+      const api = createCatalogApi(catalog)
+      const aiEnv = { ...loadEnv(mode, process.cwd(), 'OPENAI_'), ...loadEnv(mode, process.cwd(), 'SIDEQUEST_AI_'), ...process.env }
+      const ai = createAiDiscoverApi(catalog, { apiKey: aiEnv.OPENAI_API_KEY, model: aiEnv.SIDEQUEST_AI_MODEL })
+      server.middlewares.use((req, res, next) => { void ai(req, res).then(handled => handled ? true : api(req, res)).then(handled => { if (!handled) next() }).catch(next) })
     },
   }],
   test: {
