@@ -1,6 +1,6 @@
 # SideQuest — instructions for coding assistants
 
-> **FINAL PROJECT SOURCE OF TRUTH (Nov 21):** Read [the current status and owner handoff](docs/FINAL_PROJECT_CURRENT_STATUS_2026-11-21.md) before any final-project code or PR review. This file and the linked playbook preserve the **merged M2 contract** and historical class decisions. Do not use the October/November M2 target dates as proof that later final features shipped or that team assignments were ratified. Check master, every affected open PR and the current as-built architecture before changes. Never turn on disabled group/Auth or move review-only SQL into live migrations without Daven/team approval and real permission tests.
+> **Final-project agent handoff (November 21, 2026): READ FIRST:** [FINAL_PROJECT_AGENT_HANDOFF.md](FINAL_PROJECT_AGENT_HANDOFF.md). It is the current proposed Nov 21–Dec 2 action plan, API/map/Calendar status, acceptance gates, PR merge order and proposed ownership for Daven, Sembiyan, Devonny and Cynthia. **Verify newest PRs and ask the relevant human to confirm ownership before changing final-project code.** The M2 playbook, scope and roles below document the earlier MVP baseline. Don't add sprint checklists or agent instructions to the professor-facing README.
 
 
 **Read these before suggesting changes.** This project is a course assignment; a human teammate owns every PR and approves scope. This file provides common context for agents (including Cline); it does **not** launch agents.
@@ -22,7 +22,7 @@
 - Earlier M1 code PRs #10 and #11 were closed unmerged and superseded by [PR #12](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/12), **merged into `master`** as commit `6e461fd`. Final PR-head CI passed **59 Vitest tests**, a Chromium smoke test, and the TypeScript/Vite build.
 - Read [M1 post-feedback QA](docs/M1_POST_FEEDBACK_QA.md) for the verified branch/CI and lecture-alignment checklist. M1 post-feedback changes are now on `master`. Do not expand the agreed M2 scope automatically.
 
-## Agreed MVP scope
+## Agreed M2 MVP scope (baseline, not the entire final project)
 
 - Anyone may post/browse events; **no account, login, or USER table**.
 - Every public Event has `id,title,hostName,description,location,date,start,end`. `hostName` is unverified display text, **not** a user ID.
@@ -32,7 +32,7 @@
 - Free-time matching requires the **entire** event to fit, inclusive boundaries. No partial matching or travel feasibility.
 - Out of scope: user profiles, cost, registration enforcement, saved availability, cross-device schedules, and extra tables for anonymous users.
 
-## Boundaries and ownership
+## M2 boundaries and ownership (historical; final proposals are in the handoff)
 
 - **Cynthia:** shared design system, reusable React components, discovery UX.
 - **Devonny:** event browsing/details, coordinating UI with Cynthia.
