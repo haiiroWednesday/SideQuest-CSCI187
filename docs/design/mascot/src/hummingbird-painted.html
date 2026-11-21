@@ -33,7 +33,7 @@ float mp(vec3 p, out vec3 col){
   d2 = length(q-vec3(.25,.07,0.))-.27*pf; h0 = clamp(.5+.5*(d-d2)/.15,0.,1.); d = mix(d,d2,h0)-.15*h0*(1.-h0);
   float t = smoothstep(-.16,.2,-q.y*1.3+q.x*.55-.02+.05*sin(q.x*9.+q.z*6.));
   col = mix(cBk, cBl, t); col = mix(col, mix(cBk, vec3(1.,.74,.56), .65), .9*t*(1.-t));
-  col = mix(col, cW[1], .35*smoothstep(-.1,-.5,q.x)*(1.-t));
+  col = mix(col, cW[1], .14*smoothstep(-.1,-.5,q.x)*(1.-t));
   vec3 hq = uHi*(q-uHc);
   float th = smoothstep(.0,-.09,hq.y-.34*hq.x+.07+.02*sin(hq.z*14.))*smoothstep(-.2,-.02,hq.x);
   vec3 hc = mix(cHd, cTh, th); hc = mix(hc, mix(cHd, vec3(1.,.6,.6), .5), .5*smoothstep(.14,.04,length(hq-vec3(.1,-.03,sign(hq.z)*.2)))*(1.-th));
@@ -98,7 +98,7 @@ void main(){
   const hex = h => [1, 3, 5].map(i => Math.pow(parseInt(h.substr(i, 2), 16) / 255, 1))
   // each coat: back, hood, belly, throat, bill, gold, then five wing stops from the shoulder to the tip
   const COATS = {
-    A: { c: ['#de4a66', '#a3243f', '#fff4dc', '#ffc94d', '#3a1a20', '#ffc94d'], w: ['#de4a66', '#ff6f86', '#ffa257', '#ffd866', '#a5ecd9'], dot: '#a3243f' },
+    A: { c: ['#a3243f', '#a3243f', '#fff4dc', '#ffc94d', '#3a1a20', '#ffc94d'], w: ['#a3243f', '#e2506b', '#ffa257', '#ffd866', '#a5ecd9'], dot: '#a3243f' },
     B: { c: ['#63c98d', '#2f9a68', '#fff4dc', '#ff4f8b', '#2a2320', '#ffc94d'], w: ['#63c98d', '#3fd3c2', '#52a9ff', '#a08fff', '#ffd3f0'], dot: '#2f9a68' },
     C: { c: ['#bca8ff', '#8f2c50', '#fff4dc', '#ff7aa3', '#33202c', '#ffc94d'], w: ['#bca8ff', '#8fb6ff', '#ff9ad2', '#ffcf8a', '#fff3b0'], dot: '#8f66e0' } }
   let coat = 'A'
