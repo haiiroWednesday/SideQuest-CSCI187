@@ -1,5 +1,5 @@
 // VIEW hook: keep the responsive event-details dialog keyboard-accessible.
-import { useEffect, useState, type RefObject } from 'react'
+import { useCallback, useEffect, useState, type RefObject } from 'react'
 
 export function usePhoneViewport(): boolean {
   const [phone, setPhone] = useState(
@@ -39,6 +39,12 @@ export function useMobileDetailFocus({
 }: DetailFocusOptions): void {
   const modal = phone && sheetOpen
 
+  // Restore whichever event trigger is current when the dialog closes.
+  const restoreFocus = useCallback(() => {
+    const target = returnFocusRef.current
+    if (target?.isConnected) target.focus()
+  }, [returnFocusRef])
+
   useEffect(() => {
     const panel = panelRef.current
     if (!modal || !panel) return
@@ -73,9 +79,9 @@ export function useMobileDetailFocus({
     return () => {
       document.body.style.overflow = originalOverflow
       document.removeEventListener('keydown', onKey)
-      if (returnFocusRef.current?.isConnected) returnFocusRef.current.focus()
+      restoreFocus()
     }
-  }, [modal, panelRef, returnFocusRef, onClose])
+  }, [modal, panelRef, onClose, restoreFocus])
 
   // Planning can disable the focused control while the sheet stays open.
   // Move focus to a usable control without closing the dialog.
