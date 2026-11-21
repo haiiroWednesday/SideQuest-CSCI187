@@ -1,5 +1,8 @@
 # SideQuest — Current M2 MVP User Requirements
 
+> **Scope notice (Nov 21):** These requirements remain the accepted **M2 baseline**, not the complete final-project requirements. The [current final status and acceptance register](docs/FINAL_PROJECT_CURRENT_STATUS_2026-11-21.md) records new draft features and required human sign-off. Do not infer that this document's M2 exclusion of accounts/maps/Calendar/AI forbids separately approved final changes, or that draft features have been merged. The final as-built requirements must be reviewed after release integration.
+
+
 **Current implementation contract, updated November 4, 2026.** This supersedes the M1-focused root requirements. Historical M1 requirements remain in [docs/M1_HISTORICAL_REQUIREMENTS.md](docs/M1_HISTORICAL_REQUIREMENTS.md). This document describes the adopted P4-based MVP scope; the wider P3 research vision remains a future plan.
 
 ## R1 — Post a campus event
