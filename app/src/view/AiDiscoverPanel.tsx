@@ -58,7 +58,7 @@ export function AiDiscoverPanel({ visibleEventIds, onChoose }: {
     <section className="sq-ai" aria-labelledby="sq-ai-heading">
       <div className="sq-ai-intro">
         <h2 id="sq-ai-heading">Ask <em>SideQuest.</em></h2>
-        <p>Describe what you feel like doing. Suggestions come from the public event catalog.</p>
+        <p>Describe what you feel like doing. Your search and public event details are sent to an external AI service.</p>
       </div>
       <form className="sq-ai-form" onSubmit={event => { void submit(event) }} role="search" aria-label="AI event suggestions">
         <label htmlFor="sq-ai-query" className="sq-visually-hidden">What would you like to do?</label>
