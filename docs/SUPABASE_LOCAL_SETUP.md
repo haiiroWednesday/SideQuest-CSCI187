@@ -1,8 +1,5 @@
 # SideQuest M2: local Supabase setup and live acceptance check
 
-> **Final-project security note (Nov 21):** This guide configures the **M2 public EventCatalog**. It does not activate or verify the proposed email-code login, group tables, caller-scoped RPCs or cross-user permissions in PR #60. For secure activation dependencies and owners, read [current final-project status](FINAL_PROJECT_CURRENT_STATUS_2026-11-21.md). Never paste real credentials into docs or the group chat.
-
-
 **For contributors configuring or checking the shared catalog.** Updated November 4, 2026. This document is committed to GitHub and will appear in VS Code after a pull. The **individual machine's `app/.env.local` must remain untracked**.
 
 ## What is already in the code
