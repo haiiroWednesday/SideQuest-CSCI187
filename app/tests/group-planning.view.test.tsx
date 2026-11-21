@@ -77,4 +77,39 @@ describe('authenticated group page: proposal, participant and recoverable errors
     )).toBe(true))
     expect(client.act).toHaveBeenCalledTimes(1)
   })
+
+  it('ignores a stale action result when the authenticated client changes', async () => {
+    const awaiting = { ...basePlan, participants: [{ userId: amy, response: 'works' as const }] }
+    const confirmed = { ...awaiting, status: 'confirmed' as const, revision: 1 }
+    let resolveAction: ((plan: GroupDetail) => void) | undefined
+    const oldClient: GroupClientPort = {
+      list: vi.fn(async () => [awaiting]),
+      create: vi.fn(async () => awaiting),
+      get: vi.fn(async () => awaiting),
+      act: vi.fn(() => new Promise<GroupDetail>(resolve => { resolveAction = resolve })),
+    }
+    const replacementClient: GroupClientPort = {
+      list: vi.fn(async () => [awaiting]),
+      create: vi.fn(async () => awaiting),
+      get: vi.fn(async () => awaiting),
+      act: vi.fn(async () => awaiting),
+    }
+    const { rerender } = render(<GroupPlanningView actorId={orgId}
+      client={oldClient} events={events} routes={routes} />)
+    await waitFor(() => expect(screen.getByRole('button', { name: /Music workshop/ })).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: /Music workshop/ }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Confirm group outing' })).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm group outing' }))
+    await waitFor(() => expect(oldClient.act).toHaveBeenCalledTimes(1))
+
+    // A provider/session change invalidates all earlier asynchronous updates.
+    rerender(<GroupPlanningView actorId={orgId}
+      client={replacementClient} events={events} routes={routes} />)
+    await waitFor(() => expect(replacementClient.list).toHaveBeenCalledTimes(1))
+    expect(resolveAction).toBeDefined()
+    resolveAction!(confirmed)
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Confirm group outing' }) as HTMLButtonElement).disabled).toBe(false))
+    expect(screen.queryByText('Confirmed')).toBeNull()
+    expect(screen.getByText('Awaiting responses')).toBeTruthy()
+  })
 })
