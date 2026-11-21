@@ -139,7 +139,14 @@ function Lab() {
   const [playing, setPlaying] = useState(false)
   const span = 4 * 1440 - scenario.startAt - 60
 
-  const pick = (s: Scenario) => { setSid(s.id); setOffset(0); setPlanned(s.planned); setMissing(s.missing); setFree({ date: '', start: '', end: '' }); setPlaying(false) }
+  function selectScenario(nextScenario: Scenario) {
+    setSid(nextScenario.id)
+    setOffset(0)
+    setPlanned(nextScenario.planned)
+    setMissing(nextScenario.missing)
+    setFree({ date: '', start: '', end: '' })
+    setPlaying(false)
+  }
 
   const now = clockOf(scenario, offset)
   const discover = presentDiscover({ events: scenario.events, error: scenario.error, loading: scenario.loading, plannedIds: planned, freeWindow: free, now })
@@ -148,23 +155,45 @@ function Lab() {
   // Tell both frames what to draw whenever anything changes.
   const frames = [useRef<HTMLIFrameElement>(null), useRef<HTMLIFrameElement>(null)]
   const payload: ToFrame = { kind, discover, schedule }
-  useEffect(() => { frames.forEach(f => f.current?.contentWindow?.postMessage(payload, FRAME_ORIGIN)) })
   useEffect(() => {
-    const on = (event: MessageEvent<FromFrame | { type: 'ready' }>) => {
-      if (event.origin !== FRAME_ORIGIN || !frames.some(frame => frame.current?.contentWindow === event.source)) return
-      const m = event.data
-      if (m?.type === 'ready') frames.forEach(f => f.current?.contentWindow?.postMessage(payload, FRAME_ORIGIN))
-      else if (m?.type === 'plan') setPlanned(p => p.includes(m.id) ? p : [...p, m.id])
-      else if (m?.type === 'remove') { setPlanned(p => p.filter(id => id !== m.id)); setMissing(p => p.filter(id => id !== m.id)) }
-      else if (m?.type === 'free') setFree(m.window)
+    for (const frame of frames) {
+      frame.current?.contentWindow?.postMessage(payload, FRAME_ORIGIN)
     }
-    window.addEventListener('message', on)
-    return () => window.removeEventListener('message', on)
+  })
+  useEffect(() => {
+    function handleFrameMessage(event: MessageEvent<FromFrame | { type: 'ready' }>) {
+      const knownFrame = frames.some(frame => frame.current?.contentWindow === event.source)
+      if (event.origin !== FRAME_ORIGIN || !knownFrame) return
+
+      const message = event.data
+      if (message?.type === 'ready') {
+        for (const frame of frames) {
+          frame.current?.contentWindow?.postMessage(payload, FRAME_ORIGIN)
+        }
+      } else if (message?.type === 'plan') {
+        setPlanned(previous => previous.includes(message.id) ? previous : [...previous, message.id])
+      } else if (message?.type === 'remove') {
+        setPlanned(previous => previous.filter(id => id !== message.id))
+        setMissing(previous => previous.filter(id => id !== message.id))
+      } else if (message?.type === 'free') {
+        setFree(message.window)
+      }
+    }
+    window.addEventListener('message', handleFrameMessage)
+    return () => window.removeEventListener('message', handleFrameMessage)
   })
 
   useEffect(() => {
     if (!playing) return
-    const id = window.setInterval(() => setOffset(o => (o + 15 > span ? (setPlaying(false), o) : o + 15)), 220)
+    const id = window.setInterval(() => {
+      setOffset(previousOffset => {
+        if (previousOffset + 15 > span) {
+          setPlaying(false)
+          return previousOffset
+        }
+        return previousOffset + 15
+      })
+    }, 220)
     return () => window.clearInterval(id)
   }, [playing, span])
 
@@ -184,7 +213,7 @@ function Lab() {
       <header className="lab-top">
         <h1>Data <em>→</em> Controller <em>→</em> View</h1>
         <div className="lab-chips" role="group" aria-label="Scenario">
-          {all.map(s => <button key={s.id} className={s.id === scenario.id ? 'on' : ''} onClick={() => pick(s)}>{s.label}</button>)}
+          {all.map(s => <button key={s.id} className={s.id === scenario.id ? 'on' : ''} onClick={() => selectScenario(s)}>{s.label}</button>)}
           {scenario.id === 'random' && <button className="shuffle" onClick={() => setSeed(n => n + 1)}>Shuffle ↻</button>}
         </div>
         <div className="lab-clock">
