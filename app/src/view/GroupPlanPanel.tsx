@@ -134,11 +134,11 @@ export function GroupPlanPanel({
               </p>
               <textarea id={'group-condition-' + plan.id} required
                 aria-describedby={'group-condition-hint-' + plan.id}
-                aria-invalid={conditionLength > 280}
+                aria-invalid={conditionLength > MAX_PRIVATE_CONDITION}
                 value={condition} onChange={e => setCondition(e.target.value)}
                 placeholder="I can come after my class ends" />
               <p className="sq-group-privacy">{conditionLength}/{MAX_PRIVATE_CONDITION} characters</p>
-              {conditionLength > 280 && <p role="alert" className="sq-group-error">
+              {conditionLength > MAX_PRIVATE_CONDITION && <p role="alert" className="sq-group-error">
                 Shorten your condition to {MAX_PRIVATE_CONDITION} characters before saving.
               </p>}
             </>}
