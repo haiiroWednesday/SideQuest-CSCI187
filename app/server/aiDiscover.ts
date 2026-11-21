@@ -5,23 +5,14 @@ import { readCatalogWithDeadline } from '../src/controller/catalogReads'
 import { findEvents } from '../src/controller/findEvents'
 import { isValidDate } from '../src/model/events'
 import type { CampusEvent, EventCatalogPort } from '../src/model/eventCatalog'
+import type { AiDiscoverResult } from '../src/model/aiDiscovery'
 
 export const AI_DISCOVER_PATH = '/api/ai/discover'
+export const AI_STATUS_PATH = '/api/ai/status'
 export const AI_QUERY_MAX = 240
 export const AI_MAX_CANDIDATES = 40
 export const AI_MAX_SUGGESTIONS = 8
 export const AI_REQUESTS_PER_MINUTE = 5
-
-export type AiDiscoverResult = {
-  matches: Pick<CampusEvent, 'id' | 'title' | 'date' | 'start' | 'end' | 'location'>[]
-  timeInterpretation: {
-    date: string | null
-    start: string | null
-    end: string | null
-    applied: 'full_window' | 'date_only' | 'none'
-  }
-  catalogTruncated: boolean
-}
 
 export type AiDiscoverConfig = {
   apiKey?: string
@@ -162,6 +153,13 @@ export function createAiDiscoverApi(catalog: EventCatalogPort | null, config: Ai
     let url: URL
     try { url = new URL(req.url ?? '/', 'http://sidequest.local') }
     catch { return false }
+    if (url.pathname === AI_STATUS_PATH) {
+      if (req.method !== 'GET' || url.search) {
+        reply(res, 405, { error: 'AI status is read-only.' }); return true
+      }
+      reply(res, 200, { available: Boolean(catalog && config.apiKey) })
+      return true
+    }
     if (url.pathname !== AI_DISCOVER_PATH) return false
     if (req.method !== 'POST') {
       reply(res, 405, { error: 'AI discovery accepts POST requests only.' }); return true
