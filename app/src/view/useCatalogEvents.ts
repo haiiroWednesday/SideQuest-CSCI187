@@ -20,13 +20,16 @@ export function useCatalogEvents(catalog: EventCatalogPort, enabled = true, refr
     }
   }, [catalog])
 
+  // Invalidate outstanding reads when the View stops observing this catalog.
+  const invalidatePendingReads = useCallback(() => {
+    generation.current += 1
+  }, [])
+
   useEffect(() => {
     if (!enabled) return
     void refresh()
-    return () => {
-      generation.current++
-    }
-  }, [enabled, refresh, refreshKey])
+    return () => invalidatePendingReads()
+  }, [enabled, refresh, refreshKey, invalidatePendingReads])
 
   return { ...state, refresh }
 }
