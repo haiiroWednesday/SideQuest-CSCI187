@@ -1,8 +1,5 @@
 # SideQuest
 
-> **Final-project status (November 21):** Before planning or claiming final features, read the [current milestone, API, custom campus map, Google Calendar, extra-credit and teammate handoff](docs/FINAL_PROJECT_CURRENT_STATUS_2026-11-21.md). The quick-start and feature list below describe the **merged M2 master**, while most final features remain on review-only PRs #60–#64. Passing PR CI does not establish a public deployment, Auth, live calendar API or finished custom map.
-
-
 **Find campus events that fit your free time.** SideQuest helps Santa Clara University students discover upcoming activities, save plans, and post events.
 
 ## Quick start
