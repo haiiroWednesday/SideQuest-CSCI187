@@ -1,7 +1,7 @@
 // VIEW: participant and organizer controls for an authorized plan projection.
 // Caller identity is supplied by a verified session layer, never entered here.
 import { useEffect, useState, type FormEvent } from 'react'
-import type { GroupAction, GroupDetail, GroupResponse } from '../controller/groupClient'
+import { MAX_GROUP_INVITEES, MAX_PRIVATE_CONDITION, type GroupAction, type GroupDetail, type GroupResponse } from '../controller/groupClient'
 import './group-planning.css'
 
 const responseText: Record<GroupResponse, string> = {
@@ -48,7 +48,7 @@ export function GroupPlanPanel({
     setCondition(self?.response === 'if' ? self.privateCondition ?? '' : '')
   }, [actorId, plan.id, self?.response, self?.privateCondition])
   const conditionLength = condition.trim().length
-  const conditionInvalid = choice === 'if' && (conditionLength === 0 || conditionLength > 280)
+  const conditionInvalid = choice === 'if' && (conditionLength === 0 || conditionLength > MAX_PRIVATE_CONDITION)
   const member = organizer || Boolean(self)
   const actionable = plan.status === 'proposed' && !busy
   const allWork = plan.participants.length > 0 &&
@@ -130,16 +130,16 @@ export function GroupPlanPanel({
             {choice === 'if' && <>
               <label htmlFor={'group-condition-' + plan.id}>Your private condition</label>
               <p id={'group-condition-hint-' + plan.id} className="sq-group-privacy">
-                Up to 280 characters. Overlong text stays editable but cannot be submitted.
+                Up to {MAX_PRIVATE_CONDITION} characters. Overlong text stays editable but cannot be submitted.
               </p>
               <textarea id={'group-condition-' + plan.id} required
                 aria-describedby={'group-condition-hint-' + plan.id}
                 aria-invalid={conditionLength > 280}
                 value={condition} onChange={e => setCondition(e.target.value)}
                 placeholder="I can come after my class ends" />
-              <p className="sq-group-privacy">{conditionLength}/280 characters</p>
+              <p className="sq-group-privacy">{conditionLength}/{MAX_PRIVATE_CONDITION} characters</p>
               {conditionLength > 280 && <p role="alert" className="sq-group-error">
-                Shorten your condition to 280 characters before saving.
+                Shorten your condition to {MAX_PRIVATE_CONDITION} characters before saving.
               </p>}
             </>}
             <button type="submit" disabled={!choice || conditionInvalid}>
@@ -154,7 +154,7 @@ export function GroupPlanPanel({
           <form className="sq-group-form" onSubmit={onInvite}>
             <h3>Invite a participant</h3>
             <p>Invitations must refer to a verified member account. A shareable link cannot impersonate someone.</p>
-            <fieldset disabled={!actionable || plan.participants.length >= 12}>
+            <fieldset disabled={!actionable || plan.participants.length >= MAX_GROUP_INVITEES}>
               <label htmlFor={'group-invite-' + plan.id}>Verified participant account ID</label>
               <input id={'group-invite-' + plan.id} value={invitee}
                 onChange={e => setInvitee(e.target.value)} required
