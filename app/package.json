@@ -16,7 +16,11 @@
     "test:rubric": "vitest run tests/kandel.rubric-evidence.test.ts tests/kandel.code-quality.test.ts",
     "test:regression": "npm run test:coverage && npm run test:mutation:pilot && npm run test:rubric && npm run build && npm run test:e2e",
     "test:regression:contract": "vitest run tests/regression.contract-matrix.test.ts",
-    "test:regression:journeys": "playwright test e2e/regression.journeys.spec.ts --project=chromium"
+    "test:regression:journeys": "playwright test e2e/regression.journeys.spec.ts --project=chromium",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"server/**/*.ts\" \"tests/**/*.{ts,tsx}\" \"e2e/**/*.{ts,tsx,mjs}\" \"scripts/**/*.mjs\" \"vite.config.ts\" \"playwright.config.ts\" \"eslint.config.mjs\" \"index.html\" \"scenario-lab.html\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"server/**/*.ts\" \"tests/**/*.{ts,tsx}\" \"e2e/**/*.{ts,tsx,mjs}\" \"scripts/**/*.mjs\" \"vite.config.ts\" \"playwright.config.ts\" \"eslint.config.mjs\" \"index.html\" \"scenario-lab.html\"",
+    "lint": "eslint src server tests e2e scripts vite.config.ts playwright.config.ts eslint.config.mjs",
+    "check:quality": "npm run format:check && npm run lint && npm run test:rubric"
   },
   "engines": {
     "node": ">=22.12.0"
