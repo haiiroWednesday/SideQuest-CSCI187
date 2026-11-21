@@ -1,5 +1,8 @@
 # Run SideQuest M2
 
+> **Final-project note:** This is a guide to the merged M2 application. To run, review or demonstrate PRs #60–#64, first read the [current Nov 21 final status, architecture, API and ownership handoff](../docs/FINAL_PROJECT_CURRENT_STATUS_2026-11-21.md). Draft features do not appear automatically in a default master checkout, and may require owner-approved flags and test fixtures.
+
+
 Use Node 24, or Node 22.12+. Install from `app/`:
 
 ```bash
