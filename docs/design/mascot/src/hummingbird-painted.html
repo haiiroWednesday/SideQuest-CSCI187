@@ -55,10 +55,11 @@ vec4 wing(vec2 uv, vec2 S, float ph, float nr){
   float A=uWp.x, W=uWp.y, b=uWp.z, o=uWp.w; float Lf=mix(.78, (nr>.5)?1.04:.9, o); float pf=uB.z+3.1416+.1;
   vec2 v=uv-S; if (length(v)>Lf*1.12) return vec4(0.);
   float acc=0., ua=0.;
-  for (int i=0;i<12;i++){ float pi=ph+b*3.1416*(float(i)/11.*2.-1.); float f=mix(pf, A+W*sin(pi)-((nr>.5)?0.:.2), o); vec2 dr=vec2(cos(f),sin(f)); float a=dot(v,dr), c=dot(v,vec2(-dr.y,dr.x)), u=a/Lf;
+  float jt=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453)-.5;
+  for (int i=0;i<20;i++){ float pi=ph+b*3.1416*((float(i)+jt*.9)/19.*2.-1.); float f=mix(pf, A+W*sin(pi)-((nr>.5)?0.:.2), o); vec2 dr=vec2(cos(f),sin(f)); float a=dot(v,dr), c=dot(v,vec2(-dr.y,dr.x)), u=a/Lf;
     float s=pow(max(sin(3.1416*pow(clamp(u,0.,1.),.62)),0.),.7); float wt=Lf*mix(.34,.25,o)*s*(1.-.13*abs(sin(u*16.)))+.01, wl=Lf*.06*s+.012;
     float cv=smoothstep(wt,wt-.04,c)*smoothstep(-wl,-wl+.03,c)*smoothstep(1.02,.93,u)*smoothstep(-.05,.02,u); acc+=cv; ua+=u*cv; }
-  float cov=acc/12.; if (cov<.003) return vec4(0.); float u=ua/acc;
+  float cov=acc/20.; if (cov<.003) return vec4(0.); float u=ua/acc;
   float al=clamp(cov*mix(1.,2.7,b),0.,1.)*mix(1.,.9,b);
   float th=atan(v.y,v.x);
   vec3 g=pal(u*1.03+.05*sin(th*5.+uX.y*2.)); g*=.94+.06*sin(th*50.+u*9.);
