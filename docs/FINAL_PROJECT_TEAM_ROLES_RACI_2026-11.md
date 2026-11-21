@@ -1,8 +1,5 @@
 # SideQuest Final Project: Team Roles, RACI, Integration, and Quality Plan
 
-> **CURRENT STATUS OVERRIDE (November 21):** See [final-project status and actionable November 24 owner deliverables](FINAL_PROJECT_CURRENT_STATUS_2026-11-21.md). This document preserves the November 10 **proposed** RACI and scenario rationale. Later PRs #60–#64 add important code that old “not implemented” descriptions below do not account for. Assignments have **not** been independently confirmed by the four students; do not present the RACI as already accepted. Current tested branches, APIs, Calendar-link limitations and custom-map artwork handoff are in the dated index.
-
-
 **Prepared:** November 10, 2026  
 **Status: PROPOSED FOR FOUR-PERSON TEAM AGREEMENT.** This is the proposed final-project division of work, not evidence that the team accepted every assignment, shipped a feature, or approved a database migration. After agreement, record the decision and any modifications in the team's [HQ decision log](https://docs.google.com/document/d/1LGYSH-m4x2u8DCHyxFrRgzNRxXPLewnNvMufDJPF8jk/edit) with date, participants, affected interfaces, and responsible reviewers.  
 **Scope:** November 11 M2 Part 2 reflection preparation and development toward the December 2 presentation. This document supplements rather than retroactively replaces the [historical M2 MVP work allocation](MVP_TEAM_PLAYBOOK.md). Current implemented M2 remains governed by [REQUIREMENTS.md](../REQUIREMENTS.md), [SPECIFICATIONS.md](../SPECIFICATIONS.md), and reviewed code.
