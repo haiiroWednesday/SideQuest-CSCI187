@@ -1,5 +1,6 @@
 // Controller: interpret server-verified AI suggestions; Views never call a model SDK.
-import { isAiDiscoverResult, type AiDiscoverResult } from '../model/aiDiscovery'
+import { isAiDiscoverResult, type AiDiscoverResult, type AiEventSuggestion } from '../model/aiDiscovery'
+import { formatEventDate, formatEventTime } from '../presentation/formatEvents'
 
 export type { AiDiscoverResult } from '../model/aiDiscovery'
 
@@ -38,4 +39,9 @@ export async function requestAiDiscovery(
   }
   if (!isAiDiscoverResult(value)) throw new Error('AI discovery returned invalid event suggestions.')
   return value
+}
+
+// Match the app's existing campus-friendly date/time presentation convention.
+export function aiSuggestionDetails(item: AiEventSuggestion): string {
+  return `${formatEventDate(item.date)} · ${formatEventTime(item.start)}–${formatEventTime(item.end)} · ${item.location}`
 }
