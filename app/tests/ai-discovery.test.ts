@@ -117,20 +117,20 @@ describe('AI discovery: server-only provider integration', () => {
   })
 
   it('calls a real Responses API shape with a server-held key and only public catalog data', async () => {
-    const provider = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) =>
-      modelResult(selection({ event_ids: [B, A, 'not-in-catalog', A] }))) as typeof fetch
-    const { post, origin } = await server({ apiKey: 'test-key-never-return', provider })
+    const providerSpy = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) =>
+      modelResult(selection({ event_ids: [B, A, 'not-in-catalog', A] })))
+    const { post, origin } = await server({ apiKey: 'test-key-never-return', provider: providerSpy as typeof fetch })
     expect(await (await fetch(origin + '/api/ai/status')).json()).toEqual({ available: true })
     const response = await post({ query: 'jazz or painting this weekend' })
     expect(response.status).toBe(200)
     const value = await response.json()
     expect(value.matches.map((x: CampusEvent) => x.id)).toEqual([B, A])
     expect(JSON.stringify(value)).not.toContain('test-key-never-return')
-    expect(provider).toHaveBeenCalledTimes(1)
-    const [url, init] = provider.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('https://api.openai.com/v1/responses')
-    expect(init.headers).toMatchObject({ Authorization: 'Bearer test-key-never-return' })
-    const payload = JSON.parse(String(init.body))
+    expect(providerSpy).toHaveBeenCalledTimes(1)
+    const [url, init] = providerSpy.mock.calls[0]
+    expect(String(url)).toBe('https://api.openai.com/v1/responses')
+    expect(init?.headers).toMatchObject({ Authorization: 'Bearer test-key-never-return' })
+    const payload = JSON.parse(String(init?.body))
     expect(payload.store).toBe(false)
     expect(payload.text.format).toMatchObject({ type: 'json_schema', strict: true })
     expect(payload.input[1].content).toContain(A)
