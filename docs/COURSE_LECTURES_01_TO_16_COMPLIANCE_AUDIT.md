@@ -1,5 +1,7 @@
 # CSCI 187 SideQuest — Lecture 01–16 compliance audit
 
+> **Historical lecture/M2 audit:** The Nov 4 claims below were checked against the M2 snapshot, not the newer final-project drafts. Use [the November 21 final status and evidence register](FINAL_PROJECT_CURRENT_STATUS_2026-11-21.md) for current ownership, pending human reviews and release gates. Do not infer new WebSocket/Auth/map/AI compliance from this earlier audit.
+
 **Updated November 4, 2026 · Cross-checked against the 16 CSCI 187 lecture decks, P3/P4 artifacts and M2 assignments.**
 
 **Source of truth:** [current M2 requirements](../REQUIREMENTS.md), [current technical specifications](../SPECIFICATIONS.md), [MVP implementation playbook](MVP_TEAM_PLAYBOOK.md). The original [November 1 snapshot in PR #13](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/13) is historical and predates major M2 merges.
