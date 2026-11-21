@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test'
 
-// Playwright exercises the actual app/server in Chromium and selected\n// smoke paths in Firefox and WebKit; Vitest components run separately.
+// Playwright exercises the app/server in Chromium and selected
+// smoke paths in Firefox and WebKit; Vitest components run separately.
 export default defineConfig({
   testDir: './e2e',
   // Keep the full suite in Chromium; run the tagged high-value cross-browser
