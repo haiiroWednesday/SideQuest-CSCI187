@@ -17,12 +17,12 @@ const pageFromHash = () => {
   return ['#post', '#create-heading'].includes(window.location.hash) ? 'post' : 'discover'
 }
 
-export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?: () => Date } = {}) {
+export default function App({ catalog, now, realtimeEnabled = false }: { catalog?: ConnectedCatalog; now?: () => Date; realtimeEnabled?: boolean } = {}) {
   const [connection] = useState(() => catalog ?? connectBrowserEventCatalog({}))
   const [page, setPage] = useState(pageFromHash)
   const [freeWindow, setFreeWindow] = useState<FreeWindow>({ date: '', start: '', end: '' })
   const events = useEventCatalog(connection.catalog)
-  useCatalogLiveUpdates(connection.shared, events.refresh)
+  useCatalogLiveUpdates(connection.shared && realtimeEnabled, events.refresh)
   const plans = useSharedSchedule(connection.catalog)
   const details = useBrowseDetail(connection.catalog)
   const discover = useDiscoverScreen({
