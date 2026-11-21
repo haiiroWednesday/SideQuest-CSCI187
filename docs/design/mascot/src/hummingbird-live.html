@@ -1,0 +1,92 @@
+<h2 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">An animated hummingbird mascot for SideQuest with five behaviours and three coats.</h2>
+<div id="sq-stage" style="position:relative;width:100%;max-width:600px;margin:0 auto;height:0;padding-top:66.667%;border-radius:16px;background:#f7efe4;overflow:hidden">
+  <svg viewBox="0 0 600 400" style="position:absolute;inset:0;width:100%;height:100%" aria-hidden="true">
+    <g id="sq-wire" transform="translate(0 26)" style="opacity:0;transition:opacity .4s"><path d="M-10 268C120 258 250 276 380 266C470 260 540 270 610 262" fill="none" stroke="#2b1418" stroke-width="4" stroke-linecap="round"/></g>
+    <g id="sq-flower" transform="translate(20 -14)" style="opacity:0;transition:opacity .4s" stroke="#2b1418" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M508 250C504 300 512 350 506 404" fill="none"/><path d="M508 330C530 316 548 322 552 328C540 344 520 342 508 330Z" fill="#4fa36a"/><circle cx="508" cy="214" r="40" fill="#ffa6bb"/><path d="M508 214C516 200 532 216 518 228C502 240 484 220 496 202C510 184 540 196 536 220" fill="none"/></g>
+    <g id="sq-speed" style="opacity:0;transition:opacity .2s" stroke="#e0683c" stroke-width="4" stroke-linecap="round" fill="none"><path d="M40 150H210"/><path d="M90 200H300"/><path d="M30 250H190"/></g>
+  </svg>
+  <canvas id="sq-soft" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+  <canvas id="sq-crisp" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin:12px auto 0;max-width:600px">
+  <span id="sq-states" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center"></span>
+  <span id="sq-coats" style="display:flex;gap:8px;margin-left:10px"></span>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  const T = THREE, D = Math.PI / 180, V = (x, y, z) => new T.Vector3(x, y, z), stage = document.getElementById('sq-stage')
+  const COATS = {
+    A: { back: '#b8324a', belly: '#fff3d6', head: '#751728', throat: '#f2c14e', wing: '#3d0c16', tail: '#862633', gold: '#f2c14e', dot: '#751728' },
+    B: { back: '#58ab72', belly: '#fff3d6', head: '#2f7a50', throat: '#e02a6e', wing: '#143a2c', tail: '#3f8f5e', gold: '#f2c14e', dot: '#3f8f5e' },
+    C: { back: '#a892f2', belly: '#fff3d6', head: '#751728', throat: '#f2557a', wing: '#2c2170', tail: '#7c66d9', gold: '#f2c14e', dot: '#7c66d9' } }
+  const uInv = { value: new T.Matrix4() }, mats = {}
+  const vs = 'varying vec3 vN; varying vec3 vB; uniform mat4 uInv; void main(){ vN = normalize(normalMatrix * normal); vec4 w = modelMatrix * vec4(position,1.); vB = (uInv * w).xyz; gl_Position = projectionMatrix * viewMatrix * w; }'
+  const fs = 'varying vec3 vN; varying vec3 vB; uniform vec3 uA; uniform vec3 uB; uniform float uMode; uniform float uAl; void main(){ vec3 n = normalize(vN); vec3 c = uA; if (uMode > .5 && uMode < 1.5) c = mix(uA, uB, smoothstep(-.3, .34, -vB.z * 1.6 + vB.x * .75 - .12)); if (uMode > 1.5) c = mix(uA, vec3(1., .96, .72), smoothstep(.2, .95, n.x) * .6); float h = pow(dot(n, normalize(vec3(-.5, .8, .55))) * .5 + .5, 1.4); c *= .72 + .38 * h; float rim = smoothstep(.55, .05, n.z) * .32; c = mix(c, vec3(1.), rim); gl_FragColor = vec4(c, uAl); }'
+  const mat = (key, mode, al) => { const m = new T.ShaderMaterial({ vertexShader: vs, fragmentShader: fs, transparent: al < 1, depthWrite: al >= 1, uniforms: { uInv, uA: { value: new T.Color() }, uB: { value: new T.Color() }, uMode: { value: mode || 0 }, uAl: { value: al == null ? 1 : al } } }); (mats[key] = mats[key] || []).push(m); return m }
+  const flat = c => new T.MeshBasicMaterial({ color: c })
+  const sph = new T.SphereGeometry(1, 32, 22), cyl = new T.CylinderGeometry(1, 1, 1, 10)
+  const scene = new T.Scene(), root = new T.Group(), bird = new T.Group(), tilt = new T.Group(); root.rotation.x = -Math.PI / 2; scene.add(root); root.add(bird); bird.add(tilt)
+  const crisp = []
+  const ell = (m, p, s, r, parent) => { const o = new T.Mesh(sph, m); o.position.set(p[0], p[1], p[2]); o.scale.set(s[0], s[1], s[2]); if (r) o.rotation.set(r[0] * D, r[1] * D, r[2] * D); (parent || tilt).add(o); return o }
+  const grp = (p, parent) => { const g = new T.Group(); g.position.set(p[0], p[1], p[2]); (parent || tilt).add(g); return g }
+  const mBody = mat('body', 1), mHead = mat('head'), mThroat = mat('throat', 2), mTail = mat('tail'), mGold = mat('gold'), mInk = flat('#2b1418'), mEye = flat('#120a0c'), mWhite = flat('#ffffff')
+  ell(mBody, [.06, 0, 0], [.46, .36, .38], [0, -8, 0]); ell(mBody, [-.28, 0, -.04], [.36, .27, .25], [0, 8, 0]); ell(mBody, [.3, 0, .1], [.27, .28, .28])
+  const hp = grp([.5, 0, .28]); ell(mHead, [0, 0, 0], [.3, .285, .28], null, hp)
+  ell(mThroat, [.06, 0, -.15], [.19, .2, .12], [0, 16, 0], hp)
+  // crest: three feathers swept back, the longest tipped in gold
+  ;[[24, .2], [44, .26], [64, .17]].forEach(([e, L], i) => { const c = Math.cos(e * D), s = Math.sin(e * D); ell(mHead, [-.1 - c * L, 0, .2 + s * L], [L, .05, .05], [0, e, 0], hp); if (i === 1) ell(mGold, [-.1 - c * L * 2, 0, .2 + s * L * 2], [.06, .055, .06], null, hp) })
+  const eyes = [], glints = []
+  for (const s of [1, -1]) { const e = ell(mEye, [.12, s * .243, .06], [.062, .03, .062], null, hp); eyes.push(e); crisp.push(e); const g = ell(mWhite, [.138, s * .268, .088], [.019, .012, .019], null, hp); glints.push(g); crisp.push(g) }
+  const mBill = flat('#2b1418'); crisp.push(ell(mBill, [.6, 0, 0], [.36, .03, .03], [0, 3, 0], hp), ell(mBill, [.27, 0, 0], [.1, .05, .045], null, hp))
+  // tail: a short fan and two long streamers that end in gold discs, one for each end of your free time
+  const tp = grp([-.56, 0, -.06]); tp.rotation.y = -20 * D
+  ;[-24, -8, 8, 24].forEach(a => { const pv = grp([0, 0, 0], tp); pv.rotation.z = a * D; ell(mTail, [-.2, 0, 0], [.26, .07, .028], null, pv) })
+  const streams = [-1, 1].map(s => { const pv = grp([0, s * .05, 0], tp), g = grp([0, 0, 0], pv); pv.rotation.z = s * 13 * D; const st = new T.Mesh(cyl, mTail); st.scale.set(.014, .44, .014); st.rotation.z = 90 * D; st.position.set(-.36, 0, 0); g.add(st); ell(mGold, [-.64, 0, 0], [.095, .03, .095], null, g); return g })
+  // wings: four ghosts a side, so a fast beat reads as a dark blur and a folded wing reads solid
+  const wings = []
+  for (const s of [-1, 1]) for (let k = 0; k < 4; k++) { const g = grp([.2, s * .28, .2]), m = mat('wing', 0, .5); for (let i = 0; i < 7; i++) { const t = i / 6, a = (-4 + t * 46) * D, L = 1.12 - .6 * t, f = new T.Mesh(sph, m); f.position.set(Math.cos(a) * L * .52, Math.sin(a) * L * .52, 0); f.scale.set(L * .5, .09, .02); f.rotation.z = a; g.add(f) } wings.push({ g, s, k }) }
+  const feet = grp([0, 0, -.3]); for (const s of [1, -1]) { const l = new T.Mesh(cyl, mInk); l.scale.set(.02, .16, .02); l.rotation.x = 90 * D; l.position.set(.02, s * .12, -.06); feet.add(l); const f = new T.Mesh(cyl, mInk); f.scale.set(.02, .2, .02); f.rotation.z = 90 * D; f.position.set(.06, s * .12, -.14); feet.add(f) }
+  const softMeshes = []; scene.traverse(o => { if (o.isMesh && crisp.indexOf(o) < 0) softMeshes.push(o) })
+  const paint = k => { const c = COATS[k], set = (key, a, b) => (mats[key] || []).forEach(m => { m.uniforms.uA.value.set(a); if (b) m.uniforms.uB.value.set(b) }); set('body', c.back, c.belly); set('head', c.head); set('throat', c.throat); set('wing', c.wing); set('tail', c.tail); set('gold', c.gold) }
+  const cam = new T.OrthographicCamera(-1.95, 1.95, 1.3, -1.3, .1, 50), yaw = 20 * D, el = 5 * D, tgt = V(0, .85, 0); cam.position.copy(tgt.clone().add(V(Math.sin(yaw) * Math.cos(el), Math.sin(el), Math.cos(yaw) * Math.cos(el)).multiplyScalar(10))); cam.lookAt(tgt)
+  const mk = id => { const r = new T.WebGLRenderer({ canvas: document.getElementById(id), antialias: true, alpha: true }); r.setClearColor(0, 0); return r }
+  const rs = mk('sq-soft'), rc = mk('sq-crisp')
+  const fit = () => { const w = stage.clientWidth, h = Math.round(w * 2 / 3), pr = Math.min(window.devicePixelRatio || 1, 2); [rs, rc].forEach(r => { r.setPixelRatio(pr); r.setSize(w, h, false) }); rs.domElement.style.filter = 'blur(' + (w * .0036).toFixed(2) + 'px)'; rc.domElement.style.filter = 'blur(' + (w * .0006).toFixed(2) + 'px)' }
+  fit(); window.addEventListener('resize', fit)
+  // behaviours
+  const ST = { Hover: { x: .05, z: .08, pitch: -36, hp: 30, hr: 0, hy: 0, flap: 1, bob: .06, sweep: 0 }, Sip: { x: .4, z: .02, pitch: -20, hp: 26, hr: 0, hy: 0, flap: 1, bob: .025, sweep: 0 }, Rest: { x: -.1, z: -.06, pitch: -32, hp: 28, hr: 0, hy: -10, flap: 0, bob: 0, sweep: 0 }, Tilt: { x: -.1, z: -.06, pitch: -32, hp: 22, hr: -26, hy: -18, flap: 0, bob: 0, sweep: 0 }, Dart: { x: -.1, z: .1, pitch: -6, hp: 4, hr: 0, hy: 0, flap: 1, bob: 0, sweep: 1 } }
+  let state = 'Hover', coat = 'A', cur = Object.assign({}, ST.Hover), t0 = 0, dartT = -1, ang = [-.5, -.5], lastZ = 0, last = performance.now()
+  const slow = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches ? .4 : 1
+  const show = (id, on) => { document.getElementById(id).style.opacity = on ? 1 : 0 }
+  const setState = s => { state = s; if (s === 'Dart') dartT = 0; show('sq-wire', s === 'Rest' || s === 'Tilt'); show('sq-flower', s === 'Sip'); show('sq-speed', s === 'Dart'); [...document.querySelectorAll('#sq-states button')].forEach(b => b.setAttribute('aria-pressed', b.textContent === s)) ; style() }
+  const style = () => { [...document.querySelectorAll('#sq-states button')].forEach(b => { const on = b.textContent === state; b.style.background = on ? '#751728' : 'transparent'; b.style.color = on ? '#fff' : 'var(--text-primary, #2b1418)'; b.style.borderColor = on ? '#751728' : 'var(--border-strong, #c9b9ac)' }); [...document.querySelectorAll('#sq-coats button')].forEach(b => { b.style.boxShadow = b.dataset.k === coat ? '0 0 0 2px var(--surface-2, #fff), 0 0 0 4px ' + COATS[b.dataset.k].dot : 'none' }) }
+  Object.keys(ST).forEach(s => { const b = document.createElement('button'); b.textContent = s; b.style.cssText = 'font:500 13px var(--font-sans, system-ui);padding:7px 14px;border-radius:999px;border:1px solid;cursor:pointer'; b.onclick = () => setState(s); document.getElementById('sq-states').appendChild(b) })
+  Object.keys(COATS).forEach(k => { const b = document.createElement('button'); b.dataset.k = k; b.setAttribute('aria-label', 'Coat ' + k); b.style.cssText = 'width:22px;height:22px;border-radius:50%;border:0;cursor:pointer;background:' + COATS[k].dot; b.onclick = () => { coat = k; paint(k); style() }; document.getElementById('sq-coats').appendChild(b) })
+  paint(coat); setState('Hover')
+  const basis = new T.Matrix4()
+  let manual = false
+  function step(dt) { t0 += dt; const t = t0, tg = ST[state], k = 1 - Math.exp(-dt * (state === 'Dart' ? 9 : 5))
+    for (const key in tg) cur[key] += (tg[key] - cur[key]) * k
+    let x = cur.x, sx = 1
+    if (state === 'Dart') { dartT += dt; const u = dartT / 1.5; if (u < .34) x = cur.x + Math.pow(u / .34, 2.2) * 3.2; else if (u < 1) { const v = (u - .34) / .66; x = -3.2 + (1 - Math.pow(1 - v, 3)) * (3.2 + cur.x) } else setState('Hover'); sx = 1 + .22 * Math.sin(Math.min(1, u) * Math.PI) }
+    const bob = Math.sin(t * 2.3) * cur.bob + Math.sin(t * 5.1) * cur.bob * .25, breathe = 1 + (1 - cur.flap) * .018 * Math.sin(t * 2.2), z = .62 + cur.z + bob
+    bird.position.set(x + Math.sin(t * 1.1) * cur.bob * .6, 0, z); bird.scale.set(sx, 1 / Math.sqrt(sx), breathe / Math.sqrt(sx)); tilt.rotation.y = (cur.pitch + Math.sin(t * 2.3 + 1) * 3 * cur.flap) * D
+    const sipDip = state === 'Sip' ? Math.max(0, Math.sin(t * 3.2)) * 7 : 0, peek = Math.sin(t * .7) > .93 ? 1 : 0
+    hp.rotation.set((cur.hr + (state === 'Tilt' ? Math.sin(t * 1.3) * 5 : 0)) * D, (cur.hp + sipDip) * D, (cur.hy - peek * 22 * (1 - cur.flap)) * D)
+    const bl = (t % 3.4) < .13 || (state === 'Tilt' && (t % 3.4) > .32 && (t % 3.4) < .45); eyes.forEach(e => e.scale.z = bl ? .008 : .062); glints.forEach(g => g.visible = !bl)
+    const ph = t * 44
+    wings.forEach(w => { const p = ph - w.k * .55, th = (62 + 50 * Math.sin(p)) * cur.flap + 152 * (1 - cur.flap), sw = (.34 + .3 * Math.cos(p) + cur.sweep * 1.3) * cur.flap + 2.4 * (1 - cur.flap)
+      const span = V(-sw, w.s * Math.sin(th * D), Math.cos(th * D)).normalize(), c0 = V(-1, 0, -.2).normalize(), chord = c0.clone().sub(span.clone().multiplyScalar(c0.dot(span))).normalize(), nrm = span.clone().cross(chord); basis.makeBasis(span, chord, nrm); w.g.quaternion.setFromRotationMatrix(basis); const sc = 1 - (1 - cur.flap) * .42; w.g.scale.set(sc, sc, 1) })
+    const vz = (z - lastZ) / Math.max(dt, .001); lastZ = z
+    streams.forEach((g, i) => { const target = (-10 - 26 * (1 - cur.flap) + cur.sweep * 14) * D - Math.max(-.5, Math.min(.5, vz * .9)); ang[i] += (target - ang[i]) * (1 - Math.exp(-dt * (3.2 + i))); g.rotation.y = ang[i] + Math.sin(t * 3.1 + i * 1.7) * .09 })
+    feet.visible = cur.flap < .35
+    bird.updateMatrixWorld(true); uInv.value.copy(tilt.matrixWorld).invert()
+    softMeshes.forEach(o => { o.material.colorWrite = true }); crisp.forEach(o => o.visible = false); rs.render(scene, cam)
+    softMeshes.forEach(o => { o.material.colorWrite = false }); crisp.forEach(o => o.visible = true); glints.forEach(g => g.visible = !bl); rc.render(scene, cam)
+  }
+  function loop(now) { const dt = Math.min(.05, (now - last) / 1000) * slow; last = now; if (!manual) step(dt); requestAnimationFrame(loop) }
+  window.SQ = { state: setState, coat: k => { coat = k; paint(k); style() }, manual: v => { manual = v }, tick: step }
+  requestAnimationFrame(loop)
+})()
+</script>
