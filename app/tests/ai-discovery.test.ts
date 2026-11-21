@@ -132,6 +132,8 @@ describe('AI discovery: server-only provider integration', () => {
     expect(init?.headers).toMatchObject({ Authorization: 'Bearer test-key-never-return' })
     const payload = JSON.parse(String(init?.body))
     expect(payload.store).toBe(false)
+    expect(payload.reasoning).toEqual({ effort: 'none' })
+    expect(payload.max_output_tokens).toBe(800)
     expect(payload.text.format).toMatchObject({ type: 'json_schema', strict: true })
     expect(payload.input[1].content).toContain(A)
     expect(payload.input[1].content).toContain('jazz or painting')
