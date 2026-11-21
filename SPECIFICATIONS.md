@@ -1,5 +1,8 @@
 # SideQuest — Current M2 MVP Technical Specifications
 
+> **Scope notice (Nov 21):** The specifications below preserve **merged M2 behavior** and do not describe every final-project draft. Before implementing new API, Calendar, map, WebSocket, AI, Auth or group features, use [the dated final status and technical handoff](docs/FINAL_PROJECT_CURRENT_STATUS_2026-11-21.md), verify the exact current PR/commit and obtain the affected feature owner's review. Final specs and diagrams need reconciliation after the combined release passes.
+
+
 **Updated November 4, 2026.** Implements [REQUIREMENTS.md](REQUIREMENTS.md). Historic walking-skeleton specifications are retained at [docs/M1_HISTORICAL_SPECIFICATIONS.md](docs/M1_HISTORICAL_SPECIFICATIONS.md).
 
 ## Technology and runtime
