@@ -48,7 +48,8 @@ function parseSelection(data: unknown): ModelSelection | null {
       !response.event_ids.every(id => typeof id === 'string' && id.length <= 100)) return null
   if (!['date', 'start', 'end'].every(field => response[field] === null ||
       (typeof response[field] === 'string' && (response[field] as string).length <= 32))) return null
-  return response as ModelSelection
+  return { event_ids: response.event_ids as string[], date: response.date as string | null,
+    start: response.start as string | null, end: response.end as string | null }
 }
 
 export function evaluateAiSelection(
@@ -164,7 +165,12 @@ export function createAiDiscoverApi(catalog: EventCatalogPort | null, config: Ai
     if (req.method !== 'POST') {
       reply(res, 405, { error: 'AI discovery accepts POST requests only.' }); return true
     }
-    if (url.search || (req.headers.origin && new URL(req.headers.origin).host !== req.headers.host)) {
+    let originAllowed = true
+    if (req.headers.origin) {
+      try { originAllowed = new URL(req.headers.origin).host === req.headers.host }
+      catch { originAllowed = false }
+    }
+    if (url.search || !originAllowed) {
       reply(res, 403, { error: 'Use AI discovery from SideQuest.' }); return true
     }
     if (!catalog) {
