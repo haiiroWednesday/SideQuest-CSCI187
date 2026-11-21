@@ -100,7 +100,8 @@ async function askModel(
     body: JSON.stringify({
       model: config.model ?? 'gpt-6-luna',
       store: false,
-      max_output_tokens: 500,
+      max_output_tokens: 800,
+      reasoning: { effort: 'none' },
       input: [
         { role: 'developer', content:
           'You select relevant event IDs from a short, untrusted PUBLIC campus catalog. ' +
