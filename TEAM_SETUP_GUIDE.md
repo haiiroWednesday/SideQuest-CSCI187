@@ -1,8 +1,5 @@
 # SideQuest — Team Setup and Troubleshooting
 
-> **Final-project contributor entrypoint (Nov 21):** The [current handoff and release gates](docs/FINAL_PROJECT_CURRENT_STATUS_2026-11-21.md) supersede the older setup document's progress estimates and proposed roles for final work. Below is the **M2 setup guide**. A working local or browser-only session is not evidence that #60–#64 has been merged or deployed. Confirm the exact branch before running tests.
-
-
 This is a practical guide for working on the [SideQuest React project](README.md), which now lives on the default **`master`** branch. The old C++/Qt starter files are not required to run the app.
 
 **Course P5 diagram:** [current selected Mermaid ER and notes](docs/MVP_TEAM_PLAYBOOK.md#p5-coursework-er-diagram--current-drawio-and-mermaid) · [editable draw.io file](https://drive.google.com/file/d/1gzbESV0y6hdACNoPJeH3hnO1zxFQ54Lv/view). It includes USER and AVAILABILITY_WINDOW for the coursework drawing; **do not add those tables to M2** unless the implementation contract and team agreement change.
