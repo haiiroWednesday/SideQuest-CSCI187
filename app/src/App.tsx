@@ -6,6 +6,7 @@ import { ScheduleTrailView, useScheduleScreen } from './view/ScheduleTrailView'
 import { EmbeddedPostEventForm } from './view/PostEventForm'
 import { ToastStack, type ToastItem } from './view/Toasts'
 import { useEventCatalog } from './view/useEventCatalog'
+import { useCatalogLiveUpdates } from './view/useCatalogLiveUpdates'
 import { useBrowseDetail } from './view/useBrowseDetail'
 import { useSharedSchedule } from './view/useSharedSchedule'
 import { presentBrowseDetail, type FreeWindow } from './controller/presentScreens'
@@ -21,6 +22,7 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
   const [page, setPage] = useState(pageFromHash)
   const [freeWindow, setFreeWindow] = useState<FreeWindow>({ date: '', start: '', end: '' })
   const events = useEventCatalog(connection.catalog)
+  useCatalogLiveUpdates(connection.shared, events.refresh)
   const plans = useSharedSchedule(connection.catalog)
   const details = useBrowseDetail(connection.catalog)
   const discover = useDiscoverScreen({
