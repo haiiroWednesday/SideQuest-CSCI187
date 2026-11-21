@@ -1,5 +1,5 @@
 // Server API rejects event dates beyond the one-year posting horizon through
-// the shared EventCatalog Model rule. 
+// the shared EventCatalog Model rule.
 import { afterEach, describe, expect, it } from 'vitest'
 import { createServer, type Server } from 'node:http'
 import { createCatalogApi } from '../server/api'
