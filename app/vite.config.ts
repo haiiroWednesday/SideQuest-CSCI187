@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { loadEnv } from 'vite'
 import { createCatalogApi } from './server/api.ts'
+import { attachCatalogRealtime } from './server/catalogRealtime.ts'
 import { createSupabaseEventCatalogFromEnv } from './src/model/supabaseEventTable.ts'
 
 // 🧪 Vite runs the React development app; Vitest reuses this config
@@ -12,7 +13,8 @@ export default defineConfig(({ mode }) => ({
     name: 'sidequest-catalog-api',
     configureServer(server) {
       const env = { ...loadEnv(mode, process.cwd(), 'SUPABASE_'), ...process.env }
-      const api = createCatalogApi(createSupabaseEventCatalogFromEnv(env))
+      const realtime = server.httpServer ? attachCatalogRealtime(server.httpServer) : null
+      const api = createCatalogApi(createSupabaseEventCatalogFromEnv(env), Date.now, eventId => realtime?.publish(eventId))
       server.middlewares.use((req, res, next) => { void api(req, res).then(handled => { if (!handled) next() }).catch(next) })
     },
   }],
