@@ -1,7 +1,7 @@
 // Optional AI suggestions for the PUBLIC catalog. The existing View and
 // Controller remain responsible for actual event details and planning.
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { aiSearchAvailable, requestAiDiscovery, type AiDiscoverResult } from '../controller/aiDiscovery'
+import { aiSearchAvailable, requestAiDiscovery, aiSuggestionDetails, type AiDiscoverResult } from '../controller/aiDiscovery'
 import './ai-discovery.css'
 
 export function AiDiscoverPanel({ visibleEventIds, onChoose }: {
@@ -88,7 +88,7 @@ export function AiDiscoverPanel({ visibleEventIds, onChoose }: {
                     <button type="button" onClick={() => onChoose(item.id)}
                       aria-label={`View AI suggestion for ${item.title}`}>
                       <strong>{item.title}</strong>
-                      <small>{item.date} · {item.start}–{item.end} · {item.location}</small>
+                      <small>{aiSuggestionDetails(item)}</small>
                     </button>
                   ) : (
                     <span className="sq-ai-hidden-result">
