@@ -1,5 +1,8 @@
 # SideQuest — instructions for coding assistants
 
+> **FINAL PROJECT SOURCE OF TRUTH (Nov 21):** Read [the current status and owner handoff](docs/FINAL_PROJECT_CURRENT_STATUS_2026-11-21.md) before any final-project code or PR review. This file and the linked playbook preserve the **merged M2 contract** and historical class decisions. Do not use the October/November M2 target dates as proof that later final features shipped or that team assignments were ratified. Check master, every affected open PR and the current as-built architecture before changes. Never turn on disabled group/Auth or move review-only SQL into live migrations without Daven/team approval and real permission tests.
+
+
 **Read these before suggesting changes.** This project is a course assignment; a human teammate owns every PR and approves scope. This file provides common context for agents (including Cline); it does **not** launch agents.
 
 ## Source of truth
