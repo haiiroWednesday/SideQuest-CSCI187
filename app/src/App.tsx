@@ -85,7 +85,7 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
           </main>
         </div>
       ) : (
-          <DiscoverView screen={discover} routes={routes} sourceNote={sourceNote}
+          <DiscoverView screen={discover} routes={routes} sourceNote={sourceNote} aiSearchEnabled={connection.shared}
             detail={selectedDetail} onSelectEvent={details.open} onRetryDetail={details.retry}
             onRetry={() => { void events.refresh() }}
             onPlan={id => { void plans.add(id) }} onFreeWindowChange={setFreeWindow} />
