@@ -41,6 +41,28 @@ export type ScheduleScreen = {
   missing: { id: string }[]
 }
 
+function presentNextUp(first: PlanStubModel, event: ScreenEvent | undefined, now: Date): NextUpModel {
+  if (first.live?.kind === 'now') {
+    return { stub: first, kind: 'now', when: first.live.text }
+  }
+
+  const day = describeDay(first.date, now)
+  const startTime = `${first.start.time}${first.start.ampm}`
+  if (day.isToday) {
+    // Work from the verified source event; never parse the UI's formatted time.
+    const minutes = event ? minutesUntilStart(event, now) : 0
+    return { stub: first, kind: 'today', when: `in ${spanText(minutes)}` }
+  }
+  if (day.tag === 'TOMORROW') {
+    return { stub: first, kind: 'tomorrow', when: `Tomorrow at ${startTime}` }
+  }
+  // Preserve the existing short-weekday/date display. The full date stays in the model.
+  return {
+    stub: first, kind: 'later',
+    when: `${day.long.split(',')[0].slice(0, 3)} ${first.dateText.slice(0, -5)} at ${startTime}`,
+  }
+}
+
 export function presentSchedule(input: ScheduleInput, now: Date = new Date()): ScheduleScreen {
   const ids = new Set(input.entries.map(entry => entry.event.id))
   const sorted = [...input.entries].sort((a, b) => byTime(a.event, b.event))
@@ -65,21 +87,9 @@ export function presentSchedule(input: ScheduleInput, now: Date = new Date()): S
     return { ...day, overlapNote, timeline }
   })
 
-  let nextUp: NextUpModel | null = null
   const first = upcoming[0]
-  if (first) {
-    const day = describeDay(first.date, now)
-    // Use the source record for duration calculations, not formatted display strings.
-    const firstEvent = sorted.find(entry => entry.event.id === first.id)?.event
-    const until = firstEvent ? minutesUntilStart(firstEvent, now) : 0
-    nextUp = first.live?.kind === 'now'
-      ? { stub: first, kind: 'now', when: first.live.text }
-      : day.isToday
-        ? { stub: first, kind: 'today', when: `in ${spanText(until)}` }
-        : day.tag === 'TOMORROW'
-          ? { stub: first, kind: 'tomorrow', when: `Tomorrow at ${first.start.time}${first.start.ampm}` }
-          : { stub: first, kind: 'later', when: `${day.long.split(',')[0].slice(0, 3)} ${first.dateText.slice(0, -5)} at ${first.start.time}${first.start.ampm}` }
-  }
+  const firstEvent = first ? sorted.find(entry => entry.event.id === first.id)?.event : undefined
+  const nextUp = first ? presentNextUp(first, firstEvent, now) : null
 
   return {
     status: input.blocked ? 'blocked' : input.loading ? 'loading' : input.ids.length === 0 ? 'empty' : 'ready',
