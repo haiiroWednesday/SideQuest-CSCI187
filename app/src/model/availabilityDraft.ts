@@ -21,21 +21,21 @@ function readTime(source: string, prefix: string): string | null {
 }
 
 function ambiguousHour(phrase: string): boolean {
-  if (/\\b(?:noon|midnight)\\b/i.test(phrase)) return false
-  if (/(?:am|pm|a\\.m\\.|p\\.m\\.)$/i.test(phrase)) return false
-  const hour = Number(phrase.match(/^\\d{1,2}/)?.[0] ?? -1)
+  if (/\b(?:noon|midnight)\b/i.test(phrase)) return false
+  if (/(?:am|pm|a\.m\.|p\.m\.)$/i.test(phrase)) return false
+  const hour = Number(phrase.match(/^\d{1,2}/)?.[0] ?? -1)
   return !(hour >= 13 && hour <= 23)
 }
 
 export function previewAvailabilityDraft(source: string): AvailabilityCues {
-  const day = source.match(/\\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|today|tomorrow|weekend)\\b/i)?.[0] ?? null
+  const day = source.match(/\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|today|tomorrow|weekend)\b/i)?.[0] ?? null
   const range = new RegExp('\\b(?:between|from)\\s+(' + withPeriod + ')\\s+(?:and|to)\\s+(' + withPeriod + ')(?!\\w)', 'i').exec(source)
   const after = range?.[1] ?? readTime(source, 'after|from')
   const until = range?.[2] ?? readTime(source, 'until|before')
   // A return-home deadline must NEVER be presented as an event ending time.
   const homeBy = readTime(source, 'home\\s+by|back\\s+by|return\\s+by|returning\\s+by')
-  const tentative = /\\b(?:probably|maybe|might|possibly|tentative|uncertain|not sure|i think|depending|depends|unless)\\b/i.test(source)
-  const nearby = /\\b(?:nearby|close by|near campus|close to campus|walking distance|walkable)\\b/i.test(source)
+  const tentative = /\b(?:probably|maybe|might|possibly|tentative|uncertain|not sure|i think|depending|depends|unless)\b/i.test(source)
+  const nearby = /\b(?:nearby|close by|near campus|close to campus|walking distance|walkable)\b/i.test(source)
   const questions: string[] = []
   if (!day) questions.push('Which day or date does this refer to?')
   else if (/^(?:today|tomorrow|weekend)$/i.test(day)) {
