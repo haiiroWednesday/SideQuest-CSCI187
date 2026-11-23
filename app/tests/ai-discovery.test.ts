@@ -158,13 +158,13 @@ describe('AI discovery: real calendar ranges', () => {
     const monday = { ...base, id: A, date: '2030-11-08' }
     const saturday = { ...base, id: C, date: '2030-11-09' }
     const sunday = { ...base, id: B, date: '2030-11-10' }
-    const provider = vi.fn(async () => modelResult(selection({
+    const providerSpy = vi.fn(async () => modelResult(selection({
       event_ids: [A, C, B], date: '2030-11-09', date_end: null,
-    }))) as typeof fetch
+    })))
     const { post } = await server({
       apiKey: 'server-only-test-key',
       records: [monday, saturday, sunday],
-      provider,
+      provider: providerSpy as typeof fetch,
     })
     const response = await post({ query: 'I want to try something creative this weekend, maybe art or music.' })
     expect(response.status).toBe(200)
@@ -174,7 +174,8 @@ describe('AI discovery: real calendar ranges', () => {
       date: '2030-11-09', dateEnd: '2030-11-10',
       start: null, end: null, applied: 'date_range',
     })
-    const body = JSON.parse(String(provider.mock.calls[0][1]?.body))
+    expect(providerSpy).toHaveBeenCalledTimes(1)
+    const body = JSON.parse(String((providerSpy.mock.calls[0] as unknown as [unknown, RequestInit])[1]?.body))
     const sent = JSON.parse(body.input[1].content)
     expect(sent.recognized_weekend_range).toEqual({ from: '2030-11-09', through: '2030-11-10' })
     expect(sent.candidates.map((item: CampusEvent) => item.id)).toEqual([C, B])
