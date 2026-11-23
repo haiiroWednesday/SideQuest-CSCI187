@@ -180,4 +180,81 @@ describe('group proposal privacy, role and response view', () => {
       action: 'respond', expectedRevision: 3, response: 'if', condition: 'x'.repeat(280),
     })
   })
+
+  it('lets a participant preview dictation text, then explicitly copy and save the original private wording', () => {
+    const action = vi.fn()
+    const spoken = "I think I'm free Saturday after three, but need to be home by seven. Nearby works best."
+    render(<GroupPlanPanel plan={fixture({
+      participants: [{ userId: amy, response: null, privateCondition: null }],
+    })} actorId={amy} eventTitle="Jazz workshop" onAction={action} onRefresh={vi.fn()} />)
+    const input = screen.getByLabelText('What works for you?') as HTMLTextAreaElement
+    fireEvent.change(input, { target: { value: spoken } })
+    expect(action).not.toHaveBeenCalled()
+    expect(screen.queryByRole('region', { name: 'Availability cue preview' })).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Preview availability cues' }))
+    const review = within(screen.getByRole('region', { name: 'Availability cue preview' }))
+    expect(review.getByText('Saturday')).toBeTruthy()
+    expect(review.getByText('three')).toBeTruthy()
+    expect(review.getByText('seven')).toBeTruthy()
+    expect(review.getByText(/travel time/)).toBeTruthy()
+    expect(action).not.toHaveBeenCalled()
+
+    fireEvent.click(review.getByRole('button', { name: 'Use as private condition' }))
+    expect((screen.getByRole('radio', { name: 'If…' }) as HTMLInputElement).checked).toBe(true)
+    expect((screen.getByLabelText('Your private condition') as HTMLTextAreaElement).value).toBe(spoken)
+    expect(screen.getByRole('status').textContent).toMatch(/Copied into your private condition/)
+    expect(action).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Save response' }))
+    expect(action).toHaveBeenCalledExactlyOnceWith({
+      action: 'respond', expectedRevision: 3, response: 'if', condition: spoken,
+    })
+  })
+
+  it('preserves an overlong spoken draft and blocks copying instead of silently truncating it', () => {
+    const action = vi.fn()
+    render(<GroupPlanPanel plan={fixture({
+      participants: [{ userId: amy, response: null, privateCondition: null }],
+    })} actorId={amy} eventTitle="Jazz workshop" onAction={action} onRefresh={vi.fn()} />)
+    const input = screen.getByLabelText('What works for you?') as HTMLTextAreaElement
+    const spoken = 'Saturday after three ' + 'x'.repeat(300)
+    fireEvent.change(input, { target: { value: spoken } })
+    expect(input.value).toBe(spoken)
+    expect(input.maxLength).toBe(-1)
+    expect(input.getAttribute('aria-invalid')).toBe('true')
+    fireEvent.click(screen.getByRole('button', { name: 'Preview availability cues' }))
+    expect(within(screen.getByRole('region', { name: 'Availability cue preview' }))
+      .getByRole('button', { name: 'Use as private condition' }).hasAttribute('disabled')).toBe(true)
+    expect(action).not.toHaveBeenCalled()
+  })
+
+  it('clears the unsaved local preview when the verified participant changes', () => {
+    const action = vi.fn()
+    const plan = fixture({ participants: [
+      { userId: amy, response: null, privateCondition: null },
+      { userId: bo, response: null, privateCondition: null },
+    ] })
+    const { rerender } = render(<GroupPlanPanel plan={plan} actorId={amy}
+      eventTitle="Jazz workshop" onAction={action} onRefresh={vi.fn()} />)
+    fireEvent.change(screen.getByLabelText('What works for you?'), {
+      target: { value: 'Saturday after 3 pm' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Preview availability cues' }))
+    expect(screen.getByRole('region', { name: 'Availability cue preview' })).toBeTruthy()
+    rerender(<GroupPlanPanel plan={plan} actorId={bo}
+      eventTitle="Jazz workshop" onAction={action} onRefresh={vi.fn()} />)
+    expect((screen.getByLabelText('What works for you?') as HTMLTextAreaElement).value).toBe('')
+    expect(screen.queryByRole('region', { name: 'Availability cue preview' })).toBeNull()
+    expect(action).not.toHaveBeenCalled()
+  })
+
+  it('does not offer the assistant to the organizer, outsiders or confirmed plans', () => {
+    const props = { eventTitle: 'Jazz workshop', onAction: vi.fn(), onRefresh: vi.fn() }
+    const { rerender } = render(<GroupPlanPanel plan={fixture()} actorId={organizer} {...props} />)
+    expect(screen.queryByLabelText('What works for you?')).toBeNull()
+    rerender(<GroupPlanPanel plan={fixture()} actorId="outsider" {...props} />)
+    expect(screen.queryByLabelText('What works for you?')).toBeNull()
+    rerender(<GroupPlanPanel plan={fixture({ status: 'confirmed' })} actorId={amy} {...props} />)
+    expect(screen.queryByLabelText('What works for you?')).toBeNull()
+  })
 })
