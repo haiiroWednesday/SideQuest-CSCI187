@@ -27,7 +27,19 @@ test('the isolated group preview captures dictation-style words only after expli
   await expect(page.getByText('Your private condition: ' + phrase)).toBeVisible()
 
   await page.setViewportSize({ width: 320, height: 812 })
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
+  const geometry = await page.evaluate(() => ({
+    viewport: innerWidth, width: document.documentElement.scrollWidth,
+    offenders: [...document.querySelectorAll<HTMLElement>('body *')]
+      .filter(node => node.getBoundingClientRect().right > innerWidth + 1)
+      .slice(0, 12)
+      .map(node => ({
+        element: node.tagName.toLowerCase(), className: String(node.className).slice(0, 100),
+        right: Math.round(node.getBoundingClientRect().right),
+        width: Math.round(node.getBoundingClientRect().width),
+        content: node.textContent?.trim().slice(0, 80),
+      })),
+  }))
+  expect(geometry.width, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.viewport + 1)
   await page.reload()
   await expect(page.getByText('Awaiting response', { exact: true })).toHaveCount(2)
   await expect(page.getByLabel('What works for you?')).toHaveValue('')
