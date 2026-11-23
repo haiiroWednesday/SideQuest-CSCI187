@@ -14,3 +14,24 @@ export function googleMapsVenueSearchUrl(location: string): string | null {
   url.searchParams.set('query', venue)
   return url.toString()
 }
+
+
+export type DeviceCoordinates = { latitude: number; longitude: number }
+
+/** Open Google Maps walking directions only after the student explicitly chooses a
+ * destination and grants device-location access. No route or accessible entrance
+ * is claimed by SideQuest. The external provider resolves the literal venue. */
+export function googleMapsWalkingDirectionsUrl(
+  location: string, position: DeviceCoordinates,
+): string | null {
+  if (!googleMapsVenueSearchUrl(location)) return null
+  const { latitude, longitude } = position
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) ||
+      latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return null
+  const url = new URL('https://www.google.com/maps/dir/')
+  url.searchParams.set('api', '1')
+  url.searchParams.set('origin', latitude.toFixed(6) + ',' + longitude.toFixed(6))
+  url.searchParams.set('destination', location.trim())
+  url.searchParams.set('travelmode', 'walking')
+  return url.toString()
+}
