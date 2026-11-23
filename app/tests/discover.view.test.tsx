@@ -117,7 +117,7 @@ describe('Discover View: draws the Controller screen', () => {
     const later = { ...events[1], id: 'poetry-3', date: '2030-11-09' }
     const tomorrow = { ...events[0], id: 'ceramics-4', date: '2030-11-08' }
     const { rerender } = render(draw([events[0], events[1], tomorrow, later]))
-    expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual([
+    expect(screen.getAllByRole('heading', { level: 3 }).filter(h => h.classList.contains('sq-day')).map(h => h.textContent)).toEqual([
       'TODAYThursday, 11/7/2030',
       'TOMORROWFriday, 11/8/2030',
       'SATSaturday, 11/9/2030',
@@ -127,7 +127,7 @@ describe('Discover View: draws the Controller screen', () => {
 
     // Same data, the next evening: Thursday's events have ended and Friday is today.
     rerender(draw([events[0], events[1], tomorrow, later], {}, {}, new Date('2030-11-08T18:00:00-08:00')))
-    expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual(['TOMORROWSaturday, 11/9/2030'])
+    expect(screen.getAllByRole('heading', { level: 3 }).filter(h => h.classList.contains('sq-day')).map(h => h.textContent)).toEqual(['TOMORROWSaturday, 11/9/2030'])
   })
 
   it('removes an event that expires while Discover remains mounted', async () => {
