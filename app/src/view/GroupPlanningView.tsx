@@ -120,14 +120,15 @@ export function GroupPlanningView({ actorId, client, events, routes }: GroupPlan
           <h1 id="sq-group-page-title">Plan <em>together.</em></h1>
           <p>Invitations and responses belong to verified participants. A group proposal does not register anyone for an event.</p>
         </section>
-        {error && <p role="alert" className="sq-group-error">{error}</p>}
+        {/* The selected plan owns its action error. Announce it only once. */}
+        {error && !selected && <p role="alert" className="sq-group-error">{error}</p>}
         <div className="sq-group-page-layout">
           <section aria-labelledby="sq-group-list-title" className="sq-group-sidebar">
             <h2 id="sq-group-list-title">Your group outings</h2>
             <button type="button" className="sq-group-link" onClick={() => { void refreshList() }}
               disabled={loading || busy}>Refresh group list</button>
             {loading && <p role="status">Loading group plans…</p>}
-            {!loading && groups.length === 0 && <p>No shared plans yet.</p>}
+            {!loading && !error && groups.length === 0 && <p>No shared plans yet.</p>}
             <ol>
               {groups.map(plan => (
                 <li key={plan.id}>
@@ -162,7 +163,7 @@ export function GroupPlanningView({ actorId, client, events, routes }: GroupPlan
               onAction={command => { void act(command) }}
               onRefresh={() => { void open(selected.id) }}
             />}
-            {!selected && !loading && <p className="sq-group-empty">Select a plan above to review invitations and responses.</p>}
+            {!selected && !loading && !error && <p className="sq-group-empty">Select a plan above to review invitations and responses.</p>}
           </div>
         </div>
       </main>
