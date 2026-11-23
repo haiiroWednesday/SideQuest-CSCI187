@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createSharedScheduleController, type SharedScheduleResult } from '../controller/sharedSchedule'
 import type { EventCatalogPort } from '../controller/postEvent'
+import { SCHEDULE_RECOVERY_CONFIRMATION } from './scheduleRecovery'
 
 export function useSharedSchedule(catalog: EventCatalogPort) {
   const controller = useMemo(() => createSharedScheduleController(catalog), [catalog])
@@ -30,7 +31,7 @@ export function useSharedSchedule(catalog: EventCatalogPort) {
     add: (id: string) => run(() => controller.add(id)),
     remove: (id: string) => run(() => controller.remove(id)),
     recover: () => {
-      if (window.confirm('Replace unreadable schedule data with the valid plan IDs currently loaded? Invalid entries will be discarded. Original events will not change.')) {
+      if (window.confirm(SCHEDULE_RECOVERY_CONFIRMATION)) {
         void run(() => controller.recover())
       }
     },
