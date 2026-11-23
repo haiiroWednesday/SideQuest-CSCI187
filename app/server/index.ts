@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises'
 import { resolve, sep, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createCatalogApi } from './api'
+import type { CatalogPublisherPort } from '../src/model/catalogChanged'
 import { attachCatalogRealtime } from './catalogRealtime'
 import { createAiDiscoverApi } from './aiDiscover'
 import { createGroupApi } from './groupApi'
@@ -14,7 +15,10 @@ import { createSupabaseEventCatalogFromEnv } from '../src/model/supabaseEventTab
 
 const catalog = createSupabaseEventCatalogFromEnv(process.env)
 let realtime: ReturnType<typeof attachCatalogRealtime> | null = null
-const api = createCatalogApi(catalog, Date.now, eventId => realtime?.publish(eventId))
+const notifications: CatalogPublisherPort = {
+  publish(eventId) { realtime?.publish(eventId) },
+}
+const api = createCatalogApi(catalog, Date.now, notifications)
 const ai = createAiDiscoverApi(catalog, { apiKey: process.env.OPENAI_API_KEY, model: process.env.SIDEQUEST_AI_MODEL })
 const groupApi = createGroupApi(createSupabaseGroupGatewayFromEnv(process.env))
 const authApi = createEmailAuthApi(createSupabaseEmailOtpGatewayFromEnv(process.env))
