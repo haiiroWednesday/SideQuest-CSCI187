@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { loadEnv } from 'vite'
 import { createCatalogApi } from './server/api.ts'
+import type { CatalogPublisherPort } from './src/model/catalogChanged.ts'
 import { attachCatalogRealtime } from './server/catalogRealtime.ts'
 import { createAiDiscoverApi } from './server/aiDiscover.ts'
 import { createGroupApi } from './server/groupApi.ts'
@@ -27,7 +28,10 @@ export default defineConfig(({ mode }) => ({
       }
       const catalog = createSupabaseEventCatalogFromEnv(env)
       const realtime = server.httpServer ? attachCatalogRealtime(server.httpServer) : null
-      const api = createCatalogApi(catalog, Date.now, eventId => realtime?.publish(eventId))
+      const notifications: CatalogPublisherPort = {
+        publish(eventId) { realtime?.publish(eventId) },
+      }
+      const api = createCatalogApi(catalog, Date.now, notifications)
       const ai = createAiDiscoverApi(catalog, { apiKey: env.OPENAI_API_KEY, model: env.SIDEQUEST_AI_MODEL })
       const groupApi = createGroupApi(createSupabaseGroupGatewayFromEnv(env))
       const authApi = createEmailAuthApi(createSupabaseEmailOtpGatewayFromEnv(env))
