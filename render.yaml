@@ -1,0 +1,40 @@
+# Review-only deployment template for SideQuest's single Node HTTP + WebSocket service.
+# Import this Blueprint into Render only after the team approves the release SHA.
+# Git auto-deploy is deliberately OFF. No live DB migrations or Auth activation.
+services:
+  - type: web
+    name: sidequest-csci187-preview
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: app
+    branch: integration/final-release-gates-20261122
+    autoDeployTrigger: off
+    buildCommand: npm ci --no-audit --no-fund && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    numInstances: 1
+    envVars:
+      # Node 24 supports the repository's Node >=22.12 requirement.
+      - key: NODE_VERSION
+        value: "24"
+      # Configure using Render's encrypted service environment.
+      # Do not paste either value into this file or a PR.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      # Optional AI provider. Leave unset for the no-AI fallback.
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SIDEQUEST_AI_MODEL
+        value: "gpt-6-luna"
+      # Must stay OFF pending approved group schema/RLS and live identity tests.
+      - key: SIDEQUEST_GROUPS_ENABLED
+        value: "false"
+      - key: SIDEQUEST_AUTH_EMAIL_ENABLED
+        value: "false"
+      - key: SIDEQUEST_AUTH_ALLOW_SIGNUP
+        value: "false"
+      - key: SIDEQUEST_PUBLIC_GROUP_LOGIN
+        value: "false"
