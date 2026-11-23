@@ -69,3 +69,11 @@ These final-project diagrams are editable and intended for team review before th
 Branch `integration/final-full-scope-20261120` combines the previously separate visual/architecture branch (#55 stacked on #54/#53/#49) with the optional authenticated social branch (#59 stacked on #58/#57/#56/#50). It preserves the category-aware Discover presenter, map/calendar View actions, Schedule/Someday, server-only EventCatalog and all associated unit/browser security tests.
 
 **This branch is an integration candidate, not an official final submission or team-approved deployment.** Live Auth, group SQL, verified SCU pedestrian paths, real participants, and optional AI/WebSocket integrations remain incomplete. No account credentials or migrations are applied by merging these draft sources; security flags default to disabled.
+
+## November 23 as-built modular architecture addendum (proposed PR)
+
+The dated November 20 status ledger above is historical. For the **newer draft #74** candidate and the notification-port refactor, use the [as-built ports-and-adapters architecture diagram](diagrams/FINAL_AS_BUILT_PORTS_ADAPTERS.md) and its [editable diagrams.net source](diagrams/FINAL_AS_BUILT_PORTS_ADAPTERS.drawio) as the proposed **non-class-based CRC alternative**. Existing MVC responsibilities and stored-events ER remain part of the submission; no planned group table is presented as already deployed.
+
+Implemented in the draft branch: EventCatalogPort and EventTable storage abstraction with in-memory/Supabase adapters; Node HTTP catalog authority; a tested public WebSocket broadcaster that sends IDs only; React browser controllers refetching canonical event records; optional public-catalog AI endpoint. The added CatalogPublisherPort allows substituting notification transports during tests without changing domain posting. Optional group Auth and private group SQL remain disabled/unmigrated, and AI service awaits a live API-provider test. The actual deployed release SHA and professor's acceptance of the timing condition still need confirmation.
+
+Required demonstration: a persisted catalog post with a fake publisher, a WebSocket publisher, and a throwing publisher; identical persistence behavior and appropriate event ID notifications. Reconcile this as-built diagram with the final exact release commit before presenting it.
