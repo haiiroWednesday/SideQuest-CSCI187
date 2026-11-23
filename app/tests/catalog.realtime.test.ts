@@ -3,7 +3,7 @@ import { createServer, type Server } from 'node:http'
 import { WebSocket } from 'ws'
 import { createCatalogApi } from '../server/api'
 import { attachCatalogRealtime, CATALOG_LIVE_PATH } from '../server/catalogRealtime'
-import { isCatalogChanged } from '../src/model/catalogChanged'
+import { isCatalogChanged, type CatalogPublisherPort } from '../src/model/catalogChanged'
 import { createEventCatalog } from '../src/model/eventCatalog'
 import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 import { campusDateFromToday } from './fixtures/campusDates'
@@ -18,7 +18,8 @@ const draft = {
 async function setup() {
   const catalog = createEventCatalog(createInMemoryEventTable())
   let realtime: ReturnType<typeof attachCatalogRealtime> | null = null
-  const api = createCatalogApi(catalog, Date.now, id => realtime?.publish(id))
+  const notifications: CatalogPublisherPort = { publish(id) { realtime?.publish(id) } }
+  const api = createCatalogApi(catalog, Date.now, notifications)
   const server = createServer((req, res) => { void api(req, res).then(handled => {
     if (!handled) { res.writeHead(404); res.end() }
   }) })
