@@ -75,10 +75,14 @@ export function AiDiscoverPanel({ visibleEventIds, onChoose }: {
         <div className="sq-ai-results" aria-live="polite">
           <p className="sq-ai-note">
             {result.timeInterpretation.applied === 'full_window'
-              ? 'Event dates and times checked against the interpreted full window.'
-              : result.timeInterpretation.applied === 'date_only'
-                ? 'Event date checked. Full time fit is unconfirmed.'
-                : 'Suggestions only. Use the free-time form above to confirm what fits.'}
+              ? result.timeInterpretation.dateEnd
+                ? `Events checked for ${result.timeInterpretation.date} through ${result.timeInterpretation.dateEnd}, including their full time fit.`
+                : 'Event date and times checked against the interpreted full window.'
+              : result.timeInterpretation.applied === 'date_range'
+                ? `Events checked for ${result.timeInterpretation.date} through ${result.timeInterpretation.dateEnd}. Full time fit is unconfirmed.`
+                : result.timeInterpretation.applied === 'date_only'
+                  ? 'Event date checked. Full time fit is unconfirmed.'
+                  : 'Suggestions only. Use the free-time form above to confirm what fits.'}
           </p>
           {result.matches.length ? (
             <ul>

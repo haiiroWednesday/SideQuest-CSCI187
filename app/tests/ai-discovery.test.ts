@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createAiDiscoverApi, evaluateAiSelection, AI_MAX_CANDIDATES } from '../server/aiDiscover'
 import { aiSearchAvailable, requestAiDiscovery } from '../src/controller/aiDiscovery'
 import { isAiDiscoverResult } from '../src/model/aiDiscovery'
+import { recognizeWeekendRange } from '../src/model/relativeDates'
 import type { CampusEvent, EventCatalogPort } from '../src/model/eventCatalog'
 
 const now = new Date('2030-11-07T17:00:00Z')
@@ -35,7 +36,7 @@ function modelResult(selection: unknown): Response {
   }), { status: 200, headers: { 'Content-Type': 'application/json' } })
 }
 const selection = (overrides: Record<string, unknown> = {}) => ({
-  event_ids: [A, B], date: null, start: null, end: null, ...overrides,
+  event_ids: [A, B], date: null, date_end: null, start: null, end: null, ...overrides,
 })
 
 async function server(opts: {
@@ -105,6 +106,96 @@ describe('AI discovery: bounded, deterministic interpretation', () => {
   })
 })
 
+describe('AI discovery: real calendar ranges', () => {
+  it('resolves this and next weekend from the California calendar date without shifting the weekend', () => {
+    // November 7, 2030 is a Thursday; Sat/Sun are November 9 and 10.
+    expect(recognizeWeekendRange('Creative things this weekend', '2030-11-07'))
+      .toEqual({ from: '2030-11-09', through: '2030-11-10' })
+    expect(recognizeWeekendRange('Art next weekend', '2030-11-07'))
+      .toEqual({ from: '2030-11-16', through: '2030-11-17' })
+    expect(recognizeWeekendRange('This weekend', '2030-11-10'))
+      .toEqual({ from: '2030-11-09', through: '2030-11-10' })
+    expect(recognizeWeekendRange('Next weekend', '2030-11-10'))
+      .toEqual({ from: '2030-11-16', through: '2030-11-17' })
+    expect(recognizeWeekendRange('This weekend', '2030-02-30')).toBeNull()
+    expect(recognizeWeekendRange('The weekend sometime', '2030-11-07')).toBeNull()
+  })
+
+  it('checks an explicit two-day date range rather than discarding Sunday', () => {
+    const result = evaluateAiSelection(events, selection({
+      event_ids: [A, B, C, A],
+      date: '2030-11-08', date_end: '2030-11-09',
+    }))
+    expect(result.matches.map(e => e.id)).toEqual([A, B, C])
+    expect(result.timeInterpretation).toEqual({
+      date: '2030-11-08', dateEnd: '2030-11-09',
+      start: null, end: null, applied: 'date_range',
+    })
+    expect(isAiDiscoverResult(result)).toBe(true)
+  })
+
+  it('applies a strict full-duration filter across BOTH dates and rejects invalid ranges', () => {
+    const full = evaluateAiSelection(events, selection({
+      event_ids: [B, C, A], date: '2030-11-08', date_end: '2030-11-09',
+      start: '14:00', end: '16:00',
+    }))
+    expect(full.matches.map(e => e.id)).toEqual([C, A])
+    expect(full.timeInterpretation.applied).toBe('full_window')
+    expect(full.timeInterpretation.dateEnd).toBe('2030-11-09')
+
+    const reversed = evaluateAiSelection(events, selection({
+      date: '2030-11-09', date_end: '2030-11-08',
+    }))
+    expect(reversed.timeInterpretation.applied).toBe('none')
+    expect(reversed.timeInterpretation.date).toBeNull()
+    const fakeDate = evaluateAiSelection(events, selection({
+      date: '2030-11-08', date_end: '2030-11-31',
+    }))
+    expect(fakeDate.timeInterpretation.applied).toBe('none')
+  })
+
+  it('pre-filters an explicit weekend before the candidate cap and enforces the weekend despite wrong AI dates', async () => {
+    const monday = { ...base, id: A, date: '2030-11-08' }
+    const saturday = { ...base, id: C, date: '2030-11-09' }
+    const sunday = { ...base, id: B, date: '2030-11-10' }
+    const providerSpy = vi.fn(async () => modelResult(selection({
+      event_ids: [A, C, B], date: '2030-11-09', date_end: null,
+    })))
+    const { post } = await server({
+      apiKey: 'server-only-test-key',
+      records: [monday, saturday, sunday],
+      provider: providerSpy as typeof fetch,
+    })
+    const response = await post({ query: 'I want to try something creative this weekend, maybe art or music.' })
+    expect(response.status).toBe(200)
+    const result = await response.json()
+    expect(result.matches.map((item: CampusEvent) => item.id)).toEqual([C, B])
+    expect(result.timeInterpretation).toEqual({
+      date: '2030-11-09', dateEnd: '2030-11-10',
+      start: null, end: null, applied: 'date_range',
+    })
+    expect(providerSpy).toHaveBeenCalledTimes(1)
+    const body = JSON.parse(String((providerSpy.mock.calls[0] as unknown as [unknown, RequestInit])[1]?.body))
+    const sent = JSON.parse(body.input[1].content)
+    expect(sent.recognized_weekend_range).toEqual({ from: '2030-11-09', through: '2030-11-10' })
+    expect(sent.candidates.map((item: CampusEvent) => item.id)).toEqual([C, B])
+    expect(JSON.stringify(result)).not.toContain('server-only-test-key')
+  })
+
+  it('does not call the model when there are no events on the requested weekend', async () => {
+    const provider = vi.fn(async () => modelResult(selection())) as typeof fetch
+    const { post } = await server({ apiKey: 'test-key', records: [base], provider })
+    const response = await post({ query: 'a creative event this weekend' })
+    expect(response.status).toBe(200)
+    const result = await response.json()
+    expect(result.matches).toEqual([])
+    expect(result.timeInterpretation).toMatchObject({
+      date: '2030-11-09', dateEnd: '2030-11-10', applied: 'date_range',
+    })
+    expect(provider).not.toHaveBeenCalled()
+  })
+})
+
 describe('AI discovery: server-only provider integration', () => {
   it('reports no-key status without a provider call or fabricated fallback', async () => {
     const { origin, post, spy } = await server()
@@ -121,7 +212,7 @@ describe('AI discovery: server-only provider integration', () => {
       modelResult(selection({ event_ids: [B, A, 'not-in-catalog', A] })))
     const { post, origin } = await server({ apiKey: 'test-key-never-return', provider: providerSpy as typeof fetch })
     expect(await (await fetch(origin + '/api/ai/status')).json()).toEqual({ available: true })
-    const response = await post({ query: 'jazz or painting this weekend' })
+    const response = await post({ query: 'jazz or painting on campus' })
     expect(response.status).toBe(200)
     const value = await response.json()
     expect(value.matches.map((x: CampusEvent) => x.id)).toEqual([B, A])
