@@ -76,6 +76,31 @@ describe('authenticated group page: proposal, participant and recoverable errors
       node => node.textContent?.includes('The plan changed'),
     )).toBe(true))
     expect(client.act).toHaveBeenCalledTimes(1)
+    // One error announcement, even when a selected panel is present.
+    expect(screen.getAllByRole('alert')).toHaveLength(1)
+  })
+
+
+  it('distinguishes a failed group-list request from a genuinely empty list and recovers on retry', async () => {
+    const client: GroupClientPort = {
+      list: vi.fn()
+        .mockRejectedValueOnce(new Error('The group service could not be reached.'))
+        .mockResolvedValueOnce([]),
+      create: vi.fn(async () => basePlan),
+      get: vi.fn(async () => basePlan),
+      act: vi.fn(async () => basePlan),
+    }
+    render(<GroupPlanningView actorId={orgId} client={client} events={events} routes={routes} />)
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('could not be reached'))
+    // An API failure must not be presented as an empty plan list or invite prompt.
+    expect(screen.queryByText('No shared plans yet.')).toBeNull()
+    expect(screen.queryByText('Select a plan above to review invitations and responses.')).toBeNull()
+    expect(screen.getAllByRole('alert')).toHaveLength(1)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh group list' }))
+    await waitFor(() => expect(client.list).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.getByText('No shared plans yet.')).toBeTruthy())
+    expect(screen.queryByRole('alert')).toBeNull()
   })
 
   it('ignores a stale action result when the authenticated client changes', async () => {
