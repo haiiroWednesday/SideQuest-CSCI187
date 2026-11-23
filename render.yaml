@@ -10,7 +10,7 @@ services:
     rootDir: app
     branch: integration/final-release-gates-20261122
     autoDeployTrigger: off
-    buildCommand: npm ci --no-audit --no-fund && npm run build
+    buildCommand: npm ci --include=dev --no-audit --no-fund && npm run build
     startCommand: npm start
     healthCheckPath: /
     numInstances: 1
