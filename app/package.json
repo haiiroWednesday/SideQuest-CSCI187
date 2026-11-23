@@ -16,7 +16,8 @@
     "test:rubric": "vitest run tests/kandel.rubric-evidence.test.ts tests/kandel.code-quality.test.ts",
     "test:regression": "npm run test:coverage && npm run test:mutation:pilot && npm run test:rubric && npm run build && npm run test:e2e",
     "test:regression:contract": "vitest run tests/regression.contract-matrix.test.ts",
-    "test:regression:journeys": "playwright test e2e/regression.journeys.spec.ts --project=chromium"
+    "test:regression:journeys": "playwright test e2e/regression.journeys.spec.ts --project=chromium",
+    "test:ai:live": "node --env-file=.env.local scripts/verify-ai-live.mjs"
   },
   "engines": {
     "node": ">=22.12.0"
@@ -26,7 +27,8 @@
     "@fontsource/instrument-serif": "^5.3.0",
     "@supabase/supabase-js": "^2.118.0",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "ws": "8.22.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
@@ -42,6 +44,7 @@
     "jsdom": "^26.1.0",
     "typescript": "~5.9.3",
     "vite": "^8.3.4",
-    "vitest": "4.1.12"
+    "vitest": "4.1.12",
+    "@types/ws": "8.18.1"
   }
 }
