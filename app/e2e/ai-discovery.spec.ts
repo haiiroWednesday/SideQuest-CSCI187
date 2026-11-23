@@ -71,3 +71,30 @@ test('AI UI stays disabled when no provider is configured and regular Discover s
   await expect(page.getByRole('searchbox', { name: 'What would you like to do?' })).toHaveCount(0)
   await expect(page.getByLabel('Free on', { exact: true })).toBeVisible()
 })
+
+test('AI date-range wording discloses the actual days without claiming a full-time fit', async ({ browser }) => {
+  const backend = sharedCatalogHttpFixture([event])
+  const context = await browser.newContext()
+  const dateEnd = new Date(Date.parse(DATE + 'T00:00:00Z') + 86_400_000).toISOString().slice(0, 10)
+  try {
+    await backend.attach(context)
+    await context.route('**/api/ai/status', route => route.fulfill({ json: { available: true } }))
+    await context.route('**/api/ai/discover', route => route.fulfill({ json: {
+      matches: [{ id: ID, title: event.title, date: DATE, start: '14:30', end: '15:30', location: event.location }],
+      timeInterpretation: { date: DATE, dateEnd, start: null, end: null, applied: 'date_range' },
+      catalogTruncated: false,
+    } }))
+    const page = await context.newPage()
+    await page.goto(SHARED_APP)
+    await page.getByRole('searchbox', { name: 'What would you like to do?' })
+      .fill('a painting workshop this weekend')
+    await page.getByRole('button', { name: 'Find events' }).click()
+    await expect(page.getByText(
+      `Events checked for ${DATE} through ${dateEnd}. Full time fit is unconfirmed.`
+    )).toBeVisible()
+    await expect(page.getByRole('button', { name: 'View AI suggestion for Painting Workshop' })).toBeVisible()
+    expect(await page.evaluate(() => localStorage.getItem('sidequest.planned-event-ids.v1'))).toBeNull()
+  } finally {
+    await context.close()
+  }
+})
