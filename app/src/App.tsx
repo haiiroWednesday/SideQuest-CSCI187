@@ -7,6 +7,7 @@ import { ScheduleTrailView, useScheduleScreen } from './view/ScheduleTrailView'
 import { EmbeddedPostEventForm } from './view/PostEventForm'
 import { ToastStack, type ToastItem } from './view/Toasts'
 import { useEventCatalog } from './view/useEventCatalog'
+import { useCatalogLiveUpdates } from './view/useCatalogLiveUpdates'
 import { useBrowseDetail } from './view/useBrowseDetail'
 import { useSharedSchedule } from './view/useSharedSchedule'
 import { useSomeday } from './view/useSomeday'
@@ -38,9 +39,10 @@ const pageFromHash = () => {
   return ['#post', '#create-heading'].includes(window.location.hash) ? 'post' : 'discover'
 }
 
-export default function App({ catalog, now, groupSession, emailAuth }: {
+export default function App({ catalog, now, groupSession, emailAuth, realtimeEnabled = false }: {
   catalog?: ConnectedCatalog
   now?: () => Date
+  realtimeEnabled?: boolean
   /** Only a verified login provider can supply this. Never read a user ID or token from localStorage here. */
   groupSession?: VerifiedGroupSession
   emailAuth?: GroupEmailAuthFlow
@@ -56,6 +58,8 @@ export default function App({ catalog, now, groupSession, emailAuth }: {
   const [freeWindow, setFreeWindow] = useState<FreeWindow>({ date: '', start: '', end: '' })
   const [category, setCategory] = useState<EventCategorySelection>('all')
   const events = useEventCatalog(connection.catalog)
+  // Notifications only trigger an authoritative catalog refresh; no pushed event is trusted.
+  useCatalogLiveUpdates(connection.shared && realtimeEnabled, events.refresh)
   const plans = useSharedSchedule(connection.catalog)
   const someday = useSomeday()
   const details = useBrowseDetail(connection.catalog)
@@ -142,7 +146,7 @@ export default function App({ catalog, now, groupSession, emailAuth }: {
           </main>
         </div>
       ) : (
-          <DiscoverView screen={discover} routes={routes} sourceNote={sourceNote}
+          <DiscoverView screen={discover} routes={routes} sourceNote={sourceNote} aiSearchEnabled={connection.shared}
             detail={selectedDetail} onSelectEvent={details.open} onRetryDetail={details.retry}
             onRetry={() => { void events.refresh() }}
             onPlan={id => { void plans.add(id) }} onFreeWindowChange={setFreeWindow}

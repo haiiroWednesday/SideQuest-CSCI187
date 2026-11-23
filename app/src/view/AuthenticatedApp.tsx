@@ -15,7 +15,7 @@ export function AuthenticatedApp({ catalog }: { catalog: ConnectedCatalog }) {
     verifyCode: auth.verifyCode,
     signOut: auth.signOut,
   } : undefined
-  return <App catalog={catalog}
+  return <App catalog={catalog} realtimeEnabled
     groupSession={auth.enabled ? auth.session ?? undefined : undefined}
     emailAuth={flow} />
 }
