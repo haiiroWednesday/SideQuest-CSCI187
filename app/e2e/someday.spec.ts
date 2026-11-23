@@ -1,0 +1,110 @@
+import { expect, test } from '@playwright/test'
+
+test('save an undated idea, connect a real event, plan it and defer without losing the idea', async ({ page, browser }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.clock.install({ time: new Date('2030-11-07T17:00:00Z') })
+  await page.goto('/')
+  const id = '55555555-5555-4555-8555-555555555555'
+  await page.evaluate(id => {
+    localStorage.setItem('sidequest.local-catalog.v1', JSON.stringify([{
+      id, title: 'Jazz Workshop', host_name: 'SCU Music',
+      description: 'Meet the musicians', location: 'Music Hall',
+      event_date: '2030-11-08', start_time: '14:30:00', end_time: '15:30:00',
+    }]))
+  }, id)
+  await page.reload()
+  await page.goto('/#someday')
+  await expect(page.getByRole('heading', { name: 'My Someday.' })).toBeVisible()
+  await page.getByLabel('Activity or place').fill('Go to a jazz performance')
+  await page.getByLabel('What needs to happen? (optional)').fill('Find a free afternoon')
+  await page.getByRole('button', { name: 'Save the idea' }).click()
+  await expect(page.getByRole('heading', { name: 'Go to a jazz performance' })).toBeVisible()
+  await page.getByLabel('Connect to a real campus event').selectOption(id)
+  await expect(page.locator('.sq-someday-status')).toHaveText('ready')
+  await page.getByRole('button', { name: 'Plan this event' }).click()
+  await page.goto('/#schedule')
+  await expect(page.getByText('Jazz Workshop').first()).toBeVisible()
+  expect(await page.evaluate(id => JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1') || '[]').includes(id), id)).toBe(true)
+
+  await page.goto('/#someday')
+  await page.getByRole('button', { name: 'Defer for later' }).click()
+  await page.reload()
+  await expect(page.locator('.sq-someday-status')).toHaveText('deferred')
+  await expect(page.getByRole('heading', { name: 'Go to a jazz performance' })).toBeVisible()
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sidequest.someday-intentions.v1') || '[]').length)).toBe(1)
+  await page.setViewportSize({ width: 320, height: 812 })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
+  await page.screenshot({ path: test.info().outputPath('someday-phone-320.png'), fullPage: true })
+
+  // Browser-local ideas and planned event IDs must not become shared accounts.
+  const otherContext = await browser.newContext()
+  const other = await otherContext.newPage()
+  await other.goto('/#someday')
+  await expect(other.getByText('Nothing saved yet.')).toBeVisible()
+  await otherContext.close()
+})
+
+test('Someday corrupt storage is preserved unless recovery is explicitly confirmed', async ({ page }) => {
+  await page.goto('/#someday')
+  await page.evaluate(() => localStorage.setItem('sidequest.someday-intentions.v1', '{corrupt'))
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Your saved ideas cannot be read.' })).toBeVisible()
+  page.once('dialog', dialog => dialog.dismiss())
+  await page.getByRole('button', { name: 'Reset unreadable ideas' }).click()
+  expect(await page.evaluate(() => localStorage.getItem('sidequest.someday-intentions.v1'))).toBe('{corrupt')
+  page.once('dialog', dialog => dialog.accept())
+  await page.getByRole('button', { name: 'Reset unreadable ideas' }).click()
+  await expect(page.getByText('Nothing saved yet.')).toBeVisible()
+})
+
+test('Someday preserves over-limit clipboard pastes, explains limits, and saves only complete text', async ({ page, browserName }) => {
+  test.skip(browserName !== 'chromium', 'clipboard-read/clipboard-write permissions are Chromium-specific')
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.goto('/#someday')
+
+  const title = page.getByLabel('Activity or place')
+  const note = page.getByLabel('What needs to happen? (optional)')
+  const save = page.getByRole('button', { name: 'Save the idea' })
+  const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('sidequest.someday-intentions.v1') ?? '[]') as { title: string; note: string }[])
+  await expect(title).toHaveAccessibleDescription(/Up to 120 characters/)
+  await expect(note).toHaveAccessibleDescription(/Up to 500 characters/)
+
+  await page.evaluate(text => navigator.clipboard.writeText(text), 'x'.repeat(121))
+  await title.focus()
+  await page.keyboard.press('ControlOrMeta+V')
+  await expect(title).toHaveValue('x'.repeat(121))
+  await expect(title).toHaveAttribute('aria-invalid', 'true')
+  await expect(page.locator('#sq-idea-title-count')).toHaveText(/^121\/120/)
+  await expect(page.getByText('Shorten the idea to 120 characters before saving.')).toBeVisible()
+  await expect(save).toBeDisabled()
+  expect(await stored()).toHaveLength(0)
+
+  await title.fill('x'.repeat(120))
+  await expect(title).not.toHaveAttribute('aria-invalid')
+  await expect(page.locator('#sq-idea-title-count')).not.toHaveAttribute('data-over-limit')
+  await expect(save).toBeEnabled()
+
+  await page.evaluate(text => navigator.clipboard.writeText(text), 'n'.repeat(501))
+  await note.focus()
+  await page.keyboard.press('ControlOrMeta+V')
+  await expect(note).toHaveValue('n'.repeat(501))
+  await expect(note).toHaveAttribute('aria-invalid', 'true')
+  await expect(page.locator('#sq-idea-note-count')).toHaveText(/^501\/500/)
+  await expect(page.getByText('Shorten the note to 500 characters before saving.')).toBeVisible()
+  await expect(save).toBeDisabled()
+  expect(await stored()).toHaveLength(0)
+
+  await note.fill('n'.repeat(500))
+  await expect(note).not.toHaveAttribute('aria-invalid')
+  await expect(page.locator('#sq-idea-note-count')).not.toHaveAttribute('data-over-limit')
+  await expect(save).toBeEnabled()
+  await save.click()
+  await expect(page.locator('.sq-someday-card')).toHaveCount(1)
+  const ideas = await stored()
+  expect(ideas).toHaveLength(1)
+  expect(ideas[0].title).toBe('x'.repeat(120))
+  expect(ideas[0].note).toBe('n'.repeat(500))
+  await page.setViewportSize({ width: 320, height: 812 })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
+})

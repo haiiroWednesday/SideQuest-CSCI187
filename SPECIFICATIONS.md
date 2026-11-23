@@ -44,7 +44,9 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 - `model/schedule.ts`: `sidequest.planned-event-ids.v1` stores **only IDs** in the current browser. Model checks IDs, sorts resolved event details, calculates overlaps and enforces the provisional 100-plan limit.
 - `controller/personalSchedule.ts` preserves synchronous local plan writes. `controller/sharedSchedule.ts` coordinates `getById()` reads, distinguishes missing/failed/timed-out details, and rejects obsolete results without changing saved IDs.
 - `view/ScheduleTrailView.tsx` renders controller-prepared plans, conflicts, error/loading/retry states and remove controls. Removal edits only locally stored planned IDs, never the catalog.
+- Compact Schedule cards preserve list-text clamping and provide keyboard-accessible disclosures for full upcoming and past event text, including legacy-length records. This uses resolved presenter data without another catalog lookup or changed plan storage.
 - Public M2 event details must pass the M2 storage ceiling (including a 2,000-character description), not the stricter posting limits, even though older M1 records used a 500-character limit. Legacy records remain readable where applicable.
+- The Schedule presenter also calculates exact start/end minutes and disjoint layout lanes for a proportional daily timeline; the View renders a visual overview above the existing accessible event list. Displayed bar height is 1.2 pixels per minute, so 120 minutes has twice the height of 60 minutes. Collision groups share their lane count; adjacent events may reuse lanes. Historical and unresolved plans keep their existing list/retry behavior.
 - Consecutive events with end == next start do not overlap; real overlaps warn without blocking the user.
 
 ## S5 — Persistence, permissions, and failures (R1–R5)
@@ -82,3 +84,40 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 The production Node server serves the built UI and API. GET `/api/catalog` returns only the shared-storage flag; GET `/api/events` lists upcoming records or looks up `?id=...`; POST `/api/events` accepts only the seven EventDraft fields. Public PUT/PATCH/DELETE are rejected. Read deadlines are 10 seconds. The server's upstream fetch aborts at 15 seconds. An uncertain insert is not automatically retried; users are told to check Discover before another submission.
 
 Request bodies are limited to 16 KiB, browser cross-origin writes are rejected, and a per-process 20/minute/IP posting guard applies. The hosting edge should supply durable rate limiting before a real public deployment. This does not add authentication or verified organizer identity.
+
+## S6 — Someday personal intentions (new final-project draft)
+- `model/someday.ts`: separate personal Intention records have stable local IDs, plain-language title and note, explicit status, and nullable linked Event ID. An Idea may exist without an event date, and linking does not RSVP or invite others.
+- `controller/someday.ts`: rejects invalid or corrupt local records and refuses to overwrite unreadable storage without explicit user confirmation. The 100-idea limit prevents new records at capacity.
+- `view/SomedayView.tsx`: create an idea, connect it to a real currently listed Event by ID, defer or revisit it, and use the existing Schedule controller to plan the event. The public Event remains untouched.
+- State is browser-local only. Shared invitations, group permissions and cross-device synchronization require separate reviewed data models and live authorization tests before release.
+
+## S7 — Explain strict event fit (new final-project draft)
+- `model/fitAssessment.ts` reports confirmed full fit, time overlap without confirmed attendance flexibility, non-overlap or unknown end time. An event cannot become a strict M2 match merely because its interval partly overlaps.
+- `controller/presentDiscover.ts` keeps the exact existing `findEvents` filtering/count and additionally prepares up to five same-date nonmatching events with reasons. `DiscoverView` displays them separately, with no eligible-plan claim.
+- Existing catalog records still require valid start and end times. Unknown-end evaluation is additive groundwork for source import and is not evidence that undated or incomplete official events have been ingested.
+
+## S8 — Suggested category filters (new final-project draft)
+- `model/eventCategories.ts` defines six broad campus-activity groups plus Other. Suggestions use conservative English title/host keyword signals; unknown or unclassified events fall into Other. They are **not organizer-approved labels** and are not written to the public Event table.
+- `controller/presentDiscover.ts` applies category and strict full-fit filtering to the same catalog snapshot. Results, fit counts and same-date near-miss explanations are all scoped to the selected category. Category counts describe the upcoming catalog before the optional free-window constraint.
+- `view/CategoryFilters.tsx` renders accessible pressed-state filter controls, responsive horizontal scrolling and an All activities recovery action. Decorative symbols are temporary placeholders for curated illustrated category artwork, pending final design selection.
+- Future server-set or organizer-selected categories require a reviewed, backward-compatible Event contract and SQL migration. Do not silently reinterpret these provisional keyword suggestions as verified event metadata.
+
+## S9 — Google Calendar draft export (new final-project draft)
+- `controller/calendarExport.ts` derives a Google Calendar event-draft link from existing verified CampusEvent title, description, location, date and start/end in `America/Los_Angeles`. It does not require OAuth, read a calendar, issue an API request or mutate attendance.
+- California wall clock resolves to UTC only when unique. Spring DST gaps and autumn repeated local times return no link rather than silently creating a draft at the wrong instant.
+- Event details and expanded Schedule event text expose a separate `Open Google Calendar draft` link with safe encoded fields. The student must review and manually save the draft in Google Calendar; opening it does not register them for the campus event.
+- Reference: [Google Calendar event-draft link guidance](https://developers.google.com/workspace/calendar/api/concepts/inviting-attendees-to-events). Real Calendar free/busy, calendar synchronization and secure OAuth remain independent, approval-gated features.
+
+## S10 — SCU campus map and route-foundation (new final-project draft)
+- `model/campusRoutes.ts` implements deterministic shortest pedestrian paths on an explicitly supplied graph of campus junctions/buildings and surveyed, evidenced walkways. Only verified edges with positive measured lengths can be routed, and accessible-only planning excludes unapproved paths; unknown sites, missing evidence, disconnected routes and invalid data return unavailable instead of imaginary straight-line distances. **No actual SCU pedestrian graph or real campus distance is loaded yet.** Test graph measurements are synthetic fixtures only.
+- `controller/campusMapLinks.ts` supplies the [official SCU campus map](https://www.scu.edu/map/) and safely encoded, literal venue-search links using [documented Google Maps URLs](https://developers.google.com/maps/documentation/urls/get-started). They never imply a verified pin, path or travel time.
+- Discover event details and Schedule's expanded full text offer those external map entrypoints, with keyboard access on phone and desktop. Nonphysical/unspecified venues do not receive misleading Google Maps searches.
+- Actual SideQuest internal walking directions need a reviewed accessible path graph, source provenance, campus entrances, route closures, measured weights, a UI map projection, and human on-campus verification. Without that evidence, show the official map/search fallback; do not invent route metrics or claim the external-integration bonus.
+
+## S11 — Optional group login, coordination UI and private SQL proposal (new final-project draft)
+- `app/server/emailAuthApi.ts` and `app/server/supabaseEmailAuth.ts` request and verify passwordless email codes server-side. A successful code exchange is checked through Supabase Auth before a token/verified user ID is issued to the current browser tab. The email template must send `{{ .Token }}`; real delivery and signup policy are not configured here.
+- `app/src/view/useGroupEmailAuth.ts` retains the access token only in tab memory, discards it at expiry and never stores refresh credentials. The `AuthenticatedApp` wrapper exposes login/navigation only when both a public build flag and server status allow it. All flags default to off.
+- `app/src/controller/groupClient.ts`, `app/server/groupApi.ts`, and `app/server/supabaseGroupAccess.ts` implement an opt-in, same-origin Bearer-authenticated group transport with strict payloads, generic errors, caller verification, stale revision rejection and private-condition redaction. An arbitrary plan link or submitted account ID grants no authority.
+- `app/src/view/GroupPlanningView.tsx` and `GroupPlanPanel.tsx` contain the corresponding list/create/response/revocation/confirmation interface. The current invitation form uses technical account UUIDs pending a consent-based member discovery or invite-claim system.
+- `supabase/proposals/` contains **review-only** schema/RPC files, verified under simulated PostgreSQL Auth subjects. They are outside real migrations, deny table access by default, and cannot be called operational for students without reviewed Auth, real session tests, account lifecycle and SQL deployment.
+- Since this feature is disabled by default, none of the proposed account/group work changes the established M2 public EventCatalog or device-local Schedule/Someday semantics. No WebSocket collaboration or verified shared-plan deployment is claimed.

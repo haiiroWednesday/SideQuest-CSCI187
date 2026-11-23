@@ -1,31 +1,71 @@
 // VIEW: compose the shared catalog, posting form and device-local Schedule.
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import type { EventCategorySelection } from './controller/presentScreens'
 import { connectBrowserEventCatalog, type ConnectedCatalog } from './controller/postEvent'
 import { DiscoverView, SideQuestHeader, useDiscoverScreen } from './view/DiscoverView'
 import { ScheduleTrailView, useScheduleScreen } from './view/ScheduleTrailView'
 import { EmbeddedPostEventForm } from './view/PostEventForm'
 import { ToastStack, type ToastItem } from './view/Toasts'
 import { useEventCatalog } from './view/useEventCatalog'
+import { useCatalogLiveUpdates } from './view/useCatalogLiveUpdates'
 import { useBrowseDetail } from './view/useBrowseDetail'
 import { useSharedSchedule } from './view/useSharedSchedule'
+import { useSomeday } from './view/useSomeday'
+import { SomedayView } from './view/SomedayView'
+import { GroupPlanningView } from './view/GroupPlanningView'
+import { GroupEmailLoginView } from './view/GroupEmailLoginView'
+import { createAuthenticatedGroupClient, type GroupAccessTokenProvider } from './controller/groupClient'
 import { presentBrowseDetail, type FreeWindow } from './controller/presentScreens'
 
-const routes = { discover: '#discover', schedule: '#schedule', post: '#post' }
+const baseRoutes = { discover: '#discover', schedule: '#schedule', someday: '#someday', post: '#post' }
+export type VerifiedGroupSession = {
+  actorId: string
+  getAccessToken: GroupAccessTokenProvider
+}
+export type GroupEmailAuthFlow = {
+  enabled: boolean
+  busy: boolean
+  error: string | null
+  message: string | null
+  requestCode: (email: string) => Promise<boolean>
+  verifyCode: (email: string, code: string) => Promise<boolean>
+  signOut: () => void
+}
 const pageFromHash = () => {
   if (window.location.hash === '#schedule') return 'schedule'
+  if (window.location.hash === '#someday') return 'someday'
+  if (window.location.hash === '#groups') return 'groups'
+  if (window.location.hash === '#login') return 'login'
   return ['#post', '#create-heading'].includes(window.location.hash) ? 'post' : 'discover'
 }
 
-export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?: () => Date } = {}) {
+export default function App({ catalog, now, groupSession, emailAuth, realtimeEnabled = false }: {
+  catalog?: ConnectedCatalog
+  now?: () => Date
+  realtimeEnabled?: boolean
+  /** Only a verified login provider can supply this. Never read a user ID or token from localStorage here. */
+  groupSession?: VerifiedGroupSession
+  emailAuth?: GroupEmailAuthFlow
+} = {}) {
   const [connection] = useState(() => catalog ?? connectBrowserEventCatalog({}))
   const [page, setPage] = useState(pageFromHash)
+  const routes = groupSession
+    ? { ...baseRoutes, groups: '#groups', ...(emailAuth ? { onSignOut: emailAuth.signOut } : {}) }
+    : emailAuth?.enabled ? { ...baseRoutes, login: '#login' } : baseRoutes
+  const groupClient = useMemo(() => groupSession
+    ? createAuthenticatedGroupClient(groupSession.getAccessToken) : null,
+    [groupSession])
   const [freeWindow, setFreeWindow] = useState<FreeWindow>({ date: '', start: '', end: '' })
+  const [category, setCategory] = useState<EventCategorySelection>('all')
   const events = useEventCatalog(connection.catalog)
+  // Notifications only trigger an authoritative catalog refresh; no pushed event is trusted.
+  useCatalogLiveUpdates(connection.shared && realtimeEnabled, events.refresh)
   const plans = useSharedSchedule(connection.catalog)
+  const someday = useSomeday()
   const details = useBrowseDetail(connection.catalog)
   const discover = useDiscoverScreen({
     events: events.events, loading: events.loading, error: events.error,
-    plannedIds: plans.schedule.ids, freeWindow,
+    plannedIds: plans.schedule.ids, freeWindow, category,
     planningBlocked: plans.schedule.blocked || plans.loading,
     ...(now ? { now: now() } : {}),
   })
@@ -71,6 +111,27 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
         <ScheduleTrailView screen={schedule} routes={routes}
           onRemove={id => { void plans.remove(id) }} onRecover={plans.recover}
           onRetry={() => { void plans.refresh() }} />
+      ) : page === 'someday' ? (
+        <SomedayView
+          ideas={someday.items} blocked={someday.blocked} error={someday.error}
+          events={events.events} plannedIds={plans.schedule.ids} routes={routes}
+          onAdd={someday.add}
+          onLink={(id, eventId) => {
+            if (eventId === null || events.events.some(event => event.id === eventId)) {
+              someday.link(id, eventId)
+            }
+          }}
+          onStatus={someday.setStatus} onRecover={someday.recover}
+          onPlan={id => { void plans.add(id) }}
+        />
+      ) : page === 'login' && emailAuth && !groupSession ? (
+        <GroupEmailLoginView routes={routes} busy={emailAuth.busy}
+          error={emailAuth.error} message={emailAuth.message}
+          requestCode={emailAuth.requestCode} verifyCode={emailAuth.verifyCode}
+          onSuccess={() => { window.location.hash = '#groups' }} />
+      ) : page === 'groups' && groupSession && groupClient ? (
+        <GroupPlanningView actorId={groupSession.actorId} client={groupClient}
+          events={events.events} routes={routes} />
       ) : page === 'post' ? (
         <div className="sq-discover-page sq-post-page">
           <SideQuestHeader routes={routes} active="post" plannedCount={plans.schedule.ids.length} />
@@ -85,10 +146,11 @@ export default function App({ catalog, now }: { catalog?: ConnectedCatalog; now?
           </main>
         </div>
       ) : (
-          <DiscoverView screen={discover} routes={routes} sourceNote={sourceNote}
+          <DiscoverView screen={discover} routes={routes} sourceNote={sourceNote} aiSearchEnabled={connection.shared}
             detail={selectedDetail} onSelectEvent={details.open} onRetryDetail={details.retry}
             onRetry={() => { void events.refresh() }}
-            onPlan={id => { void plans.add(id) }} onFreeWindowChange={setFreeWindow} />
+            onPlan={id => { void plans.add(id) }} onFreeWindowChange={setFreeWindow}
+            onCategoryChange={setCategory} />
       )
   return (
     <>

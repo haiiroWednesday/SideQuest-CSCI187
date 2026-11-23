@@ -15,6 +15,9 @@ import logoUrl from './assets/sidequest-logo-red.svg'
 import drawingUrl from './assets/mission-arcade-trail.svg'
 import { EventDetailContent, type SelectedDetailState } from './EventDetailContent'
 import { FreeWindowForm } from './FreeWindowForm'
+import { CategoryFilters } from './CategoryFilters'
+import { AiDiscoverPanel } from './AiDiscoverPanel'
+import type { EventCategorySelection } from '../controller/presentScreens'
 import { useMobileDetailFocus, usePhoneViewport } from './useMobileDetailFocus'
 
 export type { FreeWindow } from '../controller/presentScreens'
@@ -23,6 +26,10 @@ export type DiscoverEvent = ScreenEvent
 export type SideQuestRoutes = {
   discover?: string
   schedule?: string
+  someday?: string
+  groups?: string
+  login?: string
+  onSignOut?: () => void
   post?: string
 }
 
@@ -48,7 +55,7 @@ export function SideQuestHeader({
   plannedCount = 0,
 }: {
   routes?: SideQuestRoutes
-  active?: 'discover' | 'schedule' | 'post'
+  active?: 'discover' | 'schedule' | 'someday' | 'groups' | 'login' | 'post'
   /** Shown as a badge on My Schedule, so a student sees where a planned event went. */
   plannedCount?: number
 }) {
@@ -68,6 +75,26 @@ export function SideQuestHeader({
               <i className="sq-ic" aria-hidden="true" /><span>My Schedule</span>
               {plannedCount > 0 && <b className="sq-badge" aria-hidden="true">{plannedCount}</b>}
             </a>
+          )}
+          {routes.someday && (
+            <a aria-current={current('someday')} className="sq-tab sq-tab-someday" href={routes.someday}>
+              <span className="sq-someday-symbol" aria-hidden="true">✦</span><span>Someday</span>
+            </a>
+          )}
+          {routes.groups && (
+            <a aria-current={current('groups')} className="sq-tab sq-tab-groups" href={routes.groups}>
+              <span className="sq-groups-symbol" aria-hidden="true">◎</span><span>Groups</span>
+            </a>
+          )}
+          {routes.login && (
+            <a aria-current={current('login')} className="sq-tab sq-tab-login" href={routes.login}>
+              <span className="sq-login-symbol" aria-hidden="true">◇</span><span>Sign in</span>
+            </a>
+          )}
+          {routes.onSignOut && (
+            <button type="button" className="sq-tab sq-tab-signout" onClick={routes.onSignOut}>
+              <span className="sq-login-symbol" aria-hidden="true">◇</span><span>End session</span>
+            </button>
           )}
           {routes.post && (
             <a aria-current={current('post')} className="sq-post" href={routes.post}>
@@ -89,6 +116,8 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
   children?: ReactNode
 }) {
   const classes = ['sq-stub', selected && 'sq-stub-selected', dim && 'sq-stub-dim', stub.live && `sq-stub-${stub.live.kind}`].filter(Boolean).join(' ')
+  // Discover buttons use phrasing content; static Schedule cards may contain disclosures.
+  const BodyTag = onSelect ? 'span' : 'div'
   const body = (
     <>
       <span className="sq-stub-time">
@@ -96,7 +125,7 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
         <small>to {stub.endText}</small>
         <em>{stub.durationText}</em>
       </span>
-      <span className="sq-stub-body">
+      <BodyTag className="sq-stub-body">
         <strong>{stub.title}</strong>
         <span className="sq-by">
           {stub.host && <><b>{stub.host}</b><i> · </i></>}
@@ -104,7 +133,7 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
         </span>
         {stub.live && <span className={`sq-live sq-live-${stub.live.kind}`}>{stub.live.text}</span>}
         {children}
-      </span>
+      </BodyTag>
     </>
   )
   return onSelect ? (
@@ -132,12 +161,14 @@ export type DiscoverViewProps = {
   onRetryDetail?: () => void
   onPlan?: (eventId: string) => void
   onFreeWindowChange?: (window: FreeWindow) => void
+  onCategoryChange?: (category: EventCategorySelection) => void
   routes?: SideQuestRoutes
   sourceNote?: string
+  aiSearchEnabled?: boolean
 }
 
 export function DiscoverView({
-  screen, onRetry, onPlan, onFreeWindowChange, routes, sourceNote,
+  screen, onRetry, onPlan, onFreeWindowChange, onCategoryChange, routes, sourceNote, aiSearchEnabled = false,
   detail, onSelectEvent, onRetryDetail,
 }: DiscoverViewProps) {
   const [requestedId, setRequestedId] = useState<string | null>(null)
@@ -176,7 +207,20 @@ export function DiscoverView({
           <img className="sq-campus-drawing" src={drawingUrl} alt="" aria-hidden="true" />
         </section>
 
+        {onCategoryChange && <div inert={modal || undefined}>
+          <CategoryFilters categories={screen.categories} onChange={onCategoryChange} />
+        </div>}
+
         {free && onFreeWindowChange && <FreeWindowForm free={free} ready={ready} onWindowChange={onFreeWindowChange} disabledByDialog={modal} />}
+        {aiSearchEnabled && <div inert={modal || undefined}>
+          <AiDiscoverPanel visibleEventIds={stubs.map(item => item.id)} onChoose={id => {
+            if (!stubs.some(item => item.id === id)) return
+            trigger.current = document.activeElement as HTMLElement
+            setRequestedId(id)
+            setSheetOpen(true)
+            onSelectEvent?.(id)
+          }} />
+        </div>}
 
         <div className="sq-board">
           <section inert={modal || undefined} className="sq-results" aria-labelledby="sq-events-heading">
@@ -191,9 +235,16 @@ export function DiscoverView({
               </div>
             ) : screen.status === 'empty' || (screen.status === 'ready' && screen.count === 0) ? (
               <div className="sq-message sq-message-empty">
-                <h3>{free?.active ? 'No events fit this window.' : 'No events to show yet.'}</h3>
+                <h3>{free?.active ? 'No events fit this window.'
+                  : screen.categories.selected !== 'all' ? 'No events in this category.'
+                  : 'No events to show yet.'}</h3>
                 {free?.active && onFreeWindowChange && <button type="button" className="sq-text-button"
                   onClick={() => onFreeWindowChange({ date: '', start: '', end: '' })}>Show all events</button>}
+                {screen.categories.selected !== 'all' && onCategoryChange && (
+                  <button type="button" className="sq-text-button" onClick={() => onCategoryChange('all')}>
+                    Show all categories
+                  </button>
+                )}
                 {routes?.post && <a className="sq-text-link" href={routes.post}>Post an event</a>}
               </div>
             ) : (
@@ -234,6 +285,20 @@ export function DiscoverView({
             <EventDetailContent selected={selected} verified={verified} onRetryDetail={onRetryDetail} onPlan={onPlan} planningBlocked={screen.planningBlocked} onClose={closeSheet} />
           </aside>}
         </div>
+        {free?.active && ready && screen.nearMisses.length > 0 && (
+          <section inert={modal || undefined} className="sq-near-fit" aria-labelledby="sq-near-heading">
+            <h2 id="sq-near-heading">Other events on this date</h2>
+            <p>These events are not confirmed full fits. Partly overlapping time does not establish that late arrival or early departure is permitted.</p>
+            <ul>
+              {screen.nearMisses.map(item => (
+                <li key={item.id}>
+                  <strong>{item.title}</strong>
+                  <p>{item.reason}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <div className={`sq-scrim${sheetOpen && selected && ready ? ' sq-open' : ''}`} aria-hidden="true" onClick={closeSheet} />
         {sourceNote && <p className="sq-source-note">{sourceNote}</p>}
       </main>

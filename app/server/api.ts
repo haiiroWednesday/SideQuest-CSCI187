@@ -2,6 +2,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { EventCatalogError, DRAFT_FIELD_ORDER, type EventCatalogPort, type EventDraft } from '../src/model/eventCatalog'
 import { readCatalogWithDeadline, CatalogReadTimeoutError } from '../src/controller/catalogReads'
+import type { CatalogPublisherPort } from '../src/model/catalogChanged'
 
 export const MAX_POST_BYTES = 16_384
 export const POSTS_PER_MINUTE = 20
@@ -10,7 +11,7 @@ class HttpError extends Error {
   constructor(status: number, message: string) { super(message); this.status = status }
 }
 
-export function createCatalogApi(catalog: EventCatalogPort | null, clock: () => number = Date.now) {
+export function createCatalogApi(catalog: EventCatalogPort | null, clock: () => number = Date.now, publisher?: CatalogPublisherPort) {
   const limits = new Map<string, { count: number; until: number }>()
   const reply = (res: ServerResponse, status: number, value: unknown) => {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' })
@@ -57,7 +58,10 @@ export function createCatalogApi(catalog: EventCatalogPort | null, clock: () => 
         const limit = limits.get(ip) ?? { count: 0, until: now + 60_000 }
         if (limit.count >= POSTS_PER_MINUTE) throw new HttpError(429, 'Too many event submissions. Wait a minute before trying again.')
         limit.count++; limits.set(ip, limit)
-        reply(res, 201, await catalog.create(await draftFrom(req)))
+        const created = await catalog.create(await draftFrom(req))
+        reply(res, 201, created)
+        // Notifications are best-effort; confirmed writes are authoritative.
+        try { publisher?.publish(created.id) } catch { /* A manual refresh remains available. */ }
       }
     } catch (error) {
       if (error instanceof HttpError) reply(res, error.status, { error: error.message })
