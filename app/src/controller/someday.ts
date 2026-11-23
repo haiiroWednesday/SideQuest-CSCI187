@@ -6,7 +6,7 @@ import {
 
 export type SomedayResult = { items: Intention[]; blocked: boolean; error: string | null }
 export type { Intention, IntentionStatus } from '../model/someday'
-export { SOMEDAY_KEY }
+export { SOMEDAY_KEY, MAX_IDEA_TITLE, MAX_IDEA_NOTE } from '../model/someday'
 
 function browserStorage(): SomedayStorage {
   // Resolve storage lazily so browser permission errors are caught by the Model.
