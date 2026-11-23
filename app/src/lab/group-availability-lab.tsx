@@ -8,6 +8,7 @@ import '../style.css'
 import '../view/discover.css'
 import '@fontsource/instrument-serif/400.css'
 import '@fontsource-variable/instrument-sans/wdth.css'
+import './group-availability-lab.css'
 
 const organizer = '11111111-1111-4111-8111-111111111111'
 const student = '22222222-2222-4222-8222-222222222222'
@@ -42,7 +43,7 @@ function GroupAvailabilityLab() {
   return (
     <div className="sq-discover-page">
       <main className="sq-main" id="content">
-        <section className="sq-hero" aria-labelledby="sq-lab-title">
+        <section className="sq-hero sq-group-availability-hero" aria-labelledby="sq-lab-title">
           <h1 id="sq-lab-title">Availability <em>prototype.</em></h1>
           <p>Sample data only. Try describing when you are free, review the cues,
             and decide whether to use the text in a private conditional reply.</p>
