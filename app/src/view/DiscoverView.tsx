@@ -16,6 +16,7 @@ import drawingUrl from './assets/mission-arcade-trail.svg'
 import { EventDetailContent, type SelectedDetailState } from './EventDetailContent'
 import { FreeWindowForm } from './FreeWindowForm'
 import { CategoryFilters } from './CategoryFilters'
+import { AiDiscoverPanel } from './AiDiscoverPanel'
 import type { EventCategorySelection } from '../controller/presentScreens'
 import { useMobileDetailFocus, usePhoneViewport } from './useMobileDetailFocus'
 
@@ -163,10 +164,11 @@ export type DiscoverViewProps = {
   onCategoryChange?: (category: EventCategorySelection) => void
   routes?: SideQuestRoutes
   sourceNote?: string
+  aiSearchEnabled?: boolean
 }
 
 export function DiscoverView({
-  screen, onRetry, onPlan, onFreeWindowChange, onCategoryChange, routes, sourceNote,
+  screen, onRetry, onPlan, onFreeWindowChange, onCategoryChange, routes, sourceNote, aiSearchEnabled = false,
   detail, onSelectEvent, onRetryDetail,
 }: DiscoverViewProps) {
   const [requestedId, setRequestedId] = useState<string | null>(null)
@@ -210,6 +212,15 @@ export function DiscoverView({
         </div>}
 
         {free && onFreeWindowChange && <FreeWindowForm free={free} ready={ready} onWindowChange={onFreeWindowChange} disabledByDialog={modal} />}
+        {aiSearchEnabled && <div inert={modal || undefined}>
+          <AiDiscoverPanel visibleEventIds={stubs.map(item => item.id)} onChoose={id => {
+            if (!stubs.some(item => item.id === id)) return
+            trigger.current = document.activeElement as HTMLElement
+            setRequestedId(id)
+            setSheetOpen(true)
+            onSelectEvent?.(id)
+          }} />
+        </div>}
 
         <div className="sq-board">
           <section inert={modal || undefined} className="sq-results" aria-labelledby="sq-events-heading">
