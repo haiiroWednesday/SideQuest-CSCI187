@@ -4,6 +4,8 @@
 
 MVC still organizes React Views, Controllers and Models. Stable ports separate the domain from event storage and realtime communication.
 
+**Editable companion:** [Open the diagrams.net source](FINAL_AS_BUILT_PORTS_ADAPTERS.drawio) and use File → Open From → Device. The Mermaid diagram below can also be edited directly in this Markdown file.
+
 ```mermaid
 flowchart TB
   subgraph Browser["Browser: React Views"]
