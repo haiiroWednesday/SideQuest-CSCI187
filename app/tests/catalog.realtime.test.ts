@@ -96,7 +96,8 @@ describe('read-only public catalog WebSocket notifications', () => {
     const response = await post(draft)
     expect(response.status).toBe(201)
     const event = await response.json() as { id: string }
-    expect(publish).toHaveBeenCalledExactlyOnceWith(event.id)
+    expect(publish).toHaveBeenCalledTimes(1)
+    expect(publish).toHaveBeenCalledWith(event.id)
     const saved = await (await fetch(origin + '/api/events')).json() as { id: string }[]
     expect(saved.some(row => row.id === event.id)).toBe(true)
   })
