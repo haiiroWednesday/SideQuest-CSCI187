@@ -2,6 +2,7 @@
 import type { StubModel } from '../controller/presentScreens'
 import { titleSizeClass } from './titleSize'
 import { OFFICIAL_SCU_CAMPUS_MAP, googleMapsVenueSearchUrl } from '../controller/campusMapLinks'
+import { DeviceWalkingDirections } from './DeviceWalkingDirections'
 
 export type SelectedDetailState =
   | { id: string; status: 'loading' }
@@ -56,6 +57,7 @@ function VerifiedEventDetails({ event, onPlan, planningBlocked }: {
             </a>
           )}
         </div>
+        <DeviceWalkingDirections location={event.location} />
       </div>
       {event.calendarUrl && (
         <a className="sq-calendar-link" href={event.calendarUrl} target="_blank" rel="noopener noreferrer">
