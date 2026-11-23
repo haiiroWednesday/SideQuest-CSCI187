@@ -26,7 +26,7 @@ describe('explicit device-location walking directions handoff', () => {
   })
 
   it('does not request location until explicitly invoked, and requests one low-power reading', async () => {
-    const ask = vi.fn((success: PositionCallback) => {
+    const ask = vi.fn((success: PositionCallback, _error?: PositionErrorCallback, _options?: PositionOptions) => {
       success({ coords: { latitude: 37.349, longitude: -121.94 } } as GeolocationPosition)
     })
     expect(ask).not.toHaveBeenCalled()
