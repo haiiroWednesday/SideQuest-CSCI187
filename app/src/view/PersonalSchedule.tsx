@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { createScheduleController, loadPlannedEvents, type ScheduleResult } from '../controller/personalSchedule'
 import type { EventCatalogPort } from '../controller/postEvent'
 import { displayDate, displayTime, type CampusEvent } from '../controller/findEvents'
+import { SCHEDULE_RECOVERY_CONFIRMATION } from './scheduleRecovery'
 import './schedule.css'
 
 export function usePersonalSchedule(catalog: EventCatalogPort, upcoming: CampusEvent[], revision: number, active: boolean) {
@@ -54,7 +55,7 @@ export function usePersonalSchedule(catalog: EventCatalogPort, upcoming: CampusE
     add: (id: string) => setResult(controller.add(id)),
     remove: (id: string) => setResult(controller.remove(id)),
     recover: () => {
-      if (window.confirm('Replace unreadable schedule data with the valid plan IDs currently loaded? Invalid entries will be discarded. Original events will not change.')) {
+      if (window.confirm(SCHEDULE_RECOVERY_CONFIRMATION)) {
         setResult(controller.recover())
       }
     },
