@@ -77,3 +77,10 @@ Use a **nonproduction Supabase project** with approved migrations and three dedi
 9. Disable the group flags after the controlled test. Promote production SQL and enable the feature only after Daven's security review and the team records the results.
 
 **Current outcome:** This procedure is written for controlled execution. There is no evidence yet that it has been completed with real users or that the group proposal SQL has been deployed. The group feature must remain disabled.
+
+
+## Read-only live staging probe (added November 23)
+
+[Security staging acceptance instructions](FINAL_GROUP_SECURITY_STAGING_READONLY.md) and `app/scripts/smoke-group-permissions.mjs` provide an **opt-in, GET-only** real-account review after staging approval. Default mode confirms that the deployed Auth/group gates remain disabled; `--approved-live` requires three actual provider tokens, three distinct account UUIDs, and a pre-existing plan supplied privately through the host environment. It tests organizer/invitee views, outsider 404/list exclusion, and private-condition redaction without creating or editing records.
+
+**Status:** code and offline input-validation tests exist; no real live staging test is claimed. The independent RLS, session revocation, mutation denial and browser-specific checks above are still required.
