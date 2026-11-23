@@ -206,7 +206,8 @@ describe('group proposal privacy, role and response view', () => {
     expect(screen.getByRole('status').textContent).toMatch(/Copied into your private condition/)
     expect(action).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: 'Save response' }))
-    expect(action).toHaveBeenCalledExactlyOnceWith({
+    expect(action).toHaveBeenCalledTimes(1)
+    expect(action).toHaveBeenCalledWith({
       action: 'respond', expectedRevision: 3, response: 'if', condition: spoken,
     })
   })
