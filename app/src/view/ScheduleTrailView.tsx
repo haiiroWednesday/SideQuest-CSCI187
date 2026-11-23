@@ -6,6 +6,7 @@ import { DayBubble, EventStub, SideQuestHeader, useMinuteTick, type SideQuestRou
 import { titleSizeClass } from './titleSize'
 import { OFFICIAL_SCU_CAMPUS_MAP, googleMapsVenueSearchUrl } from '../controller/campusMapLinks'
 import { ScheduleTimeline } from './ScheduleTimeline'
+import { DeviceWalkingDirections } from './DeviceWalkingDirections'
 
 /** Re-ask the Controller every half minute so Next up and Happening now stay true. */
 export function useScheduleScreen(input: ScheduleInput, now?: Date): ScheduleScreen {
@@ -31,6 +32,7 @@ function ScheduleEventDetails({ event }: { event: PlanStubModel }) {
             {' · '}
             <a href={googleMapsVenueSearchUrl(event.location)!} target="_blank" rel="noopener noreferrer">Search this venue in Google Maps</a>
           </>}
+          <DeviceWalkingDirections location={event.location} />
         </dd>
         {event.calendarUrl && <>
           <dt>Calendar</dt>
