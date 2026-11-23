@@ -2,6 +2,7 @@
 // Caller identity is supplied by a verified session layer, never entered here.
 import { useEffect, useState, type FormEvent } from 'react'
 import { MAX_GROUP_INVITEES, MAX_PRIVATE_CONDITION, type GroupAction, type GroupDetail, type GroupResponse } from '../controller/groupClient'
+import { AvailabilityDraftHelper } from './AvailabilityDraftHelper'
 import './group-planning.css'
 
 const responseText: Record<GroupResponse, string> = {
@@ -115,6 +116,13 @@ export function GroupPlanPanel({
       {self && plan.status === 'proposed' && (
         <form className="sq-group-form" onSubmit={onRespond}>
           <h3>Your response</h3>
+          <AvailabilityDraftHelper key={plan.id + ':' + actorId} disabled={!actionable}
+            onUse={text => {
+              // Copy the student's exact approved words only into their own
+              // private conditional response; no write occurs until Save.
+              setChoice('if')
+              setCondition(text)
+            }} />
           <fieldset disabled={!actionable}>
             <legend>Can you attend?</legend>
             <div className="sq-group-choices">

@@ -1,0 +1,19 @@
+/* The availability prototype uses the Group view tokens and never impersonates a chat. */
+.sq-av { display: grid; gap: 10px; border: 1px dashed var(--sq-rule-strong); border-radius: 14px; padding: clamp(12px, 3vw, 18px); background: var(--sq-ticket-bg); min-width: 0; }
+.sq-av h4 { margin: 0; font: 700 17px/1.4 var(--font-sans); }
+.sq-av h5 { margin: 0; font: 700 15px/1.4 var(--font-sans); }
+.sq-av p { margin: 0; }
+.sq-av > label { font-weight: 750; }
+.sq-av textarea { width: 100%; min-width: 0; resize: vertical; padding: 11px; font: 500 16px/1.4 var(--font-sans); color: var(--sq-ink); background: #fff; border: 1.5px solid var(--sq-rule-strong); border-radius: 10px; }
+.sq-av textarea[aria-invalid="true"] { border-color: var(--sq-red-deep); }
+.sq-av [data-over-limit] { color: var(--sq-red-deep); }
+.sq-av .sq-av-review, .sq-av .sq-av-use { justify-self: start; border: 1.5px solid var(--sq-red-deep); border-radius: 999px; background: var(--sq-red-deep); color: var(--sq-on-red); font: 700 15px/1.3 var(--font-sans); cursor: pointer; padding: 10px 16px; min-height: 44px; }
+.sq-av :is(.sq-av-review, .sq-av-use):disabled { opacity: .6; cursor: not-allowed; }
+.sq-av-review-result { display: grid; gap: 10px; border-top: 1px solid var(--sq-rule-strong); padding-top: 12px; }
+.sq-av-review-result dl { display: grid; grid-template-columns: minmax(100px, 1fr) minmax(0, 2fr); gap: 6px 12px; margin: 0; }
+.sq-av-review-result dt { color: var(--sq-muted); font-weight: 650; }
+.sq-av-review-result dd { margin: 0; overflow-wrap: anywhere; }
+.sq-av-review-result ul { margin: 0; padding-left: 22px; }
+.sq-av-review-label { font-weight: 750; }
+.sq-av-status { font-weight: 700; }
+@media (max-width: 400px) { .sq-av-review-result dl { grid-template-columns: 1fr; gap: 1px; } .sq-av-review-result dd { margin-bottom: 8px; } }

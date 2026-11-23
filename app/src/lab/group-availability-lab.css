@@ -1,0 +1,4 @@
+/* DEV-ONLY prototype framing: use real SideQuest tokens without overwide hero rows. */
+.sq-group-availability-hero { display: grid; justify-items: start; align-items: start; gap: 10px; margin-bottom: 22px; }
+.sq-group-availability-hero h1 { max-width: 100%; font-size: clamp(34px, 6vw, 65px); line-height: 1.06; }
+.sq-group-availability-hero p { max-width: 760px; margin: 0; font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; }

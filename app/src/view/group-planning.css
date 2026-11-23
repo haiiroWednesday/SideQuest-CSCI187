@@ -14,7 +14,7 @@
 .sq-group-members li { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 14px; min-width: 0; border: 1px solid var(--sq-rule-strong); border-radius: 12px; padding: 12px 14px; }
 .sq-group-member-name { font-weight: 750; max-width: 100%; overflow-wrap: anywhere; }
 .sq-group-response { color: var(--sq-muted); font-size: 13px; }
-.sq-group-condition { flex: 1 0 100%; overflow-wrap: anywhere; }
+.sq-group-condition { flex: 1 1 100%; width: 100%; min-width: 0; max-width: 100%; overflow-wrap: anywhere; white-space: pre-wrap; }
 .sq-group-form { display: grid; gap: 12px; border-radius: 16px; background: var(--sq-paper); padding: 18px; border: 1px solid var(--sq-rule-strong); }
 .sq-group-form fieldset { min-width: 0; border: 0; padding: 0; margin: 0; display: grid; gap: 12px; }
 .sq-group-form legend, .sq-group-form label { font-weight: 750; }
@@ -34,6 +34,7 @@
   .sq-group-plan { padding: 14px; gap: 13px; }
   .sq-group-form { padding: 12px; }
   .sq-group-members li { align-items: flex-start; flex-direction: column; }
+  .sq-group-members .sq-group-condition { flex: none; width: 100%; align-self: stretch; }
   .sq-group-members .sq-group-link { margin-left: 0; }
 }
 
@@ -53,6 +54,7 @@
 .sq-group-new button:disabled { opacity: .65; cursor: not-allowed; }
 .sq-group-empty { margin: 0; color: var(--sq-muted); }
 @media (max-width: 780px) {
+  .sq-group-page .sq-hero { flex-direction: column; align-items: flex-start; gap: 12px; }
   .sq-group-page-layout { display: flex; flex-direction: column; }
   .sq-group-sidebar, .sq-group-main { width: 100%; }
   .sq-group-sidebar, .sq-group-new { padding: 16px; }
