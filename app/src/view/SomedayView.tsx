@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { type Intention, type IntentionStatus } from '../controller/someday'
+import { MAX_IDEA_NOTE, MAX_IDEA_TITLE, type Intention, type IntentionStatus } from '../controller/someday'
 import { displayDate, displayTime } from '../controller/findEvents'
 import { type CampusEvent } from '../controller/postEvent'
 import { SideQuestHeader, type SideQuestRoutes } from './DiscoverView'
@@ -25,11 +25,19 @@ export function SomedayView({
 }: SomedayViewProps) {
   const [title, setTitle] = useState('')
   const [note, setNote] = useState('')
+  // Count the stored (trimmed) text, consistent with the Someday Model.
+  // Never use maxLength: native paste truncation would hide missing content.
+  const titleLength = title.trim().length
+  const noteLength = note.trim().length
+  const titleTooLong = titleLength > MAX_IDEA_TITLE
+  const noteTooLong = noteLength > MAX_IDEA_NOTE
+  const cannotSave = titleLength === 0 || titleTooLong || noteTooLong
   const available = new Map(events.map(event => [event.id, event]))
   const planned = new Set(plannedIds)
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (cannotSave) return
     if (onAdd(title, note)) {
       setTitle('')
       setNote('')
@@ -60,12 +68,32 @@ export function SomedayView({
             <form className="sq-someday-form" onSubmit={submit}>
               <h2>Something you want to do</h2>
               <label htmlFor="sq-idea-title">Activity or place</label>
-              <input id="sq-idea-title" required maxLength={120} value={title}
+              <input id="sq-idea-title" required value={title}
+                aria-invalid={titleTooLong || undefined}
+                aria-describedby={'sq-idea-title-hint sq-idea-title-count' + (titleTooLong ? ' sq-idea-title-error' : '')}
                 onChange={event => setTitle(event.target.value)} placeholder="Go to a jazz performance" />
+              <span id="sq-idea-title-hint" className="sq-visually-hidden">Up to {MAX_IDEA_TITLE} characters</span>
+              <small id="sq-idea-title-count" className="sq-someday-counter"
+                data-over-limit={titleTooLong || undefined}>
+                {titleLength}/{MAX_IDEA_TITLE}<span className="sq-visually-hidden"> characters</span>
+              </small>
+              {titleTooLong && <small id="sq-idea-title-error" className="sq-someday-field-error">
+                Shorten the idea to {MAX_IDEA_TITLE} characters before saving.
+              </small>}
               <label htmlFor="sq-idea-note">What needs to happen? (optional)</label>
-              <textarea id="sq-idea-note" maxLength={500} rows={3} value={note}
+              <textarea id="sq-idea-note" rows={3} value={note}
+                aria-invalid={noteTooLong || undefined}
+                aria-describedby={'sq-idea-note-hint sq-idea-note-count' + (noteTooLong ? ' sq-idea-note-error' : '')}
                 onChange={event => setNote(event.target.value)} placeholder="Find a good evening with friends" />
-              <button type="submit" className="sq-someday-add">Save the idea</button>
+              <span id="sq-idea-note-hint" className="sq-visually-hidden">Up to {MAX_IDEA_NOTE} characters</span>
+              <small id="sq-idea-note-count" className="sq-someday-counter"
+                data-over-limit={noteTooLong || undefined}>
+                {noteLength}/{MAX_IDEA_NOTE}<span className="sq-visually-hidden"> characters</span>
+              </small>
+              {noteTooLong && <small id="sq-idea-note-error" className="sq-someday-field-error">
+                Shorten the note to {MAX_IDEA_NOTE} characters before saving.
+              </small>}
+              <button type="submit" className="sq-someday-add" disabled={cannotSave}>Save the idea</button>
             </form>
 
             <section className="sq-someday-list" aria-labelledby="sq-ideas-heading">
