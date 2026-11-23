@@ -18,7 +18,7 @@ Host documentation: [Render web services](https://render.com/docs/web-services),
 
 ## Setup path (after permission and credentials)
 
-- Connect the GitHub repository and import [render.yaml](../render.yaml) as a new Blueprint for the **explicit candidate branch**. Confirm the service is a Render **web** service, region Oregon, root directory `app`, Node 24, `npm ci && npm run build`, `npm start`, one instance and auto-deploy OFF.
+- Connect the GitHub repository and import [render.yaml](../render.yaml) as a new Blueprint for the **explicit candidate branch**. Confirm the service is a Render **web** service, region Oregon, root directory `app`, Node 24, `npm ci --include=dev && npm run build`, `npm start`, one instance and auto-deploy OFF.
 - Supply `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` only through the host's protected environment. Confirm the database policies, event schema and current SQL migrations before testing.
 - Optionally configure `OPENAI_API_KEY` through the protected host environment, only after an approved provider account and cost cap. Without it, standard Discover should still work, and AI should be visibly unavailable. The `gpt-6-luna` model ID is part of the candidate, but a successful real API call has **not** been established by mock tests.
 - Activate only one explicitly reviewed staging deployment. Confirm its public HTTPS URL, exact source SHA and build logs. Do **not** point the Blueprint at `master` by convenience.
