@@ -15,11 +15,11 @@ const draft = {
   location: 'Benson', date: campusDateFromToday(30), start: '14:30', end: '15:30',
 }
 
-async function setup() {
+async function setup(publisherOverride?: CatalogPublisherPort) {
   const catalog = createEventCatalog(createInMemoryEventTable())
   let realtime: ReturnType<typeof attachCatalogRealtime> | null = null
   const notifications: CatalogPublisherPort = { publish(id) { realtime?.publish(id) } }
-  const api = createCatalogApi(catalog, Date.now, notifications)
+  const api = createCatalogApi(catalog, Date.now, publisherOverride ?? notifications)
   const server = createServer((req, res) => { void api(req, res).then(handled => {
     if (!handled) { res.writeHead(404); res.end() }
   }) })
@@ -86,6 +86,28 @@ describe('read-only public catalog WebSocket notifications', () => {
     expect((await post({ ...draft, end: '14:00' })).status).toBe(400)
     await new Promise<void>(resolve => setTimeout(resolve, 30))
     expect(received).not.toHaveBeenCalled()
+  })
+
+  it('can substitute an in-memory notification port without changing domain persistence', async () => {
+    const publish = vi.fn()
+    const { origin, post } = await setup({ publish })
+    expect((await post({ ...draft, end: '14:00' })).status).toBe(400)
+    expect(publish).not.toHaveBeenCalled()
+    const response = await post(draft)
+    expect(response.status).toBe(201)
+    const event = await response.json() as { id: string }
+    expect(publish).toHaveBeenCalledExactlyOnceWith(event.id)
+    const saved = await (await fetch(origin + '/api/events')).json() as { id: string }[]
+    expect(saved.some(row => row.id === event.id)).toBe(true)
+  })
+
+  it('does not fail a confirmed event write if an optional notification adapter fails', async () => {
+    const { origin, post } = await setup({ publish() { throw Error('transport offline') } })
+    const response = await post(draft)
+    expect(response.status).toBe(201)
+    const event = await response.json() as { id: string }
+    const saved = await (await fetch(origin + '/api/events')).json() as { id: string }[]
+    expect(saved.some(row => row.id === event.id)).toBe(true)
   })
 
   it('rejects a WebSocket upgrade from another Origin', async () => {
