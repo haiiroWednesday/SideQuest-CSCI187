@@ -3,7 +3,7 @@
 // choose their keyboard's built-in dictation if it is available.
 import { useId, useState } from 'react'
 import { MAX_PRIVATE_CONDITION } from '../controller/groupClient'
-import { previewAvailabilityDraft, type AvailabilityCues } from '../model/availabilityDraft'
+import { previewAvailabilityDraft, type AvailabilityCues } from '../controller/availabilityDraft'
 import './availability-draft.css'
 
 export function AvailabilityDraftHelper({
