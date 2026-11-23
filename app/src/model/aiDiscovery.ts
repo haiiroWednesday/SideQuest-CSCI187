@@ -7,9 +7,10 @@ export type AiDiscoverResult = {
   matches: AiEventSuggestion[]
   timeInterpretation: {
     date: string | null
+    dateEnd?: string | null
     start: string | null
     end: string | null
-    applied: 'full_window' | 'date_only' | 'none'
+    applied: 'full_window' | 'date_range' | 'date_only' | 'none'
   }
   catalogTruncated: boolean
 }
@@ -25,7 +26,9 @@ export function isAiDiscoverResult(input: unknown): input is AiDiscoverResult {
       typeof (item as unknown as Record<string, unknown>)[key] === 'string')
   )) return false
   const time = result.timeInterpretation
-  if (!time || !['full_window', 'date_only', 'none'].includes(time.applied)) return false
+  if (!time || !['full_window', 'date_range', 'date_only', 'none'].includes(time.applied)) return false
+  if (time.dateEnd !== undefined && time.dateEnd !== null && typeof time.dateEnd !== 'string') return false
+  if (time.applied === 'date_range' && (typeof time.date !== 'string' || typeof time.dateEnd !== 'string')) return false
   return ['date', 'start', 'end'].every(key =>
     (time as unknown as Record<string, unknown>)[key] === null ||
     typeof (time as unknown as Record<string, unknown>)[key] === 'string')
