@@ -3,7 +3,7 @@ import { createServer, type Server } from 'node:http'
 import { WebSocket } from 'ws'
 import { createCatalogApi } from '../server/api'
 import { attachCatalogRealtime, CATALOG_LIVE_PATH } from '../server/catalogRealtime'
-import { isCatalogChanged } from '../src/model/catalogChanged'
+import { isCatalogChanged, type CatalogPublisherPort } from '../src/model/catalogChanged'
 import { createEventCatalog } from '../src/model/eventCatalog'
 import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 import { campusDateFromToday } from './fixtures/campusDates'
@@ -15,10 +15,11 @@ const draft = {
   location: 'Benson', date: campusDateFromToday(30), start: '14:30', end: '15:30',
 }
 
-async function setup() {
+async function setup(publisherOverride?: CatalogPublisherPort) {
   const catalog = createEventCatalog(createInMemoryEventTable())
   let realtime: ReturnType<typeof attachCatalogRealtime> | null = null
-  const api = createCatalogApi(catalog, Date.now, id => realtime?.publish(id))
+  const notifications: CatalogPublisherPort = { publish(id) { realtime?.publish(id) } }
+  const api = createCatalogApi(catalog, Date.now, publisherOverride ?? notifications)
   const server = createServer((req, res) => { void api(req, res).then(handled => {
     if (!handled) { res.writeHead(404); res.end() }
   }) })
@@ -85,6 +86,29 @@ describe('read-only public catalog WebSocket notifications', () => {
     expect((await post({ ...draft, end: '14:00' })).status).toBe(400)
     await new Promise<void>(resolve => setTimeout(resolve, 30))
     expect(received).not.toHaveBeenCalled()
+  })
+
+  it('can substitute an in-memory notification port without changing domain persistence', async () => {
+    const publish = vi.fn()
+    const { origin, post } = await setup({ publish })
+    expect((await post({ ...draft, end: '14:00' })).status).toBe(400)
+    expect(publish).not.toHaveBeenCalled()
+    const response = await post(draft)
+    expect(response.status).toBe(201)
+    const event = await response.json() as { id: string }
+    expect(publish).toHaveBeenCalledTimes(1)
+    expect(publish).toHaveBeenCalledWith(event.id)
+    const saved = await (await fetch(origin + '/api/events')).json() as { id: string }[]
+    expect(saved.some(row => row.id === event.id)).toBe(true)
+  })
+
+  it('does not fail a confirmed event write if an optional notification adapter fails', async () => {
+    const { origin, post } = await setup({ publish() { throw Error('transport offline') } })
+    const response = await post(draft)
+    expect(response.status).toBe(201)
+    const event = await response.json() as { id: string }
+    const saved = await (await fetch(origin + '/api/events')).json() as { id: string }[]
+    expect(saved.some(row => row.id === event.id)).toBe(true)
   })
 
   it('rejects a WebSocket upgrade from another Origin', async () => {
