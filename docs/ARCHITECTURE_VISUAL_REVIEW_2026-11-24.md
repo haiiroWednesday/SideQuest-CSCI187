@@ -1,0 +1,30 @@
+# Architecture visual review and implementation reconciliation
+
+Reviewed November 24, 2026: every rendered page of the 14-page project source `SideQuest_Architecture_Group_Review_v4.3.pdf` (printed pages 01, 02, 03, 04, 04b, 05–13), plus `SideQuest_Sheet_B_Review_Amendment.pdf` (printed page 03). The source is a conceptual team-review document dated November 21, not an authorization to implement every entity or a current database migration. The amendment is a November 24 proposal. Preserve the original source files.
+
+| Printed page | Visual observation and governing rule | Current reconciliation |
+| --- | --- | --- |
+| 01 | Public opportunities, private ideas and shared plans are distinct. Yellow Free window is a saved availability claim; the M2 green form input is not stored. | Keep #88's derived personal gaps separate from shared availability and consent. Activity proposal A is deferred per the latest discussion. |
+| 02 | Source Record may attest zero or one Event; one Event can have many sources. Event Series preserves individual showtimes; a batch ID is not an external occurrence ID. | #86 collects review candidates and proposes stable mappings; no live ingestion or publication claim. |
+| 03 + amendment | Plan proposes one Event in the current design; future Plan Option stores the chosen option, derives the Event, never duplicates independent selection facts. Amendment reroutes the Offers line around revision, marks If note optional, defers Activity and options. | #89 maintains one event per plan and optional author-only note. No new option/Activity tables. |
+| 04 | Location Resolution preserves raw text or host pin; Place differs from Access Point and Walk Node. Route request/result are computed; opening rules and verified geometry govern access. Unknown is never step-free. | #88 map art and geolocation are a preview, not proof of verified routes. #77 external directions handoff must not claim custom verified walking time. |
+| 04b | Source Record can remain unmatched; Photo, Report and Moderation Case are future entities. | Do not claim postcard delivery, public photo upload or moderation in #88. Preview wording corrected. |
+| 05 | Left panel shows persisted public.events (end_time NOT NULL) and device-only saved event IDs; right panel shows proposed Auth/group tables. | Keep end_time NOT NULL as agreed Nov 24. Missing imported ends remain held. #84 proposes a separate pending invitation table; #89 allows NULL private_condition for If, so the proposed right panel needs a subsequent redraw. |
+| 06 | CRC: Event/EventCatalog/Discover preserve IDs and full-fit rules; SourceReconciler, LocationResolver, CampusRouter have independent responsibilities. | No React-dependent source or routing decisions; no guessed time. Several cards colored draft now have merged code, but actual service verification is separate. |
+| 07 | CRC: Invitation is not consent; verified actor and caller-filtered view; media and Circle membership separate. | #84 has invitation lifecycle code in review; #88 local Friends preview does not establish real group membership. |
+| 08 | Browser, Node API and Supabase are separate trust zones; no DB secrets in browser. | AI, publisher and device-local features have reached master via #82/#83; real credentials and service activation remain gated. |
+| 09 | Four request paths show verified identity, revision, and outsider denial; the authoritative state is in SQL. | #84 disposable integration is evidence, not team-database acceptance. #89 needs exact-head integration test. |
+| 10 | Explicit response states; revision bumps; material changes reset attendance. Original IF box says note required; confirmed plan diagram says locked. | Sheet B amendment supersedes note requirement. #84 adds participant leave/deletion effects; the state machine must reflect these. A rescheduled source event must not preserve stale group consent merely because its UUID remains stable. |
+| 11 | Fetch/parse, verified recurrence, genuine occurrence identity, human review, canonical UUID. No cancellation inferred from a partial feed. | #86 read-only pipeline is aligned, but future transactional sync must account for linked group-plan consent before material updates. |
+| 12 | Time fit, travel assessment and consent/revision are independent computations. No audited SCU network; unknown is not a full fit. | #88 busy marks are a personal filter only; no group-ready claim. Keep strict M2 time fit and external directions scope. |
+| 13 | Integration graph is dated November 21; last merged PR shown is #44. | Historical only. #82/#83 later merged; #84–89 remain separate candidates. Refer to CURRENT_RELEASE_AND_MERGE_GUIDE.md, then live GitHub. |
+
+## Implementation implications
+
+- Explicit attendance is still Works / If / Cannot; unanswered is NULL. The optional If note is author-only and may be blank. A one-tap response must not silently imply Works or clear a prior answer by tapping the same selection again.
+- No authorization for a separate Activity table, multiple Plan options, Circles, persistent busy/free claims, media uploads or a new personal-data schema follows from this review alone. Propose the cross-device Schedule/Someday storage separately with scope and data-isolation tests.
+- Preserve the canonical Event UUID for an approved source reschedule. This does not preserve attendance consent. Any future synchronization transaction needs a reviewed policy for material changes to time or place, cancellation, and linked group-plan revisions. Until that exists, do not activate public synchronization.
+- The revised drawings need a consistent status legend and state machine, including the pending invitation entity, optional note, accepted-member deletion and confirmed-plan invalidation. Do not recolor draft SQL green just because it passed disposable CI.
+- No production credentials, migrations, group activation or automatic source publication authorized here.
+
+This is a traceability note recording the visual review, not a replacement of the architecture PDF or proof of approval.
