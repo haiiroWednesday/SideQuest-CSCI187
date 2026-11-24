@@ -17,6 +17,7 @@ const outsiderToken = 'C'.repeat(40)
 const invalidToken = 'X'.repeat(40)
 const secretPlan = {
   id: planId, eventId, organizerId: orgId, status: 'proposed', revision: 2,
+  invitations: [],
   participants: [
     { userId: memberId, response: 'if', privateCondition: 'Private exam schedule' },
     { userId: outsiderId, response: null, privateCondition: null },
@@ -117,6 +118,25 @@ describe('opt-in group HTTP gateway and verified identity contract', () => {
     const denied = await send(otherBase, '/api/groups/' + planId, outsiderToken)
     expect(denied.status).toBe(404)
     expect((await denied.json()).error).toBe('Plan unavailable.')
+  })
+
+  it('withholds the entire roster from pending recipients even if the RPC returns it', async () => {
+    const raw = { ...secretPlan, invitations: [outsiderId], participants: [secretPlan.participants[0]] }
+    const gateway = { ...mockGateway(), read: vi.fn(async () => raw) }
+    const base = await listen(gateway)
+    const result = await send(base, '/api/groups/' + planId, outsiderToken)
+    expect(result.status).toBe(200)
+    expect(await result.json()).toMatchObject({ invitations: [outsiderId], participants: [] })
+  })
+
+  it('returns only a null receipt for decline and leave', async () => {
+    const gateway = { ...mockGateway(), action: vi.fn(async () => null) }
+    const base = await listen(gateway)
+    for (const action of ['decline', 'leave']) {
+      const res = await send(base, '/api/groups/' + planId + '/actions', memberToken, { expectedRevision: 2, action })
+      expect(res.status).toBe(200)
+      expect(await res.json()).toBeNull()
+    }
   })
 
   it('allows only validated actions without forged user targets', async () => {
