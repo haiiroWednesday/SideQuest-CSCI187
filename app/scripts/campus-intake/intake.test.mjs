@@ -211,3 +211,15 @@ test('rejects duplicate decisions and invalid persistent mappings', () => {
   assert.throws(() => plan({}, { decisions: [decision, decision] }), /Multiple decisions/)
   assert.throws(() => plan({}, { catalog: [] }), /orphaned/)
 })
+
+test('same stable export ID with conflicting start times is not silently collapsed', () => {
+  const snapshot = normalizeOrganizerExport(clubExport([clubEvent, { ...clubEvent,
+    startsAt: '2026-12-01T14:30:00-08:00' }]), qlusion, exportOptions)
+  assert.equal(snapshot.records.length, 2)
+  assert.ok(snapshot.records.every(record => record.reasons.includes('source-record-conflict')))
+})
+test('organizer export source URLs never retain arbitrary query strings', () => {
+  const snapshot = normalizeOrganizerExport(clubExport([{ ...clubEvent,
+    sourceUrl: clubEvent.sourceUrl + '?token=fixture-only#section' }]), qlusion, exportOptions)
+  assert.equal(snapshot.records[0].sourceUrl, clubEvent.sourceUrl)
+})
