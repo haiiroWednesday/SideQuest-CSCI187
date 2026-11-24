@@ -1,5 +1,8 @@
 # SideQuest: reviewed SCU event intake (November 4, 2026)
 
+> **November 23 review correction:** This November 4 batch is historical. Four records are held: three Global Learning Advising entries with conflicting hours, plus Slices of Religious Life pending documented venue reconciliation. No historical clock can authorize a write. Redirects are denied, research-only hosts are removed, and duplicate warnings preserve Unicode. The public catalog remains an intentionally anonymous M2 posting interface; a localhost target does not guarantee an isolated backend. Daven must approve a controlled target and fresh source evidence before any posting. No records have been imported by this correction.
+
+
 This is **candidate data and a safe optional posting tool**, not an unattended scraper, automatic synchronization, or proof that records are in Supabase. It does **not** edit any Model/Controller/View files or change the database schema.
 
 ## What is ready
