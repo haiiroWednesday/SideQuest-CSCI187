@@ -30,6 +30,18 @@ export function createSupabaseEmailOtpGatewayFromEnv(
   })
 
   return {
+    async signOut(token) {
+      // The exact same caller-scoped Auth endpoint exercised by disposable CI.
+      // Never accept a target account, service key or global logout scope.
+      const response = await fetch(new URL('/auth/v1/logout?scope=local', url), {
+        method: 'POST', redirect: 'error',
+        headers: { apikey: key, Authorization: 'Bearer ' + token },
+        signal: AbortSignal.timeout(10_000),
+      })
+      if (response.status !== 204 && response.status !== 200) {
+        throw Error('Provider did not confirm session revocation.')
+      }
+    },
     async requestCode(email) {
       const client = newClient()
       const { error } = await client.auth.signInWithOtp({
