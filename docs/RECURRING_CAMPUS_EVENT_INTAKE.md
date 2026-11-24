@@ -60,3 +60,30 @@ Read [SCU website terms](https://www.scu.edu/terms-and-conditions-of-use/) and t
 ## Scheduling
 
 The workflow proposes refresh every six hours after merge to the default branch. The network job is skipped until an owner sets the explicit approval variable. Manual execution can request a refresh on demand. Successful refreshes produce a seven-day-retention workflow artifact, and errors fail the run. No GitHub commits, Supabase writes or automatic public publication result from the workflow. Schedule cadence is a provisional choice, adjustable after provider approval.
+
+## Follow-up implementation (November 24)
+
+The collector now requires LiveWhale v2 pagination metadata to agree with page counts and the requested query. A capped result, changed total, incomplete page or changed pagination query fails the collection. This strict contract is based on the published API documentation and still requires a real SCU response before activation: https://support.livewhale.com/live/blurbs/json-api
+
+A neutral organizer-export format is supported for approved sources, including Qlusion **if its operator provides or authorizes a compatible export**. This is not a native Qlusion API. The format is JSON with `version: 1`, `provider` matching a registered source ID, and `events` containing `occurrenceId` (genuine stable identity), `title`, `organizer`, `location`, `sourceUrl` (HTTPS on the registered origin), `startsAt`, `endsAt` (explicit offset or UTC, null when unknown), `status` (scheduled/canceled), and `audience` (public/scu-students, otherwise held). The export must have been provided or approved for reuse by its organizer. Dates and identifiers must not be fabricated. Example command:
+
+```sh
+node app/scripts/review-organizer-export.mjs --approved-export qlusion ./approved-export.json
+```
+
+The command emits review JSON only. It does not assume the export is complete.
+
+`reviewedSyncPlan.mjs` models explicit review decisions against existing source-to-event mappings. It proposes updates retaining the canonical UUID, holds stale revisions, protects manual posts and multi-source events, and only proposes cancellation with explicit evidence. It cannot write anything. Candidate validation using the real EventCatalog Model, transactional persistence with revision guards, source-link association, and cancellation visibility are **not implemented**. The database owner must approve these decisions before an adapter can execute the proposals.
+
+### Proposed persistence contract for Daven's review
+
+- A private source mapping has a unique (provider, verified occurrence ID), FK to public.events.id, positive revision, source URL and reviewed evidence. A provider's unstable ID/date composite cannot be promoted without identity review.
+- Creation of the canonical event and its first mapping is atomic. A retry resolves the existing mapping and does not create a second event.
+- An update checks the expected revision, ownership/origin, current event validation and evidence; preserves public.events.id, and commits new facts and revision together.
+- A cancellation needs explicit reviewed evidence and a separately agreed catalog lifecycle contract. No deletion due to disappearance or failed fetch. No anonymous update privileges.
+- Multiple sources and manual event associations require explicit conflict resolution. Review and integration tests must establish access policy and atomicity before a migration is applied.
+- After commit, notify clients through the existing publisher boundary; never signal an uncommitted event.
+
+This proposal changes neither the current event table nor its non-null end-time rule. A real source without end times remains in review until the team approves the necessary catalog behavior.
+
+SCU's published website terms restrict some automated collection according to robots.txt and third-party reuse. Qlusion's public page does not establish a supported API. The local environment could not resolve the source hostnames, and web browsing did not retrieve the LiveWhale JSON. Do not claim that a provider denied access or that scheduled collection has run. See https://www.scu.edu/terms-and-conditions-of-use/ and https://www.qlusion.com/.
