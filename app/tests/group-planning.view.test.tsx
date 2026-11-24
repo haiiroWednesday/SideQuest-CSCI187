@@ -10,7 +10,7 @@ const planId = '44444444-4444-4444-8444-444444444444'
 const eventId = '55555555-5555-4555-8555-555555555555'
 const basePlan: GroupDetail = {
   id: planId, eventId, organizerId: orgId, status: 'proposed', revision: 0,
-  participants: [],
+  participants: [], invitations: [],
 }
 const events = [{
   id: eventId, title: 'Music workshop', hostName: 'SCU Music',
