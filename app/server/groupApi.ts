@@ -153,7 +153,7 @@ function response(res: ServerResponse, status: number, data: unknown): void {
 }
 
 async function jsonBody(req: IncomingMessage): Promise<JsonObject> {
-  if (!req.headers['content-type']?.toLowerCase().startsWith('application/json')) {
+  if (req.headers['content-type']?.split(';')[0].trim().toLowerCase() !== 'application/json') {
     throw new RequestError(415, 'Send group details as JSON.')
   }
   let size = 0
