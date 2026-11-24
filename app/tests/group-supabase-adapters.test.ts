@@ -36,8 +36,10 @@ beforeEach(() => {
     return {
       auth: {
         async getUser(token: string) {
+          if (token === 'outage') return { data: { user: null }, error: { status: 503 } }
+          if (token === 'anonymous') return { data: { user: { id: userA, is_anonymous: true } }, error: null }
           const id = token === tokenA ? userA : token === tokenB ? userB : null
-          return { data: { user: id ? { id } : null }, error: id ? null : { message: 'Invalid token' } }
+          return { data: { user: id ? { id } : null }, error: id ? null : { message: 'Invalid token', status: 401 } }
         },
         async signInWithOtp(input: { email: string; options: { shouldCreateUser: boolean } }) {
           calls.otpRequests.push({ email: input.email, allowSignup: input.options.shouldCreateUser })
@@ -58,6 +60,8 @@ beforeEach(() => {
       },
       async rpc(name: string, args: Record<string, unknown>) {
         calls.rpc.push({ bearer, name, args })
+        if (args.p_expected_revision === 998) return { data: null, error: { code: 'PGRST301' }, status: 401 }
+        if (args.p_expected_revision === 997) return { data: null, error: { code: '23503' }, status: 409 }
         if (args.p_expected_revision === 999) return { data: null, error: { code: '40001' } }
         if (name === 'sidequest_group_read' && bearer === `Bearer ${tokenB}`) {
           return { data: null, error: { code: '42501' } }
@@ -84,6 +88,8 @@ describe('server-only Supabase Auth and group adapters', () => {
     expect(await gateway!.verify(tokenA)).toEqual({ userId: userA })
     expect(await gateway!.verify(tokenB)).toEqual({ userId: userB })
     expect(await gateway!.verify('invalid')).toBeNull()
+    expect(await gateway!.verify('anonymous')).toBeNull()
+    await expect(gateway!.verify('outage')).rejects.toMatchObject({ status: 503 })
 
     await gateway!.list(tokenA)
     await gateway!.create(tokenA, eventId)
@@ -109,6 +115,8 @@ describe('server-only Supabase Auth and group adapters', () => {
     await expect(gateway.action(tokenA, planId, {
       action: 'confirm', expectedRevision: 999,
     })).rejects.toMatchObject({ status: 409 })
+    await expect(gateway.action(tokenA, planId, { action: 'confirm', expectedRevision: 998 })).rejects.toMatchObject({ status: 401 })
+    await expect(gateway.action(tokenA, planId, { action: 'invite', expectedRevision: 997, inviteeId: userB })).rejects.toMatchObject({ status: 400 })
   })
 
   it('issues and verifies an email code without signup or persisted sessions', async () => {
