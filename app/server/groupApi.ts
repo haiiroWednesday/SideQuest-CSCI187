@@ -26,6 +26,8 @@ export class GroupGatewayError extends Error {
 
 const GROUP_MAX_BODY_BYTES = 8192
 const GROUP_REQUESTS_PER_MINUTE = 40
+const GROUP_AUTH_CHECKS_PER_MINUTE = 600
+const MAX_TRACKED_GROUP_ACTORS = 10000
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const VALID_ACTIONS = new Set(['invite', 'remove', 'respond', 'confirm', 'cancel'])
 const VALID_RESPONSES: ReadonlySet<string> = new Set<ResponseKind>(['works', 'if', 'cant'])
@@ -151,11 +153,15 @@ async function jsonBody(req: IncomingMessage): Promise<JsonObject> {
   }
   let size = 0
   const chunks: Buffer[] = []
-  for await (const part of req) {
+  const declared = Number(req.headers['content-length'])
+  if (declared > GROUP_MAX_BODY_BYTES) throw new RequestError(413, 'Group request is too large.')
+  // Stop reading immediately rather than draining attacker-controlled input.
+  // The error response closes the connection after delivering HTTP 413.
+  for await (const part of req.iterator({ destroyOnReturn: false })) {
     size += Buffer.byteLength(part)
-    if (size <= GROUP_MAX_BODY_BYTES) chunks.push(Buffer.isBuffer(part) ? part : Buffer.from(part))
+    if (size > GROUP_MAX_BODY_BYTES) throw new RequestError(413, 'Group request is too large.')
+    chunks.push(Buffer.isBuffer(part) ? part : Buffer.from(part))
   }
-  if (size > GROUP_MAX_BODY_BYTES) throw new RequestError(413, 'Group request is too large.')
   let value: unknown
   try { value = JSON.parse(Buffer.concat(chunks).toString('utf8')) }
   catch { throw new RequestError(400, 'Group details must be valid JSON.') }
@@ -169,6 +175,9 @@ export function createGroupApi(
   clock: () => number = Date.now,
 ) {
   const limits = new Map<string, { count: number; until: number }>()
+  // A fixed, process-wide budget protects Auth without trusting proxy headers.
+  // Normal request quotas are independent for verified accounts.
+  let authBudget = { count: 0, until: 0 }
 
   return async (req: IncomingMessage, res: ServerResponse): Promise<boolean> => {
     let pathname: string
@@ -192,17 +201,13 @@ export function createGroupApi(
         throw new RequestError(405, 'Unsupported group request method.')
       }
 
-      const now = clock(), ip = req.socket.remoteAddress ?? 'unknown'
-      for (const [key, item] of limits) if (item.until <= now) limits.delete(key)
-      if (limits.size >= 10000 && !limits.has(ip)) throw new RequestError(429, 'The group service is busy.')
-      const limit = limits.get(ip) ?? { count: 0, until: now + 60000 }
-      if (limit.count >= GROUP_REQUESTS_PER_MINUTE) throw new RequestError(429, 'Too many group requests.')
-      limit.count++; limits.set(ip, limit)
-
-      if (method === 'POST' && req.headers.origin) {
+      if (method === 'POST') {
         let sameOrigin = false
-        try { sameOrigin = new URL(req.headers.origin).host === req.headers.host }
-        catch { /* malformed Origin is denied */ }
+        try {
+          const origin = new URL(req.headers.origin ?? '')
+          sameOrigin = ['http:', 'https:'].includes(origin.protocol) &&
+            origin.host === req.headers.host && !origin.username && !origin.password
+        } catch { /* missing or malformed Origin is denied */ }
         if (!sameOrigin) throw new RequestError(403, 'Use the SideQuest site for group changes.')
       }
 
@@ -212,10 +217,25 @@ export function createGroupApi(
       if (!token) throw new RequestError(401, 'Sign in before accessing group plans.')
 
       // Confirm the identity with Auth *before* calling any private RPC.
+      const now = clock()
+      if (authBudget.until <= now) authBudget = { count: 0, until: now + 60000 }
+      if (authBudget.count >= GROUP_AUTH_CHECKS_PER_MINUTE) {
+        throw new RequestError(429, 'The group service is busy.')
+      }
+      authBudget.count++
       const actor = await gateway.verify(token)
       if (!actor?.userId || !UUID.test(actor.userId)) {
         throw new RequestError(401, 'Your group session is not valid.')
       }
+
+      for (const [key, item] of limits) if (item.until <= now) limits.delete(key)
+      if (limits.size >= MAX_TRACKED_GROUP_ACTORS && !limits.has(actor.userId)) {
+        throw new RequestError(429, 'The group service is busy.')
+      }
+      const limit = limits.get(actor.userId) ?? { count: 0, until: now + 60000 }
+      if (limit.count >= GROUP_REQUESTS_PER_MINUTE) throw new RequestError(429, 'Too many group requests.')
+      limit.count++
+      limits.set(actor.userId, limit)
 
       if (isRoot && method === 'GET') {
         response(res, 200, projectList(await gateway.list(token)))
@@ -237,6 +257,11 @@ export function createGroupApi(
         ? error.status : 503
       const message = error instanceof RequestError || error instanceof GroupGatewayError
         ? error.message : 'Group planning is unavailable.'
+      if (status === 413) {
+        req.pause()
+        res.setHeader('Connection', 'close')
+        res.once('finish', () => req.destroy())
+      }
       response(res, status, { error: message })
     }
     return true
