@@ -65,6 +65,21 @@ describe('curated SCU source batch: no unverified publication', () => {
     expect(values[6]).not.toBe('')
   })
 
+  it('does not follow a redirect that could replay a POST', () => {
+    const source = new URL('../scripts/review-scu-events.mjs', import.meta.url).href
+    const command = [
+      "import { createServer } from 'node:http';",
+      "import { api } from " + JSON.stringify(source) + ";",
+      "let received = 0;",
+      "const server = createServer((req,res)=>{ if(req.url==='/sink'){received++;res.end('{}')}else{res.writeHead(307,{Location:'/sink'});res.end()} });",
+      "await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));",
+      "let rejected=false; try { await api(new URL('http://127.0.0.1:'+server.address().port),'/redirect',{method:'POST',body:'{}'}); } catch { rejected=true } finally { server.closeAllConnections(); server.close(); }",
+      "console.log(JSON.stringify({received,rejected}));",
+    ].join('\n')
+    const result = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', command], { encoding: 'utf8', timeout: 10_000 }))
+    expect(result).toEqual({ received: 0, rejected: true })
+  })
+
   it('refuses accidental publication without two explicit arguments', () => {
     const result = spawnSync(process.execPath, [program, '--apply'], { encoding: 'utf8', timeout: 10_000 })
     expect(result.status).toBe(1)
