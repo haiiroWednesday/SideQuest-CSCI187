@@ -172,3 +172,42 @@ test('export keeps unknown times, cancellation and restricted audiences in revie
     assert.ok(result.records[0].reasons.includes(reason))
   }
 })
+
+const { planReviewedSynchronization } = await import('./reviewedSyncPlan.mjs')
+const eventId = '12345678-1234-4234-8234-123456789012'
+const mapping = { provider: 'qlusion', occurrenceId: 'club-event-42', eventId, revision: 3 }
+const decision = { provider: mapping.provider, occurrenceId: mapping.occurrenceId,
+  approved: true, identityVerified: true, expectedRevision: 3, intent: 'publish',
+  candidate: { date: '2026-12-02', start: '14:00', end: '15:00' } }
+const plan = (changes = {}, options = {}) => planReviewedSynchronization({
+  mappings: [mapping], catalog: [{ id: eventId, origin: 'imported' }],
+  decisions: [{ ...decision, ...changes }], ...options,
+})
+
+test('reviewed time changes preserve existing event UUID; stale review is held', () => {
+  const result = plan()[0]
+  assert.equal(result.action, 'propose-update')
+  assert.equal(result.eventId, eventId)
+  assert.equal(result.expectedRevision, 3)
+  assert.equal(plan({ expectedRevision: 2 })[0].reason, 'stale-review')
+})
+test('absence never cancels events and cancellation requires explicit evidence', () => {
+  assert.deepEqual(plan({}, { decisions: [] }), [])
+  assert.equal(plan({ intent: 'cancel' })[0].reason, 'cancellation-evidence-required')
+  assert.equal(plan({ intent: 'cancel', explicitCancellation: true })[0].action, 'propose-cancel')
+})
+test('manual posts and multi-source records are not automatically modified', () => {
+  assert.equal(plan({}, { catalog: [{ id: eventId, origin: 'manual' }] })[0].action, 'hold')
+  assert.equal(plan({}, { mappings: [mapping, { ...mapping, provider: 'scu-livewhale' }] })[0].action, 'hold')
+})
+test('new source records require explicit identity and duplicate review', () => {
+  const options = { mappings: [], catalog: [] }
+  assert.equal(plan({ identityVerified: false }, options)[0].reason, 'review-required')
+  assert.equal(plan({ possibleDuplicate: true }, options)[0].reason, 'duplicate-review-required')
+  assert.equal(plan({ possibleDuplicate: false }, options)[0].action, 'propose-create')
+  assert.equal(plan({ intent: 'cancel' }, options)[0].action, 'hold')
+})
+test('rejects duplicate decisions and invalid persistent mappings', () => {
+  assert.throws(() => plan({}, { decisions: [decision, decision] }), /Multiple decisions/)
+  assert.throws(() => plan({}, { catalog: [] }), /orphaned/)
+})
