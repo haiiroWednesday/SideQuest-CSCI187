@@ -35,7 +35,8 @@ Schedule UUIDs are persisted under `sidequest.planned-event-ids.v1`; Someday ide
 erDiagram
     EVENTS ||--o{ GROUP_PLANS : "one real event per plan"
     AUTH_USERS ||--o{ GROUP_PLANS : organizes
-    GROUP_PLANS ||--o{ GROUP_PARTICIPANTS : invites
+    GROUP_PLANS ||--o{ GROUP_PARTICIPANTS : "accepted members"
+    GROUP_PLANS ||--o{ GROUP_INVITATIONS : offers
     AUTH_USERS ||--o{ GROUP_PARTICIPANTS : responds
 
     EVENTS {
@@ -51,16 +52,24 @@ erDiagram
         text status
         bigint revision
         timestamptz created_at
+        timestamptz updated_at
+    }
+    GROUP_INVITATIONS {
+        uuid plan_id PK,FK
+        uuid recipient_id PK
+        timestamptz expires_at
     }
     GROUP_PARTICIPANTS {
         uuid plan_id PK,FK
         uuid user_id PK,FK
         text response_nullable
         text private_condition_nullable
+        timestamptz invited_at
+        timestamptz responded_at
     }
 ```
 
-**All `AUTH_USERS`, `GROUP_PLANS` and `GROUP_PARTICIPANTS` entities and their SQL relationships are proposed, not migrated.** `AUTH_USERS` represents a possible provider-managed identity layer, not an existing application users table. Responses begin as NULL and become Works, If or Cannot only after a specific authenticated participant submits them. Condition text must be restricted to its author; a group invitation cannot grant authority to impersonate a named participant.
+**All group SQL is proposed, not migrated.** `GROUP_INVITATIONS.recipient_id` is deliberately not an Auth foreign key: invitation creation must not check account existence. Only the verified recipient may accept; pending invitees cannot see the roster. Invitations expire after seven days. Accepted participant and organizer account FKs cascade; removing an accepted member advances revision and invalidates confirmation. `AUTH_USERS` represents a possible provider-managed identity layer, not an existing application users table. Responses begin as NULL and become Works, If or Cannot only after a specific authenticated participant submits them. Condition text must be restricted to its author; a group invitation cannot grant authority to impersonate a named participant.
 
 Before adoption, agree on identities, SQL field names, unique constraints, authorization policies, revocation, concurrency guarantees, lifecycle rules, and real two-browser negative tests. [Group security contract](../GROUP_PLAN_SECURITY_CONTRACT.md).
 
