@@ -221,13 +221,22 @@ try {
   pass('Twelve-slot limit and cancellation enforced by real SQL')
   // Supabase logout revokes session/refresh credentials, but the old signed
   // access token can still be within its expiry. RPC session guard must deny.
-  const logout = await request(supabase + '/auth/v1/logout?scope=local', {
-    key: anon, token: b.token, method: 'POST',
-  })
-  check(logout.ok, 'Provider logout failed.')
+  const revoked = b.page.waitForResponse(r =>
+    new URL(r.url()).pathname === '/api/auth/sign-out' && r.request().method() === 'POST')
+  await b.page.getByRole('button', { name: 'End session' }).click()
+  const logout = await revoked
+  check(logout.status() === 200 && (await logout.json()).revoked === true,
+    'Application did not confirm provider logout.')
+  await b.page.getByRole('status').filter({ hasText: 'Signed out of this session.' }).waitFor()
+  await b.page.getByLabel('Email address').waitFor()
+  check(await b.page.getByRole('button', { name: 'End session' }).count() === 0,
+    'Logged-out tab still offers a private session.')
+  await expectStatus(await app(path, a.token), 200, 'Organizer remains signed in')
+  await expectStatus(await app('/api/groups', c.token), 200, 'Unrelated session unaffected')
   await denied(await directRead(b.token), 'Logged-out token direct RPC')
   await denied(await app(path, b.token), 'Logged-out token app gateway')
-  pass('Actual provider session revocation blocks a still-unexpired signed token')
+  await denied(await rpc('sidequest_group_list', b.token, {}), 'Logged-out token direct list')
+  pass('UI sign-out revokes the actual provider session and blocks its still-unexpired signed token')
   const deletion = await admin.auth.admin.deleteUser(b.id)
   check(!deletion.error, 'Disposable account deletion failed.')
   const after = await json(await app(path, a.token), 200, 'Plan after member deletion')
