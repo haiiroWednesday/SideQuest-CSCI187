@@ -134,8 +134,13 @@ describe('permissioned group proposal domain', () => {
 
   it('validates private condition text, membership, duplicate invites and limits', () => {
     let plan = invitePair()
-    expect(applyGroupCommand(plan, 'bo', plan.revision, { type: 'respond', response: 'if' }))
-      .toMatchObject({ ok: false, reason: 'invalid' })
+    for (const privateCondition of [undefined, null, '', '  ']) {
+      const conditional = commit(plan, 'bo', { type: 'respond', response: 'if', privateCondition })
+      expect(conditional.participants.find(item => item.userId === 'bo'))
+        .toMatchObject({ response: 'if', privateCondition: null })
+      expect(applyGroupCommand(conditional, 'organizer', conditional.revision, { type: 'confirm' }))
+        .toMatchObject({ ok: false, reason: 'conflict' })
+    }
     expect(applyGroupCommand(plan, 'bo', plan.revision, { type: 'respond', response: 'if', privateCondition: 'x'.repeat(281) }))
       .toMatchObject({ ok: false, reason: 'invalid' })
     expect(applyGroupCommand(plan, 'bo', plan.revision, { type: 'respond', response: 'cant', privateCondition: 'hidden' }))
