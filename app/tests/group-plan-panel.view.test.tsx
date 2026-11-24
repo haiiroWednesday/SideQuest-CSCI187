@@ -57,10 +57,6 @@ describe('group proposal privacy, role and response view', () => {
 
   it('requires acceptance before showing the roster or attendance controls', () => {
     const action = vi.fn()
-    render(<GroupPlanPanel plan={fixture({ invitations: [amy] })}
-      actorId={amy} eventTitle="Jazz workshop" onAction={action} onRefresh={vi.fn()} />)
-    // A corrupt fixture that says the person is already a member is not a pending recipient.
-    cleanup()
     render(<GroupPlanPanel plan={fixture({ invitations: [amy], participants: [{ userId: bo, response: 'if' }] })}
       actorId={amy} eventTitle="Jazz workshop" onAction={action} onRefresh={vi.fn()} />)
     expect(screen.queryByRole('region', { name: 'Participant responses' })).toBeNull()
