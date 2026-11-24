@@ -76,6 +76,32 @@ describe('public SCU source intake: inspection only, not publication', () => {
     }
   })
 
+  it('refuses a live probe without the same source approval gate used by the collector', () => {
+    const result = invoke(['--probe-livewhale'])
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('Source access approval required')
+  })
+
+  it('recognizes timestamp keys appearing after the first ten records', () => {
+    syntheticFixture({ data: [
+      ...Array.from({ length: 10 }, () => ({ id: 1, title: 'Synthetic' })),
+      { id: 2, href: '/event/2', date_ts: 1796152800, date2_ts: 1796156400 },
+    ] }, file => {
+      const result = invoke(['--fixture=' + file])
+      expect(result.status).toBe(0)
+      expect(result.stdout).toContain('"hasTimeKeys":true')
+      expect(result.stdout).toContain('"explicitEndKeyFound":true')
+    })
+  })
+
+  it('rejects an oversized offline fixture', () => {
+    syntheticFixture({ data: [{ title: 'x'.repeat(250001) }] }, file => {
+      const result = invoke(['--fixture=' + file])
+      expect(result.status).toBe(1)
+      expect(result.stderr).toContain('bounded size limit')
+    })
+  })
+
   it('rejects inconsistent JSON items without silently claiming an import', () => {
     syntheticFixture({ data: [null, { id: 2 }] }, file => {
       const result = invoke(['--fixture=' + file])
