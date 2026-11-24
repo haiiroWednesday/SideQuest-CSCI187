@@ -100,9 +100,15 @@ export function GroupPlanningView({ actorId, client, events, routes }: GroupPlan
     try {
       const latest = await client.act(plan.id, command)
       // An old reply must not replace a newer selection or tab session.
-      if (generation.current === current && activeId === latest.id) {
-        setSelected(latest)
-        setGroups(old => old.map(row => row.id === latest.id ? latest : row))
+      if (generation.current === current && activeId === plan.id) {
+        if (latest === null) {
+          setSelected(null)
+          setActiveId(null)
+          setGroups(old => old.filter(row => row.id !== plan.id))
+        } else if (activeId === latest.id) {
+          setSelected(latest)
+          setGroups(old => old.map(row => row.id === latest.id ? latest : row))
+        }
       }
     } catch (problem) {
       // Stale/denied updates remain visible only while this plan is current.
