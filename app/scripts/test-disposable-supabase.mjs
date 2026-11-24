@@ -4,7 +4,6 @@
  * Admin credentials provision synthetic users only; the actual app receives
  * just its anonymous/publishable key, and all assertions use caller JWTs.
  */
-import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { spawn } from 'node:child_process'
 import { setTimeout as delay } from 'node:timers/promises'
@@ -167,7 +166,11 @@ try {
     for (const table of ['group_plans', 'group_participants', 'group_invitations']) {
       const url = supabase + '/rest/v1/' + table
       await denied(await request(url, { key: anon, token: token ?? anon }), 'Direct private table SELECT')
-      await denied(await request(url, { key: anon, token: token ?? anon, method: 'DELETE' }), 'Direct private table DELETE')
+      const filter = table === 'group_plans' ? '?id=eq.' + plan.id : '?plan_id=eq.' + plan.id
+      await denied(await request(url + filter, { key: anon, token: token ?? anon, method: 'DELETE' }), 'Direct private table DELETE')
+      await denied(await request(url + filter, { key: anon, token: token ?? anon, method: 'PATCH',
+        body: table === 'group_plans' ? { status: 'cancelled' } : table === 'group_participants'
+          ? { response: 'works' } : { expires_at: '2099-01-01T00:00:00Z' } }), 'Direct private table UPDATE')
     }
   }
   pass('Signed JWTs, outsider isolation, anonymous RPC denial, direct-table denial')
@@ -203,6 +206,15 @@ try {
   const confirmed = await json(await act(a, 8, 'confirm'), 200, 'Confirm')
   check(confirmed.status === 'confirmed', 'Plan failed to confirm.')
   pass('Decline removes access and confirmation requires explicit Works')
+  const capacity = await json(await app('/api/groups', a.token, { eventId: event.id }), 201, 'Create capacity fixture')
+  const capAction = (revision, action, extra = {}) => app('/api/groups/' + capacity.id + '/actions', a.token,
+    { expectedRevision: revision, action, ...extra })
+  for (let i = 0; i < 12; i++) {
+    await expectStatus(await capAction(i, 'invite', { inviteeId: randomUUID() }), 200, 'Valid invitation slot')
+  }
+  await expectStatus(await capAction(12, 'invite', { inviteeId: randomUUID() }), 400, '13th invitation')
+  await expectStatus(await capAction(12, 'cancel'), 200, 'Cancel capacity fixture')
+  pass('Twelve-slot limit and cancellation enforced by real SQL')
   // Supabase logout revokes session/refresh credentials, but the old signed
   // access token can still be within its expiry. RPC session guard must deny.
   const logout = await request(supabase + '/auth/v1/logout?scope=local', {
@@ -223,6 +235,17 @@ try {
   check(!removeOrganizer.error, 'Disposable organizer deletion failed.')
   await denied(await directRead(a.token), 'Deleted organizer direct RPC')
   pass('Organizer account deletion revokes access')
+  // Use an actual issued access token, not a mocked expiry claim. The local
+  // Auth configuration issues 180-second JWTs. Outsider C remains signed in;
+  // list is accessible now, then both gateways must reject after its expiry.
+  await expectStatus(await app('/api/groups', c.token), 200, 'Valid live session before natural expiry')
+  const remaining = c.expiresAt - Date.now()
+  check(remaining <= 185_000, 'Fixture Auth did not honor the short JWT lifetime.')
+  console.log('Waiting for the disposable issued JWT to expire naturally.')
+  await delay(Math.max(0, remaining) + 2000)
+  await denied(await app('/api/groups', c.token), 'Naturally expired JWT via application')
+  await denied(await rpc('sidequest_group_list', c.token, {}), 'Naturally expired JWT via direct PostgREST')
+  pass('Actual issued access token expires and loses both application and RPC access')
   console.log('Completed ' + passed + ' real-stack acceptance checkpoints.')
 } catch (error) {
   // Never print exception objects, response bodies, tokens, codes or traces.
