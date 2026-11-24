@@ -3,13 +3,13 @@
 // The app's eventual sign-in module must supply the provider and verified actor.
 import { MAX_GROUP_INVITEES, type ResponseKind, type PlanStatus } from '../model/groupPlans'
 
-export { MAX_GROUP_INVITEES, MAX_PRIVATE_CONDITION } from '../model/groupPlans'
+export { MAX_GROUP_INVITEES, MAX_PRIVATE_CONDITION, privateConditionLength } from '../model/groupPlans'
 export type GroupResponse = ResponseKind
 export type GroupStatus = PlanStatus
 export type GroupAction =
   | { action: 'respond'; expectedRevision: number; response: GroupResponse; condition?: string }
   | { action: 'invite' | 'remove'; expectedRevision: number; inviteeId: string }
-  | { action: 'confirm' | 'cancel'; expectedRevision: number }
+  | { action: 'confirm' | 'cancel' | 'accept' | 'decline' | 'leave'; expectedRevision: number }
 
 export type GroupMemberView = {
   userId: string
@@ -23,13 +23,13 @@ export type GroupSummary = {
   status: GroupStatus
   revision: number
 }
-export type GroupDetail = GroupSummary & { participants: GroupMemberView[] }
+export type GroupDetail = GroupSummary & { participants: GroupMemberView[]; invitations: string[] }
 
 export interface GroupClientPort {
   list(): Promise<GroupSummary[]>
   create(eventId: string): Promise<GroupDetail>
   get(id: string): Promise<GroupDetail>
-  act(id: string, command: GroupAction): Promise<GroupDetail>
+  act(id: string, command: GroupAction): Promise<GroupDetail | null>
 }
 export type GroupAccessTokenProvider = () => Promise<string | null>
 
@@ -58,11 +58,14 @@ function summary(v: unknown): GroupSummary {
 }
 function detail(v: unknown): GroupDetail {
   const value = record(v), base = summary(v)
-  if (!value || !Array.isArray(value.participants) || value.participants.length > MAX_GROUP_INVITEES) {
+  if (!value || !Array.isArray(value.participants) || !Array.isArray(value.invitations) ||
+      value.invitations.some(id => typeof id !== 'string') ||
+      value.participants.length + value.invitations.length > MAX_GROUP_INVITEES) {
     throw new GroupClientError(503, 'The group service returned invalid data.')
   }
   return {
     ...base,
+    invitations: value.invitations as string[],
     participants: value.participants.map((item: unknown) => {
       const row = record(item)
       if (!row || typeof row.userId !== 'string' || !isResponse(row.response) ||
@@ -119,7 +122,12 @@ export function createAuthenticatedGroupClient(
     async create(eventId) { return detail(await request('/api/groups', { eventId })) },
     async get(id) { return detail(await request('/api/groups/' + encodeURIComponent(id))) },
     async act(id, command) {
-      return detail(await request('/api/groups/' + encodeURIComponent(id) + '/actions', command))
+      const result = await request('/api/groups/' + encodeURIComponent(id) + '/actions', command)
+      if (command.action === 'leave' || command.action === 'decline') {
+        if (result !== null) throw new GroupClientError(503, 'The group service returned invalid data.')
+        return null
+      }
+      return detail(result)
     },
   }
 }
