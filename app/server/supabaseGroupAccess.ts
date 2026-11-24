@@ -32,13 +32,13 @@ export function createSupabaseGroupGatewayFromEnv(
     },
   })
 
-  const anonymousAuth = client()
   const invoke = async (token: string, name: string, args: Record<string, unknown>): Promise<unknown> => {
     const scoped = client(token)
-    const { data, error } = await scoped.rpc(name, args)
+    const { data, error, status: upstreamStatus } = await scoped.rpc(name, args)
     if (error) {
-      const status = error.code === '40001' || error.code === '23505' ? 409
-        : error.code === '22023' ? 400
+      const status = upstreamStatus === 401 || ['PGRST301', 'PGRST302', 'PGRST303'].includes(error.code) ? 401
+        : error.code === '40001' || error.code === '23505' ? 409
+        : error.code === '22023' || error.code === '23503' ? 400
           : error.code === '42501' ? 404
             : 503
       // Never send database exception text, policy details or raw SQL to users.
@@ -52,11 +52,16 @@ export function createSupabaseGroupGatewayFromEnv(
       // getUser(token) contacts the Auth server; a decoded or unsigned JWT
       // payload is never treated as a verified account.
       try {
-        const { data, error } = await anonymousAuth.auth.getUser(token)
-        if (error || !data.user || !data.user.id) return null
+        const { data, error } = await client().auth.getUser(token)
+        if (error) {
+          if (error.status === 400 || error.status === 401 || error.status === 403) return null
+          throw new GroupGatewayError(503, 'Authentication is temporarily unavailable.')
+        }
+        if (!data.user?.id || data.user.is_anonymous === true) return null
         return { userId: data.user.id }
-      } catch {
-        return null
+      } catch (error) {
+        if (error instanceof GroupGatewayError) throw error
+        throw new GroupGatewayError(503, 'Authentication is temporarily unavailable.')
       }
     },
     list: token => invoke(token, 'sidequest_group_list', {}),
