@@ -7,6 +7,27 @@
 -- All SECURITY DEFINER functions use an empty search_path and fully qualified
 -- table/function references. Daven must review privileges before promotion.
 
+-- Require the signed JWT session to still exist. PostgREST validates the JWT
+-- signature and expiry; auth.uid() alone cannot detect a revoked session.
+-- The helper is private to the SECURITY DEFINER RPCs, not a public identity API.
+create function public.sidequest_group_active_actor()
+returns uuid
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select s.user_id
+  from auth.sessions s
+  join auth.users u on u.id = s.user_id
+  where s.user_id = auth.uid()
+    and s.id::text = auth.jwt()->>'session_id'
+    and coalesce(auth.jwt()->>'is_anonymous', 'false') <> 'true'
+    and (s.not_after is null or s.not_after > now())
+$$;
+alter function public.sidequest_group_active_actor() owner to postgres;
+revoke all on function public.sidequest_group_active_actor() from public, anon, authenticated;
+
 create function public.sidequest_group_read(p_plan_id uuid)
 returns jsonb
 language plpgsql
@@ -15,7 +36,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_actor uuid := auth.uid();
+  v_actor uuid := public.sidequest_group_active_actor();
   v_plan public.group_plans%rowtype;
   v_members jsonb;
   v_invites jsonb;
@@ -78,7 +99,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_actor uuid := auth.uid();
+  v_actor uuid := public.sidequest_group_active_actor();
   v_id uuid;
 begin
   if v_actor is null or coalesce(auth.jwt()->>'is_anonymous', 'false') = 'true' then
@@ -102,7 +123,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_actor uuid := auth.uid();
+  v_actor uuid := public.sidequest_group_active_actor();
   v_result jsonb;
 begin
   if v_actor is null or coalesce(auth.jwt()->>'is_anonymous', 'false') = 'true' then
@@ -144,7 +165,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_actor uuid := auth.uid();
+  v_actor uuid := public.sidequest_group_active_actor();
   v_plan public.group_plans%rowtype;
   v_condition text;
   v_invited boolean;
