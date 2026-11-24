@@ -1,4 +1,4 @@
-import { createServer, type Server } from 'node:http'
+import { createServer, request, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createEmailAuthApi, type EmailOtpGateway } from '../server/emailAuthApi'
@@ -79,6 +79,36 @@ describe('passwordless email-code HTTP contract', () => {
     const denied = await post(base, '/api/auth/request-code',
       { email: 'person@example.edu' }, 'https://unrelated.example')
     expect(denied.status).toBe(403)
+    expect(gateway.requestCode).not.toHaveBeenCalled()
+  })
+
+  it('rejects non-HTTP or noncanonical origins and invalid JSON media types', async () => {
+    const gateway = sample(), base = await start(gateway)
+    for (const origin of [base.replace('http:', 'ftp:'), base + '/path', base.replace('://', '://user@')]) {
+      expect((await post(base, '/api/auth/request-code', { email: 'person@example.edu' }, origin)).status).toBe(403)
+    }
+    const wrongType = await fetch(base + '/api/auth/request-code', {
+      method: 'POST', headers: { Origin: base, 'Content-Type': 'application/json-invalid' },
+      body: JSON.stringify({ email: 'person@example.edu' }),
+    })
+    expect(wrongType.status).toBe(415)
+    expect(gateway.requestCode).not.toHaveBeenCalled()
+  })
+
+  it('rejects oversized chunked OTP requests before the client finishes uploading', async () => {
+    const gateway = sample(), base = await start(gateway)
+    const status = await new Promise<number>((resolve, reject) => {
+      const req = request(base + '/api/auth/request-code', {
+        method: 'POST', headers: { Origin: base, 'Content-Type': 'application/json' },
+      }, res => {
+        res.resume()
+        res.once('end', () => { resolve(res.statusCode ?? 0); req.destroy() })
+      })
+      req.on('error', reject)
+      req.setTimeout(2000, () => req.destroy(new Error('Server waited for the rest of the oversized body')))
+      req.write('x'.repeat(2048))
+    })
+    expect(status).toBe(413)
     expect(gateway.requestCode).not.toHaveBeenCalled()
   })
 
