@@ -1,6 +1,6 @@
 # Final-project architecture, diagram evidence and outstanding acceptance
 
-**Updated November 20, 2026 · DRAFT BRANCH**  
+**Updated November 23, 2026 · #82 merged; PR #84 group correction under review**  
 These final-project diagrams are editable and intended for team review before the December 2 presentation. They do **not** assert that all planned features have shipped to `master`, that a migration was applied to live Supabase, or that the professor has accepted the diagrams.
 
 | Deliverable | GitHub-native preview | Editable diagrams.net source | Scope |
@@ -13,25 +13,25 @@ These final-project diagrams are editable and intended for team review before th
 
 ## Source-of-truth status ledger
 
-| Behavior | Relevant source | Status for the November 20 work |
+| Behavior | Relevant source | Status after November 23 merge and proposed correction |
 | --- | --- | --- |
 | Public Event contract, M2 catalog, create/list/get | `app/src/model/eventCatalog.ts`; `app/server/api.ts`; SQL `supabase/migrations/20261103000000_create_events.sql` | Implemented in M2 code; team-production Supabase deployment requires independent verification |
 | Device-local personal Schedule | `app/src/model/schedule.ts` and shared Schedule controller | Implemented in M2 |
-| Long Schedule text and accessible disclosures | PR #45 | Draft, stacked toward integration |
-| Proportional timeline with overlap lanes | `app/src/controller/scheduleTimeline.ts`; PR #46 | Draft code + tests |
-| Someday local intentions | `app/src/model/someday.ts`; PR #47 | Draft code + tests; no synchronized intentions |
+| Long Schedule text and accessible disclosures | PR #45 | Merged through #82 |
+| Proportional timeline with overlap lanes | `app/src/controller/scheduleTimeline.ts`; PR #46 | Merged through #82; automated tests |
+| Someday local intentions | `app/src/model/someday.ts`; PR #47 | Merged through #82; no synchronized intentions |
 | Strict-fit explanation and near misses | `app/src/model/fitAssessment.ts`; PR #48 | Draft code + tests |
-| Integrated post/find/plan/Someday | PR #49 | Combined draft, green CI at its checked head |
+| Integrated post/find/plan/Someday | PR #49 | Included in #82 |
 | Group proposal and participant permissions | `app/src/model/groupPlans.ts`; `app/server/groupPlansService.ts`; PR #50 | Tested pure rules and service boundary. No live identity, SQL repository or group API |
-| Suggested categories | `app/src/model/eventCategories.ts`; PR #51 | Draft UI/logic; heuristic suggestions only, not posted canonical categories |
-| Google Calendar draft links | `app/src/controller/calendarExport.ts`; PR #52 | Draft; no OAuth, imports, synchronization or calendar write |
+| Suggested categories | `app/src/model/eventCategories.ts`; PR #51 | Merged through #82; heuristic suggestions only |
+| Google Calendar draft links | `app/src/controller/calendarExport.ts`; PR #52 | Merged through #82; no OAuth, imports, synchronization or calendar write |
 | Categories + calendar + group rule integration | PR #53 | Combined draft, green CI at checked head |
-| Official SCU map links + route algorithm | `app/src/model/campusRoutes.ts`; `app/src/controller/campusMapLinks.ts`; PR #54 | Draft source; no surveyed live SCU pedestrian graph, thus no internal routing |
+| Official SCU map links + route algorithm | `app/src/model/campusRoutes.ts`; `app/src/controller/campusMapLinks.ts`; PR #54 | Merged through #82; external Google Maps walking handoff; no surveyed in-app SCU pedestrian graph |
 | Email-code sign-in and verified token gateway | `app/server/emailAuthApi.ts`, `app/server/supabaseEmailAuth.ts`, `app/src/view/useGroupEmailAuth.ts`; PR #59 | DRAFT code, feature OFF by default; live email template, provider setup and two-account verification outstanding |
 | Group HTTP operations and participant interface | `app/server/groupApi.ts`, `app/src/view/GroupPlanningView.tsx`; PRs #57–#58 | DRAFT implementation tested with simulated identities; no live group account session yet |
-| SQL `group_plans` / `group_participants` and role-restricted RPCs | `supabase/proposals/`; PR #56 | REVIEW-ONLY, NOT MIGRATED, RLS/Auth unverified in team database |
-| Approved real-account invitations and realtime collaboration | Proposed CRC page 2 | NOT IMPLEMENTED: typed UUID invite UI is a technical preview; no production invitation claim/WebSocket flow |
-| External calendar free/busy and AI over app data | Final-project extra-credit proposal | NOT IMPLEMENTED |
+| SQL `group_plans` / `group_participants` / proposed `group_invitations` and role-restricted RPCs | `supabase/proposals/`; PR #56 | REVIEW-ONLY, NOT MIGRATED; #84 adds expiring pending invites, separate accepted membership and account deletion behavior. Actual RLS/Auth unverified in team database |
+| Approved real-account invitations and realtime collaboration | Proposed CRC page 2 | PR #84 proposes explicit recipient consent; typed UUID remains a technical preview. Private group realtime and user-friendly identity discovery NOT IMPLEMENTED |
+| External calendar free/busy and AI over app data | #82; final-project extra-credit proposal | Calendar API NOT IMPLEMENTED; AI code merged, real provider call unverified |
 
 ## Diagram-to-code invariants for reviewer signoff
 
