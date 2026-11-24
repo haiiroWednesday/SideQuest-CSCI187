@@ -83,19 +83,23 @@ describe('group proposal privacy, role and response view', () => {
     expect(screen.getByRole('button', { name: 'If…' }).getAttribute('aria-pressed')).toBe('true')
     const note = screen.getByLabelText('Your private condition (optional)')
     expect(note.hasAttribute('required')).toBe(false)
+    expect(screen.getByRole('button', { name: 'Save private note' }).hasAttribute('disabled')).toBe(true)
     fireEvent.change(note, { target: { value: '  After my class  ' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save private note' }))
     expect(action).toHaveBeenLastCalledWith({
       action: 'respond', expectedRevision: 4, response: 'if', condition: 'After my class',
     })
+    rerender(<GroupPlanPanel plan={{ ...saved, revision: 5,
+      participants: [{ userId: amy, response: 'if', privateCondition: 'After my class' }],
+    }} actorId={amy} eventTitle="Jazz workshop" onAction={action} onRefresh={vi.fn()} />)
     fireEvent.change(note, { target: { value: '' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save private note' }))
     expect(action).toHaveBeenLastCalledWith({
-      action: 'respond', expectedRevision: 4, response: 'if', condition: '',
+      action: 'respond', expectedRevision: 5, response: 'if', condition: '',
     })
     fireEvent.click(screen.getByRole('button', { name: 'Works for me' }))
     expect(action).toHaveBeenLastCalledWith({
-      action: 'respond', expectedRevision: 4, response: 'works',
+      action: 'respond', expectedRevision: 5, response: 'works',
     })
     expect(screen.queryByRole('button', { name: 'Confirm group outing' })).toBeNull()
   })
