@@ -1,0 +1,139 @@
+name: Supabase Auth and group integration (disposable stack)
+
+# Real local Supabase Auth + PostgREST + PostgreSQL + Mailpit.
+# Never link, push, or reset a hosted database. No repository secrets needed.
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'supabase/**'
+      - '.github/workflows/supabase-group-integration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-group-integration-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  real-supabase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: supabase/setup-cli@v1
+        with:
+          version: '2.119.0'
+      - name: Prepare independent local project
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$(mktemp -d "$RUNNER_TEMP/sidequest-supabase.XXXXXX")"
+          echo "SQ_LOCAL_PROJECT=$work" >> "$GITHUB_ENV"
+          cd "$work"
+          supabase init
+          mkdir -p supabase/migrations supabase/templates
+          cp "$GITHUB_WORKSPACE"/supabase/migrations/*.sql supabase/migrations/
+          # Only this temporary project receives review-only migrations.
+          cp "$GITHUB_WORKSPACE"/supabase/proposals/*_REVIEW_ONLY.sql supabase/migrations/
+          printf '<p>SideQuest test code: {{ .Token }}</p>\n' > supabase/templates/otp.html
+          python - <<'PY'
+          import pathlib, re
+          p = pathlib.Path('supabase/config.toml')
+          s = p.read_text()
+          # Avoid accidental use of a remote project or external SMTP provider.
+          def setting(section, key, value):
+              global s
+              pattern = r'(?m)^\[' + re.escape(section) + r'\][^\n]*\n'
+              m = re.search(pattern, s)
+              if not m:
+                  s += '\n[' + section + ']\n' + key + ' = ' + value + '\n'
+                  return
+              end = re.search(r'(?m)^\[', s[m.end():])
+              stop = m.end() + end.start() if end else len(s)
+              body = s[m.end():stop]
+              key_pattern = r'(?m)^' + re.escape(key) + r'\s*=.*$'
+              body = re.sub(key_pattern, lambda _: key + ' = ' + value, body) if re.search(key_pattern,body) else key + ' = ' + value + '\n' + body
+              s = s[:m.end()] + body + s[stop:]
+          setting('auth', 'enable_signup', 'true')
+          setting('auth', 'jwt_expiry', '3600')
+          setting('auth.email', 'enable_signup', 'true')
+          setting('auth.email', 'enable_confirmations', 'false')
+          setting('auth.email', 'max_frequency', '"1s"')
+          setting('auth.rate_limit', 'email_sent', '100')
+          setting('auth.email.template.magic_link', 'subject', '"SideQuest test OTP"')
+          setting('auth.email.template.magic_link', 'content_path', '"./supabase/templates/otp.html"')
+          setting('auth.email.template.confirmation', 'subject', '"SideQuest test OTP"')
+          setting('auth.email.template.confirmation', 'content_path', '"./supabase/templates/otp.html"')
+          setting('db.seed', 'enabled', 'false')
+          p.write_text(s)
+          PY
+          supabase --version
+      - name: Start real local Supabase and extract fixture-only endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$SQ_LOCAL_PROJECT"
+          # Keep any generated local keys out of the workflow log.
+          if ! supabase start > "$RUNNER_TEMP/sq-supabase-start.log" 2>&1; then
+            echo "::error::Disposable Supabase failed to start. Inspect Docker service health."
+            docker ps -a --format '{{.Names}} {{.Status}}'
+            exit 1
+          fi
+          supabase status -o env > "$RUNNER_TEMP/sq-supabase.env"
+          python - <<'PY'
+          import os, pathlib, shlex, urllib.parse
+          data = {}
+          for line in pathlib.Path(os.environ['RUNNER_TEMP'], 'sq-supabase.env').read_text().splitlines():
+              if '=' not in line: continue
+              key, raw = line.split('=',1)
+              val = shlex.split(raw)
+              if len(val) == 1: data[key.strip()] = val[0]
+          def local_url(value, scheme):
+              u = urllib.parse.urlsplit(value)
+              if u.scheme != scheme or u.hostname not in ('127.0.0.1','localhost','::1') or u.username or u.password:
+                  raise SystemExit('Refusing non-loopback test endpoint')
+              return value.rstrip('/')
+          api = local_url(data['API_URL'], 'http')
+          mail = local_url(data.get('MAILPIT_URL') or data.get('INBUCKET_URL') or 'http://127.0.0.1:54324', 'http')
+          # Legacy local fixture keys are supported by the production adapter.
+          anon = data.get('ANON_KEY') or data['PUBLISHABLE_KEY']
+          admin = data.get('SERVICE_ROLE_KEY') or data['SECRET_KEY']
+          for key in (anon, admin):
+              if '\n' in key or not key: raise SystemExit('Invalid fixture key')
+              print('::add-mask::'+key)
+          with open(os.environ['GITHUB_ENV'],'a') as out:
+              for k,v in dict(SQ_TEST_SUPABASE_URL=api,SQ_TEST_MAIL_URL=mail,SQ_TEST_ANON_KEY=anon,SQ_TEST_ADMIN_KEY=admin).items():
+                  out.write(k+'='+v+'\n')
+          PY
+      - name: Install and build actual SideQuest server and UI
+        working-directory: app
+        env:
+          SIDEQUEST_PUBLIC_GROUP_LOGIN: 'true'
+          OPENAI_API_KEY: ''
+        run: |
+          npm ci
+          npm run build
+          npx playwright install --with-deps chromium
+      - name: Real accounts, OTP, HTTP, browser and direct PostgREST permission tests
+        working-directory: app
+        env:
+          SQ_DISPOSABLE_SUPABASE: 'true'
+        run: node scripts/test-disposable-supabase.mjs
+      - name: Destroy local Supabase volumes
+        if: always()
+        shell: bash
+        run: |
+          if [ -n "${SQ_LOCAL_PROJECT:-}" ] && [ -d "$SQ_LOCAL_PROJECT" ]; then
+            cd "$SQ_LOCAL_PROJECT"
+            supabase stop --no-backup > /dev/null 2>&1 || true
+            rm -rf "$SQ_LOCAL_PROJECT"
+          fi
+          rm -f "$RUNNER_TEMP/sq-supabase.env" "$RUNNER_TEMP/sq-supabase-start.log"
