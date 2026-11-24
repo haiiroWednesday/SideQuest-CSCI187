@@ -120,6 +120,33 @@ describe('opt-in group HTTP gateway and verified identity contract', () => {
     expect((await denied.json()).error).toBe('Plan unavailable.')
   })
 
+  it('rejects a different plan even when the caller belongs to both plans', async () => {
+    const wrongPlan = { ...secretPlan, id: '66666666-6666-4666-8666-666666666666' }
+    const gateway = { ...mockGateway(), read: vi.fn(async () => wrongPlan),
+      action: vi.fn(async () => wrongPlan) }
+    const base = await listen(gateway)
+    const read = await send(base, '/api/groups/' + planId, memberToken)
+    expect(read.status).toBe(503)
+    expect(await read.json()).toEqual({ error: 'The group response is unavailable.' })
+    const write = await send(base, '/api/groups/' + planId + '/actions', memberToken, {
+      expectedRevision: 2, action: 'respond', response: 'works',
+    })
+    expect(write.status).toBe(503)
+    expect(await write.json()).toEqual({ error: 'The group response is unavailable.' })
+  })
+
+  it('rejects a creation response for the wrong event or organizer', async () => {
+    for (const raw of [
+      { ...secretPlan, eventId: planId },
+      { ...secretPlan, organizerId: memberId, participants: [{ userId: orgId, response: null }] },
+    ]) {
+      const base = await listen({ ...mockGateway(), create: vi.fn(async () => raw) })
+      const response = await send(base, '/api/groups', orgToken, { eventId })
+      expect(response.status).toBe(503)
+      expect(await response.json()).toEqual({ error: 'The group response is unavailable.' })
+    }
+  })
+
   it('withholds the entire roster from pending recipients even if the RPC returns it', async () => {
     const raw = { ...secretPlan, invitations: [outsiderId], participants: [secretPlan.participants[0]] }
     const gateway = { ...mockGateway(), read: vi.fn(async () => raw) }
