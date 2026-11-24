@@ -41,8 +41,8 @@ function textField(value, max) {
 // A conservative duplicate warning, not a permanent external occurrence ID.
 export function normalizeEventTitle(title) {
   return String(title).normalize('NFKD').toLowerCase()
-    .replace(/\p{M}/gu, '').replace(/['’ʼ]/gu, '').replace(/&/gu, ' and ')
-    .replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
+    .replace(/(\p{Script=Latin})\p{M}+/gu, '$1').replace(/['’ʼ]/gu, '').replace(/&/gu, ' and ')
+    .replace(/[^\p{L}\p{N}\p{M}]+/gu, ' ').normalize('NFC').trim()
 }
 export function fingerprint(item) {
   const normalized = normalizeEventTitle(item.title)
@@ -82,7 +82,7 @@ async function loadBatch() {
   return events
 }
 
-async function api(target, route, options) {
+export async function api(target, route, options) {
   const response = await fetch(new URL(route, target), {
     ...options,
     redirect: 'error',
