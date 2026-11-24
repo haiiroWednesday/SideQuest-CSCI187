@@ -1,6 +1,8 @@
 // Plan catalog synchronization from explicit reviewer decisions.
 // Pure function: never allocates a canonical UUID or modifies the catalog.
 // A later approved transaction must revalidate the expected current revision.
+// Existing event IDs preserve saved Schedule references, not RSVP consent.
+// Any future write must resolve linked group plans atomically if time/place or status changes.
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 function identity(provider, occurrenceId) {
@@ -92,12 +94,14 @@ export function planReviewedSynchronization({ mappings, catalog, decisions }) {
       if (decision.explicitCancellation !== true) {
         result.push({ ...base, action: 'hold', reason: 'cancellation-evidence-required', eventId: event.id })
       } else {
-        result.push({ ...base, action: 'propose-cancel', eventId: event.id, expectedRevision: current.revision })
+        result.push({ ...base, action: 'propose-cancel', eventId: event.id, expectedRevision: current.revision,
+          requiresGroupConsentReview: true })
       }
       continue
     }
     result.push({ ...base, action: 'propose-update', eventId: event.id,
-      expectedRevision: current.revision, candidate: decision.candidate })
+      expectedRevision: current.revision, candidate: decision.candidate,
+      requiresGroupConsentReview: true })
   }
   // No decision for a known event = no action, including when a source failed.
   return result
