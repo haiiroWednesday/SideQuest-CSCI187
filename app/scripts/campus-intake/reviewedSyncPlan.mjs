@@ -51,7 +51,7 @@ export function planReviewedSynchronization({ mappings, catalog, decisions }) {
       }
       // Existing-event associations require their own explicit review; never infer
       // that a manual post and a source listing are the same event.
-      if (decision.possibleDuplicate === true || decision.possibleDuplicate !== false) {
+      if (decision.possibleDuplicate !== false) {
         result.push({ ...base, action: 'hold', reason: 'duplicate-review-required' })
         continue
       }
