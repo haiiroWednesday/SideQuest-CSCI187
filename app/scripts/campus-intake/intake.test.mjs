@@ -234,3 +234,11 @@ test('a reviewed publish decision still requires a valid same-day interval', () 
       'invalid-candidate-interval')
   }
 })
+
+test('existing occurrence changes preserve identity but never authorize reuse of group consent', () => {
+  assert.equal(plan()[0].requiresGroupConsentReview, true)
+  assert.equal(plan({ intent: 'cancel', explicitCancellation: true })[0].requiresGroupConsentReview, true)
+  const newEvent = plan({ possibleDuplicate: false }, { mappings: [], catalog: [] })[0]
+  assert.equal(newEvent.action, 'propose-create')
+  assert.equal(newEvent.requiresGroupConsentReview, undefined)
+})
