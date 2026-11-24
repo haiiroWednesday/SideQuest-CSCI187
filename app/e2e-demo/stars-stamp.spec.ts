@@ -32,6 +32,30 @@ for (const width of [390, 1280]) {
   })
 }
 
+test('group preview never shows another member’s note or assumes consent', async ({ page }) => {
+  await open(page, 'groups')
+  await expect(page.getByText('if I can leave lab early', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('Design preview: groups and responses stay in this browser. No invitations are sent.')).toBeVisible()
+  await page.getByRole('button', { name: 'New group' }).click()
+  await page.getByLabel('Group name').fill('Privacy review')
+  await page.getByLabel("Who's in it").fill('Ana')
+  await page.getByRole('button', { name: 'Make the group' }).click()
+  await page.getByLabel('Find something to propose').fill('stargazing')
+  await page.getByRole('button', { name: /^Propose Stargazing at Ricard$/ }).click()
+  const mine = page.getByRole('group', { name: /^Your answer for/ }).first()
+  await expect(mine.locator('[aria-pressed="true"]')).toHaveCount(0)
+  const conditional = mine.getByRole('button', { name: 'If…' })
+  await conditional.click()
+  await expect(conditional).toHaveAttribute('aria-pressed', 'true')
+  await conditional.click()
+  await expect(conditional).toHaveAttribute('aria-pressed', 'true')
+  const note = page.getByLabel('Your condition, only you see it')
+  await note.fill('Private reminder')
+  await mine.getByRole('button', { name: 'Cannot' }).click()
+  await conditional.click()
+  await expect(note).toHaveValue('')
+})
+
 test('the date stamp has a crisp cream outline (no misty glow) and stays readable on a dark picture', async ({ page }, info) => {
   const shot = shooter(page, info)
   await open(page, 'discover', 1280)
