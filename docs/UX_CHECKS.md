@@ -59,14 +59,14 @@ Writing rules the tests can't judge: say it once, name the thing, drop the sente
 | Tap a clash: every clashing plan on one time ruler, the overlap marked with its time, where / who / how long; keep one, remove one, or keep both | `clash.spec.ts` |
 | Three plans chained into one clash; removing the middle one ends it | `clash.spec.ts` |
 | Escape, the backdrop and Keep both close the clash sheet and hand focus back | `clash.spec.ts` |
-| Group answers wear the stars: Works gold, If dotted with a private note, Cannot struck through | `stars-stamp.spec.ts` |
+| Group answers wear the stars: Works gold, If dotted with an optional author-only note, Cannot struck through. New proposals start unanswered; changing away from If clears the note. | `stars-stamp.spec.ts` |
 | Date stamp has a crisp cream outline (no misty glow) and reads over a darkened picture | `stars-stamp.spec.ts` |
 | Map: find me on campus, the beam turns with the phone, panning stops following | `map-location.spec.ts` |
 | Map: off campus, the view widens, says how far, an edge tag points back | `map-location.spec.ts` |
 | Map: location blocked says so and offers the map on its own | `map-location.spec.ts` |
 | Wisteria (off the schedule for now) draws gradient flowers and bees without errors | `wisteria.spec.ts` |
 | Hang a Someday idea and link a real event | `pages.spec.ts` |
-| Postcard after a past plan | `pages.spec.ts` |
+| Local postcard preview after a past plan; explicitly no delivery or upload | `pages.spec.ts`, `someday-postcard-groups.spec.ts` |
 | Start a group, propose, answer | `pages.spec.ts` |
 | Post an event and find it on Discover | `pages.spec.ts` |
 | Six schedules (every category, four stacked, back-to-back, long names, late night, busy week) in Trail and Tickets; Trail stations wider than their lines | `schedule-cases.spec.ts` |
@@ -83,3 +83,7 @@ These replace the "Not run" rows in `FINAL_ACCESSIBILITY_ACCEPTANCE_2026-11-23.m
 | P-03 | Browser zoom 200% on a laptop: every screen still usable | Not run |
 | P-04 | Five students try "find something tonight" cold; note where they hesitate | Not run |
 | P-05 | Location allowed and denied on a real phone | Not run |
+
+### Architecture review constraints (November 24)
+
+The Groups design is a browser-local demonstration only; no invitations, verified membership, shared availability or account-based privacy are provided by this preview. The real authenticated group interface remains a separate gated implementation (#84/#89). The busy-mark gaps are personal discovery filters, not explicit RSVP consent or shared FreeWindow claims. Event end time remains required. Map drawing/location preview does not establish a verified pedestrian graph, accessible entrances or walking-time estimates. Media upload, host delivery and moderation are deferred; postcard UI must state no delivery. The v4.3 architecture review (especially sheets 04/04b, 07, 09, 10 and 12) and November 24 Sheet B amendment distinguish these proposals from implemented behavior.
