@@ -62,7 +62,7 @@ async function send(base: string, path: string, token = orgToken, body?: unknown
     method: hasBody ? 'POST' : 'GET',
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+      ...(hasBody ? { 'Content-Type': 'application/json', Origin: base } : {}),
       ...headers,
     },
     ...(hasBody ? { body: typeof body === 'string' ? body : JSON.stringify(body) } : {}),
@@ -164,6 +164,30 @@ describe('opt-in group HTTP gateway and verified identity contract', () => {
     expect(result.status).toBe(409)
     expect(await result.json()).toEqual({ error: 'The group request could not be completed.' })
     expect(result.headers.get('cache-control')).toBe('private, no-store')
+  })
+
+  it('limits verified accounts independently of a shared proxy address', async () => {
+    const base = await listen(mockGateway())
+    for (let i = 0; i < 40; i++) expect((await send(base, '/api/groups', orgToken)).status).toBe(200)
+    expect((await send(base, '/api/groups', orgToken)).status).toBe(429)
+    expect((await send(base, '/api/groups', memberToken)).status).toBe(200)
+  })
+
+  it('rejects missing origins, unsupported media and oversized bodies', async () => {
+    const gateway = mockGateway(), base = await listen(gateway)
+    expect((await send(base, '/api/groups', orgToken, { eventId }, { Origin: '' })).status).toBe(403)
+    expect((await send(base, '/api/groups', orgToken, { eventId }, { 'Content-Type': 'text/plain' })).status).toBe(415)
+    expect((await send(base, '/api/groups', orgToken, { text: 'x'.repeat(9000) })).status).toBe(413)
+    expect(gateway.create).not.toHaveBeenCalled()
+  })
+
+  it('reports Auth provider outages without invalidating a session', async () => {
+    const gateway = { ...mockGateway(), verify: vi.fn(async () => {
+      throw new GroupGatewayError(503, 'Authentication is temporarily unavailable.')
+    }) }
+    const base = await listen(gateway)
+    expect((await send(base, '/api/groups')).status).toBe(503)
+    expect(gateway.list).not.toHaveBeenCalled()
   })
 
   it('lists only explicit public summary fields, not participant roster data', async () => {
