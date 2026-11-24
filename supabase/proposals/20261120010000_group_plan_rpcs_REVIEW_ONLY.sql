@@ -213,7 +213,7 @@ begin
     if p_response is null or p_response not in ('works','if','cant') then
       raise exception 'Invalid response' using errcode = '22023';
     end if;
-    v_condition := nullif(regexp_replace(p_condition, '^[[:space:]]+|[[:space:]]+
+    v_condition := nullif(btrim(p_condition, U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF'), '');
     if p_response = 'if' then
       if v_condition is null or char_length(v_condition) > 280 then
         raise exception 'If response needs a condition of up to 280 characters' using errcode = '22023';
@@ -303,87 +303,6 @@ alter function public.sidequest_group_read(uuid) owner to postgres;
 alter function public.sidequest_group_create(uuid) owner to postgres;
 alter function public.sidequest_group_list() owner to postgres;
 alter function public.sidequest_group_action(uuid,bigint,text,uuid,text,text) owner to postgres;
-revoke all on function public.sidequest_group_read(uuid) from public, anon;
-revoke all on function public.sidequest_group_create(uuid) from public, anon;
-revoke all on function public.sidequest_group_list() from public, anon;
-revoke all on function public.sidequest_group_action(uuid,bigint,text,uuid,text,text) from public, anon;
-grant execute on function public.sidequest_group_read(uuid) to authenticated;
-grant execute on function public.sidequest_group_create(uuid) to authenticated;
-grant execute on function public.sidequest_group_list() to authenticated;
-grant execute on function public.sidequest_group_action(uuid,bigint,text,uuid,text,text) to authenticated;
-, '', 'g'), '');
-    if p_response = 'if' then
-      if v_condition is null or char_length(v_condition) > 280 then
-        raise exception 'If response needs a condition of up to 280 characters' using errcode = '22023';
-      end if;
-    elsif p_condition is not null then
-      raise exception 'Only If may include a private condition' using errcode = '22023';
-    end if;
-    update public.group_participants
-      set response = p_response,
-          private_condition = case when p_response='if' then v_condition else null end,
-          responded_at = now()
-      where plan_id = p_plan_id and user_id = v_actor;
-
-  else
-    if v_plan.organizer_id <> v_actor then
-      raise exception 'Organizer permission required' using errcode = '42501';
-    end if;
-
-    if p_action = 'invite' then
-      if p_invitee_id is null or p_invitee_id = v_actor then
-        raise exception 'Invite another verified account' using errcode = '22023';
-      end if;
-      if (select count(*) from public.group_participants where plan_id = p_plan_id) >= 12 then
-        raise exception 'Participant limit reached' using errcode = '22023';
-      end if;
-      if exists (select 1 from public.group_participants
-                 where plan_id = p_plan_id and user_id = p_invitee_id) then
-        raise exception 'Already invited' using errcode = '23505';
-      end if;
-      insert into public.group_participants(plan_id,user_id)
-        values (p_plan_id,p_invitee_id);
-
-    elsif p_action = 'remove' then
-      if p_invitee_id is null then
-        raise exception 'Select a participant to remove' using errcode = '22023';
-      end if;
-      delete from public.group_participants
-        where plan_id = p_plan_id and user_id = p_invitee_id;
-      if not found then
-        raise exception 'Participant not found' using errcode = '22023';
-      end if;
-
-    elsif p_action = 'confirm' then
-      if not exists (select 1 from public.group_participants
-                     where plan_id = p_plan_id) or
-         exists (select 1 from public.group_participants
-                 where plan_id = p_plan_id
-                   and response is distinct from 'works') then
-        raise exception 'All participants must explicitly answer Works' using errcode = '22023';
-      end if;
-      update public.group_plans
-        set status='confirmed' where id = p_plan_id;
-
-    elsif p_action = 'cancel' then
-      update public.group_plans
-        set status='cancelled' where id = p_plan_id;
-
-    else
-      raise exception 'Unsupported group action' using errcode = '22023';
-    end if;
-  end if;
-
-  update public.group_plans
-    set revision = revision + 1, updated_at = now()
-    where id = p_plan_id;
-  return public.sidequest_group_read(p_plan_id);
-end;
-$$;
-
--- PostgreSQL grants EXECUTE on new functions to PUBLIC by default. Remove it
--- before exposing only authenticated callers, even if PostgREST routes are
--- available. A bearer token requires actual verification by Supabase Auth.
 revoke all on function public.sidequest_group_read(uuid) from public, anon;
 revoke all on function public.sidequest_group_create(uuid) from public, anon;
 revoke all on function public.sidequest_group_list() from public, anon;
