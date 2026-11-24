@@ -34,3 +34,13 @@ The [review-only schema](../supabase/proposals/20261120000000_group_plan_storage
 The HTTP endpoint is implemented behind a feature flag to keep the existing M2 public EventCatalog independently functional. **No authentication, invitations, cross-device group persistence or actual shared collaboration can be claimed as complete from this draft alone.**
 
 Official guidance: [Supabase server identity verification](https://supabase.com/docs/guides/auth/server-side/creating-a-client), [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), and [database function security](https://supabase.com/docs/guides/database/functions).
+
+## November 24 security follow-up (#89)
+
+The gateway now rejects detail/action responses for a different plan UUID, even if the caller is a member of both plans, and rejects creation responses for the wrong event or organizer. The OTP endpoint rejects malformed Origin/media type and oversized streaming requests without waiting for the rest of the body. Regression tests exercise the failures with injected providers. Recheck exact-head CI.
+
+Remaining release concerns:
+- App sign-out currently clears tab memory; it is not provider-side session revocation. Implement and test an explicit current-session logout before claiming server-side sign-out.
+- The Node quotas protect the Node endpoints only. Authenticated clients can call the granted PostgREST RPCs directly. SQL authorization is still enforced, but the Node rate limits do not bound direct RPC creation or other calls. Daven must review an enforceable abuse/retention policy and provider-side protection before public enablement. Do not remove caller-scoped SQL authorization or substitute a privileged server key to solve this.
+- The list RPC is the authority for filtering plan summaries; the gateway strips extra fields but its summaries contain no membership evidence. Keep real outsider-list denial tests in disposable and hosted staging acceptance.
+- Keep all Auth/group flags off until the approved migration and staging acceptance. No account-owned Schedule, Someday or availability changes in this pass.
