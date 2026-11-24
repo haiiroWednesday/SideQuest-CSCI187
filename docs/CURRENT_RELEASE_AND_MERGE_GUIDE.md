@@ -25,3 +25,7 @@ The master comparison confirms zero unique commits on #46, #51, #53 and #55; the
 The M2 playbook, REQUIREMENTS and SPECIFICATIONS describe the original approved contract. Preserve assignment history. Use the current source and [as-built architecture](diagrams/FINAL_AS_BUILT_PORTS_ADAPTERS.md) for implemented behavior. Future design proposals do not authorize schema or feature changes. If they conflict, identify the discrepancy and obtain the team's decision before implementation.
 
 Review owner boundaries, tests and [release gate](FINAL_RELEASE_DEPLOYMENT_GATE.md). No changes to live secrets, SQL migrations, deployment or team assignments are authorized here. The [extra-credit plan](FINAL_EXTRA_CREDIT_EXECUTION_PLAN_2026-11-20.md) lists all nine categories and the instructor's eligibility rules. Real demo evidence and instructor acceptance remain outstanding.
+
+## November 24 architecture review follow-up
+
+See [the page-by-page visual review](ARCHITECTURE_VISUAL_REVIEW_2026-11-24.md), based on the 14 rendered v4.3 pages and replacement Sheet B. #88 is a separate design review with local sample data, not live group or media delivery. #89 follows #84 with one-tap Works / If / Cannot and an optional private note. Keep Activity and multiple options deferred and retain the required event end. Both PRs need their own exact-head verification. The older SHA/evidence list above remains a dated snapshot.
