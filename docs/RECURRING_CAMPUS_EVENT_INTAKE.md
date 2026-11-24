@@ -87,3 +87,7 @@ The command emits review JSON only. It does not assume the export is complete.
 This proposal changes neither the current event table nor its non-null end-time rule. A real source without end times remains in review until the team approves the necessary catalog behavior.
 
 SCU's published website terms restrict some automated collection according to robots.txt and third-party reuse. Qlusion's public page does not establish a supported API. The local environment could not resolve the source hostnames, and web browsing did not retrieve the LiveWhale JSON. Do not claim that a provider denied access or that scheduled collection has run. See https://www.scu.edu/terms-and-conditions-of-use/ and https://www.qlusion.com/.
+
+### Architecture review: event identity does not preserve consent
+
+Printed pages 10 and 11 of the v4.3 architecture distinguish a canonical occurrence UUID from explicit attendance approval. The synchronization planner marks every existing-event update or cancellation proposal with `requiresGroupConsentReview: true`. This is a conservative pre-write requirement, not implemented consent enforcement. Before enabling synchronization, an approved transaction must check linked group plans and apply a team-approved revision/consent policy for material time, place or cancellation changes. Do not preserve an old Works response merely because the event UUID stays the same. No catalog mutation is introduced here.
