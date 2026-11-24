@@ -1,12 +1,12 @@
 // HTTP CONTROLLER: an opt-in, bearer-authenticated gateway to caller-scoped
 // group RPCs. This controller never accepts a client-supplied acting user ID.
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { MAX_GROUP_INVITEES, MAX_PRIVATE_CONDITION, type ResponseKind } from '../src/model/groupPlans'
+import { MAX_GROUP_INVITEES, MAX_PRIVATE_CONDITION, privateConditionLength, type ResponseKind } from '../src/model/groupPlans'
 
 export type VerifiedGroupActor = { userId: string }
 export type GroupActionInput = {
   expectedRevision: number
-  action: 'invite' | 'remove' | 'respond' | 'confirm' | 'cancel'
+  action: 'invite' | 'remove' | 'respond' | 'confirm' | 'cancel' | 'accept' | 'decline' | 'leave'
   inviteeId?: string | null
   response?: ResponseKind | null
   condition?: string | null
@@ -29,7 +29,7 @@ const GROUP_REQUESTS_PER_MINUTE = 40
 const GROUP_AUTH_CHECKS_PER_MINUTE = 600
 const MAX_TRACKED_GROUP_ACTORS = 10000
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const VALID_ACTIONS = new Set(['invite', 'remove', 'respond', 'confirm', 'cancel'])
+const VALID_ACTIONS = new Set(['invite', 'remove', 'respond', 'confirm', 'cancel', 'accept', 'decline', 'leave'])
 const VALID_RESPONSES: ReadonlySet<string> = new Set<ResponseKind>(['works', 'if', 'cant'])
 
 class RequestError extends Error {
@@ -71,7 +71,7 @@ function validatedAction(value: JsonObject): GroupActionInput {
     input.response = value.response as GroupActionInput['response']
     if (input.response === 'if') {
       if (typeof value.condition !== 'string' || value.condition.trim().length === 0 ||
-          value.condition.length > MAX_PRIVATE_CONDITION) {
+          privateConditionLength(value.condition) > MAX_PRIVATE_CONDITION) {
         throw new RequestError(400, 'A conditional response needs up to 280 characters of text.')
       }
       input.condition = value.condition.trim()
@@ -91,11 +91,15 @@ function projectPlan(raw: unknown, actorId: string): unknown {
   if (!plan || typeof plan.id !== 'string' || typeof plan.eventId !== 'string' ||
       typeof plan.organizerId !== 'string' || !Number.isSafeInteger(plan.revision) ||
       !['proposed', 'confirmed', 'cancelled'].includes(String(plan.status)) ||
-      !Array.isArray(plan.participants) || plan.participants.length > MAX_GROUP_INVITEES) {
+      !Array.isArray(plan.participants) || !Array.isArray(plan.invitations) ||
+      plan.invitations.some((id: unknown) => typeof id !== 'string' || !UUID.test(id)) ||
+      plan.participants.length + plan.invitations.length > MAX_GROUP_INVITEES) {
     throw new GroupGatewayError(503, 'The group response is unavailable.')
   }
-  if (plan.organizerId !== actorId &&
-      !plan.participants.some((entry: unknown) => object(entry)?.userId === actorId)) {
+  const organizer = plan.organizerId === actorId
+  const member = organizer || plan.participants.some((entry: unknown) => object(entry)?.userId === actorId)
+  const invited = plan.status === 'proposed' && plan.invitations.includes(actorId)
+  if (!member && !invited) {
     // Defense in depth if a future SQL or transport bug returns another
     // account's group: do not expose its event, roster or metadata.
     throw new GroupGatewayError(404, 'Plan unavailable.')
@@ -103,7 +107,8 @@ function projectPlan(raw: unknown, actorId: string): unknown {
   return {
     id: plan.id, eventId: plan.eventId, organizerId: plan.organizerId,
     status: plan.status, revision: plan.revision,
-    participants: plan.participants.map((rawParticipant: unknown) => {
+    invitations: plan.status === 'proposed' ? plan.invitations.filter((id: string) => organizer || id === actorId) : [],
+    participants: (member ? plan.participants : []).map((rawParticipant: unknown) => {
       const participant = object(rawParticipant)
       if (!participant || typeof participant.userId !== 'string' ||
           (participant.response !== null && !VALID_RESPONSES.has(String(participant.response)))) {
@@ -248,7 +253,14 @@ export function createGroupApi(
         response(res, 201, projectPlan(await gateway.create(token, body.eventId), actor.userId))
       } else if (isAction) {
         const body = await jsonBody(req)
-        response(res, 200, projectPlan(await gateway.action(token, match[1], validatedAction(body)), actor.userId))
+        const command = validatedAction(body)
+        const updated = await gateway.action(token, match[1], command)
+        if (command.action === 'decline' || command.action === 'leave') {
+          if (updated !== null) throw new GroupGatewayError(503, 'The group response is unavailable.')
+          response(res, 200, null)
+        } else {
+          response(res, 200, projectPlan(updated, actor.userId))
+        }
       } else {
         response(res, 200, projectPlan(await gateway.read(token, match[1]), actor.userId))
       }
