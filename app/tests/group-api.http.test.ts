@@ -145,7 +145,7 @@ describe('opt-in group HTTP gateway and verified identity contract', () => {
     const bad = [
       { expectedRevision: 2, action: 'respond', response: 'works', userId: outsiderId },
       { expectedRevision: 2, action: 'invite', inviteeId: 'not-uuid' },
-      { expectedRevision: 2, action: 'respond', response: 'if', condition: '' },
+      { expectedRevision: 2, action: 'respond', response: 'if', condition: 42 },
       { expectedRevision: 2, action: 'confirm', inviteeId: memberId },
       { expectedRevision: -1, action: 'cancel' },
     ]
@@ -159,6 +159,19 @@ describe('opt-in group HTTP gateway and verified identity contract', () => {
     expect(gateway.action).toHaveBeenCalledWith(orgToken, planId, {
       expectedRevision: 2, action: 'invite', inviteeId: memberId,
     })
+  })
+
+  it('accepts If without a note and normalizes blank notes to null', async () => {
+    const gateway = mockGateway(), base = await listen(gateway)
+    const path = '/api/groups/' + planId + '/actions'
+    for (const extra of [{}, { condition: null }, { condition: '  ' }]) {
+      expect((await send(base, path, memberToken, {
+        expectedRevision: 2, action: 'respond', response: 'if', ...extra,
+      })).status).toBe(200)
+      expect(gateway.action).toHaveBeenLastCalledWith(memberToken, planId, {
+        expectedRevision: 2, action: 'respond', response: 'if', condition: null,
+      })
+    }
   })
 
   it('does not accept cross-site writes, malformed JSON or unexpected paths', async () => {
