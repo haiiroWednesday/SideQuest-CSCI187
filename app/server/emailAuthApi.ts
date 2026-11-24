@@ -34,16 +34,19 @@ function json(res: ServerResponse, status: number, value: unknown): void {
   res.end(JSON.stringify(value))
 }
 async function body(req: IncomingMessage): Promise<Record<string, unknown>> {
-  if (!req.headers['content-type']?.toLowerCase().startsWith('application/json')) {
+  if (req.headers['content-type']?.split(';')[0].trim().toLowerCase() !== 'application/json') {
     throw new AuthHttpError(415, 'Send the request as JSON.')
   }
   const chunks: Buffer[] = []
   let size = 0
-  for await (const part of req) {
-    size += Buffer.byteLength(part)
-    if (size <= MAX_BYTES) chunks.push(Buffer.isBuffer(part) ? part : Buffer.from(part))
+  if (Number(req.headers['content-length']) > MAX_BYTES) {
+    throw new AuthHttpError(413, 'The request is too large.')
   }
-  if (size > MAX_BYTES) throw new AuthHttpError(413, 'The request is too large.')
+  for await (const part of req.iterator({ destroyOnReturn: false })) {
+    size += Buffer.byteLength(part)
+    if (size > MAX_BYTES) throw new AuthHttpError(413, 'The request is too large.')
+    chunks.push(Buffer.isBuffer(part) ? part : Buffer.from(part))
+  }
   let parsed: unknown
   try { parsed = JSON.parse(Buffer.concat(chunks).toString('utf8')) }
   catch { throw new AuthHttpError(400, 'Invalid request.') }
@@ -106,10 +109,13 @@ export function createEmailAuthApi(
       if (typeof origin !== 'string' || !req.headers.host) {
         throw new AuthHttpError(403, 'Use the SideQuest site to sign in.')
       }
-      let expectedHost = ''
-      try { expectedHost = new URL(origin).host }
-      catch { /* malformed origin is forbidden */ }
-      if (expectedHost !== req.headers.host) {
+      let allowedOrigin = false
+      try {
+        const parsed = new URL(origin)
+        allowedOrigin = ['http:', 'https:'].includes(parsed.protocol) &&
+          parsed.host === req.headers.host && parsed.origin === origin
+      } catch { /* malformed origin is forbidden */ }
+      if (!allowedOrigin) {
         throw new AuthHttpError(403, 'Use the SideQuest site to sign in.')
       }
       const request = await body(req)
@@ -142,8 +148,14 @@ export function createEmailAuthApi(
         })
       }
     } catch (error) {
-      if (error instanceof AuthHttpError) json(res, error.status, { error: error.message })
-      else json(res, 503, { error: 'The sign-in service is unavailable.' })
+      if (error instanceof AuthHttpError) {
+        if (error.status === 413) {
+          req.pause()
+          res.setHeader('Connection', 'close')
+          res.once('finish', () => req.destroy())
+        }
+        json(res, error.status, { error: error.message })
+      } else json(res, 503, { error: 'The sign-in service is unavailable.' })
     }
     return true
   }
