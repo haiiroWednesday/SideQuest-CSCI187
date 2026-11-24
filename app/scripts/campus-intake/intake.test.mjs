@@ -14,7 +14,10 @@ const row = {
   date2_ts: seconds('2026-12-02T00:00:00Z'), is_all_day: false, is_canceled: false,
 }
 const normalize = changes => normalizeLiveWhale({ ...row, ...changes }, source, checkedAt)
-const payload = (data, next = null) => ({ data, links: { next } })
+const payload = (data, next = null, total = data.length, page = 1) => ({
+  data, links: { next }, meta: { type: 'events', total_results: total,
+    total_pages: Math.ceil(total / 100), per_page: 100, page },
+})
 const response = (data, status = 200) => new Response(JSON.stringify(data), {
   status, headers: { 'content-type': 'application/json' },
 })
@@ -77,26 +80,31 @@ test('approval gate makes no requests', async () => {
 })
 test('reads fresh time windows and traverses bounded pagination', async () => {
   const calls = []
-  const next = source.feed + 'start_date/2026-11-24/page/2/'
+  const firstPage = Array.from({ length: 100 }, (_, i) => ({ ...row, id: 123456 + i }))
+  let next
   const result = await collectLiveWhale(source, {
     approvedRead: true, now, pause: async () => {},
     fetchImpl: async (url, options) => {
       calls.push(url)
       assert.equal(options.redirect, 'error')
-      return calls.length === 1 ? response(payload([row], next)) : response(payload([row]))
+      if (calls.length === 1) {
+        next = url + '?page=2'
+        return response(payload(firstPage, next, 101))
+      }
+      return response(payload([{ ...row, id: 123556 }], null, 101, 2))
     },
   })
   assert.match(calls[0], /start_date\/2026-11-24\/end_date\/2027-01-08\//)
   assert.equal(calls[1], next)
   assert.equal(result.pages, 2)
-  assert.equal(result.received, 2)
-  assert.equal(result.records.length, 1)
+  assert.equal(result.received, 101)
+  assert.equal(result.records.length, 101)
   assert.equal(result.complete, true)
 })
 test('rejects unsafe pagination and HTTP failure instead of returning a partial snapshot', async () => {
   const options = { approvedRead: true, now, pause: async () => {} }
   await assert.rejects(collectLiveWhale(source, { ...options,
-    fetchImpl: async () => response(payload([row], 'https://unapproved.example/')) }), /Unsafe/)
+    fetchImpl: async () => response(payload(Array(100).fill(row), 'https://unapproved.example/', 101)) }), /Unsafe/)
   await assert.rejects(collectLiveWhale(source, { ...options,
     fetchImpl: async () => response({}, 429) }), /429/)
 })
@@ -105,4 +113,21 @@ test('an actual empty feed is different from a broken feed', async () => {
   assert.deepEqual((await collectLiveWhale(source, options)).records, [])
   await assert.rejects(collectLiveWhale(source, { ...options,
     fetchImpl: async () => new Response('<html>Login</html>') }), /did not return JSON/)
+})
+
+test('rejects truncated or capped results and drifting totals', async () => {
+  const options = { approvedRead: true, now, pause: async () => {} }
+  await assert.rejects(collectLiveWhale(source, { ...options,
+    fetchImpl: async () => response(payload([row], null, 101)) }), /page count/)
+  await assert.rejects(collectLiveWhale(source, { ...options,
+    fetchImpl: async () => response(payload([], null, 1000)) }), /result cap/)
+  let calls = 0
+  await assert.rejects(collectLiveWhale(source, { ...options, fetchImpl: async url => {
+    calls++
+    return calls === 1
+      ? response(payload(Array(100).fill(row), url + '?page=2', 101))
+      : response(payload([row], null, 102, 2))
+  } }), /Pagination changed/)
+  await assert.rejects(collectLiveWhale(source, { ...options,
+    fetchImpl: async url => response(payload(Array(100).fill(row), url + '?page=2&include_hidden=1', 101)) }), /Unexpected pagination query/)
 })
