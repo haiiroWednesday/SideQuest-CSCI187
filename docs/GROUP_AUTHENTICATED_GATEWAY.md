@@ -1,6 +1,6 @@
 # Authenticated group HTTP gateway: integration draft
 
-**November 20, 2026 · draft code only · feature OFF by default.**
+**November 23, 2026 · merged disabled foundations (#82); proposed correction #84 · feature OFF by default.**
 
 This branch adds server-only group API routing behind `SIDEQUEST_GROUPS_ENABLED=true`. The flag is intentionally `false` in [`app/.env.example`](../app/.env.example). Do not turn it on for the team instance until the real Supabase Auth provider, proposed SQL RPCs, and their permission tests are approved and installed. M2 EventCatalog and the existing browser-local Schedule/Someday continue to function with the flag off.
 
@@ -10,10 +10,10 @@ This branch adds server-only group API routing behind `SIDEQUEST_GROUPS_ENABLED=
 | --- | --- | --- | --- |
 | GET | `/api/groups` | Authorized plan summaries only | Verified Bearer access token |
 | POST | `/api/groups` | `{ eventId }`; returns newly created authorized plan | Verified token; plan owner derived from Auth |
-| GET | `/api/groups/:id` | Authorized participant/organizer projection | Verified token and current membership |
-| POST | `/api/groups/:id/actions` | `{ expectedRevision, action, ... }`; returns revised projection | Verified token and matching role, revision |
+| GET | `/api/groups/:id` | Accepted member/organizer projection or restricted invitation preview | Verified token and current membership or pending invitation |
+| POST | `/api/groups/:id/actions` | `{ expectedRevision, action, ... }`; returns revised projection; decline/leave return JSON null | Verified token and matching role, revision |
 
-Actions are `invite` or `remove` with an explicit `inviteeId`, `respond` with Works/If/Can't and optional private condition, `confirm`, and `cancel`. The browser cannot submit `actorId`, `organizerId` or a target response owner. Input is length-bounded, errors are generic, writes check Host/Origin and rate limits apply. The Node server removes other participants' private conditions even if an upstream RPC mistakenly returns them.
+Actions are `invite` or `remove` with `inviteeId`, recipient `accept`/`decline`, member `leave`, `respond` with Works/If/Can't and optional private condition, `confirm`, and `cancel`. The browser cannot submit `actorId`, `organizerId` or a target response owner. The proposal caps bodies at 8 KiB with early rejection, requires a browser Origin on writes, uses per-verified-account quotas and a fixed process-wide Auth check budget, and distinguishes provider failure (503) from invalid/expired authentication (401). The Node server removes other participants' private conditions even if an upstream RPC mistakenly returns them.
 
 ## Server identity and storage
 
@@ -26,8 +26,8 @@ The [review-only schema](../supabase/proposals/20261120000000_group_plan_storage
 - [ ] Daven and team select, configure and test a real Auth sign-in/refresh/logout flow. Do not ask students to paste access tokens into a web form or log tokens in analytics.
 - [ ] Backend owner reviews and promotes the SQL proposal into a controlled migration, verifies function ownership, grants, `auth.uid()` semantics and changes against the current team Supabase instance.
 - [ ] Confirm that authenticated requests pass **verified caller context** to SQL RPCs; use no privileged service key and no broad client grants.
-- [ ] Implement sign-in UI and secure session management with lifecycle/expiry handling. The current app has no way for normal users to obtain a session.
-- [ ] Implement the group proposal/invite/response UI, with appropriate condition privacy disclosure and a clear failure state.
+- [ ] Implement sign-in UI and secure session management with lifecycle/expiry handling. Email-code UI exists behind disabled flags; actual OTP delivery and session lifecycle remain unverified.
+- [ ] Verify the gated group proposal, explicit invitation acceptance/decline, leave and response UI with real accounts.
 - [ ] Run a real two-account and unauthorized-third-account test. Include unknown response, conditional response, stale simultaneous edits, revoked invitation, session expiration, and attempt to read another participant's private note.
 - [ ] Disable the feature again if live authorization, JWT validation, group persistence, or rollback checks fail.
 
