@@ -42,7 +42,7 @@ export function GroupEmailLoginView({
         </section>
         <form className="sq-login-form" onSubmit={event => { void submit(event) }}>
           <h2>{step === 'email' ? 'Get an email sign-in code' : 'Enter your email code'}</h2>
-          <p>For account security, SideQuest keeps the access token only in this tab's memory. Reloading or closing this tab discards its token, and you'll need another code. Use Sign out to revoke the current server session.</p>
+          <p>For account security, SideQuest keeps the access token only in this tab's memory. Reloading or closing this tab discards its token, and you'll need another code. Use End session to revoke the current server session.</p>
           {error && <p role="alert" className="sq-login-error">{error}</p>}
           {message && <p role="status" className="sq-login-status">{message}</p>}
           <label htmlFor="sq-login-email">Email address</label>
