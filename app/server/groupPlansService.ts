@@ -57,7 +57,7 @@ export function createGroupPlanService(
     },
     async act(
       planId: string, actor: VerifiedServerActor, expectedRevision: number, command: PlanCommand,
-    ): Promise<ServiceResult<PlanViewer>> {
+    ): Promise<ServiceResult<PlanViewer | null>> {
       try {
         const plan = await repository.get(planId)
         // Authorization happens BEFORE revision/command validation to avoid probing
@@ -67,6 +67,7 @@ export function createGroupPlanService(
         if (!updated.ok) return updated
         const saved = await repository.compareAndSwap(planId, plan.revision, updated.plan)
         if (!saved) return { ok: false, reason: 'stale', message: 'The plan changed during your update. Refresh and retry.' }
+        if (command.type === 'decline' || command.type === 'leave') return { ok: true, value: null }
         const view = readGroupPlan(updated.plan, actor.userId)
         return view ? { ok: true, value: view } : denied()
       } catch { return failed() }
