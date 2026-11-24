@@ -131,3 +131,44 @@ test('rejects truncated or capped results and drifting totals', async () => {
   await assert.rejects(collectLiveWhale(source, { ...options,
     fetchImpl: async url => response(payload(Array(100).fill(row), url + '?page=2&include_hidden=1', 101)) }), /Unexpected pagination query/)
 })
+
+const { normalizeOrganizerExport } = await import('./organizerExport.mjs')
+const qlusion = { id: 'qlusion', page: 'https://www.qlusion.com/' }
+const clubEvent = {
+  occurrenceId: 'club-event-42', title: 'Synthetic club activity', organizer: 'Example club',
+  location: 'Example room', sourceUrl: 'https://www.qlusion.com/events/42',
+  startsAt: '2026-12-01T14:00:00-08:00', endsAt: '2026-12-01T15:00:00-08:00',
+  status: 'scheduled', audience: 'scu-students',
+}
+const clubExport = events => ({ version: 1, provider: 'qlusion', events })
+const exportOptions = { approvedExport: true, now }
+
+test('approved exports retain stable source IDs even when the event moves', () => {
+  const a = normalizeOrganizerExport(clubExport([clubEvent]), qlusion, exportOptions)
+  const b = normalizeOrganizerExport(clubExport([{ ...clubEvent,
+    startsAt: '2026-12-02T14:00:00-08:00', endsAt: '2026-12-02T15:00:00-08:00' }]), qlusion, exportOptions)
+  assert.equal(a.records[0].occurrenceKey, b.records[0].occurrenceKey)
+  assert.equal(a.records[0].date, '2026-12-01')
+  assert.equal(b.records[0].date, '2026-12-02')
+  assert.equal(a.records[0].reviewState, 'awaiting-review')
+  assert.equal(a.complete, false)
+})
+test('organizer exports fail closed without approval or genuine ID', () => {
+  assert.throws(() => normalizeOrganizerExport(clubExport([clubEvent]), qlusion), /approval/)
+  assert.throws(() => normalizeOrganizerExport(clubExport([{ ...clubEvent, occurrenceId: '' }]), qlusion, exportOptions), /stable/)
+  assert.throws(() => normalizeOrganizerExport({ ...clubExport([]), provider: 'other' }, qlusion, exportOptions), /Invalid organizer export/)
+})
+test('export keeps unknown times, cancellation and restricted audiences in review', () => {
+  for (const [changes, reason] of [
+    [{ startsAt: '2026-12-01T14:00:00' }, 'start-unavailable'],
+    [{ startsAt: '2027-02-30T14:00:00Z' }, 'start-unavailable'],
+    [{ endsAt: null }, 'end-unavailable'],
+    [{ status: 'canceled' }, 'canceled'],
+    [{ audience: 'invite-only' }, 'eligibility-review'],
+    [{ sourceUrl: 'https://unapproved.example/42' }, 'event-link-unavailable'],
+  ]) {
+    const result = normalizeOrganizerExport(clubExport([{ ...clubEvent, ...changes }]), qlusion, exportOptions)
+    assert.equal(result.records[0].reviewState, 'held')
+    assert.ok(result.records[0].reasons.includes(reason))
+  }
+})
