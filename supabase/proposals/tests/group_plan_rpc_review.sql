@@ -84,11 +84,6 @@ begin
     raise exception 'Participant impersonated organizer';
   exception when insufficient_privilege then null;
   end;
-  begin
-    perform public.sidequest_group_action(plan_id,6,'respond',null,'if',null);
-    raise exception 'Missing private condition was accepted';
-  exception when invalid_parameter_value then null;
-  end;
 
   -- A second pending recipient cannot see the accepted member; after accepting,
   -- the other member's response is visible but their private condition is not.
@@ -220,9 +215,21 @@ begin
   perform public.sidequest_group_action(plan_id,0,'invite',amy);
   perform set_config('request.jwt.claim.sub',amy::text,true);
   perform public.sidequest_group_action(plan_id,1,'accept');
-  perform public.sidequest_group_action(plan_id,2,'respond',null,'works');
+  v := public.sidequest_group_action(plan_id,2,'respond',null,'if',null);
+  if v->'participants'->0->>'response' is distinct from 'if'
+     or v->'participants'->0->>'privateCondition' is not null then
+    raise exception 'If without a note did not persist';
+  end if;
   perform set_config('request.jwt.claim.sub',organizer::text,true);
-  perform public.sidequest_group_action(plan_id,3,'confirm');
+  begin
+    perform public.sidequest_group_action(plan_id,3,'confirm');
+    raise exception 'If without a note incorrectly confirmed';
+  exception when invalid_parameter_value then null;
+  end;
+  perform set_config('request.jwt.claim.sub',amy::text,true);
+  perform public.sidequest_group_action(plan_id,3,'respond',null,'works');
+  perform set_config('request.jwt.claim.sub',organizer::text,true);
+  perform public.sidequest_group_action(plan_id,4,'confirm');
   perform set_config('sidequest.test_delete_plan_id',plan_id::text,true);
 end $check$;
 
@@ -236,7 +243,7 @@ begin
     raise exception 'Account deletion retained accepted membership';
   end if;
   if (select status from public.group_plans where id=p) <> 'cancelled'
-     or (select revision from public.group_plans where id=p) <> 5 then
+     or (select revision from public.group_plans where id=p) <> 6 then
     raise exception 'Account deletion retained invalid confirmation or revision';
   end if;
   delete from auth.users where id='11111111-1111-4111-8111-111111111111';
