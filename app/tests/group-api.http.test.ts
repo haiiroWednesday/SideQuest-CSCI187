@@ -1,4 +1,4 @@
-import { createServer, type Server } from 'node:http'
+import { createServer, request, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -198,6 +198,24 @@ describe('opt-in group HTTP gateway and verified identity contract', () => {
     expect((await send(base, '/api/groups', orgToken, { eventId }, { Origin: '' })).status).toBe(403)
     expect((await send(base, '/api/groups', orgToken, { eventId }, { 'Content-Type': 'text/plain' })).status).toBe(415)
     expect((await send(base, '/api/groups', orgToken, { text: 'x'.repeat(9000) })).status).toBe(413)
+    expect(gateway.create).not.toHaveBeenCalled()
+  })
+
+  it('rejects an oversized chunked body before the client ends the upload', async () => {
+    const gateway = mockGateway(), base = await listen(gateway)
+    const status = await new Promise<number>((resolve, reject) => {
+      const req = request(base + '/api/groups', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + orgToken, Origin: base, 'Content-Type': 'application/json' },
+      }, res => {
+        res.resume()
+        res.once('end', () => { resolve(res.statusCode ?? 0); req.destroy() })
+      })
+      req.on('error', reject)
+      req.setTimeout(2000, () => { req.destroy(new Error('Server waited for the entire oversized body')) })
+      req.write('x'.repeat(9000))
+    })
+    expect(status).toBe(413)
     expect(gateway.create).not.toHaveBeenCalled()
   })
 
