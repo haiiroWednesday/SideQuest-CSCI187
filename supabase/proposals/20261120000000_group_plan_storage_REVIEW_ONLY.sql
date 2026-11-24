@@ -36,7 +36,8 @@ create table public.group_participants (
     check (
       case when response = 'if'
         then private_condition is not null
-          and char_length(btrim(private_condition)) between 1 and 280
+          and private_condition = btrim(private_condition, U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF')
+          and char_length(private_condition) between 1 and 280
         else private_condition is null
       end
     ),
@@ -62,7 +63,7 @@ create index group_invitations_recipient_idx on public.group_invitations(recipie
 -- account has the same effect. Invalidate confirmation rather than retain
 -- a misleading confirmed outing after a member's consent disappears.
 create function public.sidequest_group_member_deleted()
-returns trigger language plpgsql security definer set search_path = '' as $
+returns trigger language plpgsql security definer set search_path = '' as $$
 begin
   update public.group_plans
     set revision = revision + 1, updated_at = now(),
@@ -70,7 +71,7 @@ begin
     where id = old.plan_id;
   return old;
 end;
-$;
+$$;
 alter function public.sidequest_group_member_deleted() owner to postgres;
 revoke all on function public.sidequest_group_member_deleted() from public, anon, authenticated;
 create trigger group_member_deleted
