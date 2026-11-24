@@ -85,8 +85,8 @@ begin
   exception when insufficient_privilege then null;
   end;
   begin
-    perform public.sidequest_group_action(plan_id,6,'respond',null,'if',null);
-    raise exception 'Missing private condition was accepted';
+    perform public.sidequest_group_action(plan_id,6,'respond',null,'works','private text');
+    raise exception 'Nonconditional private condition was accepted';
   exception when invalid_parameter_value then null;
   end;
 
@@ -100,7 +100,12 @@ begin
              where member->>'userId'=amy::text and member ? 'privateCondition') then
     raise exception 'Other member can read private condition';
   end if;
-  v := public.sidequest_group_action(plan_id,7,'respond',null,'works');
+  v := public.sidequest_group_action(plan_id,7,'respond',null,'if');
+  if not exists (select 1 from jsonb_array_elements(v->'participants') member
+    where member->>'userId'=bo::text and member->>'response'='if'
+      and member->'privateCondition'='null'::jsonb) then
+    raise exception 'If without a note was not saved';
+  end if;
 
   perform set_config('request.jwt.claim.sub',organizer::text,true);
   v := public.sidequest_group_read(plan_id);
