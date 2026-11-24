@@ -86,7 +86,9 @@ function validatedAction(value: JsonObject): GroupActionInput {
 
 // Defense in depth: even if a future RPC mistakenly returns another user's
 // private condition, the Node gateway exposes it only to its authenticated owner.
-function projectPlan(raw: unknown, actorId: string): unknown {
+type ExpectedPlan = { planId: string } | { eventId: string }
+
+function projectPlan(raw: unknown, actorId: string, expected: ExpectedPlan): unknown {
   const plan = object(raw)
   if (!plan || typeof plan.id !== 'string' || typeof plan.eventId !== 'string' ||
       typeof plan.organizerId !== 'string' || !Number.isSafeInteger(plan.revision) ||
@@ -94,6 +96,13 @@ function projectPlan(raw: unknown, actorId: string): unknown {
       !Array.isArray(plan.participants) || !Array.isArray(plan.invitations) ||
       plan.invitations.some((id: unknown) => typeof id !== 'string' || !UUID.test(id)) ||
       plan.participants.length + plan.invitations.length > MAX_GROUP_INVITEES) {
+    throw new GroupGatewayError(503, 'The group response is unavailable.')
+  }
+  // A caller may belong to several plans; membership alone cannot establish
+  // that the upstream returned the requested resource.
+  if (('planId' in expected && plan.id.toLowerCase() !== expected.planId.toLowerCase()) ||
+      ('eventId' in expected && (plan.eventId.toLowerCase() !== expected.eventId.toLowerCase() ||
+        plan.organizerId !== actorId))) {
     throw new GroupGatewayError(503, 'The group response is unavailable.')
   }
   const organizer = plan.organizerId === actorId
@@ -250,7 +259,7 @@ export function createGroupApi(
         if (typeof body.eventId !== 'string' || !UUID.test(body.eventId)) {
           throw new RequestError(400, 'Choose a valid campus event.')
         }
-        response(res, 201, projectPlan(await gateway.create(token, body.eventId), actor.userId))
+        response(res, 201, projectPlan(await gateway.create(token, body.eventId), actor.userId, { eventId: body.eventId }))
       } else if (isAction) {
         const body = await jsonBody(req)
         const command = validatedAction(body)
@@ -259,10 +268,10 @@ export function createGroupApi(
           if (updated !== null) throw new GroupGatewayError(503, 'The group response is unavailable.')
           response(res, 200, null)
         } else {
-          response(res, 200, projectPlan(updated, actor.userId))
+          response(res, 200, projectPlan(updated, actor.userId, { planId: match[1] }))
         }
       } else {
-        response(res, 200, projectPlan(await gateway.read(token, match[1]), actor.userId))
+        response(res, 200, projectPlan(await gateway.read(token, match[1]), actor.userId, { planId: match[1] }))
       }
     } catch (error) {
       const status = error instanceof RequestError || error instanceof GroupGatewayError
