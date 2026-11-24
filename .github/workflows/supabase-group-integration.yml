@@ -63,7 +63,7 @@ jobs:
               body = re.sub(key_pattern, lambda _: key + ' = ' + value, body) if re.search(key_pattern,body) else key + ' = ' + value + '\n' + body
               s = s[:m.end()] + body + s[stop:]
           setting('auth', 'enable_signup', 'true')
-          setting('auth', 'jwt_expiry', '3600')
+          setting('auth', 'jwt_expiry', '180')
           setting('auth.email', 'enable_signup', 'true')
           setting('auth.email', 'enable_confirmations', 'false')
           setting('auth.email', 'max_frequency', '"1s"')
