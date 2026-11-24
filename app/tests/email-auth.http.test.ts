@@ -24,6 +24,7 @@ async function start(gateway: EmailOtpGateway | null) {
 }
 function sample(): EmailOtpGateway {
   return {
+    signOut: vi.fn(async () => undefined),
     requestCode: vi.fn(async () => undefined),
     verifyCode: vi.fn(async (_email, code) => code === '123456' ? {
       userId: actorId,
@@ -110,6 +111,29 @@ describe('passwordless email-code HTTP contract', () => {
     })
     expect(status).toBe(413)
     expect(gateway.requestCode).not.toHaveBeenCalled()
+  })
+
+  it('revokes only the supplied session and reports provider failure honestly', async () => {
+    const gateway = sample(), base = await start(gateway)
+    const token = 'example-access-token-for-unit-testing-only'
+    const signOut = (body: unknown, authorization = 'Bearer ' + token, origin = base) =>
+      fetch(base + '/api/auth/sign-out', {
+        method: 'POST', headers: { Origin: origin, Authorization: authorization, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+    expect((await signOut({}, '')).status).toBe(401)
+    expect((await signOut({ scope: 'global' })).status).toBe(400)
+    expect((await signOut({}, 'Bearer ' + token, 'https://unrelated.example')).status).toBe(403)
+    expect(gateway.signOut).not.toHaveBeenCalled()
+    const success = await signOut({})
+    expect(success.status).toBe(200)
+    expect(await success.json()).toEqual({ revoked: true })
+    expect(success.headers.get('cache-control')).toBe('no-store, private')
+    expect(gateway.signOut).toHaveBeenCalledWith(token)
+    vi.mocked(gateway.signOut).mockRejectedValueOnce(new Error('Private provider failure'))
+    const failure = await signOut({})
+    expect(failure.status).toBe(503)
+    expect(await failure.json()).toEqual({ error: 'The sign-in service is unavailable.' })
   })
 
   it('caps repeated verification attempts and does not report invalid codes as sessions', async () => {
