@@ -32,7 +32,7 @@ We added `app/scripts/audit-public-event-sources.mjs` to inspect a bounded respo
 cd app
 node scripts/audit-public-event-sources.mjs
 # Optional explicit, read-only, host-pinned GET after network review:
-node scripts/audit-public-event-sources.mjs --probe-livewhale
+SIDEQUEST_CAMPUS_FEED_APPROVED=yes node scripts/audit-public-event-sources.mjs --probe-livewhale
 ```
 
 The default command makes no network requests. An explicit probe uses a fixed `https://events.scu.edu` URL, 12-second deadline, no redirects, no credentials and a 250 KB limit. It prints only *format and observed field names*, not private event details. No API endpoint has been live-verified here, so failure must remain a documented result rather than an invitation to scrape around access controls.
@@ -75,3 +75,6 @@ No new SQL, no Supabase migrations, no Qlusion scraper, no automated SCU event p
 - SCU Theatre and Dance: https://www.scu.edu/theatre/
 - SCU Music: https://www.scu.edu/cas/music/
 - Santa Clara Broncos: https://santaclarabroncos.com/coverage
+
+### Review update
+The live probe now uses a bounded v2 candidate matching the provider family in PR #86, requires explicit source approval, and reports field names only. The live response remains unverified. PR #86 is the recurring collector, while this PR is a diagnostic and historical source research. Reconcile the two registries before activation; do not run two independent import schedules.
