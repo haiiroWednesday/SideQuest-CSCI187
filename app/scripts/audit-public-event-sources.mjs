@@ -8,14 +8,14 @@
  * This script never posts events, changes Supabase or guesses an end time.
  * A supported LiveWhale API *format* does not prove SCU enables that endpoint.
  */
-import { readFile } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 
 const registry = new URL('../data/public-scu-event-sources-2026-11-24.json', import.meta.url)
-const PROBE_URL = 'https://events.scu.edu/live/json/events/max/30/paginate/30/response_fields/location,summary,group_title'
+const PROBE_URL = 'https://events.scu.edu/live/json/v2/events/max/30/paginate/30/response_fields/location,group_title/'
 const allowed = new Set(['--probe-livewhale'])
 const MAX_JSON_BYTES = 250_000
 const known = ['id', 'title', 'date', 'date2', 'date_time', 'date2_time', 'timezone',
-  'url', 'location', 'location_title', 'summary', 'group_title', 'date_ts', 'date2_ts',
+  'url', 'href', 'location', 'location_title', 'summary', 'group_title', 'date_ts', 'date2_ts',
   'is_all_day', 'repeats', 'visibility', 'last_modified']
 
 export function inspectPayload(raw) {
@@ -30,14 +30,15 @@ export function inspectPayload(raw) {
   }
   const version = Array.isArray(raw) ? 'v1-array'
     : Array.isArray(raw.data) ? 'v2-style-data' : 'v1-paginated-results'
-  const fields = [...new Set(records.slice(0, 10).flatMap(x => Object.keys(x)))].sort()
+  const fields = [...new Set(records.flatMap(x => Object.keys(x)))].sort()
   return {
     format: version,
     inspected: records.length,
     fieldNames: fields.filter(key => known.includes(key)),
     unknownFieldCount: fields.filter(key => !known.includes(key)).length,
     // This is a SHAPE probe, not evidence that fields contain verified data.
-    hasTimeKeys: fields.includes('date_time') && fields.includes('date2_time'),
+    hasTimeKeys: (fields.includes('date_time') && fields.includes('date2_time')) ||
+      (fields.includes('date_ts') && fields.includes('date2_ts')),
     explicitEndKeyFound: fields.includes('date2_time') || fields.includes('date2_ts'),
     needsHumanSourceValidation: true,
     published: false,
@@ -63,6 +64,7 @@ async function readLimited(response) {
     }
   } finally {
     await reader.cancel().catch(() => {})
+    reader.releaseLock()
   }
   return JSON.parse(Buffer.concat(chunks).toString('utf8'))
 }
@@ -91,13 +93,20 @@ async function audit() {
   }
   if (fixture.length) {
     const file = fixture[0].slice('--fixture='.length)
-    const result = inspectPayload(JSON.parse(await readFile(file, 'utf8')))
+    const info = await stat(file)
+    if (!info.isFile() || info.size > MAX_JSON_BYTES) throw Error('Fixture exceeds the bounded size limit or is not a file.')
+    const bytes = await readFile(file)
+    if (bytes.length > MAX_JSON_BYTES) throw Error('Fixture exceeds the bounded size limit.')
+    const result = inspectPayload(JSON.parse(bytes.toString('utf8')))
     console.log('OFFLINE synthetic fixture: ' + JSON.stringify(result))
     return
   }
   if (!args.includes('--probe-livewhale')) {
     console.log('OFFLINE ONLY: No requests or data writes. SCU API access and Qlusion feed remain unverified.')
     return
+  }
+  if (process.env.SIDEQUEST_CAMPUS_FEED_APPROVED !== 'yes') {
+    throw Error('Source access approval required before live probe.')
   }
   console.log('Read-only SCU LiveWhale API shape probe; no credentials, writes or imported records.')
   const response = await fetch(PROBE_URL, {
