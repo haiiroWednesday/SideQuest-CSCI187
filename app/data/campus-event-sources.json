@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": "scu-livewhale",
+      "name": "SCU university calendar",
+      "page": "https://events.scu.edu/all",
+      "adapter": "livewhale-v2",
+      "feed": "https://events.scu.edu/live/json/v2/events/",
+      "access": "pending-live-probe-and-owner-approval",
+      "coverage": "University-wide public calendar, including participating department and athletics groups"
+    },
+    {
+      "id": "scu-campus",
+      "name": "Campus calendar",
+      "page": "https://events.scu.edu/campus-calendar/all",
+      "adapter": null,
+      "access": "covered-by-parent-unverified",
+      "coverage": "Confirm against university feed before adding a second poll"
+    },
+    {
+      "id": "scu-global",
+      "name": "Global Engagement",
+      "page": "https://events.scu.edu/global-engagement/all",
+      "adapter": null,
+      "access": "covered-by-parent-unverified"
+    },
+    {
+      "id": "scu-sustainability",
+      "name": "Sustainability",
+      "page": "https://events.scu.edu/Sustainability/all",
+      "adapter": null,
+      "access": "covered-by-parent-unverified"
+    },
+    {
+      "id": "scu-oml",
+      "name": "Office for Multicultural Learning",
+      "page": "https://events.scu.edu/office-for-multicultural-learning/",
+      "adapter": null,
+      "access": "covered-by-parent-unverified"
+    },
+    {
+      "id": "scu-arts",
+      "name": "Arts and Sciences",
+      "page": "https://events.scu.edu/arts-and-sciences/all",
+      "adapter": null,
+      "access": "covered-by-parent-unverified"
+    },
+    {
+      "id": "scu-library",
+      "name": "University Library",
+      "page": "https://www.scu.edu/library/news/calendar/",
+      "adapter": null,
+      "access": "research-only"
+    },
+    {
+      "id": "scu-museum",
+      "name": "de Saisset Museum",
+      "page": "https://www.scu.edu/desaisset/calendar/",
+      "adapter": null,
+      "access": "research-only"
+    },
+    {
+      "id": "scu-theatre",
+      "name": "Theatre and Dance productions",
+      "page": "https://www.scu.edu/theatre/productions/",
+      "adapter": null,
+      "access": "research-only"
+    },
+    {
+      "id": "scu-mission",
+      "name": "Mission and Ministry",
+      "page": "https://www.scu.edu/mission-and-ministry/",
+      "adapter": null,
+      "access": "research-only"
+    },
+    {
+      "id": "scu-engineering",
+      "name": "Engineering student organizations",
+      "page": "https://www.scu.edu/engineering/beyond-the-classroom/student-organizations/",
+      "adapter": null,
+      "access": "research-only"
+    },
+    {
+      "id": "scu-recreation",
+      "name": "Campus Recreation",
+      "page": "https://www.scu.edu/recreation/facilities/hours/",
+      "adapter": null,
+      "access": "research-only"
+    },
+    {
+      "id": "scu-fitness",
+      "name": "Fitness classes",
+      "page": "https://www.scu.edu/recreation/fitness/fitnessclassschedule/",
+      "adapter": null,
+      "access": "research-only"
+    },
+    {
+      "id": "scu-athletics",
+      "name": "Bronco Athletics composite calendar",
+      "page": "https://santaclarabroncos.com/calendar",
+      "adapter": null,
+      "access": "research-only"
+    },
+    {
+      "id": "qlusion",
+      "name": "Qlusion student organization events",
+      "page": "https://www.qlusion.com/",
+      "adapter": null,
+      "access": "research-only",
+      "coverage": "Public calendar observed; no documented authorized machine-readable feed verified"
+    },
+    {
+      "id": "scu-csi",
+      "name": "Student organization directory",
+      "page": "https://www.scu.edu/csi/organizations/directory/",
+      "adapter": null,
+      "access": "research-only",
+      "coverage": "Find organizer-published public event sources; do not collect member/contact lists"
+    }
+  ]
+}
