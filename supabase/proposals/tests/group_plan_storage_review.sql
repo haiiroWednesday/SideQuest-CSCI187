@@ -82,12 +82,14 @@ begin
   exception when check_violation then null;
   end;
 
-  begin
-    insert into public.group_participants(plan_id,user_id,response,responded_at)
-      values (plan_id, outsider, 'if', now());
-    raise exception 'If response was accepted without a condition';
-  exception when check_violation then null;
-  end;
+  -- A conditional answer is valid even without a private note.
+  update public.group_participants set private_condition=null
+    where group_participants.plan_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'::uuid and user_id=first_member;
+  if not exists (select 1 from public.group_participants
+      where group_participants.plan_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'::uuid
+        and user_id=first_member and response='if' and private_condition is null) then
+    raise exception 'Optional private condition was not preserved';
+  end if;
 
   begin
     insert into public.group_participants(plan_id,user_id,response,private_condition,responded_at)
