@@ -223,3 +223,14 @@ test('organizer export source URLs never retain arbitrary query strings', () => 
     sourceUrl: clubEvent.sourceUrl + '?token=fixture-only#section' }]), qlusion, exportOptions)
   assert.equal(snapshot.records[0].sourceUrl, clubEvent.sourceUrl)
 })
+
+test('a reviewed publish decision still requires a valid same-day interval', () => {
+  for (const candidate of [null, {}, { date: '2026-02-30', start: '14:00', end: '15:00' },
+    { date: '2026-12-02', start: '14:00', end: null },
+    { date: '2026-12-02', start: '14:00', end: '14:00' },
+    { date: '2026-12-02', start: '25:00', end: '26:00' }]) {
+    assert.equal(plan({ candidate })[0].reason, 'invalid-candidate-interval')
+    assert.equal(plan({ candidate, possibleDuplicate: false }, { mappings: [], catalog: [] })[0].reason,
+      'invalid-candidate-interval')
+  }
+})
