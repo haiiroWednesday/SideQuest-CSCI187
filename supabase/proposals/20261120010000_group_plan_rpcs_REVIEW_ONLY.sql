@@ -242,8 +242,8 @@ begin
     end if;
     v_condition := nullif(btrim(p_condition, U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF'), '');
     if p_response = 'if' then
-      if v_condition is null or char_length(v_condition) > 280 then
-        raise exception 'If response needs a condition of up to 280 characters' using errcode = '22023';
+      if v_condition is not null and char_length(v_condition) > 280 then
+        raise exception 'Optional If condition must be at most 280 characters' using errcode = '22023';
       end if;
     elsif p_condition is not null then
       raise exception 'Only If may include a private condition' using errcode = '22023';
