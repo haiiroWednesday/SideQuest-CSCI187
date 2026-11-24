@@ -269,7 +269,7 @@ export function ModeToggle({ mode, onChange }: { mode: ScheduleMode; onChange: (
 export function CategoryKey({ stubs }: { stubs: PlanStubModel[] }) {
   const used = new Set(stubs.map(s => categoryOfPlan(s)))
   return (
-    <ul className="sqm-key" aria-label="Colour key">
+    <ul className="sqm-key" aria-label="Colour key" tabIndex={0}>
       {CATEGORY_KEY.filter(c => used.has(c.id)).map(c => <li key={c.id}><i style={{ background: PALETTE[c.id][0] }} />{c.label}</li>)}
       {stubs.some(s => s.overlap) && <li><i className="sqm-key-hatch" />overlap</li>}
     </ul>
