@@ -92,6 +92,16 @@ for (const c of CASES) for (const width of [390, 1280]) {
   })
 }
 
+test('mobile schedule colour key is reachable by keyboard', async ({ page }) => {
+  await seed(page, CASES[0].events, 390)
+  const tickets = page.getByRole('button', { name: 'Tickets', exact: true })
+  const key = page.getByRole('list', { name: 'Colour key' })
+  await expect(key.getByRole('listitem').first()).toBeVisible()
+  await tickets.focus()
+  await page.keyboard.press('Tab')
+  await expect(key).toBeFocused()
+})
+
 // The date stamp on Discover, for every weekday and month-name length.
 const STAMP_DAYS = ['2026-11-23', '2026-11-24', '2026-12-02', '2027-01-07', '2027-02-05', '2027-05-01', '2027-09-12', '2027-03-31']
 for (const d of STAMP_DAYS) {
