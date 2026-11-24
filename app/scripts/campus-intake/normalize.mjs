@@ -109,7 +109,7 @@ export function reconcileRecords(records) {
   const result = []
   for (const group of groups.values()) {
     const variants = new Map(group.map(row => [JSON.stringify([
-      row.title, row.listedCalendar, row.location, row.sourceUrl, row.endEpochSeconds,
+      row.title, row.listedCalendar, row.location, row.sourceUrl, row.startEpochSeconds, row.endEpochSeconds,
       row.reviewState, row.reasons,
     ]), row]))
     if (variants.size === 1) result.push(group[0])
