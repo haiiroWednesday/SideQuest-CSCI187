@@ -84,7 +84,7 @@ class Participant {
   <<domain code in draft PR>>
   +userId
   +response: Works|If|Cannot|null
-  +privateCondition
+  +privateCondition (optional)
 }
 class GroupPlanService {
   <<server service code only>>
