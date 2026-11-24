@@ -11,6 +11,7 @@ export type VerifiedEmailSession = {
   expiresAt: number // UNIX milliseconds, never an arbitrary client value
 }
 export interface EmailOtpGateway {
+  signOut(token: string): Promise<void>
   requestCode(email: string): Promise<void>
   verifyCode(email: string, code: string): Promise<VerifiedEmailSession | null>
 }
@@ -89,7 +90,7 @@ export function createEmailAuthApi(
     let path: string
     try { path = new URL(req.url ?? '/', 'http://sidequest.local').pathname }
     catch { return false }
-    if (!['/api/auth/status', '/api/auth/request-code', '/api/auth/verify-code'].includes(path)) {
+    if (!['/api/auth/status', '/api/auth/request-code', '/api/auth/verify-code', '/api/auth/sign-out'].includes(path)) {
       return false
     }
     if (path === '/api/auth/status') {
@@ -119,6 +120,16 @@ export function createEmailAuthApi(
         throw new AuthHttpError(403, 'Use the SideQuest site to sign in.')
       }
       const request = await body(req)
+      if (path === '/api/auth/sign-out') {
+        const auth = req.headers.authorization
+        const token = typeof auth === 'string' && auth.length <= 8200
+          ? /^Bearer ([A-Za-z0-9._~-]{20,8192})$/.exec(auth)?.[1] : undefined
+        if (!token) throw new AuthHttpError(401, 'Sign in before ending a session.')
+        if (Object.keys(request).length !== 0) throw new AuthHttpError(400, 'Unexpected sign-out fields.')
+        await gateway.signOut(token)
+        json(res, 200, { revoked: true })
+        return true
+      }
       const email = emailFrom(request, path.endsWith('verify-code') ? ['email', 'code'] : ['email'])
       const ip = req.socket.remoteAddress ?? 'unknown'
       if (path === '/api/auth/request-code') {
