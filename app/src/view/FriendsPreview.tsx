@@ -23,7 +23,7 @@ function seed(events: readonly Ev[]): Group[] {
   const e = (i: number) => `#${i}`
   return [
     { id: 'g1', name: 'Swig 7th floor', members: ['Maya', 'Jun', 'Theo', YOU], plans: [
-      { id: 'p1', eventId: e(5), by: 'Maya', answers: { Maya: 'works', Jun: 'if', Theo: null, [YOU]: null }, note: { Jun: 'if I can leave lab early' } },
+      { id: 'p1', eventId: e(5), by: 'Maya', answers: { Maya: 'works', Jun: 'if', Theo: null, [YOU]: null } },
       { id: 'p2', eventId: e(9), by: 'Jun', answers: { Maya: 'works', Jun: 'works', Theo: 'cant', [YOU]: 'works' } }] },
     { id: 'g2', name: 'ACM crew', members: ['Priya', 'Sam', 'Diego', YOU], plans: [
       { id: 'p3', eventId: e(4), by: 'Priya', answers: { Priya: 'works', Sam: 'works', Diego: 'if', [YOU]: null } }] },
@@ -60,7 +60,7 @@ export function FriendsPreview({ events, routes, plannedCount }: { events: reado
   const color = (n: string) => n === YOU ? '#a32035' : COLORS[[...n].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length]
   const update = (fn: (x: Group) => Group) => setGroups(all => all.map(x => x.id === g.id ? fn(x) : x))
   const setNote = (planId: string, text: string) => update(x => ({ ...x, plans: x.plans.map(p => p.id === planId ? { ...p, note: { ...(p.note ?? {}), [YOU]: text } } : p) }))
-  const answer = (planId: string, a: Exclude<Answer, null>) => update(x => ({ ...x, plans: x.plans.map(p => p.id === planId ? { ...p, answers: { ...p.answers, [YOU]: p.answers[YOU] === a ? null : a } } : p) }))
+  const answer = (planId: string, a: Exclude<Answer, null>) => update(x => ({ ...x, plans: x.plans.map(p => p.id === planId ? { ...p, answers: { ...p.answers, [YOU]: a }, note: a === 'if' ? p.note : Object.fromEntries(Object.entries(p.note ?? {}).filter(([author]) => author !== YOU)) } : p) }))
   const makeGroup = () => {
     const n = name.trim(); if (!n) return
     const id = 'g' + Date.now()
@@ -69,7 +69,7 @@ export function FriendsPreview({ events, routes, plannedCount }: { events: reado
   }
   const propose = (eventId: string) => {
     if (!eventId || !g) return
-    update(x => ({ ...x, plans: [{ id: 'p' + Date.now(), eventId, by: YOU, answers: Object.fromEntries(x.members.map(m => [m, m === YOU ? 'works' : null])) }, ...x.plans] }))
+    update(x => ({ ...x, plans: [{ id: 'p' + Date.now(), eventId, by: YOU, answers: Object.fromEntries(x.members.map(m => [m, null])) }, ...x.plans] }))
     setProposing('')
   }
   const dayName = (date: string) => { const [y, m, d] = date.split('-').map(Number); return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(Date.UTC(y, m - 1, d)).getUTCDay()] + ' ' + d }
@@ -82,6 +82,7 @@ export function FriendsPreview({ events, routes, plannedCount }: { events: reado
         <div className="sq-fr">
           <nav className="sq-fr-groups" aria-label="Your groups">
             <h1>Groups</h1>
+            <p>Design preview: groups and responses stay in this browser. No invitations are sent.</p>
             <ul>{groups.map(x => (
               <li key={x.id}><button type="button" aria-current={x.id === g?.id ? 'true' : undefined} onClick={() => setActive(x.id)}>
                 <b>{x.name}</b><span>{x.members.length} people · {x.plans.length} {x.plans.length === 1 ? 'plan' : 'plans'}</span>
@@ -131,7 +132,7 @@ export function FriendsPreview({ events, routes, plannedCount }: { events: reado
                     <span className="sq-fr-face" aria-hidden="true"><Greetings location={e.location} small /></span>
                   </div>
                   <ul className="sq-fr-reps">{g.members.filter(m => m !== YOU).map(m => { const a = p.answers[m] ?? null
-                    return <li key={m}><i style={{ background: color(m) }}>{m[0]}</i>{m}<span className={'sq-fr-a sq-fr-a-' + (a ?? 'none')}>{a && <AnswerStar kind={a} on small />}{a === 'works' ? 'Works' : a === 'if' ? 'If…' : a === 'cant' ? 'Cannot' : 'not yet'}</span>{a === 'if' && p.note?.[m] && <em>{p.note[m]}</em>}</li> })}</ul>
+                    return <li key={m}><i style={{ background: color(m) }}>{m[0]}</i>{m}<span className={'sq-fr-a sq-fr-a-' + (a ?? 'none')}>{a && <AnswerStar kind={a} on small />}{a === 'works' ? 'Works' : a === 'if' ? 'If…' : a === 'cant' ? 'Cannot' : 'not yet'}</span></li> })}</ul>
                   <div className="sq-fr-mine" role="group" aria-label={`Your answer for ${e.title}`}><span>Your answer</span>
                     {ANSWERS.map(([k, label]) => <button key={k} type="button" className={'sq-ans sq-ans-' + k} aria-pressed={p.answers[YOU] === k} onClick={() => answer(p.id, k)}><AnswerStar kind={k} on={p.answers[YOU] === k} />{label}</button>)}
                   </div>
