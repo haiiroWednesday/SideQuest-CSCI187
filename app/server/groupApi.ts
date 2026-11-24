@@ -70,11 +70,11 @@ function validatedAction(value: JsonObject): GroupActionInput {
     }
     input.response = value.response as GroupActionInput['response']
     if (input.response === 'if') {
-      if (typeof value.condition !== 'string' || value.condition.trim().length === 0 ||
-          privateConditionLength(value.condition) > MAX_PRIVATE_CONDITION) {
-        throw new RequestError(400, 'A conditional response needs up to 280 characters of text.')
+      if (value.condition !== undefined && value.condition !== null &&
+          (typeof value.condition !== 'string' || privateConditionLength(value.condition) > MAX_PRIVATE_CONDITION)) {
+        throw new RequestError(400, 'An optional private condition must be text of up to 280 characters.')
       }
-      input.condition = value.condition.trim()
+      input.condition = typeof value.condition === 'string' ? value.condition.trim() || null : null
     } else if (value.condition !== undefined && value.condition !== null) {
       throw new RequestError(400, 'Only If responses may include a condition.')
     }
