@@ -17,7 +17,7 @@ The probe checks `GET /api/auth/status` reports disabled and `GET /api/groups` r
 
 **Do not run until Daven and the team approve the group SQL/grants, staging Supabase Auth configuration, and three dedicated disposable test accounts**. The proposed SQL files remain outside `supabase/migrations/` and must not be copied into production without review.
 
-Prepare a **pre-existing** test event and group plan owned by organizer A with invitee B, plus outsider C. Have B submit a conditional or other response through the already reviewed application UI. Confirm all three test identities are legitimately authenticated in the approved staging project. Their short-lived access tokens must be supplied as protected shell environment variables, never in CLI arguments, chat, screenshots, issue comments or Git. The probe requires:
+Prepare a **pre-existing** test event and group plan owned by organizer A with invitee B, plus outsider C. After B explicitly accepts the invitation, have B submit a conditional or other response through the already reviewed application UI. Separately test pending invitation preview before acceptance, decline, leave and account deletion in the authorized staging environment. Confirm all three test identities are legitimately authenticated in the approved staging project. Their short-lived access tokens must be supplied as protected shell environment variables, never in CLI arguments, chat, screenshots, issue comments or Git. The probe requires:
 
 | Protected environment variable | Meaning |
 | --- | --- |
