@@ -202,8 +202,12 @@ try {
   const declined = await json(await act(c, 6, 'decline'), 200, 'Decline')
   check(declined === null, 'Decline returned private plan details.')
   await denied(await directRead(c.token), 'Declined direct access')
-  await json(await act(b, 7, 'respond', { response: 'works' }), 200, 'Explicit Works')
-  const confirmed = await json(await act(a, 8, 'confirm'), 200, 'Confirm')
+  const noNote = await json(await act(b, 7, 'respond', { response: 'if' }), 200, 'If without note')
+  check(noNote.participants.find(m => m.userId === b.id)?.privateCondition === null,
+    'Optional note was not cleared.')
+  await expectStatus(await act(a, 8, 'confirm'), 400, 'If without note remains tentative')
+  await json(await act(b, 8, 'respond', { response: 'works' }), 200, 'Explicit Works')
+  const confirmed = await json(await act(a, 9, 'confirm'), 200, 'Confirm')
   check(confirmed.status === 'confirmed', 'Plan failed to confirm.')
   pass('Decline removes access and confirmation requires explicit Works')
   const capacity = await json(await app('/api/groups', a.token, { eventId: event.id }), 201, 'Create capacity fixture')
@@ -227,7 +231,7 @@ try {
   const deletion = await admin.auth.admin.deleteUser(b.id)
   check(!deletion.error, 'Disposable account deletion failed.')
   const after = await json(await app(path, a.token), 200, 'Plan after member deletion')
-  check(after.status === 'cancelled' && after.revision === 10 && after.participants.length === 0,
+  check(after.status === 'cancelled' && after.revision === 11 && after.participants.length === 0,
     'Deleted participant did not invalidate confirmed plan and advance revision.')
   await denied(await directRead(b.token), 'Deleted account direct RPC')
   pass('Real Auth account deletion, FK cascade and confirmation invalidation')
