@@ -1,6 +1,6 @@
 {
   "batch": "scu-upcoming-manual-review-2026-11-04",
-  "purpose": "Manually verified, reviewable event suggestions. NOT automatically imported. Check for changes before publishing.",
+  "purpose": "Historical November 4 review batch; not live or automatically imported. Held records are never eligible. Reverify every remaining source before any approved publication.",
   "sources": [
     {
       "type": "mission",
@@ -31,7 +31,8 @@
       "summary": "Drop in to speak with an international student peer advisor about life and study at SCU.",
       "sourceUrl": "https://events.scu.edu/global-engagement/all",
       "sourceNote": "Recurring T/TH listing; for international students",
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "reviewState": "reviewed"
     },
     {
       "reviewId": "SCU-2026-11-02",
@@ -44,7 +45,8 @@
       "summary": "A community event supporting immigrant communities, with exhibits, advocacy, and reflections on the US-Mexico border.",
       "sourceUrl": "https://www.scu.edu/mission-and-ministry/jesuit-heritage-month-2026/",
       "sourceNote": "SCU Jesuit Heritage Month event",
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "reviewState": "reviewed"
     },
     {
       "reviewId": "SCU-2026-11-03",
@@ -56,8 +58,9 @@
       "location": "Varsi Hall, Global Engagement Office",
       "summary": "Drop-in advising for SCU undergraduates considering study or internship opportunities abroad.",
       "sourceUrl": "https://events.scu.edu/global-engagement/all",
-      "sourceNote": "Weekday recurring through Dec 4",
-      "reviewedOn": "2026-11-04"
+      "sourceNote": "Daven flagged conflicting listing and description hours (2–6 PM vs 1–5 PM); retain historical data only, do not publish without an occurrence-specific source.",
+      "reviewedOn": "2026-11-04",
+      "reviewState": "hold"
     },
     {
       "reviewId": "SCU-2026-11-04",
@@ -70,7 +73,8 @@
       "summary": "Student farm-stand hour with affordable certified-organic produce; bring a student ID.",
       "sourceUrl": "https://events.scu.edu/Sustainability/all",
       "sourceNote": "Weekly Friday listing",
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "reviewState": "reviewed"
     },
     {
       "reviewId": "SCU-2026-11-05",
@@ -82,8 +86,9 @@
       "location": "Varsi Hall, Global Engagement Office",
       "summary": "Ask a global-learning advisor about SCU-approved study and internship programs abroad.",
       "sourceUrl": "https://events.scu.edu/global-engagement/all",
-      "sourceNote": "Weekday recurring through Dec 4",
-      "reviewedOn": "2026-11-04"
+      "sourceNote": "Daven flagged conflicting listing and description hours (2–6 PM vs 1–5 PM); retain historical data only, do not publish without an occurrence-specific source.",
+      "reviewedOn": "2026-11-04",
+      "reviewState": "hold"
     },
     {
       "reviewId": "SCU-2026-11-06",
@@ -96,7 +101,8 @@
       "summary": "Learn to preserve fall produce and prepare persimmon jam to take home. Check the organizer for any registration details.",
       "sourceUrl": "https://events.scu.edu/Sustainability/all",
       "sourceNote": "Nov 7 one-time workshop",
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "reviewState": "reviewed"
     },
     {
       "reviewId": "SCU-2026-11-07",
@@ -109,7 +115,8 @@
       "summary": "Reception celebrating community and the SCU production of The Importance of Being Earnest. The performance follows afterward; this listing covers only the published reception interval.",
       "sourceUrl": "https://www.scu.edu/theatre/productions/the-importance-of-being-earnest/",
       "sourceNote": "Theatre page specifies 7:00–7:45 PM reception; performance end time unknown",
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "reviewState": "reviewed"
     },
     {
       "reviewId": "SCU-2026-11-08",
@@ -121,8 +128,9 @@
       "location": "Nobili Dining Room",
       "summary": "An informal pizza gathering with religious sisters, brothers, and priests to hear their stories.",
       "sourceUrl": "https://www.scu.edu/mission-and-ministry/jesuit-heritage-month-2026/",
-      "sourceNote": "Nov 8 one-time gathering",
-      "reviewedOn": "2026-11-04"
+      "sourceNote": "Daven reported Nobili Dining Room in the Mission & Ministry source; prior venue conflict was not independently resolved. Hold until occurrence-specific verification.",
+      "reviewedOn": "2026-11-04",
+      "reviewState": "hold"
     },
     {
       "reviewId": "SCU-2026-11-09",
@@ -135,7 +143,8 @@
       "summary": "Visit SCU's student-run campus thrift store for donated clothing, accessories, and school supplies.",
       "sourceUrl": "https://events.scu.edu/Sustainability/all",
       "sourceNote": "Recurring daytime listing through Dec 3",
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "reviewState": "reviewed"
     },
     {
       "reviewId": "SCU-2026-11-10",
@@ -148,7 +157,8 @@
       "summary": "Enjoy a free plant-based meal and a relaxed campus community gathering at the Forge Garden.",
       "sourceUrl": "https://events.scu.edu/Sustainability/all",
       "sourceNote": "Weekly Monday listing through Nov 16",
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "reviewState": "reviewed"
     },
     {
       "reviewId": "SCU-2026-11-11",
@@ -161,7 +171,8 @@
       "summary": "Help harvest and distribute fresh fruit to the SCU community. Meet at the Forge Garden.",
       "sourceUrl": "https://events.scu.edu/Sustainability/all",
       "sourceNote": "Recurring Tuesday listing",
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "reviewState": "reviewed"
     },
     {
       "reviewId": "SCU-2026-11-12",
@@ -174,7 +185,8 @@
       "summary": "Drop in to help with gardening activities at the Forge. Closed-toed shoes are required.",
       "sourceUrl": "https://events.scu.edu/Sustainability/all",
       "sourceNote": "Recurring Tuesday listing",
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "reviewState": "reviewed"
     },
     {
       "reviewId": "SCU-2026-11-13",
@@ -186,8 +198,9 @@
       "location": "Varsi Hall, Global Engagement Office",
       "summary": "Office hours for undergraduates exploring global-learning opportunities and study abroad.",
       "sourceUrl": "https://events.scu.edu/global-engagement/all",
-      "sourceNote": "Weekday recurring through Dec 4",
-      "reviewedOn": "2026-11-04"
+      "sourceNote": "Daven flagged conflicting listing and description hours (2–6 PM vs 1–5 PM); retain historical data only, do not publish without an occurrence-specific source.",
+      "reviewedOn": "2026-11-04",
+      "reviewState": "hold"
     },
     {
       "reviewId": "SCU-2026-11-14",
@@ -200,7 +213,8 @@
       "summary": "An interactive community exchange with Bay Area youth environmental justice organizers.",
       "sourceUrl": "https://www.scu.edu/mission-and-ministry/jesuit-heritage-month-2026/",
       "sourceNote": "Nov 11 one-time event",
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "reviewState": "reviewed"
     },
     {
       "reviewId": "SCU-2026-11-15",
@@ -213,7 +227,8 @@
       "summary": "Drop-in support with international student peer advisors at the Global Engagement Office.",
       "sourceUrl": "https://events.scu.edu/global-engagement/all",
       "sourceNote": "Recurring T/TH listing",
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "reviewState": "reviewed"
     },
     {
       "reviewId": "SCU-2026-11-16",
@@ -226,7 +241,8 @@
       "summary": "SCU's campus thrift store offers reused clothing and other supplies to Broncos.",
       "sourceUrl": "https://events.scu.edu/Sustainability/all",
       "sourceNote": "Recurring daytime listing through Dec 3",
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "reviewState": "reviewed"
     },
     {
       "reviewId": "SCU-2026-11-17",
@@ -239,7 +255,8 @@
       "summary": "Student produce-shopping hour at the Forge's certified-organic farm stand; bring an SCU student ID.",
       "sourceUrl": "https://events.scu.edu/Sustainability/all",
       "sourceNote": "Weekly Friday listing",
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "reviewState": "reviewed"
     },
     {
       "reviewId": "SCU-2026-11-18",
@@ -252,7 +269,8 @@
       "summary": "Watch and discuss the Ignatian Family Teach-In for Justice, with a focus on peace and community.",
       "sourceUrl": "https://www.scu.edu/mission-and-ministry/jesuit-heritage-month-2026/",
       "sourceNote": "Nov 14 event",
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "reviewState": "reviewed"
     },
     {
       "reviewId": "SCU-2026-11-19",
@@ -265,7 +283,8 @@
       "summary": "Panel on spirituality, solidarity, and social justice, with opportunities for community conversation.",
       "sourceUrl": "https://www.scu.edu/mission-and-ministry/jesuit-heritage-month-2026/",
       "sourceNote": "Nov 18 event",
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "reviewState": "reviewed"
     }
   ]
 }
