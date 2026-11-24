@@ -6,11 +6,15 @@ The existing M2 public event catalog remains available. The optional Node endpoi
 ## Domain: a plan is distinct from an event and from a private intention
 
 - A `GroupPlan` has its own stable ID, a verified `eventId` from EventCatalog, an authenticated organizer ID, a status, a monotonically increasing revision, and separate pending `Invitation` and accepted `Participant` records.
-- An invitation grants only a limited invitation preview, never membership or a roster. The verified recipient accepts or declines; acceptance creates membership with an **unknown** (`null`) attendance response. Explicit answers are `works`, `if`, and `cant`. Only **If** may contain a private condition.
+- An invitation grants only a limited invitation preview, never membership or a roster. The verified recipient accepts or declines; acceptance creates membership with an **unknown** (`null`) attendance response. Explicit answers are `works`, `if`, and `cant`. Only **If** may contain an optional private condition. Missing or blank text is stored as NULL. If remains tentative, even without a note.
 - Organizer actions: offer/revoke invitations, remove members, confirm only when no active invitation is pending and all accepted participants explicitly answer Works, or cancel. Recipients accept/decline their own pending invitation; members change their own response or leave. Leaving a confirmed plan cancels its confirmation.
 - Private condition text is intentionally excluded from another participant's or the organizer's read projection. A public URL is **not** an identity or impersonation capability.
 - State changes carry an expected revision, and persistence uses an atomic compare-and-swap. Reconnects/replays reload server state instead of trusting optimistic client state.
 - A group plan is a proposal about attending an event, **not** a public event edit, ticket reservation or registration. Existing device-only Schedule and Someday remain separate.
+
+## One-tap response proposal (November 24)
+
+The three attendance buttons submit an explicit response directly. The current selection reflects the last authorized server reply. After If is saved, the participant may add, edit or clear their own optional note in a separate action. The 280-code-point limit, owner-only visibility, expected revision and confirmation rules still apply. This follow-up is proposed, not deployed.
 
 ## Required backend decisions before enabling the feature
 
