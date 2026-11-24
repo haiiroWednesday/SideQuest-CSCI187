@@ -172,7 +172,7 @@ export function GroupPlanPanel({
                 {busy ? 'Saving note…' : 'Save private note'}
               </button>
             </>}
-            <p role="status">{busy ? 'Saving response…' : choice ? 'Response saved' : 'Choose one response.'}</p>
+            <p role="status">{busy ? 'Saving response…' : choice ? 'Current response: ' + responseText[choice] : 'Choose one response.'}</p>
           </fieldset>
         </form>
       )}
