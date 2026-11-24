@@ -62,7 +62,7 @@ test('the Someday form and saved idea are covered by automated WCAG checks', asy
   await page.setViewportSize({ width: 375, height: 812 })
   await page.clock.install({ time: NOW })
   await page.goto('/#someday')
-  await expect(page.getByRole('heading', { name: 'My Someday.' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Someday' })).toBeVisible()
   await assertNoSeriousOrCriticalViolations(page, 'someday-empty')
   await page.getByLabel('Activity or place').fill('Paint with a friend')
   await page.getByLabel('What needs to happen? (optional)').fill('Agree on a Saturday')

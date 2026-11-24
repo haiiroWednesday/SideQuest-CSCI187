@@ -3,6 +3,7 @@ import { eventPhase } from '../model/eventTiming'
 import { assessEventFit } from '../model/fitAssessment'
 import { EVENT_CATEGORIES, suggestedEventCategory, type EventCategorySelection } from '../model/eventCategories'
 import { findEvents } from './findEvents'
+import { campusNow } from '../model/eventCatalog'
 import { byTime, groupDays, toStub, type ScreenEvent, type FreeWindow, type FreeWindowModel, type DiscoverScreen, type NearMissModel } from './screenModels'
 
 // ---------- Discover
@@ -16,6 +17,9 @@ export function presentDiscover(input: {
   planningBlocked?: boolean
   /** pass a window to show the "When are you free?" row; omit to hide it */
   freeWindow?: FreeWindow
+  /** gaps picked on the day ruler; an event shows when it fits inside any of them */
+  /** Free stretches the student marked, on any days. An event fits when it fits inside one of them. */
+  freeWindows?: readonly { date: string; start: string; end: string }[]
   now?: Date
 }): DiscoverScreen {
   const now = input.now ?? new Date()
@@ -74,12 +78,19 @@ export function presentDiscover(input: {
       fitCount,
       fitText: fitCount === null ? null : fitCount === 0 ? 'Nothing fits' : `${fitCount} fit`,
       hint: !complete && Boolean(values.date || values.start || values.end)
-        ? 'Showing all upcoming events. Complete the date and both times to filter.' : null,
+        ? 'Showing all upcoming events. Complete the date and both times to filter.'
+        : complete && !search?.error && windowHasPassed(values, now)
+          ? 'That time has already passed. Try a later time or another day.' : null,
       error: search?.error ?? null,
       canClear: Boolean(values.date || values.start || values.end),
     }
   }
 
+  const freeActive = Boolean(freeWindow?.active)
+  // An empty list still filters: "Tonight" with no free time shows nothing, not everything.
+  if (!freeActive && input.freeWindows) {
+    fitting = new Set(input.freeWindows.flatMap(w => { const r = findEvents(upcoming, w.date, w.start, w.end); return r.error ? [] : r.matches.map(e => e.id) }))
+  }
   const base = { plannedCount, freeWindow, nearMisses, categories, planningBlocked: Boolean(input.planningBlocked) }
   if (input.loading) return { ...base, status: 'loading', errorMessage: null, days: [], count: 0, headingText: 'Coming up' }
   if (input.error) return { ...base, status: 'error', errorMessage: input.error, days: [], count: 0, headingText: 'Coming up' }
@@ -95,4 +106,10 @@ export function presentDiscover(input: {
     count: stubs.length,
     headingText: `Coming up, ${stubs.length} ${stubs.length === 1 ? 'event' : 'events'}`,
   }
+}
+
+/** A complete window that ends before the campus clock (an earlier day, or earlier today). */
+function windowHasPassed(values: FreeWindow, now: Date): boolean {
+  const campus = campusNow(now)
+  return values.date < campus.date || (values.date === campus.date && values.end <= campus.time)
 }

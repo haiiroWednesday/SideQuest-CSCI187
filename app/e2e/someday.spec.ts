@@ -14,7 +14,7 @@ test('save an undated idea, connect a real event, plan it and defer without losi
   }, id)
   await page.reload()
   await page.goto('/#someday')
-  await expect(page.getByRole('heading', { name: 'My Someday.' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Someday' })).toBeVisible()
   await page.getByLabel('Activity or place').fill('Go to a jazz performance')
   await page.getByLabel('What needs to happen? (optional)').fill('Find a free afternoon')
   await page.getByRole('button', { name: 'Save the idea' }).click()

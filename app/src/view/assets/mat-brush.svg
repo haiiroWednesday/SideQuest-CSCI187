@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="40" viewBox="0 0 220 40" preserveAspectRatio="none"><defs>
+<filter id="pnt" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">
+ <feTurbulence type="fractalNoise" baseFrequency=".045" numOctaves="2" seed="4" result="warp"/>
+ <feDisplacementMap in="SourceGraphic" in2="warp" scale="2.4" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+ <feMorphology in="shape" operator="erode" radius="1.4" result="core"/>
+ <feComposite in="shape" in2="core" operator="out" result="edge"/>
+ <feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="2" seed="9" result="g"/>
+ <feColorMatrix in="g" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.6 1.75" result="hard"/>
+ <feColorMatrix in="g" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1 1.32" result="soft"/>
+ <feComposite in="edge" in2="hard" operator="in" result="edgeB"/>
+ <feComposite in="core" in2="soft" operator="in" result="coreB"/>
+ <feMerge result="pig"><feMergeNode in="coreB"/><feMergeNode in="edgeB"/></feMerge>
+ <feTurbulence type="fractalNoise" baseFrequency=".07" numOctaves="3" seed="13" result="cl"/>
+ <feColorMatrix in="cl" type="matrix" values="0 0 0 0 .15 0 0 0 0 .08 0 0 0 0 .1 0 0 0 .4 -.16" result="sh"/>
+ <feComposite in="sh" in2="pig" operator="in" result="sh2"/>
+ <feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="2" seed="21" result="cl2"/>
+ <feColorMatrix in="cl2" type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .7 -.32" result="hi"/>
+ <feComposite in="hi" in2="pig" operator="in" result="hi2"/>
+ <feMerge><feMergeNode in="pig"/><feMergeNode in="sh2"/><feMergeNode in="hi2"/></feMerge>
+</filter>
+<filter id="pSoft" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">
+ <feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="2" seed="5" result="warp"/>
+ <feDisplacementMap in="SourceGraphic" in2="warp" scale="1.6" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+ <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="3" result="g"/>
+ <feColorMatrix in="g" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -.9 1.3" result="soft"/>
+ <feComposite in="shape" in2="soft" operator="in"/>
+</filter>
+<filter id="inkg" x="-5%" y="-5%" width="110%" height="110%">
+ <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="1" seed="2" result="g"/>
+ <feColorMatrix in="g" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1.2 1.45" result="a"/>
+ <feComposite in="SourceGraphic" in2="a" operator="in"/>
+</filter>
+</defs><path d="M4 12C44 2.4 121.00000000000001 5.6000000000000005 214 4C220 12 221 28.799999999999997 215 36C132 38.8 55 34.4 3 37.2C-1 28 0 18 4 12Z" fill="#000" opacity="1"/><path d="M4 12C44 2.4 121.00000000000001 5.6000000000000005 214 4C220 12 221 28.799999999999997 215 36C132 38.8 55 34.4 3 37.2C-1 28 0 18 4 12Z" fill="#000" fill-rule="evenodd" filter="url(#pnt)" opacity="1"/><g filter="url(#inkg)"><path class="ink" d="M199.91 7.97Q199.91 7.97 200.38 7.8Q200.84 7.62 201.23 7.56Q201.61 7.5 201.85 7.4Q202.09 7.29 202.71 7.22Q203.33 7.14 203.76 7.23Q204.18 7.31 204.46 7.32Q204.73 7.34 205.22 7.21Q205.71 7.09 206.05 6.97Q206.39 6.85 206.75 6.81Q207.11 6.76 207.45 6.84Q207.79 6.92 208.12 6.98Q208.45 7.04 208.74 7.04Q209.03 7.03 209.42 7.01Q209.8 6.99 210.13 6.94Q210.46 6.9 211.02 6.91Q211.58 6.92 211.85 6.99Q212.12 7.05 212.62 6.97Q213.13 6.89 213.45 6.98Q213.76 7.06 215.32 7.02Q216.89 6.97 216.89 6.98Q216.89 6.98 216.89 6.99Q216.89 6.99 215.23 7.4Q213.58 7.81 213.18 7.8Q212.78 7.8 212.38 7.89Q211.99 7.99 211.56 7.93Q211.13 7.87 210.88 7.95Q210.62 8.03 210.23 8.09Q209.85 8.14 209.46 8.16Q209.07 8.17 208.77 8.17Q208.48 8.18 207.98 8.15Q207.48 8.12 207.14 8.12Q206.8 8.11 206.4 8.24Q206.01 8.36 205.6 8.44Q205.19 8.52 204.9 8.52Q204.62 8.52 204.28 8.47Q203.95 8.43 203.56 8.34Q203.17 8.25 202.8 8.27Q202.43 8.28 202.05 8.39Q201.67 8.49 201.23 8.48Q200.79 8.47 200.35 8.23Z" fill="#000"/><path class="ink" d="M196.09 32.12Q196.09 32.12 196.48 32.01Q196.86 31.9 197.15 31.81Q197.44 31.71 197.84 31.65Q198.25 31.59 198.66 31.61Q199.08 31.64 199.43 31.71Q199.78 31.78 200.09 31.83Q200.4 31.89 200.7 31.97Q200.99 32.05 201.24 32.16Q201.48 32.26 201.91 32.26Q202.33 32.26 202.62 32.23Q202.91 32.19 203.25 32.17Q203.58 32.15 203.98 32.2Q204.38 32.24 204.78 32.38Q205.17 32.51 205.46 32.67Q205.75 32.82 206.13 32.89Q206.51 32.97 206.78 32.99Q207.06 33.01 207.58 32.92Q208.1 32.82 208.48 32.87Q208.86 32.92 209.14 33.01Q209.43 33.1 209.98 33.11Q210.53 33.12 210.9 33.14Q211.28 33.16 211.62 33.26Q211.97 33.36 212.23 33.5Q212.5 33.65 214.24 34.02Q215.97 34.38 215.97 34.39Q215.97 34.39 215.97 34.4Q215.97 34.4 214.37 34.46Q212.77 34.51 212.46 34.46Q212.15 34.4 211.71 34.28Q211.27 34.16 210.92 34.17Q210.57 34.19 210.18 34.22Q209.8 34.25 209.45 34.23Q209.1 34.21 208.69 34.11Q208.29 34.01 208 34.06Q207.7 34.11 207.33 34.16Q206.96 34.21 206.64 34.18Q206.31 34.15 206.02 34.09Q205.72 34.04 205.25 33.84Q204.77 33.65 204.51 33.55Q204.25 33.46 203.97 33.43Q203.68 33.41 203.39 33.44Q203.09 33.48 202.73 33.53Q202.37 33.59 201.96 33.59Q201.55 33.59 201.22 33.48Q200.9 33.38 200.52 33.16Q200.14 32.95 199.84 32.85Q199.53 32.76 199.26 32.68Q198.99 32.59 198.68 32.55Q198.37 32.51 197.96 32.55Q197.56 32.6 197.16 32.6Q196.76 32.6 196.42 32.37Z" fill="#000"/></g></svg>

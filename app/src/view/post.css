@@ -46,3 +46,6 @@
 @media (max-width: 1160px) and (min-width: 761px) {
   .sq-post-panel h1 { font-size: 72px; }
 }
+
+/* An unfinished post kept from before switching tabs */
+.sq-draft-note { margin: 0 0 14px; padding: 10px 14px; border-radius: 12px; background: #fdf1cf; color: var(--sq-ink); font: 600 15px/1.35 var(--font-sans); }

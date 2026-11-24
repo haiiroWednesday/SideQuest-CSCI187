@@ -152,11 +152,14 @@ export function validateCatalogDraft(draft: EventDraft): { draft: EventDraft; er
 // in whatever timezone the visitor's laptop happens to use.
 export const CAMPUS_TIME_ZONE = 'America/Los_Angeles'
 
+// Building an Intl formatter is slow (it showed up as the lag when a card opens), so make one and reuse it.
+let campusFormat: Intl.DateTimeFormat | null = null
 export function campusNow(now: Date = new Date()): { date: string; time: string } {
-  const parts = new Intl.DateTimeFormat('en-CA', {
+  campusFormat ??= new Intl.DateTimeFormat('en-CA', {
     timeZone: CAMPUS_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-  }).formatToParts(now)
+  })
+  const parts = campusFormat.formatToParts(now)
   const get = (type: string) => parts.find(part => part.type === type)?.value ?? ''
   return { date: `${get('year')}-${get('month')}-${get('day')}`, time: `${get('hour')}:${get('minute')}` }
 }

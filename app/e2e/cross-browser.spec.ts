@@ -11,7 +11,7 @@ test('core pages, invalid posting feedback and phone layout work @cross-browser'
   await expect(page.getByTestId('catalog-not-shared')).toBeVisible()
 
   await page.getByRole('link', { name: 'Post an event' }).first().click()
-  await expect(page.getByRole('heading', { name: 'Post an event.' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Post an event' })).toBeVisible()
   await page.getByLabel('EVENT NAME', { exact: true }).fill('Cross-browser example')
   await page.getByRole('button', { name: '+ Post event' }).click()
   await expect(page.getByText('Please enter the host name.')).toBeVisible()

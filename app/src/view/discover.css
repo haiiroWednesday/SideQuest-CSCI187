@@ -297,13 +297,13 @@
 }
 /* the picked ticket: solid red stub, thicker border, a red ticket edge; it stays put */
 .sq-stub-selected { border: 2px solid var(--sq-red); box-shadow: 5px 6px 0 var(--sq-red-deep); transform: translate(-2px, -2px); cursor: default; }
-.sq-stub-selected .sq-stub-time { background: var(--sq-red); color: var(--sq-on-red); border-right-color: rgba(255, 250, 242, .55); }
+.sq-stub-selected .sq-stub-time { background: var(--cat, var(--sq-red)); color: var(--sq-on-red); border-right-color: rgba(255, 250, 242, .55); }
 .sq-stub-selected .sq-stub-time small, .sq-stub-selected .sq-stub-time em { color: var(--sq-on-red); }
-.sq-stub-selected .sq-stub-time::before, .sq-stub-selected .sq-stub-time::after { border-color: var(--sq-red); }
+.sq-stub-selected .sq-stub-time::before, .sq-stub-selected .sq-stub-time::after { border-color: var(--cat, var(--sq-red)); }
 .sq-stub-selected::after { content: ""; position: absolute; right: 10px; top: 10px; width: 34px; height: 22px; background: url('./assets/pen-arrow.svg') center / contain no-repeat; }
 .sq-stub-dim { border-style: dashed; background: var(--sq-ticket-under); }
 /* the torn end: the start time leads, because the day is already on the trail */
-.sq-stub-time { position: relative; display: grid; align-content: center; justify-items: center; padding: 14px 6px; background: var(--sq-row-selected); color: var(--sq-red); line-height: 1; border-right: 2px dashed var(--sq-rule-strong); }
+.sq-stub-time { position: relative; display: grid; align-content: center; justify-items: center; padding: 14px 6px; background: var(--cat-tint, var(--sq-row-selected)); color: var(--cat-deep, var(--sq-red)); line-height: 1; border-right: 2px dashed var(--sq-rule-strong); }
 .sq-stub-time::before, .sq-stub-time::after { content: ""; position: absolute; right: -11px; width: 20px; height: 20px; border-radius: 50%; background: var(--sq-paper); border: 1.5px solid var(--sq-rule-strong); }
 .sq-stub-time::before { top: -11px; }
 .sq-stub-time::after { bottom: -11px; }
@@ -557,3 +557,51 @@
 /* Full Schedule details keep external map actions discoverable to keyboard users. */
 .sq-schedule-page .sq-plan-details dd a { color: var(--sq-red-deep); text-decoration: underline !important; text-underline-offset: 3px; overflow-wrap: anywhere; }
 .sq-schedule-page .sq-plan-details dd a:focus-visible { outline: 3px solid var(--sq-red-deep); outline-offset: 3px; border-radius: 4px; }
+
+/* Pen-drawn icons (Icon.tsx) replace the mask images and symbol characters */
+.sq-icon { width: 100%; height: 100%; display: block; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+.sq-ic { display: inline-grid; place-items: center; background: none !important; -webkit-mask: none !important; mask: none !important; }
+.sq-category-symbol .sq-icon { width: 22px; height: 22px; stroke-width: 1.8; }
+.sq-tab-someday .sq-someday-symbol, .sq-tab-groups .sq-groups-symbol { display: none; }
+.sq-venue-map-links .sq-map-link { font-weight: 700; }
+@media (max-width: 760px) {
+  .sq-discover-page .sq-post .sq-ic { background: var(--sq-gold) !important; color: var(--sq-ink); }
+  .sq-post .sq-ic::after { content: none !important; }
+  .sq-post .sq-ic .sq-icon { width: 30px; height: 30px; stroke-width: 2.3; }
+  .sq-tab-discover { order: 1; } .sq-tab-map { order: 2; } .sq-post { order: 3; } .sq-tab-someday { order: 4; } .sq-tab-schedule { order: 5; } .sq-tab-groups { order: 6; } .sq-tab-login, .sq-tab-signout { order: 7; }
+}
+/* programmatic focus on a page heading after switching tabs */
+h1[tabindex="-1"]:focus, h1[tabindex="-1"]:focus-visible { outline: none; }
+
+/* Every standalone link in a details panel is at least 24px tall to tap */
+.sq-venue-map-links a, .sq-schedule-page .sq-plan-details dd a, .sq-calendar-link { display: inline-block; min-height: 28px; padding: 4px 0; line-height: 20px; }
+
+/* Laptop header between 761px and 1100px: five tabs and the post button must fit */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .sq-masthead-inner { gap: 10px; }
+  .sq-brand img { height: 56px; width: auto; }
+  .sq-nav { gap: 2px; }
+  .sq-tab { font-size: 19px; padding: 10px 8px 8px; gap: 6px; }
+  .sq-tab .sq-ic { width: 22px; height: 22px; }
+  .sq-discover-page .sq-post { margin-left: 8px; padding: 11px 16px 11px 12px; font-size: 14px; }
+}
+
+/* Narrow laptop column (330px): the big time and the date sticker must share one row */
+@media (max-width: 1024px) and (min-width: 761px) {
+  .sq-sticker-top { gap: 10px; }
+  .sq-sticker-time b { font-size: 58px; }
+  .sq-sticker-time i { font-size: 26px; }
+  .sq-sticker-time .sq-sticker-until { font-size: 18px; }
+  .sq-discover-page .sq-sticker-day { flex: none; width: 66px; height: 66px; }
+  .sq-discover-page .sq-sticker-time { flex: 1 1 auto; min-width: 0; }
+  .sq-discover-page .sq-sticker-time .sq-nx { white-space: normal; letter-spacing: .8px; }
+  .sq-discover-page .sq-sticker-day b { font-size: 27px; }
+  .sq-discover-page .sq-sticker-day small { font-size: 10px; letter-spacing: 1.2px; }
+  .sq-sticker h2 { font-size: 40px; }
+}
+
+/* Empty results: actions sit apart, never run together */
+.sq-message-empty { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 22px; }
+.sq-message-empty h3 { flex-basis: 100%; }
+/* The free-time hint and error always take a full row of their own */
+.sq-free .sq-free-hint, .sq-free .sq-free-error { grid-column: 1 / -1; flex-basis: 100%; }

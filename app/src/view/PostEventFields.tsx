@@ -1,5 +1,7 @@
 // VIEW: accessible posting inputs. Validation decisions are supplied by the controller-facing form.
 import type { FormEvent } from 'react'
+import { useQuiet } from './quietContext'
+import { DatePick, TimePick } from './Pickers'
 import { POSTING_LIMITS, campusNow, trimDraft, latestPostingDate, type CatalogFieldErrors, type EventDraft } from '../controller/postEvent'
 
 type PostEventFieldsProps = {
@@ -48,6 +50,9 @@ export function PostEventFields({ draft, fieldErrors, submitting, now, onSubmit,
       ...(describedBy ? { 'aria-describedby': describedBy } : {}),
     }
   }
+  // The new design draws its own pickers; the team's plain build keeps the browser's inputs.
+  const quiet = useQuiet()
+  const pickProps = (field: keyof EventDraft) => { const p = fieldProps(field); return { invalid: Boolean(p['aria-invalid']), describedBy: p['aria-describedby'] } }
   const fieldCount = (field: keyof EventDraft) => {
     const count = counter(field)
     return count && (
@@ -72,7 +77,7 @@ export function PostEventFields({ draft, fieldErrors, submitting, now, onSubmit,
         <div className="field">
           <label htmlFor="post-title"><span>EVENT NAME</span></label>
           <input id="post-title" type="text" value={draft.title} required {...fieldProps('title')}
-            placeholder="e.g. Art Workshop" onChange={(e) => onChange('title', e.target.value)} onBlur={() => onBlur('title')} />
+            placeholder="Art Workshop" onChange={(e) => onChange('title', e.target.value)} onBlur={() => onBlur('title')} />
           {fieldCount('title')}
           {fieldError('title')}
           {fieldHint('title')}
@@ -80,7 +85,7 @@ export function PostEventFields({ draft, fieldErrors, submitting, now, onSubmit,
         <div className="field">
           <label htmlFor="post-hostName"><span>HOST NAME</span></label>
           <input id="post-hostName" type="text" value={draft.hostName} required {...fieldProps('hostName')}
-            placeholder="e.g. SCU Photography Club" onChange={(e) => onChange('hostName', e.target.value)} onBlur={() => onBlur('hostName')} />
+            placeholder="SCU Photography Club" onChange={(e) => onChange('hostName', e.target.value)} onBlur={() => onBlur('hostName')} />
           {fieldCount('hostName')}
           {fieldError('hostName')}
           {fieldHint('hostName')}
@@ -96,26 +101,32 @@ export function PostEventFields({ draft, fieldErrors, submitting, now, onSubmit,
         <div className="field">
           <label htmlFor="post-location"><span>LOCATION</span></label>
           <input id="post-location" type="text" value={draft.location} required {...fieldProps('location')}
-            placeholder="e.g. Student Center" onChange={(e) => onChange('location', e.target.value)} onBlur={() => onBlur('location')} />
+            placeholder="Student Center" onChange={(e) => onChange('location', e.target.value)} onBlur={() => onBlur('location')} />
           {fieldCount('location')}
           {fieldError('location')}
           {fieldHint('location')}
         </div>
         <div className="field">
           <label htmlFor="post-date"><span>DATE</span></label>
-          <input id="post-date" type="date" value={draft.date} min={campusNow(now()).date} max={latestPostingDate(now())} required {...fieldProps('date')}
-            onChange={(e) => onChange('date', e.target.value)} onBlur={() => onBlur('date')} />
+          {quiet
+            ? <DatePick id="post-date" label="Date" value={draft.date} min={campusNow(now()).date} max={latestPostingDate(now())} {...pickProps('date')} onChange={v => { onChange('date', v); onBlur('date') }} />
+            : <input id="post-date" type="date" value={draft.date} min={campusNow(now()).date} max={latestPostingDate(now())} required {...fieldProps('date')}
+              onChange={(e) => onChange('date', e.target.value)} onBlur={() => onBlur('date')} />}
           {fieldError('date')}
         </div>
         <div className="time-row">
           <div className="field">
             <label htmlFor="post-start"><span>START</span></label>
-            <input id="post-start" type="time" value={draft.start} required {...fieldProps('start')} onChange={(e) => onChange('start', e.target.value)} onBlur={() => onBlur('start')} />
+            {quiet
+              ? <TimePick id="post-start" label="Start" step={15} firstHour={6} lastHour={23} value={draft.start} {...pickProps('start')} onChange={v => { onChange('start', v); onBlur('start') }} />
+              : <input id="post-start" type="time" value={draft.start} required {...fieldProps('start')} onChange={(e) => onChange('start', e.target.value)} onBlur={() => onBlur('start')} />}
             {fieldError('start')}
           </div>
           <div className="field">
             <label htmlFor="post-end"><span>END</span></label>
-            <input id="post-end" type="time" value={draft.end} required {...fieldProps('end')} onChange={(e) => onChange('end', e.target.value)} onBlur={() => onBlur('end')} />
+            {quiet
+              ? <TimePick id="post-end" label="End" step={15} firstHour={6} lastHour={23} value={draft.end} {...pickProps('end')} onChange={v => { onChange('end', v); onBlur('end') }} />
+              : <input id="post-end" type="time" value={draft.end} required {...fieldProps('end')} onChange={(e) => onChange('end', e.target.value)} onBlur={() => onBlur('end')} />}
             {fieldError('end')}
           </div>
         </div>

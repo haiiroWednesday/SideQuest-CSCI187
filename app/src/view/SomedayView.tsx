@@ -1,3 +1,4 @@
+import { useQuiet } from './quietContext'
 import { useState, type FormEvent } from 'react'
 import { MAX_IDEA_NOTE, MAX_IDEA_TITLE, type Intention, type IntentionStatus } from '../controller/someday'
 import { displayDate, displayTime } from '../controller/findEvents'
@@ -23,6 +24,7 @@ export function SomedayView({
   ideas, blocked, error, events, plannedIds, routes,
   onAdd, onLink, onStatus, onPlan, onRecover,
 }: SomedayViewProps) {
+  const quiet = useQuiet()
   const [title, setTitle] = useState('')
   const [note, setNote] = useState('')
   // Count the stored (trimmed) text, consistent with the Someday Model.
@@ -50,7 +52,7 @@ export function SomedayView({
       <main id="content" className="sq-main">
         <section className="sq-hero sq-someday-hero" aria-labelledby="sq-someday-title">
           <div>
-            <h1 id="sq-someday-title">My <em>Someday.</em></h1>
+            <h1 id="sq-someday-title">Someday</h1>
             <p>Keep an activity idea even when you do not have a date, event, or friends ready yet.</p>
             <p className="sq-device">Saved on this device. Linking an event does not RSVP or invite anyone.</p>
           </div>
@@ -66,7 +68,7 @@ export function SomedayView({
         ) : (
           <>
             <form className="sq-someday-form" onSubmit={submit}>
-              <h2>Something you want to do</h2>
+              <h2>Hang a new idea</h2>
               <label htmlFor="sq-idea-title">Activity or place</label>
               <input id="sq-idea-title" required value={title}
                 aria-invalid={titleTooLong || undefined}
@@ -97,14 +99,15 @@ export function SomedayView({
             </form>
 
             <section className="sq-someday-list" aria-labelledby="sq-ideas-heading">
-              <h2 id="sq-ideas-heading">Saved possibilities <small>{ideas.length}</small></h2>
-              {ideas.length === 0 && <p className="sq-empty-card">Nothing saved yet. Start with an activity you want to remember.</p>}
+              <h2 id="sq-ideas-heading">{quiet ? 'Ideas' : 'Saved possibilities'} <small>{ideas.length}</small></h2>
+              {ideas.length === 0 && !quiet && <p className="sq-empty-card">Nothing saved yet. Start with an activity you want to remember.</p>}
               <ol>
                 {ideas.map(idea => {
                   const event = idea.eventId ? available.get(idea.eventId) : null
                   const isPlanned = Boolean(event && planned.has(event.id))
                   return (
-                    <li key={idea.id} className="sq-someday-card">
+                    <li key={idea.id} className={`sq-someday-card sq-someday-${idea.status}${event && !isPlanned ? ' sq-someday-fits' : ''}`}>
+                      {event && !isPlanned && <span className="sq-someday-spark" aria-hidden="true" />}
                       <div className="sq-someday-card-head">
                         <h3>{idea.title}</h3>
                         <span className="sq-someday-status">{idea.status}</span>

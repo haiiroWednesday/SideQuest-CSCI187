@@ -1,0 +1,110 @@
+/* Friends preview: many groups. Answers use K3: torn paper, washi across, a brush stroke when picked. */
+.sq-fr { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 34px; margin: 26px 0 60px; }
+.sq-fr-groups h1 { margin: 0 0 12px; font: 400 44px/1 var(--font-display); }
+.sq-fr-groups ul { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
+.sq-fr-groups li button { width: 100%; text-align: left; display: grid; gap: 2px; padding: 10px 14px; border: 0; background: transparent; cursor: pointer; position: relative; isolation: isolate; color: var(--sq-ink); }
+.sq-fr-groups li button::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #fffaf2; -webkit-mask: url('./assets/mat-torn.svg') 0 0 / 100% 100% no-repeat; mask: url('./assets/mat-torn.svg') 0 0 / 100% 100% no-repeat; }
+.sq-fr-groups li button[aria-current="true"]::before { background: var(--sq-gold, #e8aa24); }
+.sq-fr-groups b { font: 400 21px var(--font-display); }
+.sq-fr-groups span { font: 600 12px var(--font-sans); color: var(--sq-muted); }
+.sq-fr-new { display: grid; gap: 10px; padding: 14px; background: #fffaf2; border: 1.5px dashed #cdbfae; }
+.sq-fr-new label { display: grid; gap: 4px; font: 700 12px var(--font-sans); color: var(--sq-muted); }
+.sq-fr-new input, .sq-fr-propose select { font: 500 15px var(--font-sans); padding: 8px 10px; border: 1.5px solid #cdbfae; border-radius: 4px; background: #fff; color: var(--sq-ink); }
+.sq-fr-new div { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.sq-fr-eyebrow { font: 700 11px var(--font-sans); letter-spacing: .12em; text-transform: uppercase; color: var(--sq-muted); }
+.sq-fr-main h2 { margin: 4px 0 14px; font: 400 40px/1 var(--font-display); }
+.sq-fr-propose { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+.sq-fr-propose select { max-width: 100%; }
+.sq-fr-empty { font: italic 400 18px var(--font-display); color: var(--sq-muted); }
+.sq-fr-plan { margin: 0 0 26px; }
+.sq-fr-card { display: grid; grid-template-columns: 104px minmax(0, 1fr) 96px; min-height: 120px; background: var(--sq-ticket-bg, #fffdf8);
+  filter: drop-shadow(1.2px 0 0 #9b8b7e) drop-shadow(-1.2px 0 0 #9b8b7e) drop-shadow(0 1.2px 0 #9b8b7e) drop-shadow(0 -1.2px 0 #9b8b7e); max-width: 560px; }
+.sq-fr-time { display: grid; align-content: center; justify-items: center; background: var(--cat-tint); color: var(--cat-deep); border-right: 2px dashed #cdbfae; padding: 10px 4px; line-height: 1.1; }
+.sq-fr-time b { font: 400 30px var(--font-display); }
+.sq-fr-time small { font: 600 13px var(--font-sans); color: var(--sq-ink); }
+.sq-fr-time em { font: 500 12px var(--font-sans); font-style: normal; color: var(--sq-muted); }
+.sq-fr-body { display: grid; align-content: center; gap: 4px; padding: 12px 14px; }
+.sq-fr-body strong { font: 400 22px/1.1 var(--font-display); }
+.sq-fr-body span { font: 500 13px var(--font-sans); color: var(--sq-muted); }
+.sq-fr-body i { font: italic 400 15px var(--font-display); color: #8a5a12; }
+.sq-fr-face { position: relative; background: #2f4f8f; border-left: 1.4px solid #9b8b7e; }
+.sq-fr-reps { list-style: none; padding: 0; margin: 12px 0; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.sq-fr-reps li { display: flex; align-items: center; gap: 7px; font: 600 14px var(--font-sans); }
+.sq-fr-reps li > i { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: 700 12px var(--font-sans); font-style: normal; }
+.sq-fr-reps em { font: italic 400 15px var(--font-display); color: var(--sq-muted); }
+.sq-fr-a { font: italic 400 16px var(--font-display); }
+.sq-fr-a-works { color: #8a5a12; } .sq-fr-a-if { color: #5f6f30; } .sq-fr-a-cant, .sq-fr-a-none { color: var(--sq-muted); }
+.sq-fr-mine { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.sq-fr-mine > span { font: 700 12px var(--font-sans); color: var(--sq-muted); margin-right: 4px; }
+.sq-ans { position: relative; isolation: isolate; min-width: 92px; min-height: 40px; padding: 8px 16px; border: 0; background: #fffaf2; color: var(--sq-ink); font: 650 15px var(--font-sans); cursor: pointer;
+  -webkit-mask: url('./assets/mat-torn.svg') 0 0 / 100% 100% no-repeat; mask: url('./assets/mat-torn.svg') 0 0 / 100% 100% no-repeat; }
+.sq-ans::before { content: ""; position: absolute; left: 4px; right: 4px; top: 30%; height: 40%; z-index: -1; background: var(--sq-gold, #e8aa24); opacity: .35; -webkit-mask: url('./assets/mat-washi.svg') 0 0 / 100% 100% no-repeat; mask: url('./assets/mat-washi.svg') 0 0 / 100% 100% no-repeat; }
+.sq-ans::after { content: ""; position: absolute; inset: 3px 0; z-index: -1; background: var(--ans, #b8741f); opacity: 0; -webkit-mask: url('./assets/mat-brush.svg') 0 0 / 100% 100% no-repeat; mask: url('./assets/mat-brush.svg') 0 0 / 100% 100% no-repeat; transition: opacity .2s; }
+.sq-ans-if { --ans: #5f6f30; } .sq-ans-cant { --ans: #8a7d74; }
+.sq-ans[aria-pressed="true"] { color: #fff; }
+.sq-ans[aria-pressed="true"]::after { opacity: .92; }
+.sq-ans:focus-visible { outline: 3px solid var(--sq-red-deep); outline-offset: 2px; }
+@media (max-width: 760px) {
+  .sq-fr { grid-template-columns: 1fr; gap: 18px; margin-top: 14px; }
+  .sq-fr-groups ul { display: flex; overflow-x: auto; gap: 6px; padding-bottom: 6px; }
+  .sq-fr-groups li { flex: 0 0 auto; }
+  .sq-fr-card { grid-template-columns: 84px minmax(0, 1fr) 72px; }
+  .sq-fr-main h2 { font-size: 32px; }
+}
+.sq-fr .sq-plan-button { width: auto; min-width: 150px; }
+.sq-fr .sq-plan-button:disabled::before { display: none; }
+@media (max-width: 760px) {
+  .sq-fr { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .sq-fr-groups ul { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 6px; scroll-snap-type: x mandatory; }
+  .sq-fr-groups li { flex: 0 0 auto; scroll-snap-align: start; max-width: 72vw; }
+}
+
+/* Answers wear her stars. The star fills when chosen; the button needs no colour wash. */
+.sq-ans { display: inline-grid !important; justify-items: center; gap: 2px; min-width: 78px; padding: 6px 12px 8px !important; }
+.sq-ans::after { content: none !important; }
+.sq-ans[aria-pressed="true"] { color: var(--sq-ink) !important; }
+.sq-star { overflow: visible; transition: transform .25s cubic-bezier(.3,1.6,.5,1); }
+.sq-star path { fill: #fffaf2; stroke: #3a2a26; stroke-width: 1.3; stroke-linejoin: round; }
+.sq-star-on { transform: scale(1.18) rotate(-8deg); }
+.sq-star-works.sq-star-on path { fill: var(--sq-gold, #e8aa24); filter: drop-shadow(0 0 4px rgba(255, 214, 120, .9)); }
+.sq-star-if .sq-star-inner { fill: none; stroke: var(--sq-gold, #e8aa24); stroke-width: 1.6; }
+.sq-star-if.sq-star-on .sq-star-inner { fill: var(--sq-gold, #e8aa24); }
+.sq-star-cant path { stroke: #8f8278; }
+.sq-star-cant .sq-star-strike { fill: none; stroke: #8f8278; stroke-width: 1.8; stroke-linecap: round; }
+.sq-star-cant.sq-star-on path:first-child { fill: #e8ddd2; }
+.sq-fr-a { display: inline-flex; align-items: center; gap: 5px; }
+.sq-fr-note { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; padding: 8px 12px; background: #fff4cf; transform: rotate(-.6deg); box-shadow: 0 2px 4px -2px rgba(60,40,30,.3); }
+.sq-fr-note svg { width: 16px; height: 16px; fill: none; stroke: #8a6a10; stroke-width: 1.5; flex: none; }
+.sq-fr-note input { flex: 1; border: 0; background: transparent; font: 500 15px var(--font-sans); color: #5a4410; min-height: 40px; }
+@media (prefers-reduced-motion: reduce) { .sq-star { transition: none; } }
+.sq-ans::before { content: none !important; }
+.sq-ans { background: transparent !important; }
+.sq-fr-mine:has([aria-pressed="true"]) .sq-ans:not([aria-pressed="true"]) { opacity: .5; }
+.sq-ans[aria-pressed="true"] { font-weight: 800 !important; }
+.sq-ans .sq-star { width: 30px; height: 30px; }
+.sq-fr-mine:has([aria-pressed="true"]) .sq-ans:not([aria-pressed="true"]) { opacity: 1 !important; }
+.sq-fr-mine:has([aria-pressed="true"]) .sq-ans:not([aria-pressed="true"]) .sq-star { opacity: .4; }
+/* If: the star in dotted lines. Chosen, the dots turn gold and a soft gold fill shows through. */
+.sq-star-if path { stroke-dasharray: 1.6 2.2; stroke-width: 1.6; stroke-linecap: round; fill: transparent; }
+.sq-star-if.sq-star-on path { stroke: #b8741f; fill: rgba(232, 170, 36, .28); filter: drop-shadow(0 0 3px rgba(255, 214, 120, .8)); }
+/* More groups sit off to the right: the row fades out at its edge so it reads as "scroll for more" (Nov 24). */
+@media (max-width: 760px) {
+  .sq-fr-groups ul { -webkit-mask-image: linear-gradient(90deg, #000 0 82%, transparent 100%); mask-image: linear-gradient(90deg, #000 0 82%, transparent 100%); padding-right: 40px; scrollbar-width: none; }
+  .sq-fr-groups ul::-webkit-scrollbar { display: none; }
+}
+
+/* Find something to propose: a search box and a short list, each row one tap to propose (Nov 24). */
+.sq-fr-find { display: grid; gap: 8px; margin: 10px 0 18px; max-width: 620px; }
+.sq-fr-find-box { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px; background: #fffaf2; border-bottom: 1.6px solid #9b8b7e; }
+.sq-fr-find-box:focus-within { border-bottom-color: var(--sq-red, #a32035); background: #fff4d6; }
+.sq-fr-find-box svg { width: 18px; height: 18px; fill: none; stroke: #8a5a12; stroke-width: 1.6; stroke-linecap: round; flex: none; }
+.sq-fr-find-box input { flex: 1; border: 0; background: transparent; font: 500 16px var(--font-sans); color: var(--sq-ink); min-height: 44px; outline: none; }
+.sq-fr-hits { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.sq-fr-hits li { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 8px 8px 12px; background: #fffaf2; box-shadow: 0 1px 3px -1px rgba(60, 40, 30, .25); }
+.sq-fr-hit-when { display: grid; font: 600 12px var(--font-sans); color: var(--sq-muted); }
+.sq-fr-hit-when b { font: 400 19px/1 var(--font-display); color: var(--sq-ink); }
+.sq-fr-hit-what { display: grid; min-width: 0; }
+.sq-fr-hit-what strong { font: 400 18px/1.15 var(--font-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sq-fr-hit-what small { font: 500 13px var(--font-sans); color: var(--sq-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sq-fr .sq-fr-hit-go { min-width: 0 !important; width: auto; min-height: 48px !important; padding: 0 16px !important; font-size: 14px; }
+.sq-fr-none { margin: 0; color: var(--sq-muted); font: 500 14px var(--font-sans); }

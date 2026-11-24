@@ -2,6 +2,8 @@
 
 **Status: automated checks added, human assistive-technology review pending.** Scope: #78 release candidate plus this test branch. Nothing here claims that manual keyboard, VoiceOver/NVDA, device permission, or contrast tests have already been performed. Use the exact verified release SHA when collecting evidence.
 
+> **Update, Nov 24:** the checklist now lives in [`UX_CHECKS.md`](UX_CHECKS.md). A03 (320px, clipping, overlap) and the contrast half of A10 are automated there; the rest stay manual below.
+
 ## Automated evidence
 
 `app/e2e/accessibility.spec.ts` scans basic Discover, Post, and My Schedule. New `app/e2e/accessibility-release-gate.spec.ts` exercises actual content and error states: an opened mobile event-detail dialog, consent-gated walking directions, Someday before/after an idea is saved, an invalid Post form, and denial of device location.

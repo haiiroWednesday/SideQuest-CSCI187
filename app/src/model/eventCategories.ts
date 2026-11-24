@@ -24,7 +24,7 @@ const rules: ReadonlyArray<{ id: Exclude<EventCategory, 'other'>; words: RegExp 
   { id: 'arts', words: /\b(art|arts|painting|drawing|ceramics|poetry|poem|film|cinema|theater|theatre|music|concert|choir|singing|dance|dancing|exhibition|gallery|photography|orchestra|jazz|performance|recital)\b/i },
   { id: 'sports', words: /\b(sport|sports|soccer|basketball|tennis|volleyball|football|baseball|hiking|hike|climbing|running|cycling|outdoors|swimming|yoga outdoors|fitness run)\b/i },
   { id: 'learning', words: /\b(stem|science|physics|chemistry|biology|engineering|robotics|coding|programming|computer|mathematics|math|lecture|seminar|research|hackathon|workshop|academic|astronomy)\b/i },
-  { id: 'service', words: /\b(volunteer|volunteering|charity|donation|donate|community service|mutual aid|environmental|sustainability|clean.?up|fundraiser|service project)\b/i },
+  { id: 'service', words: /\b(volunteer|volunteering|charity|donation|donate|community service|mutual aid|environmental|sustainability|clean.?up|fundraiser|service project|food pantry|pantry|food bank|food drive|glean|gleaning)\b/i },
   { id: 'social', words: /\b(food|dinner|lunch|breakfast|brunch|pizza|coffee|tea|potluck|mixer|meetup|social|game night|board games|celebration|party|cooking|baking)\b/i },
   { id: 'wellness', words: /\b(wellness|mindfulness|meditation|mental health|self.care|yoga|stress relief|wellbeing|well.being|therapy)\b/i },
 ]

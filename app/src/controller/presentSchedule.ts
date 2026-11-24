@@ -1,6 +1,7 @@
 // CONTROLLER: prepare a device-local Schedule screen from resolved plan entries.
 import { eventPhase, minutesUntilStart, overlapSpan } from '../model/eventTiming'
 import { layoutDayTimeline, type DayTimeline } from './scheduleTimeline'
+import { presentClashes, type ClashModel } from './presentClash'
 import { byTime, describeDay, groupDays, spanText, toStub, type ScreenEvent, type StubModel, type DayModel } from './screenModels'
 
 // ---------- My Schedule
@@ -34,7 +35,7 @@ export type ScheduleScreen = {
   overlapCount: number
   missingCount: number
   nextUp: NextUpModel | null
-  days: (DayModel & { events: PlanStubModel[]; overlapNote: string | null; timeline: DayTimeline | null })[]
+  days: (DayModel & { events: PlanStubModel[]; overlapNote: string | null; timeline: DayTimeline | null; clashes: ClashModel[] })[]
   done: PlanStubModel[]
   capacityMessage: string | null
   unresolved: { id: string }[]
@@ -80,11 +81,12 @@ export function presentSchedule(input: ScheduleInput, now: Date = new Date()): S
   const days = groupDays(upcoming, now).map(day => {
     const count = day.events.filter(event => event.overlap !== null).length
     const overlapNote = count ? `${count} plans have conflicts` : null
-    const timeline = layoutDayTimeline(day.events.flatMap(stub => {
+    const dayEvents = day.events.flatMap(stub => {
       const event = eventsById.get(stub.id)
       return event ? [event] : []
-    }))
-    return { ...day, overlapNote, timeline }
+    })
+    const timeline = layoutDayTimeline(dayEvents)
+    return { ...day, overlapNote, timeline, clashes: presentClashes(dayEvents, now) }
   })
 
   const first = upcoming[0]

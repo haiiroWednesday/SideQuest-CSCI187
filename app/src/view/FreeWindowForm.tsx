@@ -38,7 +38,12 @@ export function FreeWindowForm({ free, ready, onWindowChange, disabledByDialog }
       )}
       {free.canClear && (
         <button type="button" className="sq-free-clear"
-          onClick={() => onWindowChange({ date: '', start: '', end: '' })}>✕ Clear</button>
+          onClick={event => {
+            // The button disappears once the form is empty, so keep focus in the form.
+            const form = event.currentTarget.form
+            onWindowChange({ date: '', start: '', end: '' })
+            requestAnimationFrame(() => form?.querySelector<HTMLInputElement>('input')?.focus())
+          }}>✕ Clear</button>
       )}
       {free.hint && <p id="sq-free-hint" className="sq-free-hint" role="status">{free.hint}</p>}
       {free.error && <p id="sq-free-error" className="sq-free-error" role="alert">{free.error}</p>}

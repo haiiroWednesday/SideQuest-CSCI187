@@ -17,7 +17,9 @@
     "test:regression": "npm run test:coverage && npm run test:mutation:pilot && npm run test:rubric && npm run build && npm run test:e2e",
     "test:regression:contract": "vitest run tests/regression.contract-matrix.test.ts",
     "test:regression:journeys": "playwright test e2e/regression.journeys.spec.ts --project=chromium",
-    "test:ai:live": "node --env-file=.env.local scripts/verify-ai-live.mjs"
+    "test:ai:live": "node --env-file=.env.local scripts/verify-ai-live.mjs",
+    "test:e2e:demo": "playwright test -c playwright.demo.config.ts",
+    "test:ux": "playwright test -c playwright.demo.config.ts"
   },
   "engines": {
     "node": ">=22.12.0"
@@ -26,13 +28,30 @@
     "@fontsource-variable/instrument-sans": "^5.3.0",
     "@fontsource/instrument-serif": "^5.3.0",
     "@supabase/supabase-js": "^2.118.0",
+    "perfect-freehand": "^1.2.3",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "ws": "8.22.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
-    "@vitest/coverage-v8": "4.1.12",
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/dm-sans": "^5.3.0",
+    "@fontsource-variable/figtree": "^5.3.0",
+    "@fontsource-variable/fraunces": "^5.3.0",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/lexend": "^5.3.0",
+    "@fontsource-variable/manrope": "^5.3.0",
+    "@fontsource-variable/montserrat": "^5.3.0",
+    "@fontsource-variable/outfit": "^5.3.0",
+    "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
+    "@fontsource-variable/sora": "^5.3.0",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
+    "@fontsource-variable/syne": "^5.3.0",
+    "@fontsource-variable/urbanist": "^5.3.0",
+    "@fontsource/dm-serif-display": "^5.3.0",
+    "@fontsource/fira-sans": "^5.3.0",
+    "@fontsource/poppins": "^5.3.0",
     "@playwright/test": "^1.64.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.3",
@@ -40,11 +59,12 @@
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/ws": "8.18.1",
     "@vitejs/plugin-react": "^6.1.2",
+    "@vitest/coverage-v8": "4.1.12",
     "jsdom": "^26.1.0",
     "typescript": "~5.9.3",
     "vite": "^8.3.4",
-    "vitest": "4.1.12",
-    "@types/ws": "8.18.1"
+    "vitest": "4.1.12"
   }
 }

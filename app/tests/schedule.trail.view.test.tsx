@@ -27,7 +27,16 @@ describe('My Schedule trail view: draws the Controller screen', () => {
     expect(within(next).getByText('in 1 hr 30 min')).toBeTruthy()
     expect(within(next).getByRole('heading', { name: 'Ceramics Workshop' })).toBeTruthy()
     expect(screen.getByText('2 plans have conflicts')).toBeTruthy()
-    expect(screen.getAllByText(/^Overlaps .* by 30 min$/)).toHaveLength(3) // two stubs and the Next up warning
+    // Next up states the overlap in words; the day's Trail names both plans and what each overlaps.
+    expect(within(next).getByText(/^Overlaps .* by 30 min$/)).toBeTruthy()
+    const day = screen.getByRole('button', { name: /Ceramics Workshop.*Show as tickets$/ })
+    expect(day.getAttribute('aria-label')).toMatch(/Ceramics Workshop .*\(Overlaps Poetry Reading by 30 min\)/)
+    expect(day.getAttribute('aria-label')).toMatch(/Poetry Reading .*\(Overlaps Ceramics Workshop by 30 min\)/)
+    // In Tickets each overlapping plan is a button that says what it overlaps,
+    // and Next up's overlap note is a third, which opens the clash sheet.
+    fireEvent.click(screen.getByRole('button', { name: 'Tickets' }))
+    expect(screen.getAllByRole('button', { name: /Overlaps .* by 30 min$/ })).toHaveLength(3)
+    expect(within(next).getByRole('button', { name: /^Overlaps .* by 30 min$/ }).getAttribute('aria-haspopup')).toBe('dialog')
     expect(screen.getByText('An event you planned')).toBeTruthy()
   })
 
@@ -43,7 +52,10 @@ describe('My Schedule trail view: draws the Controller screen', () => {
 
     render(<ScheduleTrailView screen={current} onRemove={onRemove} />)
 
-    const trailDetails = document.querySelector<HTMLDetailsElement>('.sq-trail .sq-plan-details')
+    // A plan's full details and its Remove button are one tap away: open it in Tickets.
+    fireEvent.click(screen.getByRole('button', { name: 'Tickets' }))
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${title}, `) }))
+    const trailDetails = document.querySelector<HTMLDetailsElement>('.sqm-open .sq-plan-details')
     const nextDetails = document.querySelector<HTMLDetailsElement>('.sq-sticker .sq-plan-details')
     expect(trailDetails).not.toBeNull()
     expect(nextDetails).not.toBeNull()
