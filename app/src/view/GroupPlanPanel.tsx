@@ -48,6 +48,7 @@ export function GroupPlanPanel({
   }, [actorId, plan.id, self?.response, self?.privateCondition])
   const conditionLength = privateConditionLength(condition)
   const conditionInvalid = conditionLength > MAX_PRIVATE_CONDITION
+  const conditionChanged = condition.trim() !== (self?.privateCondition ?? '')
   const member = organizer || Boolean(self)
   const invited = !member && plan.invitations.includes(actorId)
   const actionable = plan.status === 'proposed' && !busy
@@ -59,7 +60,7 @@ export function GroupPlanPanel({
   }
   const onSaveCondition = (event: FormEvent) => {
     event.preventDefault()
-    if (!actionable || !self || choice !== 'if' || conditionInvalid) return
+    if (!actionable || !self || choice !== 'if' || conditionInvalid || !conditionChanged) return
     onAction({
       action: 'respond', expectedRevision: plan.revision, response: 'if',
       condition: condition.trim(),
@@ -168,7 +169,7 @@ export function GroupPlanPanel({
               {conditionLength > MAX_PRIVATE_CONDITION && <p role="alert" className="sq-group-error">
                 Shorten your condition to {MAX_PRIVATE_CONDITION} characters before saving.
               </p>}
-              <button type="submit" disabled={conditionInvalid}>
+              <button type="submit" disabled={conditionInvalid || !conditionChanged}>
                 {busy ? 'Saving note…' : 'Save private note'}
               </button>
             </>}
