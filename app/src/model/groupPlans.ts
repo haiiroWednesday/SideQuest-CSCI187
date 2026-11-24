@@ -151,17 +151,14 @@ export function applyGroupCommand(
     if (condition !== null && typeof condition !== 'string') {
       return reject('invalid', 'A private condition must be text.')
     }
-    if (response === 'if' && (!condition || !condition.trim())) {
-      return reject('invalid', 'A conditional response needs a private condition.')
-    }
     if (condition && privateConditionLength(condition) > MAX_PRIVATE_CONDITION) {
       return reject('invalid', 'Private conditions must be 280 characters or fewer.')
     }
-    if (response !== 'if' && condition) {
+    if (response !== 'if' && condition !== null) {
       return reject('invalid', 'Private conditions are only supported for If responses.')
     }
     const updated: Participant[] = plan.participants.map(item => item.userId === actorId
-      ? { ...item, response, privateCondition: response === 'if' ? condition!.trim() : null }
+      ? { ...item, response, privateCondition: response === 'if' ? condition?.trim() || null : null }
       : item)
     return advance(plan, updated)
   }
