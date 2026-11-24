@@ -182,6 +182,38 @@ begin
   end;
   perform set_config('request.jwt.claim.is_anonymous','false',true);
 
+  -- An existing session alone cannot authorize an expired or invalid JWT.
+  -- All four private RPC entry points must deny access, even for the organizer.
+  foreach i in array array[0,1,2,3] loop
+    perform set_config('request.jwt.claim.exp',
+      case i when 0 then '1' when 1 then 'null'
+        when 2 then '"not-a-number"' else '"4102444800"' end, true);
+    begin
+      perform public.sidequest_group_list();
+      raise exception 'Invalid expiry allowed list';
+    exception when insufficient_privilege then null;
+    end;
+    begin
+      perform public.sidequest_group_read(plan_id);
+      raise exception 'Invalid expiry allowed read';
+    exception when insufficient_privilege then null;
+    end;
+    begin
+      perform public.sidequest_group_create(event_id);
+      raise exception 'Invalid expiry allowed create';
+    exception when insufficient_privilege then null;
+    end;
+    begin
+      perform public.sidequest_group_action(cap_plan,13,'cancel');
+      raise exception 'Invalid expiry allowed mutation';
+    exception when insufficient_privilege then null;
+    end;
+  end loop;
+  perform set_config('request.jwt.claim.exp','',true);
+  if jsonb_array_length(public.sidequest_group_list()) <> 2 then
+    raise exception 'Valid session failed after resetting expiry fixture';
+  end if;
+
   -- Reserve a confirmed plan for testing Auth-account removal by FK cascade.
   v := public.sidequest_group_create(event_id);
   plan_id := (v->>'id')::uuid;
