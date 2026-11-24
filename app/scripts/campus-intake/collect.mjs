@@ -5,7 +5,7 @@ import { normalizePage, reconcileRecords, campusParts } from './normalize.mjs'
 
 const MAX_PAGES = 12
 const MAX_PAGE_BYTES = 2_000_000
-const MAX_RECORDS = 1200
+const MAX_RECORDS = 1000
 const REQUEST_DELAY_MS = 1200
 const TIMEOUT_MS = 15000
 
@@ -69,7 +69,10 @@ export async function collectLiveWhale(source, {
   const checkedAt = now.toISOString()
   const seen = new Set()
   const rows = []
-  let next = requestUrl(source, now, horizonDays)
+  const first = requestUrl(source, now, horizonDays)
+  let next = first
+  let expectedTotal = null
+  let expectedPages = null
   while (next) {
     if (seen.size >= MAX_PAGES || seen.has(next.href)) throw new Error('Pagination limit or loop; no complete snapshot')
     if (seen.size) await pause(REQUEST_DELAY_MS)
@@ -78,11 +81,35 @@ export async function collectLiveWhale(source, {
       method: 'GET', redirect: 'error', signal: AbortSignal.timeout(TIMEOUT_MS),
       headers: { Accept: 'application/json', 'User-Agent': 'SideQuest-CSCI187/0.1 (approved campus event intake)' },
     })
-    const page = normalizePage(await readBoundedJson(response), source, checkedAt)
+    const payload = await readBoundedJson(response)
+    const meta = payload?.meta
+    if (!meta || meta.type !== 'events' || !Number.isInteger(meta.total_results) ||
+        meta.total_results < 0 || meta.total_results >= MAX_RECORDS ||
+        !Number.isInteger(meta.total_pages) || meta.total_pages < 0 ||
+        meta.total_pages > MAX_PAGES || meta.page !== seen.size || meta.per_page !== 100 ||
+        meta.total_pages !== Math.ceil(meta.total_results / 100)) {
+      throw new Error('Invalid pagination metadata or provider result cap reached; no complete snapshot')
+    }
+    if (expectedTotal === null) {
+      expectedTotal = meta.total_results
+      expectedPages = meta.total_pages
+    } else if (meta.total_results !== expectedTotal || meta.total_pages !== expectedPages) {
+      throw new Error('Pagination changed during collection; retry the complete snapshot')
+    }
+    const page = normalizePage(payload, source, checkedAt)
+    if (page.records.length !== Math.min(100, Math.max(0, expectedTotal - rows.length))) {
+      throw new Error('Provider page count does not match metadata')
+    }
+    if (Boolean(page.next) !== (seen.size < expectedPages)) throw new Error('Incomplete pagination links')
     rows.push(...page.records)
     if (rows.length > MAX_RECORDS) throw new Error('Record limit exceeded; no complete snapshot')
     next = page.next ? checkedFeedUrl(page.next, source) : null
+    if (next && (next.pathname !== first.pathname || next.searchParams.size !== 1 ||
+        next.searchParams.get('page') !== String(seen.size + 1))) {
+      throw new Error('Unexpected pagination query; no complete snapshot')
+    }
   }
+  if (rows.length !== expectedTotal) throw new Error('Incomplete provider snapshot')
   const records = reconcileRecords(rows)
   return { version: 1, provider: source.id, checkedAt, horizonDays, complete: true,
     pages: seen.size, received: rows.length, records }
