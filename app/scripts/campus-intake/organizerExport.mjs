@@ -28,6 +28,7 @@ function eventLink(value, source) {
     const url = new URL(value)
     if (url.protocol !== 'https:' || url.origin !== new URL(source.page).origin ||
         url.username || url.password) return null
+    url.search = ''
     url.hash = ''
     return url.href
   } catch { return null }
