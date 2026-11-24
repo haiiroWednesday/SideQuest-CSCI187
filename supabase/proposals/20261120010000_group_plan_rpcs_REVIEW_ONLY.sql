@@ -7,8 +7,9 @@
 -- All SECURITY DEFINER functions use an empty search_path and fully qualified
 -- table/function references. Daven must review privileges before promotion.
 
--- Require the signed JWT session to still exist. PostgREST validates the JWT
--- signature and expiry; auth.uid() alone cannot detect a revoked session.
+-- Require a verified JWT with an unexpired numeric exp claim AND an active
+-- session. PostgREST verifies signatures; enforce expiry here independently
+-- because a gateway clock tolerance must not extend private group access.
 -- The helper is private to the SECURITY DEFINER RPCs, not a public identity API.
 create function public.sidequest_group_active_actor()
 returns uuid
@@ -23,7 +24,12 @@ as $$
   where s.user_id = auth.uid()
     and s.id::text = auth.jwt()->>'session_id'
     and coalesce(auth.jwt()->>'is_anonymous', 'false') <> 'true'
-    and (s.not_after is null or s.not_after > now())
+    and case
+      when jsonb_typeof(auth.jwt()->'exp') = 'number'
+        then (auth.jwt()->>'exp')::numeric > extract(epoch from statement_timestamp())
+      else false
+    end
+    and (s.not_after is null or s.not_after > statement_timestamp())
 $$;
 alter function public.sidequest_group_active_actor() owner to postgres;
 revoke all on function public.sidequest_group_active_actor() from public, anon, authenticated;
