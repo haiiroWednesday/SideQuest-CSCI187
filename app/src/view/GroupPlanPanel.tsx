@@ -38,30 +38,31 @@ export function GroupPlanPanel({
   const organizer = plan.organizerId === actorId
   const self = plan.participants.find(participant => participant.userId === actorId)
   // No response must remain unselected until the participant explicitly chooses.
-  const [choice, setChoice] = useState<GroupResponse | null>(self?.response ?? null)
+  const choice = self?.response ?? null
   const [condition, setCondition] = useState(self?.response === 'if' ? self.privateCondition ?? '' : '')
   const [invitee, setInvitee] = useState('')
   // When a refresh or another browser changes our saved answer, show the server's
   // current value. Unrelated participants' changes do not reset an unsaved draft.
   useEffect(() => {
-    setChoice(self?.response ?? null)
     setCondition(self?.response === 'if' ? self.privateCondition ?? '' : '')
   }, [actorId, plan.id, self?.response, self?.privateCondition])
   const conditionLength = privateConditionLength(condition)
-  const conditionInvalid = choice === 'if' && (conditionLength === 0 || conditionLength > MAX_PRIVATE_CONDITION)
+  const conditionInvalid = conditionLength > MAX_PRIVATE_CONDITION
   const member = organizer || Boolean(self)
   const invited = !member && plan.invitations.includes(actorId)
   const actionable = plan.status === 'proposed' && !busy
   const allWork = plan.invitations.length === 0 && plan.participants.length > 0 &&
     plan.participants.every(participant => participant.response === 'works')
-  const onRespond = (event: FormEvent) => {
+  const onRespond = (response: GroupResponse) => {
+    if (!actionable || !self || response === choice) return
+    onAction({ action: 'respond', expectedRevision: plan.revision, response })
+  }
+  const onSaveCondition = (event: FormEvent) => {
     event.preventDefault()
-    if (!actionable || !self || !choice || conditionInvalid) return
+    if (!actionable || !self || choice !== 'if' || conditionInvalid) return
     onAction({
-      action: 'respond',
-      expectedRevision: plan.revision,
-      response: choice,
-      ...(choice === 'if' ? { condition: condition.trim() } : {}),
+      action: 'respond', expectedRevision: plan.revision, response: 'if',
+      condition: condition.trim(),
     })
   }
   const onInvite = (event: FormEvent) => {
@@ -141,26 +142,24 @@ export function GroupPlanPanel({
       )}
 
       {self && plan.status === 'proposed' && (
-        <form className="sq-group-form" onSubmit={onRespond}>
+        <form className="sq-group-form" onSubmit={onSaveCondition}>
           <h3>Your response</h3>
           <fieldset disabled={!actionable}>
             <legend>Can you attend?</legend>
             <div className="sq-group-choices">
               {(['works', 'if', 'cant'] as const).map(value => (
-                <label key={value}>
-                  <input type="radio" name={'group-response-' + plan.id}
-                    value={value} checked={choice === value}
-                    onChange={() => setChoice(value)} />
-                  <span>{responseText[value]}</span>
-                </label>
+                <button key={value} type="button" aria-pressed={choice === value}
+                  onClick={() => onRespond(value)}>
+                  {responseText[value]}
+                </button>
               ))}
             </div>
             {choice === 'if' && <>
-              <label htmlFor={'group-condition-' + plan.id}>Your private condition</label>
+              <label htmlFor={'group-condition-' + plan.id}>Your private condition (optional)</label>
               <p id={'group-condition-hint-' + plan.id} className="sq-group-privacy">
-                Up to {MAX_PRIVATE_CONDITION} characters. Overlong text stays editable but cannot be submitted.
+                Only you can see this note. Leave it blank or save up to {MAX_PRIVATE_CONDITION} characters.
               </p>
-              <textarea id={'group-condition-' + plan.id} required
+              <textarea id={'group-condition-' + plan.id}
                 aria-describedby={'group-condition-hint-' + plan.id}
                 aria-invalid={conditionLength > MAX_PRIVATE_CONDITION}
                 value={condition} onChange={e => setCondition(e.target.value)}
@@ -169,10 +168,11 @@ export function GroupPlanPanel({
               {conditionLength > MAX_PRIVATE_CONDITION && <p role="alert" className="sq-group-error">
                 Shorten your condition to {MAX_PRIVATE_CONDITION} characters before saving.
               </p>}
+              <button type="submit" disabled={conditionInvalid}>
+                {busy ? 'Saving note…' : 'Save private note'}
+              </button>
             </>}
-            <button type="submit" disabled={!choice || conditionInvalid}>
-              {busy ? 'Saving response…' : 'Save response'}
-            </button>
+            <p role="status">{busy ? 'Saving response…' : choice ? 'Response saved' : 'Choose one response.'}</p>
           </fieldset>
         </form>
       )}
