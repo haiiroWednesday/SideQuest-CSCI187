@@ -34,18 +34,18 @@ export default defineConfig({
     url: 'http://127.0.0.1:5173',
     reuseExistingServer: false,
     timeout: 60_000,
-    env: { SUPABASE_URL: '', SUPABASE_PUBLISHABLE_KEY: '' },
+    env: { SIDEQUEST_GROUPS_ENABLED: 'false', SIDEQUEST_AUTH_EMAIL_ENABLED: 'false', SIDEQUEST_AUTH_ALLOW_SIGNUP: 'false', SIDEQUEST_PUBLIC_GROUP_LOGIN: 'false', OPENAI_API_KEY: '', SUPABASE_URL: '', SUPABASE_PUBLISHABLE_KEY: '' },
   }, {
     command: 'npm run dev -- --host 127.0.0.1 --port 5175 --strictPort',
     url: 'http://127.0.0.1:5175',
     reuseExistingServer: false,
     timeout: 60_000,
-    env: { SUPABASE_URL: 'http://127.0.0.1:5176', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_server_fixture' },
+    env: { SIDEQUEST_GROUPS_ENABLED: 'false', SIDEQUEST_AUTH_EMAIL_ENABLED: 'false', SIDEQUEST_AUTH_ALLOW_SIGNUP: 'false', SIDEQUEST_PUBLIC_GROUP_LOGIN: 'false', OPENAI_API_KEY: '', SUPABASE_URL: 'http://127.0.0.1:5176', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_server_fixture' },
   }, {
     command: 'npm start',
     url: 'http://127.0.0.1:5177',
     reuseExistingServer: false,
     timeout: 30_000,
-    env: { PORT: '5177', SUPABASE_URL: 'http://127.0.0.1:5176', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_server_fixture' },
+    env: { SIDEQUEST_GROUPS_ENABLED: 'false', SIDEQUEST_AUTH_EMAIL_ENABLED: 'false', SIDEQUEST_AUTH_ALLOW_SIGNUP: 'false', SIDEQUEST_PUBLIC_GROUP_LOGIN: 'false', OPENAI_API_KEY: '', PORT: '5177', SUPABASE_URL: 'http://127.0.0.1:5176', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_server_fixture' },
   }],
 })
