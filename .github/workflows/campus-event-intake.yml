@@ -5,6 +5,8 @@ on:
       - 'app/scripts/campus-intake/**'
       - 'app/scripts/refresh-campus-events.mjs'
       - 'app/data/campus-event-sources.json'
+      - 'supabase/review/campus_intake_publication.sql'
+      - 'supabase/tests/campus_intake_publication.sql'
       - '.github/workflows/campus-event-intake.yml'
   workflow_dispatch:
     inputs:
@@ -50,3 +52,38 @@ jobs:
           path: intake-output/scu-events.json
           if-no-files-found: error
           retention-days: 7
+
+  isolated-publication:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: sidequest-intake-fixture
+          POSTGRES_DB: sidequest_intake_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: sidequest-intake-fixture
+      PGDATABASE: sidequest_intake_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exercise reviewed publication against the actual catalog schema
+        run: |
+          if ! command -v psql >/dev/null; then sudo apt-get update && sudo apt-get install -y postgresql-client; fi
+          psql -v ON_ERROR_STOP=1 -c 'create role anon nologin; create role authenticated nologin;'
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261103000000_create_events.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261108000000_event_date_sanity_bound.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110000000_event_date_posting_horizon.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261111000000_event_text_posting_rules.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/review/campus_intake_publication.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/campus_intake_publication.sql
