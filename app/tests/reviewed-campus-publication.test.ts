@@ -23,6 +23,16 @@ describe('reviewed campus publication preparation', () => {
     expect(result.sourceUrl).toBe(candidate.sourceUrl)
   })
 
+  it('adds the verified source link and validates the final description length', () => {
+    const draft = { ...candidate.draft, description: 'A student recital.' }
+    expect(prepareReviewedPublication({ ...candidate, draft }, now).draft.description)
+      .toBe('A student recital.\nSource: ' + candidate.sourceUrl)
+    expect(prepareReviewedPublication(candidate, now).draft.description).toBe(candidate.draft.description)
+    expect(() => prepareReviewedPublication({
+      ...candidate, draft: { ...draft, description: 'x'.repeat(1000) },
+    }, now)).toThrow()
+  })
+
   it('requires explicit review of identity, reuse, audience and duplication', () => {
     for (const field of ['identityVerified', 'reuseApproved', 'eligibilityVerified', 'duplicateReviewed'] as const) {
       expect(() => prepareReviewedPublication({ ...candidate, [field]: false }, now)).toThrow(/review/)
@@ -31,6 +41,7 @@ describe('reviewed campus publication preparation', () => {
 
   it('rejects stale evidence, unapproved origin and credential-like URL parts', () => {
     for (const changes of [
+      { checkedAt: '2026-11-24' },
       { checkedAt: '2026-11-01T00:00:00Z' },
       { checkedAt: '2027-01-01T00:00:00Z' },
       { sourceUrl: 'https://example.invalid/event/123' },
