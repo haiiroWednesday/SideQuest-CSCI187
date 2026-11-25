@@ -117,7 +117,7 @@ export function GroupPlanPanel({
                 {organizer && participant.userId !== actorId && actionable && (
                   <button type="button" className="sq-group-link"
                     onClick={() => onAction({ action: 'remove', expectedRevision: plan.revision, inviteeId: participant.userId })}>
-                    Revoke invitation for {participantName(participant.userId)}
+                    Remove participant {participantName(participant.userId)}
                   </button>
                 )}
               </li>

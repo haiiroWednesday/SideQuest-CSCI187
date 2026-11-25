@@ -60,6 +60,7 @@ export function useGroupEmailAuth() {
     if (!credentials) return
     const delay = Math.max(0, Math.min(credentials.expiresAt - Date.now() - 5000, 2147483647))
     const timer = window.setTimeout(() => {
+      if (current.current !== credentials) return
       current.current = null
       setCredentials(null)
       setMessage('Your session expired. Request a new code to sign in again.')

@@ -60,19 +60,24 @@ export function GroupPlanningView({ actorId, client, events, routes }: GroupPlan
     setLoading(true)
     setActiveId(id)
     setError(null)
-    setSelected(null)
+    if (selected?.id !== id) setSelected(null)
     try {
       const plan = await client.get(id)
       if (generation.current === current) setSelected(plan)
     } catch (problem) {
-      if (generation.current === current) setError(displayError(problem))
+      if (generation.current === current) {
+        setSelected(null)
+        setError(displayError(problem))
+      }
     } finally {
       if (generation.current === current) setLoading(false)
     }
   }
 
+  const canCreate = !loading && !busy && eventNames.has(eventId)
+
   const create = async () => {
-    if (!eventId || busy || !events.some(event => event.id === eventId)) return
+    if (!canCreate) return
     const current = generation.current
     setBusy(true)
     setError(null)
@@ -93,7 +98,7 @@ export function GroupPlanningView({ actorId, client, events, routes }: GroupPlan
 
   const act = async (command: GroupAction) => {
     const plan = selected
-    if (!plan || busy || !activeId || plan.id !== activeId) return
+    if (!plan || busy || loading || !activeId || plan.id !== activeId) return
     const current = generation.current
     setBusy(true)
     setError(null)
@@ -131,6 +136,10 @@ export function GroupPlanningView({ actorId, client, events, routes }: GroupPlan
         <div className="sq-group-page-layout">
           <section aria-labelledby="sq-group-list-title" className="sq-group-sidebar">
             <h2 id="sq-group-list-title">Your group outings</h2>
+            <label htmlFor="sq-group-own-account">Your account ID</label>
+            <input id="sq-group-own-account" value={actorId} readOnly
+              aria-describedby="sq-group-own-account-help" onFocus={event => event.currentTarget.select()} />
+            <p id="sq-group-own-account-help">Share this ID with someone you want to invite you.</p>
             <button type="button" className="sq-group-link" onClick={() => { void refreshList() }}
               disabled={loading || busy}>Refresh group list</button>
             {loading && <p role="status">Loading group plans…</p>}
@@ -158,14 +167,14 @@ export function GroupPlanningView({ actorId, client, events, routes }: GroupPlan
                 <option value="">Choose an event</option>
                 {events.map(event => <option key={event.id} value={event.id}>{event.title}</option>)}
               </select>
-              <button type="button" disabled={!eventId || busy} onClick={() => { void create() }}>
+              <button type="button" disabled={!canCreate} onClick={() => { void create() }}>
                 {busy ? 'Saving…' : 'Create group proposal'}
               </button>
             </section>
             {selected && <GroupPlanPanel
               key={selected.id} plan={selected} actorId={actorId}
               eventTitle={eventNames.get(selected.eventId) ?? 'Campus event'}
-              busy={busy} error={error}
+              busy={busy || loading} error={error}
               onAction={command => { void act(command) }}
               onRefresh={() => { void open(selected.id) }}
             />}

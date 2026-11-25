@@ -38,11 +38,11 @@ describe('group proposal privacy, role and response view', () => {
     expect(action).not.toHaveBeenCalled()
   })
 
-  it('organizer can revoke and invite without editing another person\'s response', () => {
+  it('organizer can remove a participant and invite without editing another person\'s response', () => {
     const action = vi.fn()
     render(<GroupPlanPanel plan={fixture()} actorId={organizer} eventTitle="Jazz workshop"
       participantName={id => id === amy ? 'Amy' : 'Bo'} onAction={action} onRefresh={vi.fn()} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Revoke invitation for Amy' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Remove participant Amy' }))
     expect(action).toHaveBeenLastCalledWith({
       action: 'remove', expectedRevision: 3, inviteeId: amy,
     })
