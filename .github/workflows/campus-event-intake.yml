@@ -5,6 +5,8 @@ on:
       - 'app/scripts/campus-intake/**'
       - 'app/scripts/refresh-campus-events.mjs'
       - 'app/data/campus-event-sources.json'
+      - 'app/src/controller/prepareReviewedPublication.ts'
+      - 'app/tests/reviewed-campus-publication.test.ts'
       - 'supabase/review/campus_intake_publication.sql'
       - 'supabase/tests/campus_intake_publication.sql'
       - '.github/workflows/campus-event-intake.yml'
@@ -87,3 +89,38 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261111000000_event_text_posting_rules.sql
           psql -v ON_ERROR_STOP=1 -f supabase/review/campus_intake_publication.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/campus_intake_publication.sql
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Run operator command on a synthetic fixture
+        working-directory: app
+        env:
+          SIDEQUEST_INTAKE_WRITE_APPROVED: 'yes'
+        run: |
+          npm ci --no-audit --no-fund
+          npx vite build --ssr scripts/campus-intake/publishReviewed.ts --outDir "$RUNNER_TEMP/sidequest-intake"
+          node --input-type=module <<'NODE'
+          import { writeFileSync } from 'node:fs'
+          const future = new Date(Date.now() + 7 * 86400000)
+          const date = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit'
+          }).format(future)
+          writeFileSync(process.env.RUNNER_TEMP + '/review-fixture.json', JSON.stringify({
+            provider: 'scu-livewhale', occurrenceId: 'synthetic-ci-only',
+            sourceUrl: 'https://events.scu.edu/event/123-synthetic-fixture',
+            checkedAt: new Date().toISOString(), identityVerified: true, reuseApproved: true,
+            eligibilityVerified: true, duplicateReviewed: true,
+            draft: { title: "Fixture's workshop", hostName: 'Fixture club', description: 'Synthetic fixture only',
+              location: 'Fixture room', date, start: '14:00', end: '15:00' }
+          }))
+          NODE
+          cli="$RUNNER_TEMP/sidequest-intake/publishReviewed.js"
+          review="$RUNNER_TEMP/review-fixture.json"
+          node "$cli" --validate "$review"
+          if SIDEQUEST_INTAKE_WRITE_APPROVED=no node "$cli" --publish-reviewed "$review"; then exit 1; fi
+          first=$(node "$cli" --publish-reviewed "$review")
+          second=$(node "$cli" --publish-reviewed "$review")
+          test "$first" = "$second"
+          test "$(psql -X -qAt -v ON_ERROR_STOP=1 -c "select count(*) from public.events where title = 'Fixture''s workshop'")" = 1
+          test "$(psql -X -qAt -v ON_ERROR_STOP=1 -c "select count(*) from sidequest_intake.source_occurrences where occurrence_id = 'synthetic-ci-only'")" = 1
