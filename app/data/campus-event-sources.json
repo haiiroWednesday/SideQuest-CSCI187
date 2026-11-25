@@ -6,9 +6,9 @@
       "name": "SCU university calendar",
       "page": "https://events.scu.edu/all",
       "adapter": "livewhale-v2",
-      "feed": "https://events.scu.edu/live/json/v2/events/",
-      "access": "pending-live-probe-and-owner-approval",
-      "coverage": "University-wide public calendar, including participating department and athletics groups"
+      "feed": "https://events.scu.edu/live/json/events/",
+      "access": "browser-sample-verified-recurring-access-pending",
+      "coverage": "User-supplied JSON page and iCalendar export verify central calendar coverage; filtered enriched API and scheduled network access remain unverified"
     },
     {
       "id": "scu-campus",
