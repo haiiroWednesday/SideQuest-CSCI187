@@ -134,11 +134,42 @@ describe('Google HTTP routes', () => {
 
   it('serves Google walking routes near campus and refuses far ones', async () => {
     const s = await start(true)
-    const ok = await s.post('/api/google/route', { from: { lat: 37.3494, lng: -121.9405 }, to: { lat: 37.3528, lng: -121.9361 } }, { token: null })
+    const ok = await s.post('/api/google/route', { from: { lat: 37.3494, lng: -121.9405 }, to: { lat: 37.3528, lng: -121.9361 } })
     const route = await ok.json()
     expect(route.label).toBe('Google route, not checked on foot')
     expect(JSON.stringify(route)).not.toContain(KEY)
-    const far = await s.post('/api/google/route', { from: { lat: 37.3494, lng: -121.9405 }, to: { lat: 37.7749, lng: -122.4194 } }, { token: null })
+    const far = await s.post('/api/google/route', { from: { lat: 37.3494, lng: -121.9405 }, to: { lat: 37.7749, lng: -122.4194 } })
     expect(far.status).toBe(422)
+  })
+
+  it('serves routes and place details only to a signed-in SideQuest session', async () => {
+    const s = await start(true)
+    const body = { from: { lat: 37.3494, lng: -121.9405 }, to: { lat: 37.3528, lng: -121.9361 } }
+    const anonymous = await s.post('/api/google/route', body, { token: null })
+    expect(anonymous.status).toBe(401)
+    expect((await anonymous.json()).code).toBe('signed_out')
+    expect((await s.post('/api/google/route', body, { token: 'not-a-live-session-token-at-all' })).status).toBe(401)
+    expect(s.googleCalls).toHaveLength(0)
+    expect((await s.post('/api/google/route', body)).status).toBe(200)
+    expect(s.googleCalls).toHaveLength(1)
+  })
+
+  it('asks Supabase Auth once per token in 30 s, and caps new tokens per IP', async () => {
+    let checks = 0
+    const counting: SessionIdentity = { async verify(token) { checks++; return token === session ? { userId: user } : null } }
+    const calendar = createGoogleCalendarService({ config: null, identity: counting, connections: memoryConnectionStore(), links: memoryPlanLinkStore(), busy: null })
+    const api = createGoogleApi(calendar, createGoogleRoutesService(null), counting)
+    const server = createServer((req, res) => { void api(req, res).then(done => { if (!done) { res.statusCode = 404; res.end() } }) })
+    await new Promise<void>(r => server.listen(0, '127.0.0.1', r))
+    servers.push(server)
+    const base = 'http://127.0.0.1:' + (server.address() as AddressInfo).port
+    const status = (token: string) => fetch_(base + '/api/google/status', { headers: { Authorization: `Bearer ${token}` } })
+    for (let i = 0; i < 5; i++) expect((await status(session)).status).toBe(200)
+    expect(checks).toBe(1)
+    // A script spraying made-up tokens gets cut off before each one reaches Supabase Auth.
+    const codes: number[] = []
+    for (let i = 0; i < 130; i++) codes.push((await status(`made-up-token-number-${String(i).padStart(4, '0')}`)).status)
+    expect(codes.filter(code => code === 429).length).toBeGreaterThan(0)
+    expect(checks).toBeLessThanOrEqual(1 + 120)
   })
 })

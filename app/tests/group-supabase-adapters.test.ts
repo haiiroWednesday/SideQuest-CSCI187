@@ -15,6 +15,9 @@ const userA = '11111111-1111-4111-8111-111111111111'
 const userB = '22222222-2222-4222-8222-222222222222'
 const tokenA = 'A'.repeat(40)
 const tokenB = 'B'.repeat(40)
+// A real Supabase account whose address is outside the scu.edu sign-in policy.
+const tokenOutside = 'C'.repeat(40)
+const userOutside = '55555555-5555-4555-8555-555555555555'
 const eventId = '33333333-3333-4333-8333-333333333333'
 const planId = '44444444-4444-4444-8444-444444444444'
 const env = {
@@ -36,8 +39,9 @@ beforeEach(() => {
     return {
       auth: {
         async getUser(token: string) {
-          const id = token === tokenA ? userA : token === tokenB ? userB : null
-          return { data: { user: id ? { id } : null }, error: id ? null : { message: 'Invalid token' } }
+          const id = token === tokenA ? userA : token === tokenB ? userB : token === tokenOutside ? userOutside : null
+          const email = token === tokenOutside ? 'someone@gmail.com' : token === tokenA ? 'a@scu.edu' : 'b@alumni.scu.edu'
+          return { data: { user: id ? { id, email } : null }, error: id ? null : { message: 'Invalid token' } }
         },
         async signInWithOtp(input: { email: string; options: { shouldCreateUser: boolean } }) {
           calls.otpRequests.push({ email: input.email, allowSignup: input.options.shouldCreateUser })
@@ -84,6 +88,8 @@ describe('server-only Supabase Auth and group adapters', () => {
     expect(await gateway!.verify(tokenA)).toEqual({ userId: userA })
     expect(await gateway!.verify(tokenB)).toEqual({ userId: userB })
     expect(await gateway!.verify('invalid')).toBeNull()
+    // The scu.edu rule holds here too, not only at sign-in.
+    expect(await gateway!.verify(tokenOutside)).toBeNull()
 
     await gateway!.list(tokenA)
     await gateway!.create(tokenA, eventId)

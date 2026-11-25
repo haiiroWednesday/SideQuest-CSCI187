@@ -3,6 +3,7 @@
 // forwarded, so Row Level Security in the database decides what the caller can read or change.
 // Validation repeats the database rules first, so a bad request never reaches Supabase.
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { AuthCheckLimitError, createVerifiedTokenGuard } from './verifiedTokens'
 import {
   PersonalStoreError, checkBusyDraft, checkDisplayName, checkId, checkIdeaDraft, checkIdeaPatch,
   type PersonalStorePort,
@@ -55,6 +56,7 @@ function bearer(req: IncomingMessage): string {
 const STATUS: Record<PersonalStoreError['kind'], number> = { invalid: 400, limit: 409, 'not-found': 404, 'signed-out': 401, unavailable: 503 }
 
 export function createPersonalApi(gateway: PersonalGateway | null, clock: () => number = Date.now) {
+  const sessions = createVerifiedTokenGuard(clock)
   const writes = new Map<string, { count: number; until: number }>()
   const countWrite = (userId: string) => {
     const now = clock()
@@ -84,7 +86,11 @@ export function createPersonalApi(gateway: PersonalGateway | null, clock: () => 
       }
       const token = bearer(req)
       let userId: string | null
-      try { userId = await gateway.userFor(token) } catch { throw new MeHttpError(503, 'The sign-in service is unavailable.') }
+      try { userId = await sessions.check(req, token, t => gateway.userFor(t)) }
+      catch (error) {
+        if (error instanceof AuthCheckLimitError) throw new MeHttpError(429, error.message)
+        throw new MeHttpError(503, 'The sign-in service is unavailable.')
+      }
       if (!userId) throw new MeHttpError(401, 'Your session ended. Sign in again.')
       if (write) countWrite(userId)
       const store = gateway.storeFor(token, userId)

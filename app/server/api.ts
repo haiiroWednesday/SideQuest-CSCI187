@@ -1,5 +1,6 @@
 // HTTP Controller. Shared validation and persistence remain in Model.
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { clientIp } from './clientIp'
 import { EventCatalogError, BASE_FIELD_ORDER, DRAFT_FIELD_ORDER, type EventCatalogPort, type EventDraft } from '../src/model/eventCatalog'
 import { readCatalogWithDeadline, CatalogReadTimeoutError } from '../src/controller/catalogReads'
 import type { CatalogPublisherPort } from '../src/model/catalogChanged'
@@ -58,7 +59,7 @@ export function createCatalogApi(catalog: EventCatalogPort | null, clock: () => 
       } else {
         const origin = req.headers.origin
         if (origin && new URL(origin).host !== req.headers.host) throw new HttpError(403, 'Post events from the SideQuest site.')
-        const now = clock(), ip = req.socket.remoteAddress ?? 'unknown'
+        const now = clock(), ip = clientIp(req)
         for (const [key, value] of limits) if (value.until <= now) limits.delete(key)
         if (limits.size >= 10_000 && !limits.has(ip)) throw new HttpError(429, 'The catalog is busy. Please try again later.')
         const limit = limits.get(ip) ?? { count: 0, until: now + 60_000 }

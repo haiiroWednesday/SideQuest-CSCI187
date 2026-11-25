@@ -1,7 +1,8 @@
 // HTTP CONTROLLER: an opt-in, bearer-authenticated gateway to caller-scoped
 // group RPCs. This controller never accepts a client-supplied acting user ID.
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { MAX_GROUP_INVITEES, MAX_PRIVATE_CONDITION, type ResponseKind } from '../src/model/groupPlans'
+import { clientIp } from './clientIp'
+import { MAX_GROUP_INVITEES, MAX_IF_CONDITION, type ResponseKind } from '../src/model/groupPlans'
 
 export type VerifiedGroupActor = { userId: string }
 export type GroupActionInput = {
@@ -69,7 +70,7 @@ function validatedAction(value: JsonObject): GroupActionInput {
     input.response = value.response as GroupActionInput['response']
     if (input.response === 'if') {
       if (typeof value.condition !== 'string' || value.condition.trim().length === 0 ||
-          value.condition.length > MAX_PRIVATE_CONDITION) {
+          value.condition.length > MAX_IF_CONDITION) {
         throw new RequestError(400, 'A conditional response needs up to 280 characters of text.')
       }
       input.condition = value.condition.trim()
@@ -82,8 +83,13 @@ function validatedAction(value: JsonObject): GroupActionInput {
   return input
 }
 
-// Defense in depth: even if a future RPC mistakenly returns another user's
-// private condition, the Node gateway exposes it only to its authenticated owner.
+// If notes are shared with the plan's members (owner decision, Nov 24; PR #89).
+// Only an If answer carries one. Outsiders never reach the participant list (404 below).
+function noteOf(participant: JsonObject): string | null {
+  const note = participant.ifCondition ?? participant.privateCondition
+  return typeof note === 'string' ? note : null
+}
+
 function projectPlan(raw: unknown, actorId: string): unknown {
   const plan = object(raw)
   if (!plan || typeof plan.id !== 'string' || typeof plan.eventId !== 'string' ||
@@ -110,9 +116,9 @@ function projectPlan(raw: unknown, actorId: string): unknown {
       return {
         userId: participant.userId,
         response: participant.response,
-        ...(participant.userId === actorId
-          ? { privateCondition: typeof participant.privateCondition === 'string'
-              ? participant.privateCondition : null }
+        // The RPC on this branch still names it privateCondition; PR #89's names it ifCondition.
+        ...(participant.userId === actorId || participant.response === 'if'
+          ? { ifCondition: participant.response === 'if' ? noteOf(participant) : null }
           : {}),
       }
     }),
@@ -192,7 +198,7 @@ export function createGroupApi(
         throw new RequestError(405, 'Unsupported group request method.')
       }
 
-      const now = clock(), ip = req.socket.remoteAddress ?? 'unknown'
+      const now = clock(), ip = clientIp(req)
       for (const [key, item] of limits) if (item.until <= now) limits.delete(key)
       if (limits.size >= 10000 && !limits.has(ip)) throw new RequestError(429, 'The group service is busy.')
       const limit = limits.get(ip) ?? { count: 0, until: now + 60000 }

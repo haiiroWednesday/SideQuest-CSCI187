@@ -6,6 +6,8 @@ export default defineConfig({
   testDir: './e2e-demo',
   projects: [{ name: 'demo-chromium', use: { browserName: 'chromium' } }],
   retries: process.env.CI ? 1 : 0,
+  // A test that only passes on the retry is flaky: CI fails instead of showing green.
+  failOnFlakyTests: Boolean(process.env.CI),
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: 'http://127.0.0.1:5180',

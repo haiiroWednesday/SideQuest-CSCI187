@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  GOOGLE_ROUTE_LABEL, createGoogleRoutesService, decodePolyline, routesConfigFromEnv,
+  GOOGLE_DAILY_REQUEST_BUDGET, GOOGLE_ROUTE_LABEL, createGoogleRoutesService, decodePolyline, distanceKm, roundOrigin, routesConfigFromEnv,
 } from '../server/googleRoutes'
 
 const KEY = 'test-maps-server-key-0123456789'
@@ -42,7 +42,8 @@ describe('Google walking routes for near-campus places', () => {
     expect(headers.get('x-goog-fieldmask')).toBe('routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline')
     expect(JSON.parse(String(call.init?.body))).toMatchObject({
       travelMode: 'WALK',
-      origin: { location: { latLng: { latitude: benson.lat, longitude: benson.lng } } },
+      // The device position goes out snapped to the ~25 m grid, never as measured.
+      origin: { location: { latLng: { latitude: roundOrigin(benson).lat, longitude: roundOrigin(benson).lng } } },
       destination: { location: { latLng: { latitude: nearCafe.lat, longitude: nearCafe.lng } } },
     })
   })
@@ -104,5 +105,34 @@ describe('Google place details', () => {
   it('has its own flag', async () => {
     const service = createGoogleRoutesService({ apiKey: KEY, placesEnabled: false })
     await expect(service.place('ChIJplace123456')).rejects.toMatchObject({ code: 'not_enabled' })
+  })
+})
+
+describe('Google route privacy and cost', () => {
+  it('snaps the device position to about 25 m before caching or asking Google', async () => {
+    const snapped = roundOrigin(benson)
+    expect(snapped).not.toEqual(benson)
+    expect(distanceKm(benson, snapped) * 1000).toBeLessThanOrEqual(18) // half a 25 m cell, diagonally
+    // Two readings a few metres apart share one cell, so one Google call and one cache entry.
+    const google = fake(() => json({ routes: [{ duration: '60s', distanceMeters: 80, polyline: { encodedPolyline: '_p~iF~ps|U_ulLnnqC' } }] }))
+    const service = createGoogleRoutesService({ apiKey: KEY, placesEnabled: false }, { fetch: google.fetch })
+    const cell = { lat: snapped.lat + 0.00003, lng: snapped.lng - 0.00003 }
+    await service.walk(cell, nearCafe)
+    await service.walk({ lat: snapped.lat - 0.00003, lng: snapped.lng + 0.00003 }, nearCafe)
+    expect(google.calls).toHaveLength(1)
+    const sent = JSON.parse(String(google.calls[0].init?.body)).origin.location.latLng
+    expect(sent).toEqual({ latitude: snapped.lat, longitude: snapped.lng })
+  })
+
+  it('stops calling Google for the day once the daily budget is spent', async () => {
+    let now = Date.UTC(2026, 10, 25, 12)
+    const google = fake(() => json({ routes: [{ duration: '60s', distanceMeters: 80, polyline: { encodedPolyline: '_p~iF~ps|U_ulLnnqC' } }] }))
+    const service = createGoogleRoutesService({ apiKey: KEY, placesEnabled: false }, { fetch: google.fetch, clock: () => now })
+    // Each walk goes to a different place, so none is a cache hit.
+    for (let i = 0; i < GOOGLE_DAILY_REQUEST_BUDGET; i++) await service.walk(benson, { lat: 37.35 + i * 0.000001, lng: -121.936 })
+    await expect(service.walk(benson, { lat: 37.351, lng: -121.937 })).rejects.toMatchObject({ status: 503, code: 'daily_budget' })
+    expect(google.calls).toHaveLength(GOOGLE_DAILY_REQUEST_BUDGET)
+    now += 24 * 60 * 60_000
+    await expect(service.walk(benson, { lat: 37.351, lng: -121.937 })).resolves.toMatchObject({ source: 'google' })
   })
 })

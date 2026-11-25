@@ -141,9 +141,13 @@ describe('/api/me: the same rules as the database', () => {
 describe('/api/me is wired into both servers', () => {
   it('production and dev servers hand requests to the personal API', async () => {
     const { readFile } = await import('node:fs/promises')
+    // Both servers run the one shared handler list, and that list includes /api/me.
     for (const file of ['server/index.ts', 'vite.config.ts']) {
       const source = await readFile(new URL(`../${file}`, import.meta.url), 'utf8')
-      expect(source, file).toMatch(/await personalApi\(req, res\)\) return/)
+      expect(source, file).toMatch(/createServerHandlers\(/)
+      expect(source, file).toMatch(/runHandlers\(handlers, req, res\)/)
     }
+    const { createServerHandlers } = await import('../server/handlers')
+    expect(createServerHandlers({}, { catalog: null }).map(h => h.name)).toContain('personal')
   })
 })

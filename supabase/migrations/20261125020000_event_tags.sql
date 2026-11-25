@@ -40,7 +40,7 @@ alter table public.events
 -- Column grants: posters may write tags and tags_by. The Node server only ever writes 'host' for a
 -- post (the client cannot send tags_by at all); 'reviewer' is for the reviewed import (PR #86).
 -- If the team wants the database itself to refuse 'reviewer' from anon, add it to the INSERT policy
--- together with the rules in 20261125010000_event_access_contact.sql.
+-- together with the rules in supabase/proposals/20261125010000_event_access_contact_REVIEW_ONLY.sql.
 grant insert (tags, tags_by) on public.events to anon, authenticated;
 
 comment on column public.events.tags is

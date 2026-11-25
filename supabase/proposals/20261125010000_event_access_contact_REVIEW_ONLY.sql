@@ -1,3 +1,10 @@
+-- REVIEW ONLY. Moved out of supabase/migrations on 25 Nov 2026 so `supabase db push` cannot apply it.
+-- Why: once applied, the INSERT policy below refuses every post that lacks organizer, contact and
+-- the exact Access Policy Statement. The app ships with ACCESS_POLICY_ON=false and the owner dropped
+-- the ADA fields from Post, so the Node server sends only the seven original columns, and every
+-- plain post would be refused. Apply it only together with turning those fields back on.
+-- Behaviour test: supabase/proposals/tests/event_access_contact_review.sql.
+--
 -- SideQuest: SCU's posting policy on events (scu.edu/csi/organizations/resources/advertising).
 -- Every ad includes the organization's name and contact information, and the Access Policy
 -- Statement: "In compliance with the ADA/504, please direct your accommodation requests to
@@ -23,7 +30,6 @@
 -- ALTER POLICY replaces the whole WITH CHECK expression, so the date window
 -- (20261110000000) and the text rules (20261111000000) are repeated verbatim below.
 -- Keep all three rule sets in this one expression when changing any of them.
--- Behaviour test: supabase/tests/event_access_contact.sql.
 
 alter table public.events
   add column organizer text

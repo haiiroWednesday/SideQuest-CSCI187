@@ -5,6 +5,7 @@
 import { createHmac, randomBytes } from 'node:crypto'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { SignInPolicy } from './signInPolicy'
+import { clientIp } from './clientIp'
 
 export type VerifiedEmailSession = {
   userId: string
@@ -35,6 +36,19 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const CODE_PATTERN = /^\d{6,8}$/
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const MAX_BYTES = 1024
+const MAX_COUNTERS = 10_000
+/** Sign-in emails one address can be sent per hour, from every IP together. */
+export const CODE_REQUESTS_PER_EMAIL_PER_HOUR = 5
+
+/** SIDEQUEST_PUBLIC_ORIGIN as a bare origin (https://host), or undefined when unset or not a web origin. */
+export function publicOriginFromEnv(env: Readonly<Record<string, unknown>>): string | undefined {
+  const raw = String(env.SIDEQUEST_PUBLIC_ORIGIN ?? '').trim()
+  if (!raw) return undefined
+  try {
+    const url = new URL(raw)
+    return (url.protocol === 'https:' || url.protocol === 'http:') && !url.username && !url.password ? url.origin : undefined
+  } catch { return undefined }
+}
 
 function json(res: ServerResponse, status: number, value: unknown): void {
   res.writeHead(status, {
@@ -83,21 +97,25 @@ export function createEmailAuthApi(
   clock: () => number = Date.now,
   features?: SignInFeatures,
   policy?: SignInPolicy,
+  options: { publicOrigin?: string } = {},
 ) {
   const pepper = randomBytes(32)
   const counters = new Map<string, { count: number; until: number }>()
-  const limits = (email: string, ip: string, purpose: 'request' | 'verify') => {
-    const key = purpose + ':' + createHmac('sha256', pepper).update(email + '\0' + ip).digest('hex')
+  const count = (key: string, max: number, windowMs: number) => {
     const now = clock()
     for (const [id, row] of counters) if (row.until <= now) counters.delete(id)
-    if (counters.size >= 10000 && !counters.has(key)) {
-      throw new AuthHttpError(429, 'Too many attempts. Try again later.')
-    }
-    const max = purpose === 'request' ? 3 : 10
-    const saved = counters.get(key) ?? { count: 0, until: now + 900000 }
+    // A full table drops its oldest counter; it never locks every student out.
+    if (counters.size >= MAX_COUNTERS && !counters.has(key)) counters.delete(counters.keys().next().value as string)
+    const saved = counters.get(key) ?? { count: 0, until: now + windowMs }
     if (saved.count >= max) throw new AuthHttpError(429, 'Too many attempts. Try again later.')
     saved.count++
     counters.set(key, saved)
+  }
+  const hashed = (value: string) => createHmac('sha256', pepper).update(value).digest('hex')
+  const limits = (email: string, ip: string, purpose: 'request' | 'verify') => {
+    count(purpose + ':' + hashed(email + '\0' + ip), purpose === 'request' ? 3 : 10, 900000)
+    // Changing IP does not reset this one: an address gets a few emails an hour at most.
+    if (purpose === 'request') count('email:' + hashed(email), CODE_REQUESTS_PER_EMAIL_PER_HOUR, 3_600_000)
   }
 
   return async (req: IncomingMessage, res: ServerResponse): Promise<boolean> => {
@@ -124,14 +142,19 @@ export function createEmailAuthApi(
       if (typeof origin !== 'string' || !req.headers.host) {
         throw new AuthHttpError(403, 'Use the SideQuest site to sign in.')
       }
-      let expectedHost = ''
-      try { expectedHost = new URL(origin).host }
+      let originUrl: URL | null = null
+      try { originUrl = new URL(origin) }
       catch { /* malformed origin is forbidden */ }
-      if (expectedHost !== req.headers.host) {
+      // With SIDEQUEST_PUBLIC_ORIGIN set, only the deployed site may ask, and sign-in links
+      // always return there, whatever Host header a proxy or a script sent.
+      const allowed = options.publicOrigin
+        ? originUrl?.origin === options.publicOrigin
+        : originUrl?.host === req.headers.host
+      if (!allowed) {
         throw new AuthHttpError(403, 'Use the SideQuest site to sign in.')
       }
       const request = await body(req)
-      const ip = req.socket.remoteAddress ?? 'unknown'
+      const ip = clientIp(req)
       if (path === '/api/auth/link-session') {
         // A sign-in link put a token in the app's address. The app sends it here once and the
         // server asks Supabase Auth who it belongs to before the app may use it.
@@ -162,7 +185,7 @@ export function createEmailAuthApi(
         // A deployed origin must also be listed in Supabase Auth's Redirect URLs.
         // A send that failed for reasons unrelated to the account (the sender's hourly limit, an
         // outage) is reported, so nobody waits for an email that never left. Anything else stays generic.
-        try { await gateway.requestCode(email, origin) }
+        try { await gateway.requestCode(email, options.publicOrigin ?? origin) }
         catch (error) {
           if (error instanceof EmailSendError) {
             throw new AuthHttpError(error.reason === 'limit' ? 429 : 503, error.reason === 'limit'

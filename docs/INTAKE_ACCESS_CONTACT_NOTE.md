@@ -19,7 +19,7 @@ This branch adds, in `app/src/model/eventCatalog.ts`:
 - `spaceConfirmed`: required on every post, not stored.
 
 `POST /api/events` and the insert policy in
-`supabase/migrations/20261125010000_event_access_contact.sql` (review only, not applied)
+`supabase/proposals/20261125010000_event_access_contact_REVIEW_ONLY.sql` (review only, not applied)
 enforce the same rules.
 
 The campus intake code lives in #86, not on this branch, so here is what changes for it:

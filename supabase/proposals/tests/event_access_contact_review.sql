@@ -1,4 +1,4 @@
--- Run after 20261125010000_event_access_contact.sql in an isolated PostgreSQL
+-- Run after supabase/proposals/20261125010000_event_access_contact_REVIEW_ONLY.sql in an isolated PostgreSQL
 -- database as its owner. Every test write is rolled back.
 -- Checks: new posts need the organizer, an email or phone contact, and SCU's Access
 -- Policy Statement word for word; rows from before the migration keep NULL and stay readable.

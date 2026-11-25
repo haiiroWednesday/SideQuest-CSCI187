@@ -10,7 +10,9 @@ import {
   memoryPlanLinkStore, type CalendarBusyStore, type GoogleCalendarService, type SessionIdentity,
 } from './googleCalendar'
 import { createGoogleRoutesApi, createGoogleRoutesService, routesConfigFromEnv, type GoogleRoutesService } from './googleRoutes'
-import { bearer, pathOf, sendJson } from './googleShared'
+import { GoogleHttpError, bearer, pathOf, sendError, sendJson } from './googleShared'
+import { createSignInPolicy } from './signInPolicy'
+import { AuthCheckLimitError, createVerifiedTokenGuard } from './verifiedTokens'
 
 type Env = Readonly<Record<string, unknown>>
 
@@ -31,11 +33,14 @@ export function supabaseIdentityFromEnv(env: Env): SessionIdentity | null {
   const client = supabaseFromEnv(env)
   if (!client) return null
   const auth = client()
+  const policy = createSignInPolicy(env as Record<string, string | undefined>)
   return {
     async verify(token) {
       try {
         const { data, error } = await auth.auth.getUser(token)
-        return error || !data.user?.id ? null : { userId: data.user.id }
+        if (error || !data.user?.id) return null
+        // Same account rule as sign-in: a token for an address outside the policy is no session here.
+        return policy.allows(data.user.email) ? { userId: data.user.id } : null
       } catch { return null }
     },
   }
@@ -64,16 +69,28 @@ export function supabaseCalendarBusyFromEnv(env: Env): CalendarBusyStore | null 
   }
 }
 
-export function createGoogleApi(calendar: GoogleCalendarService, routes: GoogleRoutesService, identity: SessionIdentity | null) {
+export function createGoogleApi(calendar: GoogleCalendarService, routes: GoogleRoutesService, identity: SessionIdentity | null, clock: () => number = Date.now) {
   const calendarApi = createGoogleCalendarApi(calendar, identity)
-  const routesApi = createGoogleRoutesApi(routes)
+  // Supabase Auth is asked at most once per token per 30 s, within a per-IP budget.
+  const sessions = createVerifiedTokenGuard(clock)
+  const sessionOf = async (req: IncomingMessage) => {
+    const token = bearer(req)
+    if (!token || !identity) return null
+    try { return await sessions.check(req, token, t => identity.verify(t)) }
+    catch (error) {
+      if (error instanceof AuthCheckLimitError) throw new GoogleHttpError(429, error.message, 'rate_limited')
+      return null
+    }
+  }
+  const routesApi = createGoogleRoutesApi(routes, sessionOf, clock)
   return async (req: IncomingMessage, res: ServerResponse): Promise<boolean> => {
     const url = pathOf(req)
     if (!url || !url.pathname.startsWith('/api/google/')) return false
     if (url.pathname === '/api/google/status') {
       if (req.method !== 'GET') { sendJson(res, 405, { error: 'Use GET.' }); return true }
-      const token = bearer(req)
-      const who = token && identity ? await identity.verify(token).catch(() => null) : null
+      let who: { userId: string } | null
+      try { who = await sessionOf(req) }
+      catch (error) { sendError(res, error, 'Google is unavailable right now.'); return true }
       sendJson(res, 200, {
         calendar: await calendar.status(who?.userId ?? null),
         routes: { enabled: routes.enabled },
@@ -105,13 +122,17 @@ export function createGoogleApiFromEnv(env: Env) {
   }
 }
 
-let shared: ReturnType<typeof createGoogleApiFromEnv> | null = null
+const built = new WeakMap<object, ReturnType<typeof createGoogleApiFromEnv>>()
+/** One Google API per environment object, built on first use, so every caller shares its token store. */
+export function googleApiOnce(env: Env): ReturnType<typeof createGoogleApiFromEnv> {
+  let api = built.get(env)
+  if (!api) { api = createGoogleApiFromEnv(env); built.set(env, api) }
+  return api
+}
 /** The production server's single Google API, built from process.env on first use. */
 export function googleApi(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
-  shared ??= createGoogleApiFromEnv(process.env)
-  return shared.handle(req, res)
+  return googleApiOnce(process.env).handle(req, res)
 }
 export function googleCalendarForServer(): GoogleCalendarService {
-  shared ??= createGoogleApiFromEnv(process.env)
-  return shared.calendar
+  return googleApiOnce(process.env).calendar
 }

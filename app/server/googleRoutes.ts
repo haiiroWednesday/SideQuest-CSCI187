@@ -8,6 +8,7 @@ import {
   GoogleHttpError, NOT_ENABLED, createRateLimiter, pathOf, readJson,
   requireSameOrigin, sendError, sendJson, withDeadline, type FetchLike,
 } from './googleShared'
+import { clientIp } from './clientIp'
 
 export const GOOGLE_ROUTE_LABEL = 'Google route, not checked on foot'
 export const CAMPUS_CENTER = { lat: 37.3496, lng: -121.939 }
@@ -17,6 +18,11 @@ const PLACES = 'https://places.googleapis.com/v1/'
 const CACHE_MS = 10 * 60_000
 const CACHE_MAX = 500
 const PLACE_ID = /^[A-Za-z0-9_-]{10,300}$/
+/** Calls to Google (routes, place details, photos) allowed per UTC day, for the whole server. Cache hits are free. */
+export const GOOGLE_DAILY_REQUEST_BUDGET = 1000
+/** A device position is snapped to a grid of about this many metres before it is cached or sent to Google. */
+export const ORIGIN_ROUNDING_METERS = 25
+const METERS_PER_DEGREE = 111_320
 
 export type LatLng = { lat: number; lng: number }
 export type GoogleWalkRoute = {
@@ -72,6 +78,15 @@ export function decodePolyline(encoded: string): [number, number][] {
   return points
 }
 
+/** Snaps a position to a ~25 m grid, so Google and the cache never get someone's exact spot. */
+export function roundOrigin(p: LatLng, meters = ORIGIN_ROUNDING_METERS): LatLng {
+  const latStep = meters / METERS_PER_DEGREE
+  const lat = Math.round(p.lat / latStep) * latStep
+  const lngStep = meters / (METERS_PER_DEGREE * Math.max(Math.cos(lat * Math.PI / 180), 0.01))
+  const lng = Math.round(p.lng / lngStep) * lngStep
+  return { lat: Math.round(lat * 1e6) / 1e6, lng: Math.round(lng * 1e6) / 1e6 }
+}
+
 function point(value: unknown): LatLng | null {
   const v = value as Record<string, unknown> | null
   if (!v || typeof v !== 'object') return null
@@ -83,8 +98,19 @@ function point(value: unknown): LatLng | null {
 
 export function createGoogleRoutesService(config: RoutesConfig | null, options: { fetch?: FetchLike; clock?: () => number } = {}) {
   const clock = options.clock ?? Date.now
-  const http = withDeadline(options.fetch ?? ((input, init) => fetch(input, init)))
+  const deadline = withDeadline(options.fetch ?? ((input, init) => fetch(input, init)))
   const cache = new Map<string, { until: number; value: unknown }>()
+  const budget = { day: '', used: 0 }
+  // Every outbound Google call spends from one daily budget, so a script cannot run up the bill.
+  const http: FetchLike = (input, init) => {
+    const day = new Date(clock()).toISOString().slice(0, 10)
+    if (budget.day !== day) { budget.day = day; budget.used = 0 }
+    if (budget.used >= GOOGLE_DAILY_REQUEST_BUDGET) {
+      return Promise.reject(new GoogleHttpError(503, 'Google maps are resting for today. Try again tomorrow.', 'daily_budget'))
+    }
+    budget.used++
+    return deadline(input, init)
+  }
 
   function remember<T>(key: string, value: T): T {
     if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value as string)
@@ -102,8 +128,9 @@ export function createGoogleRoutesService(config: RoutesConfig | null, options: 
     enabled: config !== null,
     placesEnabled: Boolean(config?.placesEnabled),
 
-    async walk(from: LatLng, to: LatLng): Promise<GoogleWalkRoute> {
+    async walk(device: LatLng, to: LatLng): Promise<GoogleWalkRoute> {
       if (!config) throw new GoogleHttpError(503, 'Google walking routes are not enabled.', NOT_ENABLED)
+      const from = roundOrigin(device)
       if (distanceKm(CAMPUS_CENTER, to) > NEAR_CAMPUS_KM || distanceKm(CAMPUS_CENTER, from) > NEAR_CAMPUS_KM) {
         throw new GoogleHttpError(422, 'Google routes are only for places near campus.', 'too_far')
       }
@@ -191,18 +218,22 @@ export function createGoogleRoutesService(config: RoutesConfig | null, options: 
 
 export type GoogleRoutesService = ReturnType<typeof createGoogleRoutesService>
 
-/** POST /api/google/route and GET /api/google/place?id=... */
-export function createGoogleRoutesApi(service: GoogleRoutesService, clock: () => number = Date.now) {
+/** Who is signed in on this request (null when nobody), checked with Supabase Auth. */
+export type RequestSession = (req: IncomingMessage) => Promise<{ userId: string } | null>
+
+/** POST /api/google/route and GET /api/google/place?id=... Both need a signed-in SideQuest session. */
+export function createGoogleRoutesApi(service: GoogleRoutesService, session: RequestSession = async () => null, clock: () => number = Date.now) {
   const limit = createRateLimiter(60, 60_000, clock)
   return async (req: IncomingMessage, res: ServerResponse): Promise<boolean> => {
     const url = pathOf(req)
     if (!url || (url.pathname !== '/api/google/route' && url.pathname !== '/api/google/place')) return false
     try {
-      limit(req.socket.remoteAddress ?? 'unknown')
+      limit(clientIp(req))
       if (url.pathname === '/api/google/route') {
         if (!service.enabled) throw new GoogleHttpError(503, 'Google walking routes are not enabled.', NOT_ENABLED)
         if (req.method !== 'POST') throw new GoogleHttpError(405, 'Use POST.')
         requireSameOrigin(req)
+        if (!await session(req)) throw new GoogleHttpError(401, 'Sign in to SideQuest first.', 'signed_out')
         const data = await readJson(req)
         const from = point(data.from), to = point(data.to)
         if (!from || !to) throw new GoogleHttpError(400, 'Invalid route.')
@@ -210,6 +241,7 @@ export function createGoogleRoutesApi(service: GoogleRoutesService, clock: () =>
       } else {
         if (!service.placesEnabled) throw new GoogleHttpError(503, 'Google place details are not enabled.', NOT_ENABLED)
         if (req.method !== 'GET') throw new GoogleHttpError(405, 'Use GET.')
+        if (!await session(req)) throw new GoogleHttpError(401, 'Sign in to SideQuest first.', 'signed_out')
         sendJson(res, 200, await service.place(url.searchParams.get('id') ?? ''))
       }
     } catch (error) {

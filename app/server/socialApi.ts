@@ -2,9 +2,10 @@
 // Flag SIDEQUEST_SOCIAL_ENABLED is false by default, and then every /api/social/* answers 404 "not enabled".
 // The rules are the same pure functions the app uses (src/controller/socialPlans). Storage is a port:
 // the in-memory adapter here backs the tests; the Supabase adapter would call the review-only
-// functions in supabase/proposals/20261125020000_open_invites_REVIEW_ONLY.sql once Daven approves them.
+// functions in supabase/proposals/20261125030000_open_invites_REVIEW_ONLY.sql once Daven approves them.
 // Never stores or accepts a location. Free time is start and end only; others get only the overlap.
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { AuthCheckLimitError, createVerifiedTokenGuard } from './verifiedTokens'
 import {
   commonTime, inviteErrors, join, joinBlock, leaveInvite, makeInvite, callOff, canMakePlan, markPlanned, visibleInvites,
   cleanSlots, type FreeShare, type OpenInvite, type SocialGroup, type Slot,
@@ -44,6 +45,7 @@ const str = (v: unknown) => (typeof v === 'string' ? v : '')
 const ALLOWED_INVITE = ['title', 'place', 'eventId', 'date', 'start', 'end', 'groupIds']
 
 export function createSocialApi(store: SocialStorePort | null, clock: () => Date = () => new Date()) {
+  const sessions = createVerifiedTokenGuard(() => clock().getTime())
   return async function socialApi(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
     let url: URL
     // A malformed request line (for example "GET //[") must not throw out of the server.
@@ -61,7 +63,12 @@ export function createSocialApi(store: SocialStorePort | null, clock: () => Date
       const header = req.headers.authorization
       const token = typeof header === 'string' && header.startsWith('Bearer ') ? header.slice(7).trim() : ''
       if (token.length < 20 || token.length > 8192 || !TOKEN.test(token)) throw new SocialHttpError(401, 'Sign in first.')
-      const me = await store.userFor(token)
+      let me: string | null
+      try { me = await sessions.check(req, token, t => store.userFor(t)) }
+      catch (error) {
+        if (error instanceof AuthCheckLimitError) throw new SocialHttpError(429, error.message)
+        throw error
+      }
       if (!me) throw new SocialHttpError(401, 'Sign in first.')
       const now = clock(), groups = await store.groups()
       const parts = url.pathname.split('/').filter(Boolean) // api, social, ...
