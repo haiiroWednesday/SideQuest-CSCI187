@@ -31,7 +31,7 @@ function sourceLink(value, source) {
   try {
     const url = new URL(value, source.page)
     if (url.protocol !== 'https:' || url.host !== new URL(source.page).host ||
-        url.username || url.password || !/\/event\/\d+(?:[-/]|$)/.test(url.pathname)) return null
+        url.username || url.password || !/\/(?:event|live\/events)\/\d+(?:[-/]|$)/.test(url.pathname)) return null
     url.search = ''
     url.hash = ''
     return url.href
@@ -43,9 +43,10 @@ export function normalizeLiveWhale(record, source, checkedAt) {
   const providerId = typeof record.id === 'string' || typeof record.id === 'number' ? String(record.id) : ''
   if (!/^\d{1,20}$/.test(providerId)) throw new Error('Missing or invalid provider event ID')
   const title = text(record.title)
-  const link = sourceLink(record.href, source)
+  const link = sourceLink(record.url ?? record.href, source)
   const start = unixSeconds(record.date_ts ?? record.ts_start)
-  const end = unixSeconds(record.date2_ts ?? record.ts_end)
+  // An explicit null in SCU JSON means no published end, even if another field exists.
+  const end = unixSeconds(Object.hasOwn(record, 'date2_ts') ? record.date2_ts : record.ts_end)
   const startLocal = start === null ? null : campusParts(new Date(start * 1000))
   const endLocal = end === null ? null : campusParts(new Date(end * 1000))
   const calendar = text(record.group_title)
@@ -64,7 +65,7 @@ export function normalizeLiveWhale(record, source, checkedAt) {
   if (marked(record.is_all_day)) reasons.push('all-day')
   if (marked(record.is_multi_day)) reasons.push('multi-day')
   // A repeat ID alone is not a verified occurrence identity.
-  if (marked(record.is_repeating) || text(record.repeats)) reasons.push('recurrence-review')
+  if (marked(record.is_repeating) || marked(record.repeats) && record.repeats !== '' || record.parent != null) reasons.push('recurrence-review')
   if (marked(record.is_canceled)) reasons.push(flag(record.is_canceled) ? 'canceled' : 'cancellation-status-review')
   const now = Date.parse(checkedAt)
   if (!Number.isFinite(now)) throw new Error('Invalid collection timestamp')
@@ -74,6 +75,7 @@ export function normalizeLiveWhale(record, source, checkedAt) {
   return {
     occurrenceKey, providerId, provider: source.id, sourceUrl: link, checkedAt,
     title: title || null, listedCalendar: calendar || null, location: location || null,
+    endEvidence: end === null ? 'missing' : 'source-json',
     date: startLocal?.date ?? null, start: startLocal?.time ?? null, end: endLocal?.time ?? null,
     startEpochSeconds: start, endEpochSeconds: end,
     reviewState: reasons.length ? 'held' : 'awaiting-review',
@@ -110,7 +112,7 @@ export function reconcileRecords(records) {
   for (const group of groups.values()) {
     const variants = new Map(group.map(row => [JSON.stringify([
       row.title, row.listedCalendar, row.location, row.sourceUrl, row.startEpochSeconds, row.endEpochSeconds,
-      row.reviewState, row.reasons,
+      row.reviewState, row.reasons, row.endEvidence,
     ]), row]))
     if (variants.size === 1) result.push(group[0])
     else for (const row of variants.values()) result.push({
