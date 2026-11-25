@@ -123,7 +123,7 @@ describe('campus router: selected mutation pilot', () => {
     ['inaccessible shortcut', 'edge.closed || (options.accessibleOnly && !edge.accessible)', 'edge.closed'],
     ['cheaper indirect route', 'proposedDistance < previousDistance', 'proposedDistance > previousDistance'],
     ['undirected reverse route', 'adjacency.get(edge.to)!.push({ destination: edge.from, meters: edge.distanceMeters })', 'void 0'],
-    ['equal distance ties', 'comparePath(paths.get(id)!, paths.get(current)!) < 0', 'comparePath(paths.get(id)!, paths.get(current)!) > 0'],
+    ['equal distance ties', 'comparePath(proposedPath, paths.get(link.destination)!) < 0', 'comparePath(proposedPath, paths.get(link.destination)!) > 0'],
   ] as const)('detects the mutation for %s', (name, before, after) => {
     const altered = mutate(before, after)
     const target = cases.find(c => c.name === name)!
