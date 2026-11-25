@@ -175,22 +175,30 @@ export function DiscoverView({
   // Phones show the ticket as a sheet; it opens when a stub is picked.
   const [sheetOpen, setSheetOpen] = useState(false)
   const sheet = useRef<HTMLElement>(null)
+  const resultsHeading = useRef<HTMLHeadingElement>(null)
   const trigger = useRef<HTMLElement | null>(null)
   const phone = usePhoneViewport()
   const closeSheet = useCallback(() => setSheetOpen(false), [])
-  const modal = phone && sheetOpen
   const stubs = screen.days.flatMap(day => day.events)
-  // Keep the student's pick while it is still listed; otherwise fall back to the first event.
-  const listedSelection = stubs.find(stub => stub.id === requestedId) ?? stubs[0] ?? null
+  const requested = stubs.find(stub => stub.id === requestedId)
+  const showSheet = sheetOpen && (!phone || requested !== undefined)
+  const modal = phone && showSheet
+  const listedSelection = requested ?? stubs[0] ?? null
   // The ID must match the current selection: a late result for a previous
   // ticket can never replace this ticket's details.
   const verified = detail?.id === listedSelection?.id ? detail : null
   const selected = verified?.status === 'ready' ? verified.stub : listedSelection
   useEffect(() => {
-    if (screen.status !== 'ready' || screen.count === 0) setSheetOpen(false)
-  }, [screen.status, screen.count])
+    if (!sheetOpen) return
+    if (phone && !showSheet) {
+      closeSheet()
+      resultsHeading.current?.focus()
+    } else if (screen.status !== 'ready' || screen.count === 0) {
+      closeSheet()
+    }
+  }, [phone, sheetOpen, showSheet, screen.status, screen.count, closeSheet])
   useMobileDetailFocus({
-    phone, sheetOpen, panelRef: sheet, returnFocusRef: trigger, onClose: closeSheet,
+    phone, sheetOpen: showSheet, panelRef: sheet, returnFocusRef: trigger, onClose: closeSheet,
     selectedId: selected?.id, selectedPlanned: selected?.planned, planningBlocked: screen.planningBlocked,
   })
   const ready = screen.status === 'ready'
@@ -224,7 +232,7 @@ export function DiscoverView({
 
         <div className="sq-board">
           <section inert={modal || undefined} className="sq-results" aria-labelledby="sq-events-heading">
-            <h2 id="sq-events-heading" className="sq-visually-hidden">{screen.headingText}</h2>
+            <h2 id="sq-events-heading" ref={resultsHeading} tabIndex={-1} className="sq-visually-hidden">{screen.headingText}</h2>
             {screen.status === 'loading' ? (
               <p className="sq-message" role="status"><span className="sq-spinner" aria-hidden="true" />Loading campus events…</p>
             ) : screen.status === 'error' ? (
@@ -281,7 +289,7 @@ export function DiscoverView({
               </div>
             )}
           </section>
-          {ready && <aside ref={sheet} className={`sq-sticker${sheetOpen ? ' sq-open' : ''}`} hidden={phone && !sheetOpen} role={modal ? 'dialog' : undefined} aria-modal={modal || undefined} aria-labelledby="sq-detail-title">
+          {ready && <aside ref={sheet} className={`sq-sticker${showSheet ? ' sq-open' : ''}`} hidden={phone && !showSheet} role={modal ? 'dialog' : undefined} aria-modal={modal || undefined} aria-labelledby="sq-detail-title">
             <EventDetailContent selected={selected} verified={verified} onRetryDetail={onRetryDetail} onPlan={onPlan} planningBlocked={screen.planningBlocked} onClose={closeSheet} />
           </aside>}
         </div>
@@ -299,7 +307,7 @@ export function DiscoverView({
             </ul>
           </section>
         )}
-        <div className={`sq-scrim${sheetOpen && selected && ready ? ' sq-open' : ''}`} aria-hidden="true" onClick={closeSheet} />
+        <div className={`sq-scrim${showSheet && selected && ready ? ' sq-open' : ''}`} aria-hidden="true" onClick={closeSheet} />
         {sourceNote && <p className="sq-source-note">{sourceNote}</p>}
       </main>
       <footer className="sq-footer">

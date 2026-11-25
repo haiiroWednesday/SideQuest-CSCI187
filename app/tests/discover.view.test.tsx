@@ -8,6 +8,7 @@ import { scuCalendarId, SCU_CALENDAR_SOURCE_LABEL } from '../src/model/scuCalend
 afterEach(() => {
   cleanup()
   vi.useRealTimers()
+  vi.unstubAllGlobals()
 })
 
 // The view only draws what the Controller prepares, so every render goes through presentDiscover
@@ -231,5 +232,18 @@ describe('Discover View: draws the Controller screen', () => {
     fireEvent.click(within(sheet).getByRole('button', { name: 'Close details' }))
     expect(sheet.className).not.toContain('sq-open')
     expect(within(sheet).getByRole('heading', { name: 'Poetry Reading' })).toBeTruthy()
+  })
+
+  it('closes the phone sheet when its event disappears while other listings remain', () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }))
+    const { rerender } = render(draw(events))
+    fireEvent.click(screen.getByRole('button', { name: 'View details for Poetry Reading' }))
+    expect(screen.getByRole('dialog', { name: 'Poetry Reading' })).toBeTruthy()
+
+    rerender(draw([events[0]]))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('button', { name: 'View details for Ceramics Workshop' })).toBeTruthy()
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Coming up, 1 event' }))
   })
 })
