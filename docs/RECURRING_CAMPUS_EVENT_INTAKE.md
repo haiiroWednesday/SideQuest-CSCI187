@@ -91,3 +91,28 @@ SCU's published website terms restrict some automated collection according to ro
 ### Architecture review: event identity does not preserve consent
 
 Printed pages 10 and 11 of the v4.3 architecture distinguish a canonical occurrence UUID from explicit attendance approval. The synchronization planner marks every existing-event update or cancellation proposal with `requiresGroupConsentReview: true`. This is a conservative pre-write requirement, not implemented consent enforcement. Before enabling synchronization, an approved transaction must check linked group plans and apply a team-approved revision/consent policy for material time, place or cancellation changes. Do not preserve an old Works response merely because the event UUID stays the same. No catalog mutation is introduced here.
+
+## First publication implementation (review-only SQL, November 24)
+
+The branch now includes `supabase/review/campus_intake_publication.sql`, a runnable **first-publication** transaction and private source mapping, tested by `supabase/tests/campus_intake_publication.sql` in disposable PostgreSQL 16. The initial SQL fixture run succeeded. This is not a migration and has not been applied to the team's database. It is callable only by an authorized database operator, not the public server or anonymous/authenticated browser roles.
+
+It atomically inserts a valid reviewed event and its verified external occurrence mapping, returns the stable UUID on an exact retry, refuses changed records pending update/consent policy, and rejects a possible duplicate of a manual event. The conservative pilot locks the catalog briefly while checking and inserting; a larger-scale design must revisit concurrent throughput. It never cancels/deletes records. Multiple-source associations, actual public source attribution UI, change/cancellation policy and WebSocket notification of imports remain outstanding.
+
+The operator command uses the real `catalogPostingErrors` Model validator and refuses unregistered source origins, missing review decisions, stale source evidence, and invalid event fields. From `app/`:
+
+```sh
+npm ci
+npx vite build --ssr scripts/campus-intake/publishReviewed.ts --outDir /tmp/sidequest-intake
+node /tmp/sidequest-intake/publishReviewed.js --validate /path/to/review.json
+```
+
+The review JSON contains provider, occurrenceId (verified stable external identity), sourceUrl, checkedAt (ISO timestamp), identityVerified, reuseApproved, eligibilityVerified, duplicateReviewed, and draft with title, hostName, description, location, date, start and end. A reviewer must verify these assertions; synthetic fixture approval flags are not real approvals. Use only a fresh, factual event description with a source link, not copied promotional text. Reviewers must not use a date-based provisional key as a stable ID.
+
+Only after Daven/team approves and applies the SQL to a controlled staging database, configure PGHOST, PGDATABASE, PGUSER and a secure PostgreSQL credential mechanism outside Git and use the explicit `--publish-reviewed` mode with `SIDEQUEST_INTAKE_WRITE_APPROVED=yes`. No production database credentials were read or configured here. The workflow's write test uses synthetic records and a disposable database only.
+
+## Live-source findings
+
+- Official SCU calendar pages are readable, but neither the v1 nor v2 JSON endpoint or robots.txt could be retrieved in this environment. Local DNS failed. This does not prove the endpoints are disabled. Contact SCU's [Web Development team](https://www.scu.edu/is/academic-technology/web-development/) through its Website Support Request system to confirm a supported feed and redistribution conditions.
+- [Qlusion](https://www.qlusion.com/) identifies its SCU calendar, but the actual feed/export and access terms are still not verified. Ask the operator for the documented interface rather than guessing private endpoints.
+- [Theatre and Dance](https://www.scu.edu/theatre/) lists Choreographers' Gallery for Dec 3–4, 2026. [Official athletics tickets](https://scubroncos.scu.edu/?lang=en) list home games, including men's basketball Nov 28 and Dec 2 and women's basketball Dec 3. Start-only listings remain held until an actual end time is confirmed, per v5.1's required-end-time decision. These observations are evidence that independent calendars matter, not approved import records.
+- Source access, actual Qlusion and independent adapters, production scheduling and automatic live app updates remain unverified. Do not mark these finished merely because fixture CI is green.
