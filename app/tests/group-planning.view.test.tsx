@@ -29,6 +29,9 @@ describe('authenticated group page: proposal, participant and recoverable errors
       act: vi.fn(async () => basePlan),
     }
     render(<GroupPlanningView actorId={orgId} client={client} events={events} routes={routes} />)
+    const ownId = screen.getByRole<HTMLInputElement>('textbox', { name: 'Your account ID' })
+    expect(ownId.value).toBe(orgId)
+    expect(ownId.readOnly).toBe(true)
     await waitFor(() => expect(client.list).toHaveBeenCalledOnce())
     fireEvent.change(screen.getByLabelText('Choose a real campus event'), {
       target: { value: eventId },
