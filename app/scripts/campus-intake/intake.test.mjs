@@ -4,7 +4,7 @@ import { normalizeLiveWhale, normalizePage, reconcileRecords } from './normalize
 import { collectLiveWhale } from './collect.mjs'
 
 const source = { id: 'scu-livewhale', adapter: 'livewhale-v2', page: 'https://events.scu.edu/all',
-  feed: 'https://events.scu.edu/live/json/v2/events/' }
+  feed: 'https://events.scu.edu/live/json/events/' }
 const now = new Date('2026-11-24T19:00:00Z')
 const checkedAt = now.toISOString()
 const seconds = iso => Date.parse(iso) / 1000
@@ -241,4 +241,60 @@ test('existing occurrence changes preserve identity but never authorize reuse of
   const newEvent = plan({ possibleDuplicate: false }, { mappings: [], catalog: [] })[0]
   assert.equal(newEvent.action, 'propose-create')
   assert.equal(newEvent.requiresGroupConsentReview, undefined)
+})
+
+const { compareScuCaptures } = await import('./compareScuCaptures.mjs')
+const captureRow = { id: 123456, title: 'Fixture workshop',
+  url: 'https://events.scu.edu/library/event/123456-fixture',
+  date_ts: seconds('2026-12-01T22:30:00Z'), date2_ts: seconds('2026-12-02T00:00:00Z'),
+  is_all_day: null, is_canceled: null, repeats: null }
+const captureIcs = (end = '20261201T160000', start = '20261201T143000') => Buffer.from([
+  'BEGIN:VCALENDAR', 'VERSION:2.0', 'BEGIN:VEVENT',
+  'UID:20261201T223000Z-123456@events.scu.edu', 'X-LIVEWHALE-ID:123456',
+  'DTSTART;TZID=America/Los_Angeles:' + start,
+  'DTEND;TZID=America/Los_Angeles:' + end, 'LOCATION:Fixture Hall\\, Room 2',
+  'END:VEVENT', 'END:VCALENDAR', '',
+].join('\r\n'))
+test('observed SCU JSON uses url, null flags and live/events parent links', () => {
+  const record = normalizeLiveWhale({ ...captureRow, url: 'https://events.scu.edu/live/events/111111-fixture',
+    parent: 111111, repeats: 'weekly' }, source, checkedAt)
+  assert.equal(record.sourceUrl, 'https://events.scu.edu/live/events/111111-fixture')
+  assert.ok(record.reasons.includes('recurrence-review'))
+  assert.ok(!record.reasons.includes('all-day'))
+  assert.equal(record.endEvidence, 'source-json')
+})
+test('captured JSON and ICS recover location, not unsupported organizer or duration', () => {
+  const result = compareScuCaptures(payload([captureRow]), captureIcs(), source, checkedAt)
+  assert.equal(result.complete, false)
+  assert.equal(result.matched, 1)
+  assert.equal(result.locationRecovered, 1)
+  assert.equal(result.records[0].location, 'Fixture Hall, Room 2')
+  assert.equal(result.records[0].locationEvidence, 'matching-ical')
+  assert.ok(result.records[0].reasons.includes('organizer-unverified'))
+  const missing = compareScuCaptures(payload([{ ...captureRow, date2_ts: null, ts_end: captureRow.date2_ts }]),
+    captureIcs(), source, checkedAt)
+  assert.equal(missing.records[0].end, null)
+  assert.equal(missing.calendarEndWithoutJsonEnd, 1)
+  assert.ok(missing.records[0].reasons.includes('calendar-end-unconfirmed'))
+})
+test('captured calendar conflicts and mismatched starts stay unresolved', () => {
+  const conflict = compareScuCaptures(payload([captureRow]), captureIcs('20261201T153000'), source, checkedAt)
+  assert.ok(conflict.records[0].reasons.includes('calendar-end-conflict'))
+  const mismatch = compareScuCaptures(payload([captureRow]), captureIcs('20261201T160000', '20261201T140000'), source, checkedAt)
+  assert.equal(mismatch.locationRecovered, 0)
+  assert.equal(mismatch.records[0].location, null)
+})
+test('capture importer refuses incomplete calendar and malformed page metadata', () => {
+  assert.throws(() => compareScuCaptures(payload([captureRow]), Buffer.from('BEGIN:VCALENDAR\n'), source, checkedAt), /Incomplete/)
+  assert.throws(() => compareScuCaptures(payload([captureRow], null, 123), captureIcs(), source, checkedAt), /page counts/)
+})
+test('byte-folded Unicode locations survive calendar unfolding', () => {
+  const bytes = captureIcs()
+  const changed = Buffer.concat([
+    bytes.subarray(0, bytes.indexOf('Fixture Hall')),
+    Buffer.from([0xe2]), Buffer.from('\r\n '), Buffer.from([0x80, 0x99]),
+    bytes.subarray(bytes.indexOf('Fixture Hall') + 'Fixture Hall'.length),
+  ])
+  const result = compareScuCaptures(payload([captureRow]), changed, source, checkedAt)
+  assert.equal(result.records[0].location, '’, Room 2')
 })
