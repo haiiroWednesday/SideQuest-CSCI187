@@ -132,3 +132,45 @@ Use the actual capture timestamp, not a new timestamp to make stale data appear 
 https://events.scu.edu/live/json/events/start_date/2026-11-25/end_date/2026-12-08/paginate/100/response_fields/group_title,location/
 
 The collection job retains its permission gate and fails if the filtered response is capped or incomplete. Qlusion remains unresolved. The database publication code still requires operator approval and stable identity evidence; no real event has been written.
+
+## Further source and deployment investigation (November 24)
+
+### 1. LiveWhale enriched response
+
+Provider documentation confirms response_fields=location,group_title,event_types,last_modified is a supported field selection (path syntax, not a query string), with location coordinates, audience and campus categories, and modification time. See https://support.livewhale.com/live/blurbs/json-api and https://support.livewhale.com/calendar-onboarding/widgets-and-api/. Start with a small one-record probe:
+https://events.scu.edu/live/json/events/max/1/response_fields/location,group_title,event_types,last_modified/
+Then use the previously documented date-filtered query. Check actual meta.response_fields, returned field types, total/page counts, requested date boundaries, null fields and occurrence identities. The default feed is already verified via the user's capture; these enriched requests remain unverified because direct DNS and browsing retrieval failed again. Do not treat a tool cache miss as a provider outage. The provider recommends cached integrations rather than requesting data for every user visit. Six-hour collection is adequate for an initial pilot; cancellation latency must be disclosed.
+
+SCU's terms https://www.scu.edu/terms-and-conditions-of-use/ distinguish personal use, third-party distribution, and robot restrictions. The public API's existence is not itself a blanket redistribution license. Obtain clarification via the official LiveWhale support form https://scuweb.zendesk.com/hc/en-us/requests/new. Ask for the recommended endpoint, permission for minimal factual metadata and links, permitted frequency, semantics of occurrence IDs, cancellation fields, and whether athletics end times are estimates. No authenticated or hidden events.
+
+### 2. Student-club sources independent of Qlusion
+
+Qlusion's https://www.qlusion.com/ public calendar is indexed, but its readable output contains only the UI shell. SCU Bronco Venture Accelerator's historical Prep School V announcement identifies a Qlusion participant; it does not establish current ownership or a supported API. No documented feed or public event response was retrieved. Ask the Center for Student Involvement (csi@scu.edu) to identify the current operator or obtain an organizer-approved export. The official directory at https://www.scu.edu/csi/organizations/directory/ identifies organizations but is not an event feed.
+
+New source candidates now registered:
+- Engineering RSO Events Calendar, linked by https://www.scu.edu/engineering/beyond-the-classroom/student-organizations/ (public calendar link; Google Calendar export access not verified).
+- Education and Counseling Psychology student club calendar, linked by https://www.scu.edu/ecp/studentclubs/ (public calendar link; graduate-school audience and export access need review).
+- Activities Programming Board, https://www.scu.edu/csi/organizations/cso/directory/apb/ (official page links Instagram, not a documented feed). Request a club-owned calendar or export through the advisor listed at https://www.scu.edu/csi/organizations/advisors/.
+Google documents public iCalendar URLs at https://support.google.com/calendar/answer/37083. Request public addresses from calendar owners; never request secret iCal URLs or login cookies. Use a standards-compliant recurrence parser for independently approved calendars, with bounded expansion, EXDATE, RECURRENCE-ID, explicit timezone, and cancellation tests. These are alternative source routes, not functioning adapters.
+
+### 3. Production scheduling and storage
+
+Repository inspection at master d374382 shows render.yaml still pins the earlier integration branch and has auto-deploy disabled. PR #87 proposes documentation correction but is not merged. The existing intake workflow runs scheduled jobs only after reaching the default branch and explicit read approval; the collection job produces an artifact, never publishes. GitHub schedule can be delayed or disabled after inactivity: https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows. Render free web services can sleep and have ephemeral storage: https://render.com/docs/free. Do not run a scheduler inside a sleeping Node service or rely on local JSON as durable state.
+
+Recommended implementation order:
+1. Deploy an approved exact SHA to a single Render Node web service, with an approved staging Supabase catalog and the existing groups-off flags.
+2. Separate recurring collection from privileged publication. Store source snapshots and review decisions durably in a private schema, with unique stable verified identities, reviewed field evidence, last-success/last-attempt timestamps and revision guards. Start with automatic collection and explicit human publication; automatic publication needs a reviewed admission policy, not a blanket flag.
+3. For approved recurring production collection, use the existing GitHub scheduled workflow for an initial pilot or a dedicated Render cron job (separate service, cost approval required, https://render.com/docs/cronjobs). No privileged database credentials in untrusted PR jobs. Use a least-privilege writer in an approved protected deployment environment.
+4. Add pagination/limit detection to the actual Supabase catalog reader before expanding the catalog. Its selectFromDate currently performs one ordered select with no explicit pagination; Supabase's documented default response limit is 1,000 rows. The 1,223 source records do not all qualify for the public catalog, but silent truncation becomes a credible risk. See https://supabase.com/docs/reference/javascript/v1/select.
+
+### 4. Imported-event live notification gap
+
+Current master app/server/api.ts invokes CatalogPublisherPort.publish(created.id) only after a successful HTTP POST. Direct SQL imports bypass that code. app/server/catalogRealtime.ts is a per-process read-only hub broadcasting only event IDs. The import fixture checks catalog retrieval and fit logic, not actual browser notifications.
+
+Recommended bridge: subscribe on the server (using the restricted existing Supabase client) to INSERTs on public.events via Supabase Realtime Postgres Changes; forward only validated event UUIDs through the existing CatalogPublisherPort. Keep private tables out of the subscription. Add UPDATE support only after material change/consent policy is agreed. Enable only the public.events table in supabase_realtime publication after review; https://supabase.com/docs/guides/realtime/postgres-changes. Coalesce duplicate manual POST and database notifications, reconcile by reading the catalog on reconnect, and avoid claiming successful delivery before a committed write. This preserves the existing same-origin browser WebSocket contract and avoids sending privileged keys to browsers. No public schema mutation or realtime bridge activation performed by this research.
+
+Acceptance: two independent browser contexts on the actual staging HTTPS URL, both showing Discover; publish one approved labeled fixture through the importer, capture the commit and validated event-ID notification, see the event in both browsers without a manual refresh, retry import and prove no duplicate, disconnect/reconnect and verify catalog recovery. Confirm normal manual posts still work. For subsequent material changes verify same canonical ID and renewed group consent where applicable. No claim of deployed success until these observations exist.
+
+### CI evidence at inspected head ffb6667
+
+Campus intake and legacy CI succeeded, React CI failed during browser smoke test with a browserContext.close / test-ended error. Investigate retained browser trace and related shared-catalog timeouts noted in #91, without weakening assertions. The newly edited registry is a later commit and needs its own CI result. No public deployment, production synchronization, or Qlusion API access was verified.
