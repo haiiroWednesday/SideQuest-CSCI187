@@ -21,7 +21,7 @@ test('independent browser sessions share public posts and keep their personal pl
     for (const page of [a, b]) await page.clock.install({ time: PAGE_NOW })
     await a.goto(`${SHARED_APP}/#post`)
     await expect(a.getByTestId('catalog-not-shared')).toHaveCount(0)
-    const values = { 'EVENT NAME': 'Shared workshop', 'HOST NAME': 'Art Club', DESCRIPTION: 'The whole shared catalog flow.', LOCATION: 'Library', CONTACT: 'Ana Ruiz', DATE: EVENT_DATE, START: '14:30', END: '15:30' }
+    const values = { 'EVENT NAME': 'Shared workshop', 'HOST NAME': 'Art Club', DESCRIPTION: 'The whole shared catalog flow.', LOCATION: 'Library', DATE: EVENT_DATE, START: '14:30', END: '15:30' }
     for (const [name, value] of Object.entries(values)) await a.getByLabel(name, { exact: true }).fill(value)
     await a.getByRole('button', { name: '+ Post event' }).click()
     await expect(a.getByRole('status')).toContainText('to the shared catalog')
@@ -121,7 +121,7 @@ test('posting failure keeps the draft, and retry creates exactly one public even
     const page = await context.newPage()
     await page.clock.install({ time: PAGE_NOW })
     await page.goto(`${SHARED_APP}/#post`)
-    for (const [name, value] of Object.entries({ 'EVENT NAME': 'Retry workshop', 'HOST NAME': 'Art Club', DESCRIPTION: 'Keep this text.', LOCATION: 'Library', CONTACT: 'Ana Ruiz', DATE: EVENT_DATE, START: '14:30', END: '15:30' })) await page.getByLabel(name, { exact: true }).fill(value)
+    for (const [name, value] of Object.entries({ 'EVENT NAME': 'Retry workshop', 'HOST NAME': 'Art Club', DESCRIPTION: 'Keep this text.', LOCATION: 'Library', DATE: EVENT_DATE, START: '14:30', END: '15:30' })) await page.getByLabel(name, { exact: true }).fill(value)
     await backend.failInserts(true)
     await page.getByRole('button', { name: '+ Post event' }).click()
     await expect(page.getByRole('alert')).toContainText('Could not confirm this post')
@@ -144,7 +144,7 @@ test('production build keeps database credentials on the server and posts throug
     page.on('request', request => requests.push({ url: request.url(), headers: request.headers() }))
     await page.goto('http://127.0.0.1:5177/#post')
     await expect(page.getByTestId('catalog-not-shared')).toHaveCount(0)
-    for (const [name, value] of Object.entries({ 'EVENT NAME': 'Production workshop', 'HOST NAME': 'Art Club', DESCRIPTION: 'A server-only catalog test.', LOCATION: 'Library', CONTACT: 'Ana Ruiz', DATE: EVENT_DATE, START: '14:30', END: '15:30' })) await page.getByLabel(name, { exact: true }).fill(value)
+    for (const [name, value] of Object.entries({ 'EVENT NAME': 'Production workshop', 'HOST NAME': 'Art Club', DESCRIPTION: 'A server-only catalog test.', LOCATION: 'Library', DATE: EVENT_DATE, START: '14:30', END: '15:30' })) await page.getByLabel(name, { exact: true }).fill(value)
     await page.getByRole('button', { name: '+ Post event' }).click()
     await expect(page.getByRole('status')).toContainText('Posted “Production workshop”')
     expect((await backend.state()).rows).toHaveLength(1)
@@ -183,7 +183,6 @@ test('the mobile Post form rejects a date beyond the cap and accepts the last al
       'HOST NAME': 'SCU Club',
       DESCRIPTION: 'Posting boundary test.',
       LOCATION: 'Benson 101',
-      CONTACT: 'Ana Ruiz',
       START: '14:30',
       END: '15:30',
     }

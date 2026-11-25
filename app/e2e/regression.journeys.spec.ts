@@ -116,7 +116,6 @@ test('REG-UI-03: invalid posting never writes; corrected draft posts once', asyn
   await title.fill('Reliable Workshop')
   await page.getByLabel('DESCRIPTION', { exact: true }).fill('Draft must survive invalid edits.')
   await page.getByLabel('LOCATION', { exact: true }).fill('Library')
-  await page.getByLabel('CONTACT', { exact: true }).fill('Ana Ruiz')
   await date.fill(DATE)
   await start.fill('14:30')
   await end.fill('15:30')
@@ -162,7 +161,7 @@ test('REG-UI-04: browser-only posts never appear in an independent browser profi
     await a.goto(LOCAL_APP + '/#post')
     for (const [field, value] of Object.entries({
       'EVENT NAME': 'Only on this device', 'HOST NAME': 'Student Club',
-      DESCRIPTION: 'An offline catalog item.', LOCATION: 'Music Hall', CONTACT: 'Ana Ruiz',
+      DESCRIPTION: 'An offline catalog item.', LOCATION: 'Music Hall',
       DATE, START: '14:30', END: '15:30',
     })) await a.getByLabel(field, { exact: true }).fill(value)
     await a.getByRole('button', { name: '+ Post event' }).click()

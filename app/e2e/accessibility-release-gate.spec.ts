@@ -80,7 +80,6 @@ test('the Post form announces an invalid event and has accessible field labels',
   await page.getByLabel('EVENT NAME', { exact: true }).fill('Accessible paint night')
   await page.getByLabel('HOST NAME', { exact: true }).fill('Art Club')
   await page.getByLabel('LOCATION', { exact: true }).fill('Library')
-  await page.getByLabel('CONTACT', { exact: true }).fill('Ana Ruiz')
   await page.getByLabel('DATE', { exact: true }).fill('2030-11-08')
   await page.getByLabel('START', { exact: true }).fill('15:00')
   await page.getByLabel('END', { exact: true }).fill('14:00')
