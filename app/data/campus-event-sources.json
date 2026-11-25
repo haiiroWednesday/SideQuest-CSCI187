@@ -51,14 +51,16 @@
       "name": "University Library",
       "page": "https://www.scu.edu/library/news/calendar/",
       "adapter": null,
-      "access": "research-only"
+      "access": "research-only",
+      "coverage": "Observed library and Archives and Special Collections records in central feed; distinguish opening hours, closures, and actual events."
     },
     {
       "id": "scu-museum",
       "name": "de Saisset Museum",
       "page": "https://www.scu.edu/desaisset/calendar/",
       "adapter": null,
-      "access": "research-only"
+      "access": "research-only",
+      "coverage": "Observed de Saisset events in November 24 central feed; compare exceptional closures before publication."
     },
     {
       "id": "scu-theatre",
@@ -79,7 +81,8 @@
       "name": "Engineering student organizations",
       "page": "https://www.scu.edu/engineering/beyond-the-classroom/student-organizations/",
       "adapter": null,
-      "access": "research-only"
+      "access": "research-only",
+      "coverage": "Official engineering page links a separate Google Calendar for student organizations; verify owner-approved public iCalendar address and event-level visibility."
     },
     {
       "id": "scu-recreation",
@@ -100,7 +103,8 @@
       "name": "Bronco Athletics composite calendar",
       "page": "https://santaclarabroncos.com/calendar",
       "adapter": null,
-      "access": "research-only"
+      "access": "research-only",
+      "coverage": "Observed home volleyball and basketball in November 24 central feed; official athletics schedule is a cross-check, especially for end-time estimates and away games."
     },
     {
       "id": "qlusion",
@@ -108,7 +112,7 @@
       "page": "https://www.qlusion.com/",
       "adapter": null,
       "access": "research-only",
-      "coverage": "Public calendar observed; no documented authorized machine-readable feed verified"
+      "coverage": "Public calendar UI and historical Bronco Venture Accelerator association verified; no public API, data export, or operator currently confirmed. Ask CSI to identify operator and authorized export; do not assume SCU owns it."
     },
     {
       "id": "scu-csi",
@@ -117,6 +121,30 @@
       "adapter": null,
       "access": "research-only",
       "coverage": "Find organizer-published public event sources; do not collect member/contact lists"
+    },
+    {
+      "id": "scu-engineering-clubs-calendar",
+      "name": "Engineering RSO Events Calendar",
+      "page": "https://calendar.google.com/calendar/embed?ctz=America%2FLos_Angeles&src=c_5ec131520d2017819f002b564c8d93508b150f6e89002ccd86726536fdf4d6a3%40group.calendar.google.com",
+      "adapter": null,
+      "access": "public-link-verified-export-unverified",
+      "coverage": "Official Engineering student organizations page links this calendar. Candidate public iCalendar path only after owner confirms publication scope."
+    },
+    {
+      "id": "scu-ecp-clubs-calendar",
+      "name": "Education and Counseling Psychology student clubs",
+      "page": "https://www.scu.edu/ecp/studentclubs/",
+      "adapter": null,
+      "access": "public-link-verified-export-unverified",
+      "coverage": "Official school page links a separate Google Calendar. Confirm intended audience and owner-approved public iCalendar URL."
+    },
+    {
+      "id": "scu-apb",
+      "name": "Activities Programming Board",
+      "page": "https://www.scu.edu/csi/organizations/cso/directory/apb/",
+      "adapter": null,
+      "access": "organizer-partnership-needed",
+      "coverage": "Official page directs readers to Instagram. Request organizer-approved structured export, not automated social-media scraping."
     }
   ]
 }
