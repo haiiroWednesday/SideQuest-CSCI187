@@ -19,7 +19,7 @@ Recheck current workflow runs, peer reviews and mergeability on GitHub. Run the 
 
 ## Historical drafts
 
-The master comparison confirms zero unique commits on #46, #51, #53 and #55; these are ancestor branches and do not need a second merge. #47, #48, #50, #52, #54 and #56 diverge from master: their functionality was integrated through later work, but unique historical commits still need file-level comparison before closure. Do not infer that every file was preserved from a feature name alone.
+The heads of #46, #51, #53, #55, #60, #64, #72, #74, #78 and #81 are ancestors of `master`. The changed files in #70, #71, #75, #76, #77 and #80 also match `master` byte for byte at the recorded baseline, even though their branches diverged. Both groups can be reconciled as already incorporated. Older diverged PRs with differing files, including #47, #48, #50, #52, #54 and #56–59, need a file-level check for any work worth porting before closure.
 
 - #32: preserve old source evidence; prefer #85/#86 for recurring collection. Never publish the expired batch.
 - #33/#40/#65: preserve useful historical decisions and links; prefer this current release index rather than replacing the agreed M2 playbook or copying obsolete status tables.
