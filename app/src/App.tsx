@@ -14,7 +14,7 @@ import { useSomeday } from './view/useSomeday'
 import { SomedayView } from './view/SomedayView'
 import { GroupPlanningView } from './view/GroupPlanningView'
 import { GroupEmailLoginView } from './view/GroupEmailLoginView'
-import { createAuthenticatedGroupClient, groupPlanEventOptions, type GroupAccessTokenProvider } from './controller/groupClient'
+import { createAuthenticatedGroupClient, type GroupAccessTokenProvider } from './controller/groupClient'
 import { presentBrowseDetail, type FreeWindow } from './controller/presentScreens'
 
 const baseRoutes = { discover: '#discover', schedule: '#schedule', someday: '#someday', post: '#post' }
@@ -140,7 +140,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
           onSuccess={() => { window.location.hash = '#groups' }} />
       ) : page === 'groups' && groupSession && groupClient ? (
         <GroupPlanningView actorId={groupSession.actorId} client={groupClient}
-          events={groupPlanEventOptions(events.events)} routes={routes} />
+          events={events.events} routes={routes} />
       ) : page === 'post' ? (
         <div className="sq-discover-page sq-post-page">
           <SideQuestHeader routes={routes} active="post" plannedCount={plans.schedule.ids.length} />

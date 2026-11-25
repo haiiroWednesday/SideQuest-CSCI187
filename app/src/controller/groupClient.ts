@@ -36,7 +36,7 @@ export interface GroupClientPort {
 export type GroupAccessTokenProvider = () => Promise<string | null>
 
 // Group plans reference a posted event row through a database foreign key.
-export function groupPlanEventOptions(events: CampusEvent[]): CampusEvent[] {
+export function groupPlanEventOptions(events: readonly CampusEvent[]): CampusEvent[] {
   return events.filter(event => !isScuCalendarId(event.id))
 }
 
