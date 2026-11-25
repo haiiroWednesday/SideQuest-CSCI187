@@ -124,3 +124,9 @@ jobs:
           test "$first" = "$second"
           test "$(psql -X -qAt -v ON_ERROR_STOP=1 -c "select count(*) from public.events where title = 'Fixture''s workshop'")" = 1
           test "$(psql -X -qAt -v ON_ERROR_STOP=1 -c "select count(*) from sidequest_intake.source_occurrences where occurrence_id = 'synthetic-ci-only'")" = 1
+
+      - name: Verify published fixture reaches existing Discover rules
+        working-directory: app
+        run: |
+          npx vite build --ssr scripts/campus-intake/verifyPublishedFixture.ts --outDir "$RUNNER_TEMP/sidequest-intake-discovery"
+          node "$RUNNER_TEMP/sidequest-intake-discovery/verifyPublishedFixture.js"
