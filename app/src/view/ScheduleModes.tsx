@@ -1,6 +1,7 @@
 // VIEW: one day of My Schedule drawn two ways. "Trail" folds each plan into a thin
 // line with its name beside it; "Tickets" grows each line into its ticket. Both
 // read the Controller's day timeline (start, end, lane), so nothing is re-timed here.
+import type React from 'react'
 import { useLayoutEffect, useRef, useState } from 'react'
 import type { PlanStubModel } from '../controller/presentSchedule'
 import type { DayTimeline, TimelineEntry } from '../controller/scheduleTimeline'
@@ -35,6 +36,45 @@ const clock = (m: number) => { const h = Math.floor(m / 60), mm = m % 60, h12 = 
 const span = (a: number, b: number) => { const s = clock(a), e = clock(b); return s.slice(-2) === e.slice(-2) ? `${s.slice(0, -2)}–${e}` : `${s}–${e}` }
 const hrs = (m: number) => { const h = Math.round(m / 30) / 2; return `${h} hr` }
 
+// Text is measured before it is placed (Nov 24, polish pass): a long name steps down a size or wraps
+// onto another line, and the layout makes room, instead of being cut short with "…".
+const measureCtx = typeof document !== 'undefined' && typeof navigator !== 'undefined' && !/jsdom/i.test(navigator.userAgent)
+  ? document.createElement('canvas').getContext('2d') : null
+function textWidth(text: string, font: string) {
+  if (!measureCtx) return text.length * 0.5 * parseFloat(/(\d+(?:\.\d+)?)px/.exec(font)?.[1] ?? '16')
+  measureCtx.font = font
+  return measureCtx.measureText(text).width
+}
+/** Lines needed to set `text` in `width`, greedy by word; the first line starts `lead` px in. */
+function linesFor(text: string, font: string, width: number, lead = 0) {
+  const words = text.split(/\s+/).filter(Boolean), space = textWidth(' ', font)
+  let lines = 1, x = lead
+  for (const w of words) {
+    const ww = textWidth(w, font)
+    if (x > lead || (lines > 1 && x > 0)) { if (x + space + ww > width) { lines++; x = ww } else x += space + ww }
+    else x += ww
+  }
+  return lines
+}
+type Fit = { size: number; lines: number }
+/** The largest size from `sizes` that sets `text` on one line in `width`; else the smallest size, wrapped. */
+function fitText(text: string, family: string, weight: number, sizes: number[], width: number): Fit {
+  for (const size of sizes) if (textWidth(text, `${weight} ${size}px ${family}`) <= width) return { size, lines: 1 }
+  const size = sizes[sizes.length - 1]
+  return { size, lines: linesFor(text, `${weight} ${size}px ${family}`, width) }
+}
+/** The page's two font families, read once fonts have loaded so measurements match what is drawn. */
+function useFamilies(ref: React.RefObject<HTMLElement | null>) {
+  const [fam, setFam] = useState({ display: 'Georgia, serif', sans: 'Arial, sans-serif', ready: 0 })
+  useLayoutEffect(() => {
+    const read = () => { const el = ref.current; if (!el) return; const cs = getComputedStyle(el)
+      setFam(f => ({ display: cs.getPropertyValue('--font-display').trim() || f.display, sans: cs.getPropertyValue('--font-sans').trim() || f.sans, ready: f.ready + 1 })) }
+    read()
+    if (typeof document !== 'undefined' && document.fonts?.ready) document.fonts.ready.then(read).catch(() => {})
+  }, [ref])
+  return fam
+}
+
 function useWidth<T extends HTMLElement>() {
   const ref = useRef<T>(null)
   const [w, setW] = useState(0)
@@ -66,6 +106,7 @@ export function ScheduleDayModes({ events, timeline, mode, now, isToday, onOpen,
   compact?: boolean
 }) {
   const [ref, measured] = useWidth<HTMLDivElement>()
+  const fam = useFamilies(ref)
   const W = Math.max(measured || 300, 200)
   const byId = new Map(events.map(e => [e.id, e]))
   const items: Item[] = timeline.items.flatMap(t => { const stub = byId.get(t.id); return stub ? [{ ...t, stub }] : [] })
@@ -96,28 +137,38 @@ export function ScheduleDayModes({ events, timeline, mode, now, isToday, onOpen,
   // Trail labels stack downwards when plans start close together. If a stack would
   // run into a free-time note, the folded gap grows to make room, so every label
   // stays beside its own plan and nothing touches the note.
+  const GUT = 46, TX = GUT + 10, X = K ? 64 : TX, R = W - 4
+  const lane = (l: number) => TX + l * 12
+  const LX = lane(Math.max(1, ...items.map(i => i.laneCount))) + 4
+  // A Trail label is "time  name". When it does not fit beside the trail it wraps under itself
+  // (the time stays whole), and the labels below move down to make room.
+  const LW = Math.max(R - LX - 6, 90)
+  const labelLines = new Map<string, number>()
+  for (const it of items) {
+    const lead = textWidth(span(it.startMinute, it.endMinute), `700 12px ${fam.sans}`) + textWidth(' ', `400 17px ${fam.display}`)
+    labelLines.set(it.id, Math.min(linesFor(it.stub.title, `400 17px ${fam.display}`, LW, lead), 3))
+  }
+  const labelH = (id: string) => 22 * (labelLines.get(id) ?? 1)
   const labelAt = new Map<string, number>()
   const placeLabels = () => {
     let below = -99
     labelAt.clear()
-    for (const it of timeline.items) { const y = Math.max(Y(it.startMinute) - 11, below + 22); below = y; labelAt.set(it.id, y) }
+    for (const it of timeline.items) { const y = Math.max(Y(it.startMinute) - 11, below); below = y + labelH(it.id); labelAt.set(it.id, y) }
   }
   placeLabels()
   if (!K) {
     for (const fo of folds) {
       const top = Y(fo.from) + 9
-      const bottom = Math.max(-99, ...timeline.items.filter(it => it.startMinute < fo.to).map(it => labelAt.get(it.id)! + 22))
+      const bottom = Math.max(-99, ...timeline.items.filter(it => it.startMinute < fo.to).map(it => labelAt.get(it.id)! + labelH(it.id)))
       if (bottom > top - 3) fo.pad = bottom - top + 5
     }
     placeLabels()
   }
-  const H = Y(last) + 16
+  const labelBottom = K ? 0 : Math.max(0, ...items.map(it => (labelAt.get(it.id) ?? 0) + labelH(it.id)))
+  let H = Math.max(Y(last) + 16, labelBottom + 6)
   const hours: number[] = []
   for (let m = first; m <= last; m += 60) if (!folds.some(f => m > f.from && m < f.to)) hours.push(m)
 
-  const GUT = 46, TX = GUT + 10, X = K ? 64 : TX, R = W - 4
-  const lane = (l: number) => TX + l * 12
-  const LX = lane(Math.max(1, ...items.map(i => i.laneCount))) + 4
 
   // Ticket geometry: one lane is full width; a long plan holding shorter ones becomes a spine;
   // two lanes sit side by side; three or more fold into a stack you can read in one glance.
@@ -140,6 +191,42 @@ export function ScheduleDayModes({ events, timeline, mode, now, isToday, onOpen,
       g.items.forEach((it, i) => boxes.set(it.id, { l: X + Math.min(i, 2) * 5, t: t + Math.min(i, 2) * 5, w: full - 10, h, kind: i === 0 ? 'stack' : 'behind', depth: i }))
     }
   }
+
+  // Ticket text is fitted to its ticket: the name steps down from 19px to 15px to stay on one line;
+  // a name that still does not fit wraps, and its ticket grows to hold it. A place that does not fit
+  // on its line is left off the ticket (it is on the opened card), never cut short.
+  type TicketFit = { title: Fit; showPlace: boolean; place: Fit; rows: Fit[]; small: boolean; time?: { text: string; size: number } }
+  const fits = new Map<string, TicketFit>()
+  const emW = (it: Item) => textWidth(span(it.startMinute, it.endMinute), `700 12px ${fam.sans}`)
+  for (const it of items) {
+    const b = boxes.get(it.id); if (!b) continue
+    const cw = b.w - 15 - 10 - 3
+    if (b.kind === 'ticket') {
+      const small = b.h < 44
+      // The time is one unit: it steps down to fit, and a ticket too narrow even then shows the start time only
+      // (its height already shows how long the plan runs).
+      const whole = span(it.startMinute, it.endMinute)
+      const timeSize = [12, 11, 10.5].find(z => textWidth(whole, `700 ${z}px ${fam.sans}`) <= (small ? cw * .5 : cw)) ?? 0
+      const time = timeSize ? { text: whole, size: timeSize } : { text: clock(it.startMinute), size: 11 }
+      const title = small
+        ? fitText(it.stub.title, fam.display, 400, [17, 16, 15, 14, 13], cw - emW(it) - 8)
+        : fitText(it.stub.title, fam.display, 400, [19, 18, 17, 16, 15], cw)
+      const titleH = title.lines * title.size * 1.1
+      const place = fitText(it.stub.location || '', fam.sans, 600, [12, 11.5, 11], cw - 12)
+      const roomForPlace = !small && b.h - (7 + 16 + titleH + 3) >= 17
+      const need = small ? 6 + titleH + 7 : 7 + 16 + titleH + 9
+      if (need > b.h) b.h = Math.ceil(need)
+      fits.set(it.id, { title, showPlace: roomForPlace && place.lines === 1 && !!it.stub.location, place, rows: [], small, time })
+    } else if (b.kind === 'stack') {
+      const g = stacks.find(st => st.items[0].id === it.id)
+      if (!g) continue
+      const rows = g.items.map(m => fitText(m.stub.title, fam.sans, 500, [13.5, 13, 12.5, 12], cw - 9 - 7 - emW(m) - 7))
+      const extra = rows.reduce((t, r) => t + (r.lines - 1) * 16, 0)
+      for (const m of g.items) { const bm = boxes.get(m.id); if (bm) bm.h += extra }
+      fits.set(it.id, { title: { size: 21, lines: 1 }, showPlace: false, place: { size: 12, lines: 1 }, rows, small: false })
+    }
+  }
+  if (K) H = Math.max(H, ...[...boxes.values()].map(b => b.t + b.h + 8))
 
   const nowMin = now && isToday ? now.getHours() * 60 + now.getMinutes() : null
   const showNow = nowMin !== null && nowMin >= first && nowMin <= last
@@ -204,7 +291,7 @@ export function ScheduleDayModes({ events, timeline, mode, now, isToday, onOpen,
               boxShadow: (b.kind === 'spine' ? `inset 0 6px 0 ${col}` : `inset 5px 0 0 ${col}`) + (sel ? `, 0 0 0 2.5px ${col}` : ''), borderRadius: 11 }
           : { left: lane(it.lane) - 2.5, top: Y(it.startMinute), width: 5, height: Math.max(Y(it.endMinute) - Y(it.startMinute), 5), zIndex: 3,
               background: col, borderColor: 'transparent', boxShadow: 'none', borderRadius: 3 }
-        const small = b.h < 44
+        const small = fits.get(it.id)?.small ?? b.h < 44
         const tm = span(it.startMinute, it.endMinute)
         const label = labelAt.get(it.id) ?? Y(it.startMinute) - 11
         return (
@@ -215,21 +302,22 @@ export function ScheduleDayModes({ events, timeline, mode, now, isToday, onOpen,
               <span className="sqm-kc" aria-hidden="true">
                 {b.kind === 'stack' ? (() => { const g = stacks.find(s => s.items[0].id === it.id)!
                   return <span className="sqm-stack"><b><i>{g.items.length}</i> plans at {clock(g.start)}</b>
-                    {g.items.map(m => { const c = colorsFor(m.stub); return <span key={m.id} className="sqm-row" onClick={e => { e.stopPropagation(); if (K) onOpen(m.id) }}><i style={{ background: c[0] }} /><em style={{ color: c[2] }}>{span(m.startMinute, m.endMinute)}</em><span className="sqm-rowt">{m.stub.title}</span></span> })}
+                    {g.items.map((m, i) => { const c = colorsFor(m.stub), r = fits.get(it.id)?.rows[i]; return <span key={m.id} className={`sqm-row${r && r.lines > 1 ? ' sqm-wrap' : ''}`} onClick={e => { e.stopPropagation(); if (K) onOpen(m.id) }}><i style={{ background: c[0] }} /><em style={{ color: c[2] }}>{span(m.startMinute, m.endMinute)}</em><span className="sqm-rowt" style={r ? { fontSize: r.size } : undefined}>{m.stub.title}</span></span> })}
                   </span> })()
                 : b.kind === 'spine' ? <span className="sqm-spine" style={{ color: dark }}>{it.stub.title}</span>
                 : b.kind === 'behind' ? null
-                : <span className={`sqm-tk${small ? ' sqm-small' : ''}`}>
-                    <em style={{ color: dark }}>{tm}</em>{small && <strong>{it.stub.title}</strong>}
-                    {!small && <strong>{it.stub.title}</strong>}
-                    {!small && b.h > 62 && <small style={{ color: dark }}><i />{it.stub.location}</small>}
-                  </span>}
+                : (() => { const f = fits.get(it.id); const ts = f ? { fontSize: f.title.size, whiteSpace: f.title.lines > 1 ? 'normal' as const : undefined } : undefined
+                  return <span className={`sqm-tk${small ? ' sqm-small' : ''}`}>
+                    <em style={{ color: dark, fontSize: f?.time?.size }}>{f?.time?.text ?? tm}</em>{small && <strong style={ts}>{it.stub.title}</strong>}
+                    {!small && <strong style={ts}>{it.stub.title}</strong>}
+                    {!small && (f ? f.showPlace : b.h > 62) && <small style={{ color: dark, fontSize: f?.place.size }}><i />{it.stub.location}</small>}
+                  </span> })()}
               </span>
             </button>
             <i className="sqm-ring" style={{ left: lane(it.lane) - 5, top: Y(it.startMinute) - 5, borderColor: col }} />
             {/* A closed ring marks a known end. A plan with no listed end keeps an open tail. */}
             <i className="sqm-ring sqm-ring-end" style={{ left: lane(it.lane) - 4, top: Y(it.endMinute) - 4, borderColor: col }} />
-            <span className="sqm-label" style={{ left: LX, top: label }} aria-hidden="true">
+            <span className={`sqm-label${(labelLines.get(it.id) ?? 1) > 1 ? ' sqm-wrap' : ''}`} style={{ left: LX, top: label, maxWidth: LW }} aria-hidden="true">
               <em style={{ color: dark }}>{tm}</em> {it.stub.title}
             </span>
           </div>

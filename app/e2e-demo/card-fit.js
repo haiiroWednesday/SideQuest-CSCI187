@@ -10,6 +10,8 @@
 //  - short units stay whole: a duration ("1 hr 30 min"), "until 12:00pm", "5 going", a host name or one part
 //    of a place ("Benson Memorial Center") never breaks across lines when it would fit on one line, and no
 //    word is split in the middle.
+//  - no row is squashed: a fact that wraps only because something sits beside it (it would fit across the
+//    card's text column on its own) counts as squashed.
 //  - nothing overlaps: words do not run into the stamp, the bookmark, the bites or other words.
 //  - the card is at least 44px tall and wide, so it stays easy to tap.
 (function cardFit(selector) {
@@ -110,17 +112,20 @@
     for (let i = 1; i < arr.length; i++) if (arr[i] - arr[i - 1] > 4) lines++
     return lines
   }
-  function fitsOneLine(el, text) {
+  function needOf(el, text) {
     const s = getComputedStyle(el), z = zoomOf(el)
     canvas.font = `${s.fontStyle} ${s.fontWeight} ${s.fontSize} ${s.fontFamily}`
     const ls = parseFloat(s.letterSpacing) || 0
-    const tt = s.textTransform === 'uppercase' ? text.toUpperCase() : text
-    const need = (canvas.measureText(tt.trim()).width + ls * tt.trim().length) * z
+    const tt = (s.textTransform === 'uppercase' ? text.toUpperCase() : text).trim()
+    return (canvas.measureText(tt).width + ls * tt.length) * z
+  }
+  function fitsOneLine(el, text) {
+    const need = needOf(el, text)
     // room = the content width of the nearest block box that holds this text
     let box = el; while (box && getComputedStyle(box).display.startsWith('inline')) box = box.parentElement
     const bs = getComputedStyle(box), bz = zoomOf(box)
     const room = box.getBoundingClientRect().width - (parseFloat(bs.paddingLeft) + parseFloat(bs.paddingRight)) * bz
-    return need <= room - 1
+    return need <= room - 4
   }
 
   for (const card of document.querySelectorAll(SEL)) {
@@ -156,13 +161,13 @@
       }
       // a word broken in the middle (hyphenation or forced break)
       let i = 0
-      for (const w of t.split(/(\s+)/)) {
+      for (const w of t.split(/(\s+|(?<=-))/)) { // a break right after a real hyphen is fine
         if (w.trim().length > 1) {
           const rg = document.createRange(); rg.setStart(n, i); rg.setEnd(n, i + w.length)
           const tops = new Set([...rg.getClientRects()].filter(q => q.width > 1).map(q => Math.round(q.top / 4)))
           if (tops.size > 1) add('word split', `"${short(w)}"`)
         }
-        i += w.length
+        i += (w || '').length
       }
     }
     for (let a = 0; a < inks.length; a++) for (let b = a + 1; b < inks.length; b++) {
@@ -183,9 +188,18 @@
     }
 
     // whole units broken across lines
+    // the room a fact would have with nothing beside it: the card inside its line, less a stub that runs down the side
+    const t = card.querySelector('.sq-stub-time'), tr = t && t.getBoundingClientRect()
     for (const p of phrasesOf(card)) {
       if (!visible(p.el) || !p.text.trim()) continue
-      if (linesOfText(p.el, p.text) > 1 && fitsOneLine(p.el, p.text)) add('unit split across lines', `"${short(p.text)}"`)
+      if (linesOfText(p.el, p.text) < 2) continue
+      if (fitsOneLine(p.el, p.text)) { add('unit split across lines', `"${short(p.text)}"`); continue }
+      if (p.el.closest('.sq-stub-time')) continue
+      // a stub running down beside this row is part of the design; anything else beside it squashes it
+      const pr = p.el.getBoundingClientRect()
+      const side = tr && tr.top < pr.bottom && tr.bottom > pr.top && tr.right <= pr.left + 1 ? tr.width : 0
+      const bodyRoom = L.r.width - 2 * L.inset - side - 32 * L.z
+      if (needOf(p.el, p.text) <= bodyRoom) add('squashed by its neighbour', `"${short(p.text)}"`)
     }
   }
   // one line per problem

@@ -131,3 +131,8 @@
 .sq-fr-invite-card { margin: 14px 0 18px; }
 .sq-fr-invite-acts { display: flex; align-items: center; gap: 14px; }
 @media (max-width: 760px) { .sq-fr-decide button, .sq-fr-leave button, .sq-fr-invite-acts button { min-height: 46px !important; } }
+
+/* Polish (Nov 24): even spacing in the new-group form, breathing room for ticket times. */
+.sq-fr-new > * { margin: 0 !important; }
+.sq-fr-time { padding: 10px 8px; }
+@media (max-width: 560px) { .sq-fr-time b { font-size: 25px; } }

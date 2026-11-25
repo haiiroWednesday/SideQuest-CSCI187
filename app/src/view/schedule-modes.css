@@ -103,3 +103,13 @@
 .sqm-key::-webkit-scrollbar { display: none; }
 .sqm-key:focus-visible { outline: 3px solid var(--sq-focus); outline-offset: -3px; }
 .sqm-key li { flex: none; }
+
+/* Polish pass (Nov 24): names are fitted before they are drawn (see ScheduleModes.tsx), so nothing is
+   cut short with "…". A Trail label that needs two lines wraps under itself; the time never splits. */
+.sqm-label { overflow: visible; text-overflow: clip; }
+.sqm-label.sqm-wrap { white-space: normal; }
+.sqm-label em { white-space: nowrap; }
+.sqm-row.sqm-wrap { white-space: normal; align-items: flex-start; }
+.sqm-row.sqm-wrap .sqm-rowt { white-space: normal; line-height: 16px; }
+.sqm-row em { white-space: nowrap; }
+.sqm-tk strong[style*="normal"] { overflow: visible; }

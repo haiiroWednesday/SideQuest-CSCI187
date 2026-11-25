@@ -21,6 +21,8 @@
   opts = opts || {}
   const skip = ['.sq-stub', 'svg', '[hidden]', '[inert]', '.sq-visually-hidden', '.sr-only', '[data-polish-ok]', ...(opts.skip || [])].join(',')
   const allowPic = '.sq-bookmark, [class*=stamp], [class*=postmark], .sq-faces, .sq-going-faces, [data-polish-ok]'
+  const modal = [...document.querySelectorAll('dialog[open], [role=dialog][aria-modal=true]')].filter(d => { const r = d.getBoundingClientRect(); return r.width > 40 && r.height > 40 && getComputedStyle(d).visibility !== 'hidden' }).pop()
+  const root = (opts.root && document.querySelector(opts.root)) || modal || document.body
   const out = []
   const cache = new Map()
   const st = e => { let s = cache.get(e); if (!s) { s = getComputedStyle(e); cache.set(e, s) } return s }
@@ -29,7 +31,7 @@
   const rotated = e => { for (let a = e; a && a !== document.body; a = a.parentElement) { const s = st(a); if (/vertical/.test(s.writingMode)) return true; if (s.transform !== 'none') { const m = s.transform.match(/matrix\(([^,]+), ([^,]+)/); if (m && Math.abs(+m[2]) > .02) return true } } return false }
   const inView = r => r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth
   const lines = rs => { const tops = []; for (const r of rs) if (!tops.some(t => Math.abs(t - r.top) < 3)) tops.push(r.top); return tops.length }
-  const add = (kind, el, rect, text, detail) => out.push({ kind, el: name(el), text: (text || '').replace(/\s+/g, ' ').trim().slice(0, 60), detail: detail || '', box: [Math.round(rect.left), Math.round(rect.top + scrollY), Math.round(rect.width), Math.round(rect.height)] })
+  const add = (kind, el, rect, text, detail) => out.push({ kind, el: name(el), text: (text || '').replace(/\s+/g, ' ').trim().slice(0, 60), detail: detail || '', box: [Math.round(rect.left), Math.round(rect.top + scrollY), Math.round(rect.width), Math.round(rect.height)], vbox: [Math.round(rect.left), Math.round(rect.top), Math.round(rect.width), Math.round(rect.height)] })
   const px = v => parseFloat(v) || 0
   const seen = c => !/rgba\([^)]*, 0\)|transparent/.test(c)
 
@@ -45,19 +47,24 @@
       if ((pk('Left') && pk('Right')) || (pk('Top') && pk('Bottom'))) {
         const L = r.left + px(p.left) + px(p.borderLeftWidth), T = r.top + px(p.top) + px(p.borderTopWidth)
         const W = px(p.width) || (r.width - px(p.left) - px(p.right)), H = px(p.height) || (r.height - px(p.top) - px(p.bottom))
-        return { left: L, top: T, right: r.left + px(p.left) + W - px(p.borderRightWidth), bottom: r.top + px(p.top) + H - px(p.borderBottomWidth), how: 'inner line' }
+        // A real inner line wraps most of the box; a short dashed divider or tick is not a frame.
+        if (W >= r.width * .6 && H >= r.height * .6) return { left: L, top: T, right: r.left + px(p.left) + W - px(p.borderRightWidth), bottom: r.top + px(p.top) + H - px(p.borderBottomWidth), how: 'inner line' }
       }
     }
     if ((side('Left') && side('Right')) || (side('Top') && side('Bottom'))) {
       return { left: r.left + px(s.borderLeftWidth), top: r.top + px(s.borderTopWidth), right: r.right - px(s.borderRightWidth), bottom: r.bottom - px(s.borderBottomWidth), how: 'border' }
     }
-    if ((seen(s.backgroundColor) || s.backgroundImage !== 'none') && (px(s.paddingLeft) > 0 || px(s.paddingTop) > 0) && r.width < innerWidth - 4) {
+    // A filled box only counts when its fill shows: paper-coloured fills that hide a line behind a label do not.
+    const under = (() => { for (let a = e.parentElement; a; a = a.parentElement) { const c = st(a).backgroundColor; if (seen(c)) return c } return 'rgb(255, 255, 255)' })()
+    const rgb = c => (c.match(/[\d.]+/g) || []).slice(0, 3).map(Number)
+    const differs = seen(s.backgroundColor) && rgb(s.backgroundColor).reduce((t, v, i) => t + Math.abs(v - rgb(under)[i]), 0) > 18
+    if ((differs || (s.backgroundImage !== 'none' && !/gradient\(.*transparent/.test(s.backgroundImage))) && (px(s.paddingLeft) > 0 || px(s.paddingTop) > 0) && r.width < innerWidth - 4) {
       return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, how: 'filled box' }
     }
     return null
   }
   const frames = new Map()
-  const nearestFrame = el => { for (let a = el; a && a !== document.body; a = a.parentElement) { if (!frames.has(a)) frames.set(a, frameOf(a)); const f = frames.get(a); if (f) return [a, f] } return [null, null] }
+  const nearestFrame = el => { for (let a = el; a && a !== document.body && a !== root.parentElement; a = a.parentElement) { if (!frames.has(a)) frames.set(a, frameOf(a)); const f = frames.get(a); if (f) return [a, f] } return [null, null] }
 
   const UNITS = [
     /\b\d{1,2}(?::\d{2})?\s?(?:am|pm)?\s?[–-]\s?\d{1,2}(?::\d{2})?\s?(?:am|pm)\b/gi,
@@ -70,7 +77,7 @@
   ]
 
   const texts = []
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, { acceptNode: n => n.textContent.trim() ? 1 : 2 })
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.textContent.trim() ? 1 : 2 })
   for (let n; (n = walker.nextNode());) {
     const el = n.parentElement
     if (!el || el.closest(skip) || !vis(el) || rotated(el)) continue
@@ -84,6 +91,10 @@
     if (f) {
       for (const r of rs) {
         const over = Math.max(f.left - r.left, r.right - f.right, f.top - r.top, r.bottom - f.bottom)
+        // Text wholly outside its frame is a label placed beside it on purpose (a time above a band);
+        // text half in and half out is the problem.
+        const apart = r.right <= f.left + 1 || r.left >= f.right - 1 || r.bottom <= f.top + 1 || r.top >= f.bottom - 1
+        if (apart) break
         if (over > 1) { add('cross', el, r, text, `crosses ${f.how} of ${name(fe)} by ${Math.round(over)}px`); break }
         const dx = Math.min(r.left - f.left, f.right - r.right), dy = Math.min(r.top - f.top, f.bottom - r.bottom)
         if (dx < 6 || dy < 4) { add('edge', el, r, text, `${dx < 6 ? Math.round(dx) + 'px from the side' : Math.round(dy) + 'px from top/bottom'} of ${name(fe)}`); break }
@@ -110,9 +121,23 @@
     if (words.length >= 3 && lines(rs) >= words.length) add('squeeze', el, el.getBoundingClientRect(), text, 'one word per line')
 
     const btn = el.closest('button, [role=button], a[href]')
-    if (btn && !btn.closest(skip) && text.trim().length <= 30 && lines(rs) > 1) add('wrap', btn, btn.getBoundingClientRect(), text, 'button label wraps')
+    // Only true short labels: a tappable block holding several lines of content (a schedule stack) may wrap.
+    const block = btn && [...btn.querySelectorAll('*')].filter(e => /block|flex|grid/.test(st(e).display) && e.textContent.trim()).length >= 2
+    if (btn && !block && !btn.closest(skip) && text.trim().length <= 30 && (btn.innerText || '').trim().length <= 30 && lines(rs) > 1) add('wrap', btn, btn.getBoundingClientRect(), text, 'button label wraps')
   }
 
+  // Both texts are visible at the spot: the top element there is one of them, and nothing opaque sits
+  // between it and the other one. Text hidden under the nav, a sheet or a card is not an overlap you see.
+  const painted = (A, B, x, y) => {
+    if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return false
+    const stack = document.elementsFromPoint(x, y)
+    const ia = stack.findIndex(e => e === A || A.contains(e)), ib = stack.findIndex(e => e === B || B.contains(e))
+    if (ia < 0 || ib < 0) return false
+    const [hi, lo] = ia < ib ? [ia, ib] : [ib, ia]
+    if (hi !== 0 && !stack.slice(0, hi).every(e => { const s = st(e); return !seen(s.backgroundColor) && s.backgroundImage === 'none' })) return false
+    for (const e of stack.slice(hi + 1, lo)) { const s = st(e); if (seen(s.backgroundColor) || s.backgroundImage !== 'none') return false }
+    return true
+  }
   // Text painted over other text.
   texts.sort((a, b) => a.rs[0].top - b.rs[0].top)
   const flat = []; for (const t of texts) for (const r of t.rs) if (inView(r)) flat.push({ el: t.el, r })
@@ -123,12 +148,12 @@
       if (A.el === B.el || A.el.contains(B.el) || B.el.contains(A.el)) continue
       if (A.el.closest(allowPic) || B.el.closest(allowPic)) continue
       const w = Math.min(A.r.right, B.r.right) - Math.max(A.r.left, B.r.left), h = Math.min(A.r.bottom, B.r.bottom) - Math.max(A.r.top, B.r.top)
-      if (w > 2 && h > 3) add('overlap', A.el, A.r, A.el.textContent, `under/over "${B.el.textContent.trim().slice(0, 24)}" (${name(B.el)})`)
+      if (w > 2 && h > 3 && painted(A.el, B.el, (Math.max(A.r.left, B.r.left) + Math.min(A.r.right, B.r.right)) / 2, (Math.max(A.r.top, B.r.top) + Math.min(A.r.bottom, B.r.bottom)) / 2)) add('overlap', A.el, A.r, A.el.textContent, `under/over "${B.el.textContent.trim().slice(0, 24)}" (${name(B.el)})`)
     }
   }
 
   // Pictures crossing their frame.
-  for (const pic of document.querySelectorAll('img, svg, canvas, picture')) {
+  for (const pic of root.querySelectorAll('img, svg, canvas, picture')) {
     if (pic.parentElement?.closest('svg') || pic.closest(allowPic) || pic.closest(skip.replace(/svg,?/, '')) || !vis(pic)) continue
     const r = pic.getBoundingClientRect(); if (r.width < 12 || r.height < 12 || !inView(r)) continue
     const [fe, f] = nearestFrame(pic.parentElement); if (!f || fe === pic) continue
@@ -137,8 +162,9 @@
   }
 
   // Uneven spacing in boxes that ask for an even gap.
-  for (const box of document.querySelectorAll('body *')) {
-    if (box.closest(skip)) continue
+  for (const box of root.querySelectorAll('*')) {
+    // The header nav sets Post apart from the tabs with a margin on purpose.
+    if (box.closest(skip) || box.matches('.sq-nav')) continue
     const s = st(box); if (!/flex|grid/.test(s.display)) continue
     const rg = px(s.rowGap), cg = px(s.columnGap); if (rg <= 0 && cg <= 0) continue
     const br = box.getBoundingClientRect(); if (!inView(br) || !vis(box)) continue

@@ -104,8 +104,8 @@ for (const route of ['discover', 'schedule', 'someday', 'groups', 'post']) {
         const [R, G, B, A = 1] = m.map(Number), rad = parseFloat(cs.borderTopLeftRadius) || 0
         const gold = A > .5 && R > 200 && G > 140 && G < 200 && B < 90
         const pill = A > .3 && rad >= Math.min(r.height / 2 - 1, 14)
-        // Allowed: the dashed date stamp (a stamp, not a button), people's initials and the day beads on their gold thread (her D10 pick).
-        if (e.closest('.sq-sticker-day') || e.closest('.sq-fr-people, .sq-fr-avatars') || e.closest('.sq-days') || e.tagName === 'I') continue
+        // Allowed: the dashed date stamp (a stamp, not a button), people's initials the day beads on their gold thread (her D10 pick) and the same beads down the timeline (.sq-bubble).
+        if (e.closest('.sq-sticker-day') || e.closest('.sq-fr-people, .sq-fr-avatars') || e.closest('.sq-days') || e.closest('.sq-bubble') || e.tagName === 'I') continue
         if ((gold && rad >= 6) || pill) out.push(`${e.className || e.tagName}: ${(e.innerText || '').trim().slice(0, 30)}`)
       }
       return out
