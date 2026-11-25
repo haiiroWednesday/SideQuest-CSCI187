@@ -188,22 +188,22 @@ try {
   pass('Invitation consent and account-enumeration resistance on real PostgREST')
   const note = '🦋'.repeat(280)
   const conditional = await json(await act(b, 4, 'respond', { response: 'if', condition: note }), 200, '280 code points')
-  check(conditional.participants.find(m => m.userId === b.id)?.privateCondition === note, 'Private condition owner projection incorrect.')
+  check(conditional.participants.find(m => m.userId === b.id)?.ifCondition === note, 'If note owner projection incorrect.')
   const organizer = await json(await app(path, a.token), 200, 'Organizer read')
   const directOrganizer = await json(await directRead(a.token), 200, 'Organizer direct RPC')
   for (const view of [organizer, directOrganizer]) {
-    check(!Object.hasOwn(view.participants.find(m => m.userId === b.id), 'privateCondition'), 'Private condition leaked to organizer.')
+    check(view.participants.find(m => m.userId === b.id)?.ifCondition === note, 'If note not shared with the organizer.')
   }
   await expectStatus(await act(b, 5, 'respond', { response: 'if', condition: '🦋'.repeat(281) }), 400, '281 code points')
   await expectStatus(await act(b, 4, 'respond', { response: 'works' }), 409, 'Stale revision')
   await expectStatus(await act(a, 5, 'confirm'), 400, 'Conditional is not consent')
-  pass('Unicode boundary, private notes and stale revisions with real provider')
+  pass('Unicode boundary, shared If notes and stale revisions with real provider')
   await json(await act(a, 5, 'invite', { inviteeId: c.id }), 200, 'Invite third account')
   const declined = await json(await act(c, 6, 'decline'), 200, 'Decline')
   check(declined === null, 'Decline returned private plan details.')
   await denied(await directRead(c.token), 'Declined direct access')
   const noNote = await json(await act(b, 7, 'respond', { response: 'if' }), 200, 'If without note')
-  check(noNote.participants.find(m => m.userId === b.id)?.privateCondition === null,
+  check(noNote.participants.find(m => m.userId === b.id)?.ifCondition === null,
     'Optional note was not cleared.')
   await expectStatus(await act(a, 8, 'confirm'), 400, 'If without note remains tentative')
   await json(await act(b, 8, 'respond', { response: 'works' }), 200, 'Explicit Works')

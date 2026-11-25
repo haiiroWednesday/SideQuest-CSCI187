@@ -84,9 +84,9 @@ describe('authenticated group page: proposal, participant and recoverable errors
   })
 
 
-  it('keeps an unsaved private note when refreshing the same authorized plan', async () => {
+  it('keeps an unsaved group note when refreshing the same authorized plan', async () => {
     const plan: GroupDetail = {
-      ...basePlan, participants: [{ userId: amy, response: 'if', privateCondition: 'Original' }],
+      ...basePlan, participants: [{ userId: amy, response: 'if', ifCondition: 'Original' }],
     }
     const client: GroupClientPort = {
       list: vi.fn(async () => [plan]),
@@ -96,11 +96,11 @@ describe('authenticated group page: proposal, participant and recoverable errors
     }
     render(<GroupPlanningView actorId={amy} client={client} events={events} routes={routes} />)
     fireEvent.click(await screen.findByRole('button', { name: /Music workshop/ }))
-    const note = await screen.findByRole<HTMLTextAreaElement>('textbox', { name: /Your private condition/ })
+    const note = await screen.findByRole<HTMLTextAreaElement>('textbox', { name: /Your note for the group/ })
     fireEvent.change(note, { target: { value: 'Draft before refresh' } })
     fireEvent.click(screen.getByRole('button', { name: 'Refresh responses' }))
     await waitFor(() => expect(client.get).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Save private note' }).hasAttribute('disabled')).toBe(false))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save note' }).hasAttribute('disabled')).toBe(false))
     expect(note.value).toBe('Draft before refresh')
   })
 

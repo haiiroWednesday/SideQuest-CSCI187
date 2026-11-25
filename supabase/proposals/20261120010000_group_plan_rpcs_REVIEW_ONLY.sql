@@ -70,8 +70,11 @@ begin
       jsonb_build_object(
         'userId', member.user_id,
         'response', member.response
-      ) || case when member.user_id = v_actor
-        then jsonb_build_object('privateCondition', member.private_condition)
+      ) || case when member.user_id = v_actor or member.response = 'if'
+        -- If conditions are shared with the plan's accepted members (team decision, Nov 24):
+        -- a condition is how the group talks. Pending invitees and outsiders never reach this
+        -- list (v_member below), and a non-If answer carries no condition (table constraint).
+        then jsonb_build_object('ifCondition', member.if_condition)
         else '{}'::jsonb
       end
       order by member.user_id
@@ -246,11 +249,11 @@ begin
         raise exception 'Optional If condition must be at most 280 characters' using errcode = '22023';
       end if;
     elsif p_condition is not null then
-      raise exception 'Only If may include a private condition' using errcode = '22023';
+      raise exception 'Only If may include a condition' using errcode = '22023';
     end if;
     update public.group_participants
       set response = p_response,
-          private_condition = case when p_response='if' then v_condition else null end,
+          if_condition = case when p_response='if' then v_condition else null end,
           responded_at = now()
       where plan_id = p_plan_id and user_id = v_actor;
 

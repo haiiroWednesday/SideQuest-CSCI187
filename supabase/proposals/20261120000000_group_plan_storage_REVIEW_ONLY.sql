@@ -28,16 +28,16 @@ create table public.group_participants (
   user_id uuid not null references auth.users(id) on delete cascade,
   response text
     check (response is null or response in ('works', 'if', 'cant')),
-  private_condition text,
+  if_condition text,
   invited_at timestamptz not null default now(),
   responded_at timestamptz,
   primary key (plan_id, user_id),
   constraint group_condition_matches_response
     check (
       case when response = 'if'
-        then private_condition is null or (private_condition = btrim(private_condition, U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF')
-          and char_length(private_condition) between 1 and 280)
-        else private_condition is null
+        then if_condition is null or (if_condition = btrim(if_condition, U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF')
+          and char_length(if_condition) between 1 and 280)
+        else if_condition is null
       end
     ),
   constraint group_response_time_consistent
@@ -98,4 +98,4 @@ revoke all on public.group_invitations from public, anon, authenticated;
 comment on table public.group_plans is
   'SideQuest proposed group plan schema; not production-ready until verified authenticated RPCs and RLS are reviewed.';
 comment on table public.group_participants is
-  'Private response condition is never granted for direct client table reads; exposed via a caller-filtered server projection only.';
+  'If condition: never granted for direct client table reads. Exposed only through the caller-filtered projection, to accepted members of the same plan.';
