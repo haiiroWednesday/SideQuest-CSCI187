@@ -29,7 +29,7 @@ export const CALENDAR_ROWS = [
   { id: 521456, gid: 4, title: 'Maryanne Wolf: Transformation of Reading in the Age of AI',
     url: 'https://events.scu.edu/provost/event/521456-maryanne-wolf-transformation-of-reading-in-age-of-ai',
     date_ts: s('2026-11-10T03:00:00Z'), date2_ts: s('2026-11-10T04:30:00Z'),
-    location: 'Locatelli Center', group_title: 'Office of the Provost' },
+    location: 'Locatelli Center', group_title: 'Office of the Provost', status: 1 },
   // modelled on the audit: the calendar marks Idea Lab all-day while newsletters give 10 a.m. to 3 p.m.
   { id: 907200, gid: 7, title: 'Bronco Ventures Idea Lab',
     url: 'https://events.scu.edu/engineering/event/907200-bronco-ventures-idea-lab',
@@ -89,4 +89,20 @@ ${entry('Nov', '11', ['WAVE Founders Workshop', '5:00-6:30 p.m. | SCDI 1308', 'P
 ${entry('Nov', '14', ['Bronco Ventures Idea Lab', '10:00 a.m. to 3:00 p.m. | SCDI 2302', 'Build with mentors.',
     '<a href="https://share.hsforms.com/19uTleRT_TPmL2fAOHE2plgcbc5l">Register</a>'])}
 <hr>`,
+}
+
+// Instagram leads: modelled (invented handles and post codes, captions written for these tests).
+// Intake is a pasted post URL + caption, never a scrape.
+export const POSTED_ON = '2026-11-24'
+export const ORGANIZERS = { 'scu.dance.collective': { name: 'SCU Dance Collective' }, 'scu.boardgames': { name: 'Board Game Club' }, 'scu.boba.society': { name: 'Boba Society' } }
+export const INSTAGRAM = {
+  complete: { postUrl: 'https://www.instagram.com/p/DxWinter01/', handle: '@scu.dance.collective', postedOn: POSTED_ON,
+    caption: 'Winter Showcase ✨\nFri, Dec 4 · 7-9 p.m.\n📍 Mission Room, Benson\nIn compliance with the ADA/504, please direct your accommodation requests to Lena Ortiz at lortiz@scu.edu.',
+    imageRefs: ['winter-showcase-flyer.jpg'] },
+  noTime: { postUrl: 'https://www.instagram.com/p/DxBoba002/', handle: 'scu.boba.society', postedOn: POSTED_ON,
+    caption: 'Boba study night 🧋\nThursday Dec 3\n📍 Learning Commons\nTime TBA, stay tuned!' },
+  unclearDate: { postUrl: 'https://www.instagram.com/reel/DxGame003/', handle: 'scu.boardgames', postedOn: POSTED_ON,
+    caption: 'Game night this Friday!! 🎲 7pm\n📍 Benson Parlors' },
+  repost: { postUrl: 'https://www.instagram.com/p/DxRepost4/', handle: 'scu.memes.daily', postedOn: POSTED_ON,
+    caption: 'Winter Showcase repost\nFri, Dec 4 · 7-9 p.m.\n📍 Mission Room, Benson' },
 }

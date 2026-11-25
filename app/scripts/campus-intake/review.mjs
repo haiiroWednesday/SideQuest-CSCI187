@@ -55,7 +55,8 @@ function calendarValues(r) {
   }
 }
 function newsletterValues(n) {
-  const src = 'newsletter:' + n.issue + ':' + n.part
+  const src = n.source === 'instagram' ? 'instagram:@' + n.handle : n.source === 'organizer' ? 'organizer:@' + n.handle
+    : 'newsletter:' + n.issue + ':' + n.part
   return {
     title: value(src, 'title', n.title, n.evidence?.title), date: value(src, 'date', n.date, n.evidence?.date),
     start: value(src, 'start', n.start, n.evidence?.start), end: value(src, 'end', n.end, n.evidence?.end),
@@ -95,6 +96,8 @@ export function buildCandidates({ calendar = [], newsletter = [], evidence = [] 
     const joined = newsletter.filter(n => n.linkedProviderId === r.providerId)
     joined.forEach(n => used.add(n))
     candidates.push({ key: r.occurrenceKey, providerId: r.providerId, kind: r.occurrenceKind, production: r.production ?? null,
+      // SCU calendar groups are university units (Cyn, Nov 24: departments skip the ADA/contact check).
+      hostKind: 'university-department',
       calendar: r, newsletters: joined, evidence: evidence.filter(e => e.providerId === r.providerId), possibleMatches: [] })
   }
   // Newsletter-only rows: the same issue mentioning the same date, start and place twice is one candidate.
@@ -104,7 +107,8 @@ export function buildCandidates({ calendar = [], newsletter = [], evidence = [] 
     if (n.linkedProviderId && !byProvider.has(n.linkedProviderId)) {
       // Links to a calendar event outside this snapshot: keep the link for the reviewer.
     }
-    const key = [n.issue, n.date, n.start, norm(n.location ?? '')].join('|')
+    // An Instagram post is its own lead: two posts about one event are joined only by a reviewer.
+    const key = n.source === 'instagram' ? 'instagram|' + n.postUrl : [n.issue, n.date, n.start, norm(n.location ?? '')].join('|')
     loose.set(key, [...(loose.get(key) ?? []), n])
   }
   for (const [key, rows] of loose) {
@@ -112,8 +116,10 @@ export function buildCandidates({ calendar = [], newsletter = [], evidence = [] 
     // Similar titles on the same day are only suggestions for a reviewer. They never join records.
     const possibleMatches = records.filter(r => r.date === sample.date &&
       [...words(sample.title)].some(w => words(r.title).has(w))).map(r => r.providerId)
-    candidates.push({ key: 'newsletter:' + key, providerId: sample.linkedProviderId ?? null, kind: 'single', production: null,
-      calendar: null, newsletters: rows, evidence: [], possibleMatches })
+    const instagram = sample.source === 'instagram'
+    candidates.push({ key: (instagram ? '' : 'newsletter:') + key, providerId: sample.linkedProviderId ?? null, kind: 'single', production: null,
+      hostKind: instagram ? 'student-organization' : 'unknown', instagram: instagram ? sample : null,
+      organizerConfirmation: null, calendar: null, newsletters: rows, evidence: [], possibleMatches })
   }
   return candidates.map(describe)
 }
@@ -144,7 +150,8 @@ function describe(c) {
   const deadlineOnly = !c.calendar && c.newsletters.every(n => DEADLINE.test(n.title ?? ''))
   if (c.kind === 'deadline' || deadlineOnly) flags.push('not-an-event')
   if (c.kind === 'showtime') flags.push('showtime-kept-separate')
-  if (!c.calendar) flags.push(c.possibleMatches.length ? 'newsletter-only-possible-calendar-match' : 'newsletter-only')
+  if (!c.calendar && c.instagram) flags.push(c.instagram.organizerPost ? 'instagram-organizer-post' : 'instagram-lead')
+  else if (!c.calendar) flags.push(c.possibleMatches.length ? 'newsletter-only-possible-calendar-match' : 'newsletter-only')
   if (fields.contact.state === 'missing' || fields.accessibility.state === 'missing') flags.push('ada-contact-missing')
   if (refused.length) flags.push('ical-end-ignored')
   return { ...c, fields, aliases, refusedEvidence: refused, flags }
@@ -152,7 +159,7 @@ function describe(c) {
 
 /**
  * Reviews: [{ reviewer, decisions: { field: { action: 'confirm' | 'edit' | 'flag', value? } },
- *            linkProviderId?, policyAck?: 'statement-present' | 'university-department' }].
+ *            hostKind?: 'university-department' | 'student-organization' }].
  * A field is verified when `threshold` different reviewers settle on the same value.
  */
 export function applyReviews(candidate, reviews = [], threshold = DEFAULT_REVIEWERS) {
@@ -175,8 +182,10 @@ export function applyReviews(candidate, reviews = [], threshold = DEFAULT_REVIEW
     if (winner) settled[f] = winner.value
   }
   const reviewers = byReviewer.size
-  const policy = [...byReviewer.values()].some(r => r.policyAck)
-  return { ...candidate, review: { reviewers, threshold, settled, flagged: [...flagged], policyAck: policy } }
+  // Reviewers may correct who hosts the event (e.g. a newsletter row that is a department's).
+  const hostVotes = [...byReviewer.values()].map(r => r.hostKind).filter(k => k === 'university-department' || k === 'student-organization')
+  const hostKind = hostVotes.length >= threshold && new Set(hostVotes).size === 1 ? hostVotes[0] : candidate.hostKind
+  return { ...candidate, hostKind, review: { reviewers, threshold, settled, flagged: [...flagged] } }
 }
 
 /** Where a candidate stands. Only 'ready' may go to the catalog, through the existing reviewed-publication path. */
@@ -188,12 +197,15 @@ export function status(candidate) {
     f[field].values.some(v => v.source === 'scu-calendar'))
   if (candidate.flags.includes('canceled')) return 'canceled'
   if (candidate.flags.includes('not-an-event')) return 'not-an-event'
+  if (candidate.instagram) return instagramStatus(candidate)
   if (REVIEW_FIELDS.some(x => f[x].state === 'disputed' && !(x in s))) return 'disputed'
+  // PR #92 already shows this row from the feed under the same ID. #86 adds nothing unless a reviewer corrects it.
+  if (candidate.calendar?.liveFeedEligible && !Object.keys(s).length) return 'served-by-live-feed'
   const endValue = s.end ?? (verified('end') ? f.end.values[0]?.value : null)
   if (!endValue || endValue === 'all day') return 'held-no-verified-end'
   if (candidate.review?.flagged?.length) return 'flagged-missing'
   if (!REQUIRED_FIELDS.every(verified)) return 'needs-review'
-  if (candidate.flags.includes('ada-contact-missing') && !candidate.review?.policyAck) return 'needs-ada-contact'
+  if (needsAdaContact(candidate)) return 'needs-ada-contact'
   if ((candidate.review?.reviewers ?? 0) < (candidate.review?.threshold ?? DEFAULT_REVIEWERS)) return 'needs-more-reviewers'
   return 'ready'
 }
@@ -213,10 +225,12 @@ export function metrics(candidates) {
   const states = candidates.map(c => ({ c, s: status(c) }))
   return {
     candidates: candidates.length,
-    scheduleReady: states.filter(x => x.s === 'ready').length,
+    scheduleReady: states.filter(x => FREE_TIME_STATUSES.has(x.s) && x.s !== 'served-by-live-feed').length,
+    servedByLiveFeed: states.filter(x => x.s === 'served-by-live-feed').length,
+    timeTba: states.filter(x => x.s === 'time-tba').length,
     heldNoVerifiedEnd: states.filter(x => x.s === 'held-no-verified-end').length,
     disputed: states.filter(x => x.s === 'disputed').length,
-    reviewItems: states.filter(x => !['ready', 'canceled', 'not-an-event'].includes(x.s)).length,
+    reviewItems: states.filter(x => !FREE_TIME_STATUSES.has(x.s) && !['canceled', 'not-an-event'].includes(x.s)).length,
     // Count of rows this pipeline holds that a naive importer would have published with a wrong fact.
     wouldMispublishIfNaive: states.filter(x => x.s !== 'ready' && naiveWouldPublish(x.c)).length,
     icalEndsRefused: candidates.reduce((n, c) => n + c.refusedEvidence.length, 0),
@@ -234,4 +248,58 @@ export function confirmLink(candidates, newsletterKey, providerId) {
   if (!from || !to) throw new Error('Unknown candidate or calendar row')
   const merged = describe({ ...to, newsletters: [...to.newsletters, ...from.newsletters], linkedBy: 'reviewer' })
   return candidates.filter(c => c !== from && c !== to).concat(merged)
+}
+
+/** Student organization events need SCU's ADA/504 statement with a contact; university departments do not. */
+function needsAdaContact(c) {
+  if (c.hostKind === 'university-department') return false
+  const f = c.fields, s = c.review?.settled ?? {}
+  const has = field => field in s || f[field].values.length > 0
+  return !(has('contact') && has('accessibility'))
+}
+
+function instagramStatus(c) {
+  const f = c.fields
+  const s = c.review?.settled ?? {}
+  const confirmed = c.organizerConfirmation
+  const known = field => field in s || f[field].values.length > 0
+  if (REVIEW_FIELDS.some(x => f[x].state === 'disputed' && !(x in s))) return 'disputed'
+  if (!known('date')) return 'held-date-unclear'
+  if (!known('start') || !known('end')) return 'time-tba'
+  if (!c.instagram.organizerPost && !confirmed) return 'needs-organizer-confirmation'
+  if (!known('location')) return 'needs-organizer-confirmation'
+  if (needsAdaContact(c)) return 'needs-ada-contact'
+  return 'ready-organizer-verified'
+}
+
+/**
+ * The organizer confirms or completes their event: the club's verified account or a club officer replying
+ * to the review request. Their values join as a new source; anything that differs from the post is a dispute.
+ * A contact given here completes SCU's ADA/504 statement.
+ */
+export function confirmByOrganizer(candidate, { handle, name, contact, values = {} } = {}) {
+  if (!candidate?.instagram) throw new Error('Only Instagram leads take organizer confirmation')
+  const h = typeof handle === 'string' ? handle.replace(/^@/, '').toLowerCase() : ''
+  if (h !== candidate.instagram.handle) throw new Error('The confirmation must come from the posting club')
+  const accessibility = contact && name ? ADA_STATEMENT.replace('NAME', name).replace('EMAIL ADDRESS', contact) : null
+  const row = { source: 'organizer', handle: h, part: 'organizer', links: [], linkedProviderId: null,
+    title: values.title ?? null, date: values.date ?? null, start: values.start ?? null, end: values.end ?? null,
+    location: values.location ?? null, speaker: null,
+    contact: contact && name ? name + ' (' + contact + ')' : null, accessibility,
+    evidence: Object.fromEntries(Object.keys(values).map(k => [k, 'confirmed by @' + h])) }
+  if (accessibility) Object.assign(row.evidence, { contact: 'confirmed by @' + h, accessibility })
+  return describe({ ...candidate, newsletters: [...candidate.newsletters, row], organizerConfirmation: { handle: h, name: name ?? null } })
+}
+
+// Statuses whose event has a verified full interval: the only ones free-time matching may use.
+export const FREE_TIME_STATUSES = new Set(['ready', 'ready-organizer-verified', 'served-by-live-feed'])
+export function eligibleForFreeTime(c) { return FREE_TIME_STATUSES.has(status(c)) }
+
+/** What Browse may list. A dated event with no confirmed time shows as "Time TBA" and stays out of free-time matches. */
+export function browseListing(c) {
+  const st = status(c)
+  const value = field => c.review?.settled?.[field] ?? c.fields[field].values[0]?.value ?? null
+  if (FREE_TIME_STATUSES.has(st)) return { date: value('date'), start: value('start'), end: value('end'), label: null, freeTime: true }
+  if (st === 'time-tba') return { date: value('date'), start: null, end: null, label: 'Time TBA', freeTime: false }
+  return null
 }

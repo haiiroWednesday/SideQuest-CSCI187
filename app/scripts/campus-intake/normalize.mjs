@@ -64,6 +64,20 @@ export function occurrenceKind(record, title, start, end) {
   return 'single'
 }
 
+// Mirrors app/src/model/scuCalendarId.ts on PR #92 (kept in step by knownAnswers.test.mjs).
+const SCU_ID_PREFIX = 'da2f880c-2a83-8d1a-8c04-'
+export function scuCalendarId(providerId) {
+  const n = Number(providerId)
+  return Number.isSafeInteger(n) && n > 0 && n <= 0xffffffffffff ? SCU_ID_PREFIX + n.toString(16).padStart(12, '0') : null
+}
+/** Would PR #92's five-minute reader publish this row as it stands? Mirrors its eventFrom() rules. */
+function liveFeedEligible(record, providerId, linkId, start, end, startLocal, endLocal) {
+  return linkId === providerId && (record.status === 1 || record.status === '1') &&
+    !flag(record.is_all_day) && !flag(record.is_canceled) && !flag(record.is_online) &&
+    start !== null && end !== null && end > start && startLocal.date === endLocal.date &&
+    Boolean(text(record.title)) && Boolean(text(record.location)) && Boolean(text(record.group_title))
+}
+
 export function normalizeLiveWhale(record, source, checkedAt) {
   if (!record || typeof record !== 'object' || Array.isArray(record)) throw new Error('Invalid event row')
   const providerId = typeof record.id === 'string' || typeof record.id === 'number' ? String(record.id) : ''
@@ -88,6 +102,11 @@ export function normalizeLiveWhale(record, source, checkedAt) {
   if (startLocal && endLocal && (startLocal.date !== endLocal.date || endLocal.time <= startLocal.time)) {
     reasons.push('outside-same-day-contract')
   }
+  // Same identity rule as the live feed reader (PR #92): the URL's event ID must be the row's own ID.
+  const linkId = link ? /\/(?:event|events)\/(\d{1,20})(?:[-/]|$)/.exec(new URL(link).pathname)?.[1] ?? null : null
+  if (link && linkId !== providerId) reasons.push('mirrored-row')
+  if (flag(record.is_online)) reasons.push('online-only')
+  if (Object.hasOwn(record, 'status') && record.status !== 1 && record.status !== '1') reasons.push('not-published-upstream')
   if (marked(record.is_all_day)) reasons.push('all-day')
   if (marked(record.is_multi_day)) reasons.push('multi-day')
   // A repeat ID alone is not a verified occurrence identity.
@@ -109,6 +128,9 @@ export function normalizeLiveWhale(record, source, checkedAt) {
     groupId: idText(record.gid), parentId: idText(record.parent), lastModified: modifiedAt(record.last_modified),
     eventTypes: list(record.event_types), registration: text(typeof record.registration === 'string' ? record.registration : '') || null,
     occurrenceKind: kind,
+    // PR #92 serves the event straight from the feed with this ID; #86 must reuse it, never mint another.
+    sideQuestId: scuCalendarId(providerId),
+    liveFeedEligible: liveFeedEligible(record, providerId, linkId, start, end, startLocal, endLocal),
     date: startLocal?.date ?? null, start: startLocal?.time ?? null, end: endLocal?.time ?? null,
     startEpochSeconds: start, endEpochSeconds: end,
     reviewState: reasons.length ? 'held' : 'awaiting-review',
