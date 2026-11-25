@@ -202,7 +202,8 @@
 
 /* Timeline beads (Cyn, Nov 24): the day picker's gold thread turned vertical.
    Flat beads, no shading: today is the gold bead with the maroon star, other days are cream. */
-:root[data-quiet] .sq-trail::before { border-left: 0 !important; width: 2px; background: var(--sq-gold, #e8aa24); opacity: 1 !important; border-radius: 2px; }
+/* The line joining the days is the MVP's dotted trail; today's gold bead sits on it. */
+:root[data-quiet] .sq-trail::before { border-left: 3px dotted var(--sq-red, #a32035) !important; width: 0; background: none; opacity: .5 !important; }
 :root[data-quiet] .sq-trail .sq-bubble { border-radius: 50% !important; background: #fffaf2 !important; color: var(--sq-ink) !important;
   box-shadow: inset 0 0 0 1.4px rgba(48, 36, 33, .35), 0 0 0 6px var(--sq-paper) !important; outline: 0 !important;
   -webkit-mask: none !important; mask: none !important; transform: none !important; padding-top: 2px !important; overflow: visible; }

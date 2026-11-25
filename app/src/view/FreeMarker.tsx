@@ -100,7 +100,7 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnb
         <TimePick label={`${markName} from`} placeholder="From" value={from} onChange={v => { setFrom(v); setTypedError(false) }} step={5} firstHour={8} lastHour={22} />
         <span aria-hidden="true">–</span>
         <TimePick label="until" placeholder="Until" value={until} onChange={v => { setUntil(v); setTypedError(false) }} step={5} firstHour={8} lastHour={23} />
-        <button type="submit" className="sq-plan-button sq-busy-add sq-busy-add-small">Add</button>
+        <button type="submit" className="sq-text-button sq-ink-act sq-busy-add sq-busy-add-small">Add</button>
       </form>
       {typedError && <p className="sq-busy-error" role="alert">{from && until ? 'End after start' : 'Pick both times'}</p>}
 

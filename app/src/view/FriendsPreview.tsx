@@ -23,6 +23,13 @@ function GroupTicket({ stub, compact = false, children }: { stub: StubModel; com
   )
 }
 
+/** "You, Maya and Jun" or "You, Maya and 3 more": who is in a group, in the fewest words. */
+const peopleLine = (members: readonly string[]): string => {
+  const names = [...members].sort((a, b) => (a === YOU ? -1 : b === YOU ? 1 : 0))
+  if (names.length <= 3) return names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+  return `${names.slice(0, 2).join(', ')} and ${names.length - 2} more`
+}
+
 export function FriendsPreview({ events, routes, plannedCount, plannedIds = [], store }: { events: readonly Ev[]; routes: SideQuestRoutes; plannedCount: number; plannedIds?: readonly string[]; store: GroupsPreview }) {
   const ticketOf = (e: Ev) => presentBrowseDetail(e, plannedIds, new Date())
   useSyncExternalStore(store.subscribe, store.getState)
@@ -78,7 +85,9 @@ export function FriendsPreview({ events, routes, plannedCount, plannedIds = [], 
             <p className="sq-fr-preview-note">Preview only. Nothing is sent.</p>
             <ul>{groups.map(x => (
               <li key={x.id}><button type="button" aria-current={x.id === g?.id ? 'true' : undefined} onClick={() => setActive(x.id)}>
-                <b>{x.name}</b><span>{x.inviteFrom ? <em className="sq-fr-invited-tag">Invited by {x.inviteFrom}</em> : <>{x.members.length} people · {x.plans.length} {x.plans.length === 1 ? 'plan' : 'plans'}</>}</span>
+                {/* Faces first: a row of the people in it is what makes this read as a group, not a filter. */}
+                <span className="sq-fr-faces" aria-hidden="true">{x.members.slice(0, 5).map(m => <i key={m} style={{ background: personColor(m) }}>{m[0]}</i>)}{x.members.length > 5 && <i className="sq-fr-faces-more">+{x.members.length - 5}</i>}</span>
+                <b>{x.name}</b><span>{x.inviteFrom ? <em className="sq-fr-invited-tag">Invited by {x.inviteFrom}</em> : <>{peopleLine(x.members)} · {x.plans.length} {x.plans.length === 1 ? 'plan' : 'plans'}</>}</span>
               </button></li>))}</ul>
             {making ? (
               <form className="sq-fr-new" onSubmit={e => { e.preventDefault(); makeGroup() }}>
@@ -119,7 +128,7 @@ export function FriendsPreview({ events, routes, plannedCount, plannedIds = [], 
                     {hits.map(e => (
                       <li key={e.id}>
                         <GroupTicket compact stub={ticketOf(e)}>
-                          <button type="button" className="sq-plan-button sq-fr-hit-go" onClick={() => propose(e.id)}>Propose<span className="sq-visually-hidden"> {e.title}</span></button>
+                          <button type="button" className="sq-text-button sq-ink-act sq-fr-hit-go" onClick={() => propose(e.id)}>Propose<span className="sq-visually-hidden"> {e.title}</span></button>
                         </GroupTicket>
                       </li>
                     ))}

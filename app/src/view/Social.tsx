@@ -151,7 +151,7 @@ export function OpenInvites({ onMakePlan }: { onMakePlan: (invite: OpenInvite, g
     <section className="sq-oi" aria-labelledby="sq-oi-h">
       <div className="sq-oi-head">
         <h2 id="sq-oi-h">Who's free</h2>
-        <button type="button" className="sq-plan-button sq-oi-start" onClick={startFromGroups}>I'm free, who's in?</button>
+        <button type="button" className="sq-text-button sq-ink-act sq-oi-start" onClick={startFromGroups}>I'm free, who's in?</button>
       </div>
       {api.invites.length === 0 ? <p className="sq-oi-none">No open invites right now.</p> : (
         <ul className="sq-stubs sq-stubs-one sq-oi-list">

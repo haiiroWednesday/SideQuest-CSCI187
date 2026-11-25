@@ -6,7 +6,7 @@ export const EVENT_TAGS = [
   { id: 'free-food', label: 'Free food' },
   { id: 'guest-speaker', label: 'Guest speaker' },
   { id: 'off-campus', label: 'Off campus' },
-  { id: 'registration', label: 'Registration needed' },
+  { id: 'registration', label: 'RSVP' },
 ] as const
 
 export type EventTag = typeof EVENT_TAGS[number]['id']
@@ -50,7 +50,7 @@ export const EVENT_SOURCE_TEXT: Record<EventSource, string> = {
   'scu-calendar': "From SCU's events calendar, checked",
 }
 
-export const TAG_ERROR = 'Pick tags from the list: free food, guest speaker, off campus or registration needed.'
+export const TAG_ERROR = 'Pick tags from the list: free food, guest speaker, off campus or RSVP.'
 
 /** True when the event carries every one of the chosen tags. No chosen tags means every event. */
 export function hasAllTags(event: { tags?: readonly string[] }, chosen: readonly EventTag[]): boolean {

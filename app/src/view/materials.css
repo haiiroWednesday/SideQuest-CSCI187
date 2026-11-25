@@ -361,14 +361,14 @@
 .sq-quiet-stamp { position: absolute; left: -26px; bottom: -16px; width: 70px; height: 70px; color: #9b1f34; transform: rotate(-14deg); mix-blend-mode: multiply; opacity: .9; pointer-events: none; }
 .sq-quiet-stamp .sq-datestamp { width: 100%; height: 100%; }
 @media (min-width: 761px) {
-  .sq-quiet-pic .sq-pic-wide .sq-greet { width: 200px; }
-  .sq-quiet-pic .sq-pic-square .sq-greet { width: 150px; }
-  .sq-quiet-pic .sq-pic-flyer .sq-greet { width: 128px; }
+  .sq-quiet-pic .sq-pic-wide .sq-greet { width: 240px; }
+  .sq-quiet-pic .sq-pic-square .sq-greet { width: 184px; }
+  .sq-quiet-pic .sq-pic-flyer .sq-greet { width: 160px; }
   .sq-quiet-stamp { width: 86px; height: 86px; left: -34px; }
 }
 .sq-quiet-top .sq-quiet-time b { font-size: 58px; line-height: 1; }
 @media (max-width: 380px) { .sq-quiet-top .sq-quiet-time b { font-size: 46px; } }
-@media (max-width: 760px) { .sq-quiet-pic { margin-right: 14px; } .sq-quiet-pic .sq-pic-wide .sq-greet { width: 132px; } .sq-quiet-pic .sq-pic-square .sq-greet { width: 100px; } .sq-quiet-pic .sq-pic-flyer .sq-greet { width: 84px; } }
+@media (max-width: 760px) { .sq-quiet-pic { margin-right: 14px; } .sq-quiet-pic .sq-pic-wide .sq-greet { width: 168px; } .sq-quiet-pic .sq-pic-square .sq-greet { width: 132px; } .sq-quiet-pic .sq-pic-flyer .sq-greet { width: 116px; } }
 
 /* The date stamp over a picture: red ink over a crisp cream outline (drawn in DateStamp), so it reads
    on dark pictures without a misty glow (Nov 24). One gold sparkle at its edge, cheap to animate. */

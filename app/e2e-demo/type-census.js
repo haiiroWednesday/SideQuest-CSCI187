@@ -44,7 +44,9 @@
     return 'body'
   }
   // Text typed in capitals reads the same as text set in capitals.
-  const capsText = t => /[A-Z]{2}/.test(t) && t === t.toUpperCase()
+  // An acronym is spelled in capitals; that is its spelling, not a caps style.
+  const ACRONYMS = new Set(['RSVP'])
+  const capsText = t => /[A-Z]{2}/.test(t) && t === t.toUpperCase() && !ACRONYMS.has(t.trim())
   const sig = (cs, text = '') => ({
     family: fam(cs),
     size: px(cs.fontSize),

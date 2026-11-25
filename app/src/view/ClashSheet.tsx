@@ -57,7 +57,7 @@ export function ClashSheet({ clashes, onClose, onRemove, onRemoveMany }: {
                 <EventStub compact stub={p.stub}>
                   <span className="sq-clash-over">{p.overlapText}</span>
                   <span className="sq-clash-acts">
-                    <button type="button" className="sq-plan-button" onClick={() => keepPlan(p.conflictingIds)}>Keep this one<span className="sq-visually-hidden">: {p.title}, and remove the plans it clashes with</span></button>
+                    <button type="button" className="sq-text-button sq-ink-act sq-clash-keep" onClick={() => keepPlan(p.conflictingIds)}>Keep this one<span className="sq-visually-hidden">: {p.title}, and remove the plans it clashes with</span></button>
                     <button type="button" className="sq-text-button sq-clash-drop" onClick={() => removeOne(clash, p.id)}>Remove<span className="sq-visually-hidden"> {p.title}</span></button>
                   </span>
                 </EventStub>
