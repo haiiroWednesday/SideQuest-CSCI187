@@ -21,15 +21,15 @@ test('Someday: Ana hangs "Learn to throw a bowl", links it to a real event and t
   await noSidewaysScroll(page)
 })
 
-test('My Schedule: after Ceramics Workshop, Ben sends the host a postcard', async ({ page }, info) => {
+test('My Schedule: after Ceramics Workshop, Ben previews a postcard for the host', async ({ page }, info) => {
   const shot = shooter(page, info)
   await open(page, 'schedule')
-  await page.getByRole('button', { name: 'Send the host a postcard' }).first().click()
+  await page.getByRole('button', { name: 'Preview a postcard for the host' }).first().click()
   await page.getByPlaceholder('Add a line').fill('Loved the glazing table, thank you!')
   await shot('postcard-written')
-  await page.getByRole('button', { name: 'Send to the host' }).click()
-  await expect(page.getByText('Sent to the host.')).toBeVisible()
-  await shot('postcard-sent')
+  await page.getByRole('button', { name: 'Finish preview' }).click()
+  await expect(page.getByText('Preview complete. Nothing was sent to the host.')).toBeVisible()
+  await shot('postcard-previewed')
 })
 
 test('Groups: Cyn starts "Film buffs" with Ana and Ben, proposes an event and answers If…', async ({ page }, info) => {

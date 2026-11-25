@@ -177,7 +177,8 @@ export function paintMarks(input: MarkInput & { date: string }, from: number, to
 
 /** Typed busy time, "15:00" to "16:30". Returns null when the times make no sense, so the form can say so. */
 export function addBusy(input: MarkInput & { date: string }, start: string, end: string): FreeMarks | null {
-  if (!/^\d{2}:\d{2}$/.test(start) || !/^\d{2}:\d{2}$/.test(end)) return null
+  const validTime = /^(?:[01]\d|2[0-3]):[0-5]\d$/
+  if (!validTime.test(start) || !validTime.test(end)) return null
   const a = toMin(start), b = toMin(end)
   if (b <= a) return null
   const first = Math.max(0, Math.floor((a - DAY_START) / CELL)), last = Math.min(CELLS - 1, Math.ceil((b - DAY_START) / CELL) - 1)

@@ -71,7 +71,7 @@ for (const s of SCREENS) for (const width of [390, 1280]) {
     const axe = await new AxeBuilder({ page }).include(scope).exclude('.sq-stub').withTags(['wcag2a', 'wcag2aa']).options({ rules: { 'color-contrast': { enabled: true } } }).analyze()
     const contrast = axe.violations.filter(v => v.id === 'color-contrast').flatMap(v => v.nodes.map(n => n.target.join(' ')))
     expect(contrast, 'text too faint to read').toEqual([])
-    expect(axe.violations.filter(v => v.impact === 'serious' || v.impact === 'critical').map(v => v.id), 'serious accessibility problems').toEqual([])
+    expect(axe.violations.filter(v => v.impact === 'serious' || v.impact === 'critical').map(v => ({ id: v.id, targets: v.nodes.map(n => n.target) })), 'serious accessibility problems').toEqual([])
 
     expect(await clippedOrCovered(page, scope), 'text cut off or covered').toEqual([])
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'sideways scroll').toBe(true)

@@ -55,6 +55,13 @@ describe('free time comes from busy time', () => {
     expect(addBusy({ ...base, date: '2026-11-24' }, '', '19:00')).toBeNull()
   })
 
+  it('rejects impossible clock values instead of normalizing them into another time', () => {
+    const input = { ...base, date: '2026-11-24' }
+    expect(addBusy(input, '12:60', '15:00')).toBeNull()
+    expect(addBusy(input, '19:00', '24:00')).toBeNull()
+    expect(addBusy(input, '08:00', '09:99')).toBeNull()
+  })
+
   it('"Busy then" fills a whole gap', () => {
     const w = presentMarks(base).windows[0]
     const marks = fillGap(base, w)

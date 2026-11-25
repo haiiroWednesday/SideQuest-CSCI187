@@ -101,4 +101,5 @@
 /* One line, always (Nov 24): shorter labels, tighter gaps; if a phone is very narrow it scrolls sideways. */
 .sqm-key { flex-wrap: nowrap !important; gap: 4px 10px !important; font-size: 12px !important; overflow-x: auto; scrollbar-width: none; white-space: nowrap; }
 .sqm-key::-webkit-scrollbar { display: none; }
+.sqm-key:focus-visible { outline: 3px solid var(--sq-focus); outline-offset: -3px; }
 .sqm-key li { flex: none; }

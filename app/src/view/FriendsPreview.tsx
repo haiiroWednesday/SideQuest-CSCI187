@@ -120,6 +120,7 @@ export function FriendsPreview({ events, routes, plannedCount }: { events: reado
         <div className="sq-fr">
           <nav className="sq-fr-groups" aria-label="Your groups">
             <h1>Groups</h1>
+            <p>Design preview: groups and responses stay in this browser. No invitations are sent.</p>
             <ul>{groups.map(x => (
               <li key={x.id}><button type="button" aria-current={x.id === g?.id ? 'true' : undefined} onClick={() => setActive(x.id)}>
                 <b>{x.name}</b><span>{x.inviteFrom ? <em className="sq-fr-invited-tag">Invited by {x.inviteFrom}</em> : <>{x.members.length} people · {x.plans.length} {x.plans.length === 1 ? 'plan' : 'plans'}</>}</span>

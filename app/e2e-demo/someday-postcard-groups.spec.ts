@@ -23,12 +23,12 @@ test('Someday hangs each idea as a frame, and a linked unplanned idea gets the g
   await noSidewaysScroll(page)
 })
 
-test('a past plan offers a postcard to the host, and sending it says so', async ({ page }) => {
+test('a past plan offers a postcard preview without claiming delivery', async ({ page }) => {
   await open(page, 'schedule')
-  await page.getByRole('button', { name: 'Send the host a postcard' }).first().click()
+  await page.getByRole('button', { name: 'Preview a postcard for the host' }).first().click()
   await page.getByPlaceholder('Add a line').fill('Loved it')
-  await page.getByRole('button', { name: 'Send to the host' }).click()
-  await expect(page.getByText('Sent to the host.')).toBeVisible()
+  await page.getByRole('button', { name: 'Finish preview' }).click()
+  await expect(page.getByText('Preview complete. Nothing was sent to the host.')).toBeVisible()
 })
 
 test('you can belong to many groups, start another, propose an event and answer', async ({ page }) => {
