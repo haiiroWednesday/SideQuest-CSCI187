@@ -41,6 +41,8 @@ describe('public SCU source intake: inspection only, not publication', () => {
       expect(r.status).toBe(0)
       expect(r.stdout).toContain('"format":"v2-style-data"')
       expect(r.stdout).toContain('"inspected":1')
+      expect(r.stdout).toContain('"endKeyFound":true')
+      expect(r.stdout).toContain('"recordsWithStartAndEndValues":0')
       expect(r.stdout).toContain('"needsHumanSourceValidation":true')
       expect(r.stdout).toContain('"published":false')
       expect(r.stdout).not.toContain('Synthetic campus activity')
@@ -90,7 +92,8 @@ describe('public SCU source intake: inspection only, not publication', () => {
       const result = invoke(['--fixture=' + file])
       expect(result.status).toBe(0)
       expect(result.stdout).toContain('"hasTimeKeys":true')
-      expect(result.stdout).toContain('"explicitEndKeyFound":true')
+      expect(result.stdout).toContain('"endKeyFound":true')
+      expect(result.stdout).toContain('"recordsWithStartAndEndValues":1')
     })
   })
 

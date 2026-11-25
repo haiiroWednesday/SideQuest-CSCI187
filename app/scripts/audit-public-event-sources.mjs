@@ -16,7 +16,8 @@ const allowed = new Set(['--probe-livewhale'])
 const MAX_JSON_BYTES = 250_000
 const known = ['id', 'title', 'date', 'date2', 'date_time', 'date2_time', 'timezone',
   'url', 'href', 'location', 'location_title', 'summary', 'group_title', 'date_ts', 'date2_ts',
-  'is_all_day', 'repeats', 'visibility', 'last_modified']
+  'is_all_day', 'repeats', 'visibility', 'last_modified', 'date_iso', 'date2_iso',
+  'is_canceled', 'is_online', 'parent', 'status']
 
 export function inspectPayload(raw) {
   if (typeof raw !== 'object' || raw === null) throw Error('API body is not a JSON object/array.')
@@ -38,8 +39,15 @@ export function inspectPayload(raw) {
     unknownFieldCount: fields.filter(key => !known.includes(key)).length,
     // This is a SHAPE probe, not evidence that fields contain verified data.
     hasTimeKeys: (fields.includes('date_time') && fields.includes('date2_time')) ||
-      (fields.includes('date_ts') && fields.includes('date2_ts')),
-    explicitEndKeyFound: fields.includes('date2_time') || fields.includes('date2_ts'),
+      (fields.includes('date_ts') && fields.includes('date2_ts')) ||
+      (fields.includes('date_iso') && fields.includes('date2_iso')),
+    endKeyFound: ['date2_time', 'date2_ts', 'date2_iso'].some(key => fields.includes(key)),
+    recordsWithStartAndEndValues: records.filter(record =>
+      [['date_time', 'date2_time'], ['date_ts', 'date2_ts'], ['date_iso', 'date2_iso']]
+        .some(([start, end]) => [record[start], record[end]].every(value =>
+          (typeof value === 'string' && value.trim() !== '') || (typeof value === 'number' && value > 0),
+        )),
+    ).length,
     needsHumanSourceValidation: true,
     published: false,
   }
@@ -49,6 +57,10 @@ async function readLimited(response) {
   if (!response.ok) throw Error('HTTP ' + response.status + ' from read-only SCU API candidate.')
   if (!response.headers.get('content-type')?.toLowerCase().includes('json')) {
     throw Error('SCU endpoint did not return JSON.')
+  }
+  if (Number(response.headers.get('content-length')) > MAX_JSON_BYTES) {
+    await response.body?.cancel().catch(() => {})
+    throw Error('API response exceeds the bounded size limit.')
   }
   const reader = response.body?.getReader()
   if (!reader) throw Error('API response has no readable body.')
@@ -66,7 +78,7 @@ async function readLimited(response) {
     await reader.cancel().catch(() => {})
     reader.releaseLock()
   }
-  return JSON.parse(Buffer.concat(chunks).toString('utf8'))
+  return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks)))
 }
 
 async function audit() {
