@@ -44,13 +44,13 @@ describe('official SCU calendar', () => {
     const { catalog, fetcher, posted, refresh, publish } = setup()
     const pagination = { total: 12, perPage: 10 }
     fetcher.mockResolvedValueOnce(page([
-      row(), { ...row(2), date2_iso: null }, { ...row(3), is_all_day: 1 },
+      row(), { ...row(2), date2_ts: null }, { ...row(3), is_all_day: 1 },
       { ...row(4), is_canceled: 1 }, { ...row(5), is_online: 1 },
       { ...row(6), url: 'https://unrelated.test/event/6' }, { ...row(9), url: row(90).url },
       row(7), { ...row(8), date2_iso: '2026-12-03T20:50:00Z' },
       { ...row(10), date_iso: '2027-02-29T20:00:00Z', date2_iso: '2027-02-29T20:50:00Z' },
     ], 1, pagination)).mockResolvedValueOnce(page([
-      row(), { ...row(7), date_iso: '2026-12-01T20:00:00Z', date2_iso: '2026-12-01T20:50:00Z' },
+      { ...row(14), status: 0 }, { ...row(7), date_iso: '2026-12-01T20:00:00Z', date2_iso: '2026-12-01T20:50:00Z' },
     ], 2, pagination))
     await refresh()
     const [post, event] = await catalog.listUpcoming()
@@ -107,6 +107,8 @@ describe('official SCU calendar', () => {
   it.each([
     ['a short page', () => page([], 2, { total: 4, perPage: 2 })],
     ['a changed total across pages', () => page([row(13)], 2, { total: 3, perPage: 2 })],
+    ['a repeated occurrence on two full pages', () => page([row(11), row(13)], 2, { total: 4, perPage: 2 })],
+    ['an oversized response', () => new Response(' '.repeat(2_000_001))],
   ])('keeps the last complete snapshot after receiving %s', async (_reason, secondPage) => {
     vi.spyOn(console, 'warn').mockImplementation(() => {})
     const { catalog, fetcher, publish, refresh } = setup()

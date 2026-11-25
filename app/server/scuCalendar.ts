@@ -10,6 +10,8 @@ export const SCU_CALENDAR_FEED = 'https://events.scu.edu/live/json/v2/events/end
 const REFRESH_MS = 5 * 60_000
 const MAX_SNAPSHOT_AGE_MS = 15 * 60_000
 const MAX_PAGES = 12
+const MAX_PAGE_BYTES = 2_000_000
+const MAX_ROWS_PER_PAGE = 1000
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:00(?:Z|[+-]\d{2}:\d{2})$/
 
 type Fields = Record<string, unknown>
@@ -43,6 +45,8 @@ function officialOccurrence(row: Fields): { id: string; source: string } | null 
 
 function eventFrom(row: Fields, id: string, source: string): CampusEvent | null {
   if (row.status !== 1 || row.is_all_day || row.is_canceled || row.is_online) return null
+  // A null raw timestamp means the organizer did not publish that time.
+  if (row.date_ts === null || row.date2_ts === null) return null
   if (typeof row.date_iso !== 'string' || typeof row.date2_iso !== 'string' ||
       !TIMESTAMP.test(row.date_iso) || !TIMESTAMP.test(row.date2_iso) ||
       !isValidDate(row.date_iso.slice(0, 10)) || !isValidDate(row.date2_iso.slice(0, 10))) return null
@@ -58,6 +62,30 @@ function eventFrom(row: Fields, id: string, source: string): CampusEvent | null 
   return result.draft ? { id, ...result.draft } : null
 }
 
+async function readFeedBody(response: Response): Promise<Fields> {
+  if (!response.body || Number(response.headers.get('content-length')) > MAX_PAGE_BYTES) {
+    await response.body?.cancel().catch(() => {})
+    throw new Error('Missing or oversized SCU calendar response')
+  }
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder('utf-8', { fatal: true })
+  let size = 0
+  let json = ''
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      size += value.byteLength
+      if (size > MAX_PAGE_BYTES) throw new Error('Oversized SCU calendar response')
+      json += decoder.decode(value, { stream: true })
+    }
+    return fields(JSON.parse(json + decoder.decode()))
+  } finally {
+    await reader.cancel().catch(() => {})
+    reader.releaseLock()
+  }
+}
+
 async function fetchSnapshot(fetcher: typeof fetch): Promise<Map<string, CampusEvent>> {
   const signal = AbortSignal.timeout(8_000)
   async function read(page: number): Promise<FeedPage> {
@@ -65,12 +93,12 @@ async function fetchSnapshot(fetcher: typeof fetch): Promise<Map<string, CampusE
       redirect: 'error', headers: { Accept: 'application/json' }, signal,
     })
     if (!response.ok) throw new Error(`SCU calendar returned HTTP ${response.status}`)
-    const body = fields(await response.json()), meta = fields(body.meta)
+    const body = await readFeedBody(response), meta = fields(body.meta)
     const { total_pages: pages, total_results: total, per_page: perPage } = meta
     if (meta.type !== 'events' || !Array.isArray(body.data) || meta.page !== page ||
         typeof pages !== 'number' || !Number.isInteger(pages) || pages < 0 || pages > MAX_PAGES ||
         typeof total !== 'number' || !Number.isSafeInteger(total) || total < 0 ||
-        typeof perPage !== 'number' || !Number.isSafeInteger(perPage) || perPage < 1 ||
+        typeof perPage !== 'number' || !Number.isSafeInteger(perPage) || perPage < 1 || perPage > MAX_ROWS_PER_PAGE ||
         pages !== Math.ceil(total / perPage) || page > Math.max(pages, 1) ||
         body.data.length !== Math.min(perPage, total - (page - 1) * perPage)) {
       throw new Error('Unexpected SCU calendar response')
@@ -82,6 +110,20 @@ async function fetchSnapshot(fetcher: typeof fetch): Promise<Map<string, CampusE
   const rest = await Promise.all(Array.from({ length: Math.max(0, first.pages - 1) }, (_, index) => read(index + 2)))
   if (rest.some(page => page.pages !== first.pages || page.total !== first.total || page.perPage !== first.perPage)) {
     throw new Error('SCU calendar changed during pagination')
+  }
+  const occurrencePages = new Map<string, number>()
+  for (const [pageIndex, page] of [first, ...rest].entries()) {
+    for (const value of page.rows) {
+      const row = fields(value)
+      const occurrence = officialOccurrence(row)
+      if (!occurrence || typeof row.date_iso !== 'string') continue
+      const key = JSON.stringify([occurrence.id, row.date_iso])
+      const earlier = occurrencePages.get(key)
+      if (earlier !== undefined && earlier !== pageIndex) {
+        throw new Error('SCU calendar repeated an occurrence across pages')
+      }
+      occurrencePages.set(key, pageIndex)
+    }
   }
   const events = new Map<string, CampusEvent>()
   const ambiguous = new Set<string>()

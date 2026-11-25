@@ -22,7 +22,7 @@ export function useBrowseDetail(catalog: EventCatalogPort) {
     if (state) open(state.id)
   }, [open, state])
   const refreshInBackground = useCallback(() => {
-    if (state?.status === 'ready') load(state.id, true)
+    if (state && state.status !== 'loading') load(state.id, true)
   }, [load, state])
 
   // Ignore any lookup that completes after a catalog replacement or unmount.

@@ -111,6 +111,18 @@ describe('useBrowseDetail: asynchronous selection lifecycle', () => {
     expect(result.current.state).toMatchObject({ id: FIRST, status: 'ready', event: { end: '16:00' } })
   })
 
+  it('automatically rechecks selected details after a temporary lookup failure', async () => {
+    const getById = vi.fn().mockResolvedValueOnce(sample)
+      .mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(sample)
+    const catalog = port(getById)
+    const { result } = renderHook(() => useBrowseDetail(catalog))
+    await act(async () => { result.current.open(FIRST) })
+    await act(async () => { result.current.refreshInBackground() })
+    expect(result.current.state).toMatchObject({ id: FIRST, status: 'error' })
+    await act(async () => { result.current.refreshInBackground() })
+    expect(result.current.state).toMatchObject({ id: FIRST, status: 'ready', event: sample })
+  })
+
   it('ignores a stale failed request after a different event is successfully selected', async () => {
     const first = deferred<CampusEvent | null>()
     const getById = (id: string) => id === FIRST ? first.promise : Promise.resolve({ ...sample, id: SECOND })
