@@ -116,3 +116,19 @@ Only after Daven/team approves and applies the SQL to a controlled staging datab
 - [Qlusion](https://www.qlusion.com/) identifies its SCU calendar, but the actual feed/export and access terms are still not verified. Ask the operator for the documented interface rather than guessing private endpoints.
 - [Theatre and Dance](https://www.scu.edu/theatre/) lists Choreographers' Gallery for Dec 3–4, 2026. [Official athletics tickets](https://scubroncos.scu.edu/?lang=en) list home games, including men's basketball Nov 28 and Dec 2 and women's basketball Dec 3. Start-only listings remain held until an actual end time is confirmed, per v5.1's required-end-time decision. These observations are evidence that independent calendars matter, not approved import records.
 - Source access, actual Qlusion and independent adapters, production scheduling and automatic live app updates remain unverified. Do not mark these finished merely because fixture CI is green.
+
+## Actual browser captures received November 24, 2026
+
+The user's SCU browser captures establish that the default `https://events.scu.edu/live/json/events` returns the v2-style `meta`, `links`, `data` envelope, with 1,223 reported records across 13 pages, 100 in the supplied first page. Actual keys include `url`, `id`, `gid`, `date_ts`, `date2_ts`, null flags and optional `parent`. The unfiltered response does not include venue or calendar-title metadata, but advertises both in supported_fields. The supplied ICS contains 633 VEVENT blocks; 82 of the JSON rows match an ICS UID by source ID and observed UTC start. Eleven matching timed rows have null JSON ends but one-hour ICS intervals, so **do not infer a confirmed end from ICS DTEND**. Multiple observed dates reuse some source IDs, and mirrored parent/child listings can duplicate the same activity. Do not equate provider ID with verified occurrence ID. No full source files or copied event descriptions are committed.
+
+The adapter now accepts the observed JSON base and URL field, preserves explicit missing end evidence, and recognizes mirrored /live/events links. The offline comparison accepts a raw, valid JSON page (if manually pasted, remove Markdown fences and restore any missing opening brace) and the original ICS bytes. It unfolds bytes before UTF-8 decoding, matches exact ID plus UTC start, requires matching Pacific DTSTART before recovering venues, holds contradictory times, and keeps the capture incomplete. It does not expand recurrence rules or publish. Example:
+
+```sh
+node app/scripts/compare-scu-captures.mjs /path/to/page.json /path/to/events.ics 2026-11-24T18:30:00-08:00 > /tmp/sidequest-review.json
+```
+
+Use the actual capture timestamp, not a new timestamp to make stale data appear fresh. The source URL is browser-verified, **not** a successful unattended collector run. The following enriched, date-filtered URL is the next browser/approved-run probe, based on the documented API parameters, not yet verified at SCU:
+
+https://events.scu.edu/live/json/events/start_date/2026-11-25/end_date/2026-12-08/paginate/100/response_fields/group_title,location/
+
+The collection job retains its permission gate and fails if the filtered response is capped or incomplete. Qlusion remains unresolved. The database publication code still requires operator approval and stable identity evidence; no real event has been written.
