@@ -8,6 +8,7 @@ import { useQuiet } from './quietContext'
 import { DateStamp } from './DateStamp'
 import type React from 'react'
 import { Bookmark, NowMark } from './Marks'
+import { GoingFaces, ShareGoing } from './FriendsGoing'
 
 export type SelectedDetailState =
   | { id: string; status: 'loading' }
@@ -115,8 +116,11 @@ function QuietDetails({ event, onPlan, planningBlocked }: { event: StubModel; on
           <li><svg viewBox="0 0 24 24" aria-label="Where" role="img"><path d="M12 22s7-7 7-12a7 7 0 1 0-14 0c0 5 7 12 7 12z" /><circle cx="12" cy="10" r="2.5" /></svg>
             {event.location.trim() ? <a href={`#map/${encodeURIComponent(event.location.trim())}`}>{event.location}</a> : 'Place not given'}</li>
         </ul>
+        <GoingFaces eventId={event.id} big />
         {event.description && !/Sample data for the design review/.test(event.description) && <p className="sq-sticker-desc">{event.description}</p>}
+        <QuietHandoffs event={event} />
       </div>
+      {onPlan && <ShareGoing eventId={event.id} planned={event.planned} />}
       {onPlan && (event.planned
         ? <div className="sq-quiet-planned"><Bookmark label="In My Schedule" big /><span aria-hidden="true">Planned</span></div>
         : <button className="sq-plan-button" type="button" disabled={planningBlocked} onClick={() => onPlan(event.id)}>Plan it</button>)}
@@ -159,6 +163,25 @@ export function EventDetailContent({ selected, verified, onRetryDetail, onPlan, 
         </div>
       ) : (
         <VerifiedEventDetails event={selected} onPlan={onPlan} planningBlocked={planningBlocked} />
+      )}
+    </div>
+  )
+}
+
+/** Two ways onward that stay inside SideQuest (Nov 24: no links out to other sites from the card).
+ *  My day opens My Schedule on this event's day, showing where it falls even before it is planned.
+ *  Walk there opens our map and draws a walking route from where you are. */
+function QuietHandoffs({ event }: { event: StubModel }) {
+  const place = event.location.trim()
+  return (
+    <div className="sq-handoffs" role="group" aria-label="See it in SideQuest">
+      <a className="sq-handoff" href={`#day/${encodeURIComponent(event.id)}`} aria-label={`My day, ${event.dow} ${event.dayNumber}, see where it fits`}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></svg>My day
+      </a>
+      {place && (
+        <a className="sq-handoff" href={`#walk/${encodeURIComponent(place)}`} aria-label={`Walk there, a route to ${place} on the SideQuest map`}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4.5" r="2" /><path d="M10 21l2.5-6.5L15 17v4M8 12l2.5-4.5 4 1.5 2 3M12.5 14.5l1-6" /></svg>Walk there
+        </a>
       )}
     </div>
   )

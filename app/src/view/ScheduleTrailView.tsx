@@ -13,7 +13,7 @@ import { DayBubble, EventStub, SideQuestHeader, useMinuteTick, type SideQuestRou
 import { titleSizeClass } from './titleSize'
 import { OFFICIAL_SCU_CAMPUS_MAP, googleMapsVenueSearchUrl } from '../controller/campusMapLinks'
 import { DeviceWalkingDirections } from './DeviceWalkingDirections'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ClashSheet } from './ClashSheet'
 import { CategoryKey, ModeToggle, ScheduleDayModes, type ScheduleMode } from './ScheduleModes'
 
@@ -68,9 +68,13 @@ export type ScheduleTrailViewProps = {
   now?: Date
   /** Show this view and don't remember it (scenario lab). */
   forcedMode?: ScheduleMode
+  /** "My day" from an event card: open on this event's day with it picked. */
+  focusId?: string | null
+  /** Plan an event shown as a preview. */
+  onPlan?: (eventId: string) => void
 }
 
-export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes, message = null, error = null, now, forcedMode }: ScheduleTrailViewProps) {
+export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes, message = null, error = null, now, forcedMode, focusId = null, onPlan }: ScheduleTrailViewProps) {
   const quiet = useQuiet()
   const next = screen.nextUp
   const [chosen, setModeState] = useState<ScheduleMode>(() => readScheduleMode())
@@ -88,6 +92,17 @@ export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes
   const setMode = (m: ScheduleMode) => { setModeState(m); saveScheduleMode(m) }
   const allStubs = screen.days.flatMap(day => day.events)
   const openDay = (date: string) => { setMode('tickets'); requestAnimationFrame(() => document.getElementById(`sqm-day-${date}`)?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })) }
+  // "My day": show the tickets for that event's day, with the event picked and in view.
+  const focusDate = focusId ? screen.days.find(day => day.events.some(stub => stub.id === focusId))?.date ?? null : null
+  useEffect(() => {
+    if (!focusId || !focusDate) return
+    setModeState('tickets'); setOpenId(focusId)
+    const t = window.setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[data-event-id="${CSS.escape(focusId)}"]`) ?? document.getElementById(`sqm-day-${focusDate}`)
+      el?.scrollIntoView?.({ block: 'center' })
+    }, 60)
+    return () => window.clearTimeout(t)
+  }, [focusId, focusDate])
   const remove = (id: string, label: string) => onRemove && (
     <button type="button" className="sq-remove" aria-label={`Remove ${label} from plans`} onClick={() => onRemove(id)}>Remove</button>
   )
@@ -201,12 +216,14 @@ export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes
                         </ol>
                       )}
                       {mode === 'tickets' && open && (
-                        <div className="sqm-open">
-                          <div className="sqm-openhead"><span>PICKED</span><button type="button" onClick={() => setOpenId(null)}>Close</button></div>
+                        <div className={`sqm-open${open.preview ? ' sqm-open-preview' : ''}`}>
+                          <div className="sqm-openhead"><span>{open.preview ? 'NOT PLANNED YET' : 'PICKED'}</span><button type="button" onClick={() => setOpenId(null)}>Close</button></div>
                           <EventStub face stub={open}>
                             {open.overlap && <span className="sq-pill sq-pill-overlap">{open.overlap.text}</span>}
-                            <ScheduleEventDetails event={open} />
-                            {remove(open.id, open.title)}
+                            {!open.preview && <ScheduleEventDetails event={open} />}
+                            {open.preview
+                              ? onPlan && <button type="button" className="sq-plan-button sqm-preview-plan" onClick={() => onPlan(open.id)}>Plan it</button>
+                              : remove(open.id, open.title)}
                           </EventStub>
                         </div>
                       )}

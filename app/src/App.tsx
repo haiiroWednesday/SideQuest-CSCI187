@@ -12,14 +12,17 @@ import { useCatalogLiveUpdates } from './view/useCatalogLiveUpdates'
 import { useBrowseDetail } from './view/useBrowseDetail'
 import { useSharedSchedule } from './view/useSharedSchedule'
 import { useSomeday } from './view/useSomeday'
+import { useBusyMarks } from './view/useBusyMarks'
+import type { PersonalStorePort } from './controller/personalClient'
 import { SomedayView } from './view/SomedayView'
 import { GroupPlanningView } from './view/GroupPlanningView'
 import { GroupEmailLoginView } from './view/GroupEmailLoginView'
 import { createAuthenticatedGroupClient, type GroupAccessTokenProvider } from './controller/groupClient'
-import { presentBrowseDetail, type FreeWindow } from './controller/presentScreens'
+import { presentBrowseDetail, withPreview, type FreeWindow } from './controller/presentScreens'
 import { FriendsPreview } from './view/FriendsPreview'
+import { FriendsGoingProvider } from './view/FriendsGoing'
 import { QuietContext } from './view/quietContext'
-import { addBusy, fillGap, freeWindows, paintMarks, presentMarks, type FreeMarks, type When } from './controller/freeMarks'
+import { addBusy, fillGap, freeWindows, paintMarks, presentMarks, reshapeBusy, type FreeMarks, type When } from './controller/freeMarks'
 import type { MarkerProps } from './view/DiscoverView'
 import { addPostedId, readPostedIds } from './controller/myPosts'
 
@@ -33,6 +36,8 @@ export type GroupEmailAuthFlow = {
   busy: boolean
   error: string | null
   message: string | null
+  /** True when signing in also keeps My Schedule, Someday and busy time in the account. */
+  accounts?: boolean
   requestCode: (email: string) => Promise<boolean>
   verifyCode: (email: string, code: string) => Promise<boolean>
   signOut: () => void
@@ -41,17 +46,33 @@ const mapFocusFromHash = () => {
   if (!window.location.hash.startsWith('#map/')) return null
   try { return decodeURIComponent(window.location.hash.slice(5)) || null } catch { return null }
 }
+/** "#walk/<place>": the map draws a walking route from you to that place. */
+const walkFromHash = () => {
+  if (!window.location.hash.startsWith('#walk/')) return null
+  try { return decodeURIComponent(window.location.hash.slice(6)) || null } catch { return null }
+}
+/** "#day/<event id>": My Schedule opens on that event's day, showing where it falls. */
+const dayFromHash = () => {
+  if (!window.location.hash.startsWith('#day/')) return null
+  try { return decodeURIComponent(window.location.hash.slice(5)) || null } catch { return null }
+}
 const pageFromHash = () => {
-  if (window.location.hash === '#map' || window.location.hash.startsWith('#map/')) return 'map'
-  if (window.location.hash === '#schedule') return 'schedule'
+  if (window.location.hash === '#map' || window.location.hash.startsWith('#map/') || window.location.hash.startsWith('#walk/')) return 'map'
+  if (window.location.hash === '#schedule' || window.location.hash.startsWith('#day/')) return 'schedule'
   if (window.location.hash === '#someday') return 'someday'
   if (window.location.hash === '#groups') return 'groups'
   if (window.location.hash === '#login') return 'login'
   return ['#post', '#create-heading'].includes(window.location.hash) ? 'post' : 'discover'
 }
 
-export default function App({ catalog, now, groupSession, emailAuth, realtimeEnabled = false, designReview = false }: {
+export default function App({ catalog, now, groupSession, emailAuth, realtimeEnabled = false, designReview = false, quiet = false, signedIn = false, personalStore = null }: {
   catalog?: ConnectedCatalog
+  /** The designed look (paper, tickets, the busy-time bar) on real data, without the review's sample groups. */
+  quiet?: boolean
+  /** A verified email-code session exists in this tab. */
+  signedIn?: boolean
+  /** Signed in with accounts on: where My Schedule, Someday and busy time are kept. Never built from storage. */
+  personalStore?: PersonalStorePort | null
   /** Design review build: shows the switch between Discover layouts. */
   designReview?: boolean
   now?: () => Date
@@ -62,22 +83,25 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
 } = {}) {
   const [connection] = useState(() => catalog ?? connectBrowserEventCatalog({}))
   const [page, setPage] = useState(pageFromHash)
-  const routes = groupSession || designReview
-    ? { ...baseRoutes, groups: '#groups', ...(emailAuth ? { onSignOut: emailAuth.signOut } : {}) }
+  const look = designReview || quiet
+  const routes = groupSession || designReview || signedIn
+    ? { ...baseRoutes, ...(groupSession || designReview ? { groups: '#groups' } : {}), ...(emailAuth ? { onSignOut: emailAuth.signOut } : {}) }
     : emailAuth?.enabled ? { ...baseRoutes, login: '#login' } : baseRoutes
   const groupClient = useMemo(() => groupSession
     ? createAuthenticatedGroupClient(groupSession.getAccessToken) : null,
     [groupSession])
   const [freeWindow, setFreeWindow] = useState<FreeWindow>({ date: '', start: '', end: '' })
   const [category, setCategory] = useState<EventCategorySelection>('all')
-  const [marks, setMarks] = useState<FreeMarks>({})
+  const busyMarks = useBusyMarks(personalStore)
+  const marks: FreeMarks = busyMarks.marks
+  const setMarks = busyMarks.setMarks
   const [markDate, setMarkDate] = useState('')
   const [markWhen, setMarkWhen] = useState<When>('week')
   const events = useEventCatalog(connection.catalog)
   // Notifications only trigger an authoritative catalog refresh; no pushed event is trusted.
   useCatalogLiveUpdates(connection.shared && realtimeEnabled, events.refresh)
-  const plans = useSharedSchedule(connection.catalog)
-  const someday = useSomeday()
+  const plans = useSharedSchedule(connection.catalog, personalStore)
+  const someday = useSomeday(personalStore)
   const details = useBrowseDetail(connection.catalog)
   const markInput = { events: events.events, plannedIds: plans.schedule.ids, now: now?.() ?? new Date(), marks, when: markWhen }
   const markModel = presentMarks({ ...markInput, date: markDate })
@@ -87,6 +111,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
     onWhen: key => { if (key !== 'week') setMarkDate(''); setMarkWhen(key) },
     onAddBusy: (start, end) => { const next = addBusy({ ...markInput, date: markModel.date }, start, end); if (next) setMarks(next); return next !== null },
     onFillGap: w => setMarks(fillGap(markInput, w)),
+    onReshape: (from, first, last) => setMarks(reshapeBusy({ ...markInput, date: markModel.date }, from, first, last)),
     onUnbusy: r => setMarks(paintMarks({ ...markInput, date: markModel.date }, r.first, r.last, false)),
     onClear: Object.keys(marks).length || markWhen !== 'week' ? () => { setMarks({}); setMarkWhen('week') } : null,
   }
@@ -95,7 +120,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   const discover = useDiscoverScreen({
     events: events.events, loading: events.loading, error: events.error,
     plannedIds: plans.schedule.ids, freeWindow, category,
-    ...(designReview && told ? { freeWindows: freeWindows(markInput) } : {}),
+    ...(look && told ? { freeWindows: freeWindows(markInput) } : {}),
     planningBlocked: plans.schedule.blocked || plans.loading,
     ...(now ? { now: now() } : {}),
   })
@@ -105,13 +130,17 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
     ? { id: details.state.id, status: 'ready' as const,
         stub: presentBrowseDetail(details.state.event, plans.schedule.ids, now?.()) }
     : details.state
-  const schedule = useScheduleScreen({
-    ...plans.schedule, loading: plans.loading, unresolvedIds: plans.unresolvedIds,
-  }, now?.())
   const [mapFocus, setMapFocus] = useState(mapFocusFromHash)
+  const [mapWalk, setMapWalk] = useState(walkFromHash)
+  const [dayFocus, setDayFocus] = useState(dayFromHash)
+  // "My day" on an event card: an event not in My Schedule yet is shown on its day as a preview.
+  const previewEvent = dayFocus && !plans.schedule.ids.includes(dayFocus) ? events.events.find(e => e.id === dayFocus) ?? null : null
+  const schedule = useScheduleScreen(withPreview({
+    ...plans.schedule, loading: plans.loading, unresolvedIds: plans.unresolvedIds,
+  }, previewEvent), now?.())
   const [postedIds, setPostedIds] = useState(() => readPostedIds())
   useEffect(() => {
-    const navigate = () => { setPage(pageFromHash()); setMapFocus(mapFocusFromHash()) }
+    const navigate = () => { setPage(pageFromHash()); setMapFocus(mapFocusFromHash()); setMapWalk(walkFromHash()); setDayFocus(dayFromHash()) }
     window.addEventListener('hashchange', navigate)
     return () => window.removeEventListener('hashchange', navigate)
   }, [])
@@ -136,7 +165,9 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
     details.open(id)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [details.open])
-  const sourceNote = connection.shared
+  const sourceNote = connection.shared && personalStore
+    ? 'Public campus events. Your plans, ideas and busy time are saved to your account. Times are in California time.'
+    : connection.shared
     ? 'Public campus events. Personal plans stay on this device. Times are in California time.'
     : 'Posts are saved in this browser only. Dates and times use California time. Personal plans stay on this device.'
 
@@ -159,13 +190,15 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
     action: plans.schedule.blocked ? { label: 'Recover valid plans', onClick: plans.recover } : undefined })
   else if (page !== 'schedule' && plans.lookupError) toasts.push({ key: `lookup-${feedbackRevision}`, tone: 'error', text: plans.lookupError,
     action: { label: 'Try again', onClick: () => { void plans.refresh() } } })
+  if (busyMarks.error) toasts.push({ key: `busy-${busyMarks.error}`, tone: 'error', text: busyMarks.error })
   if (page !== 'schedule' && plans.schedule.capacityMessage) toasts.push({ key: `capacity-${feedbackRevision}`, tone: 'info', text: plans.schedule.capacityMessage })
 
   const content = page === 'map' ? (
         <MapView routes={routes} plannedCount={plans.schedule.ids.length} events={events.events}
-          plannedIds={plans.schedule.ids} postedIds={postedIds} focus={mapFocus} now={now?.() ?? new Date()} onOpenEvent={openFromMap} designReview={designReview} />
+          plannedIds={plans.schedule.ids} postedIds={postedIds} focus={mapFocus} walk={mapWalk} now={now?.() ?? new Date()} onOpenEvent={openFromMap} designReview={designReview} />
       ) : page === 'schedule' ? (
-        <ScheduleTrailView screen={schedule} routes={routes} now={now?.() ?? new Date()}
+        <ScheduleTrailView screen={schedule} routes={routes} now={now?.() ?? new Date()} focusId={dayFocus}
+          onPlan={id => { void plans.add(id) }}
           onRemove={id => { void plans.remove(id) }} onRecover={plans.recover}
           onRetry={() => { void plans.refresh() }} />
       ) : page === 'someday' ? (
@@ -181,11 +214,11 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
           onStatus={someday.setStatus} onRecover={someday.recover}
           onPlan={id => { void plans.add(id) }}
         />
-      ) : page === 'login' && emailAuth && !groupSession ? (
-        <GroupEmailLoginView routes={routes} busy={emailAuth.busy}
+      ) : page === 'login' && emailAuth && !groupSession && !signedIn ? (
+        <GroupEmailLoginView routes={routes} busy={emailAuth.busy} accounts={emailAuth.accounts === true}
           error={emailAuth.error} message={emailAuth.message}
           requestCode={emailAuth.requestCode} verifyCode={emailAuth.verifyCode}
-          onSuccess={() => { window.location.hash = '#groups' }} />
+          onSuccess={() => { window.location.hash = emailAuth.accounts ? '#schedule' : '#groups' }} />
       ) : page === 'groups' && designReview && !groupSession ? (
         <FriendsPreview events={events.events} routes={routes} plannedCount={plans.schedule.ids.length} />
       ) : page === 'groups' && groupSession && groupClient ? (
@@ -209,11 +242,11 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
             detail={selectedDetail} onSelectEvent={details.open} onRetryDetail={details.retry}
             onRetry={() => { void events.refresh() }}
             onPlan={id => { void plans.add(id) }} onFreeWindowChange={setFreeWindow}
-            onCategoryChange={setCategory} marker={designReview ? marker : undefined} openId={mapPick} key={mapPick ?? 'list'} layoutSwitcher={false} />
+            onCategoryChange={setCategory} marker={look ? marker : undefined} openId={mapPick} key={mapPick ?? 'list'} layoutSwitcher={false} />
       )
   return (
-    <QuietContext.Provider value={designReview}>
-      {content}
+    <QuietContext.Provider value={look}>
+      <FriendsGoingProvider events={events.events} enabled={designReview}>{content}</FriendsGoingProvider>
       <ToastStack toasts={toasts} />
     </QuietContext.Provider>
   )

@@ -3,6 +3,7 @@
 // An explicit public Boolean controls UI visibility, not server authorization.
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { VerifiedGroupSession } from '../App'
+import type { SignInLink } from '../controller/signInLink'
 
 const PUBLIC_LOGIN = import.meta.env.SIDEQUEST_PUBLIC_GROUP_LOGIN === 'true'
 
@@ -33,8 +34,11 @@ async function authRequest(path: string, payload: unknown): Promise<Record<strin
   return record
 }
 
-export function useGroupEmailAuth() {
+/** `link`: a sign-in link this page was opened from, already wiped from the address by main.tsx. */
+export function useGroupEmailAuth(link: SignInLink | null = null) {
   const [enabled, setEnabled] = useState(false)
+  // Which signed-in pages this server can back. An older server only knew groups.
+  const [features, setFeatures] = useState({ groups: false, accounts: false })
   const [checking, setChecking] = useState(PUBLIC_LOGIN)
   const [busy, setBusy] = useState(false)
   const [credentials, setCredentials] = useState<Credentials | null>(null)
@@ -45,8 +49,13 @@ export function useGroupEmailAuth() {
     if (!PUBLIC_LOGIN) return
     let active = true
     void fetch('/api/auth/status', { credentials: 'omit', cache: 'no-store' })
-      .then(async response => response.ok ? await response.json() as { enabled?: boolean } : null)
-      .then(data => { if (active) setEnabled(data?.enabled === true) })
+      .then(async response => response.ok ? await response.json() as { enabled?: boolean; groups?: boolean; accounts?: boolean } : null)
+      .then(data => {
+        if (!active) return
+        const on = data?.enabled === true
+        setEnabled(on)
+        setFeatures({ groups: on && (data?.groups ?? true), accounts: on && data?.accounts === true })
+      })
       .catch(() => { if (active) setEnabled(false) })
       .finally(() => { if (active) setChecking(false) })
     return () => { active = false }
@@ -98,13 +107,38 @@ export function useGroupEmailAuth() {
     } finally { setBusy(false) }
   }, [enabled, busy])
 
+  // A sign-in link: the server checks its token with Supabase Auth once, then it is used like a code's.
+  const [linkUsed, setLinkUsed] = useState(false)
+  useEffect(() => {
+    if (!link || linkUsed || checking) return
+    setLinkUsed(true)
+    if (link.kind === 'error') { setError(link.message); return }
+    if (!enabled) return
+    setBusy(true)
+    void authRequest('/api/auth/link-session', { accessToken: link.accessToken })
+      .then(data => {
+        if (typeof data.userId !== 'string' || data.accessToken !== link.accessToken ||
+            typeof data.expiresAt !== 'number' || data.expiresAt <= Date.now() + 5000) {
+          throw Error('This sign-in link has expired or was already used. Ask for a new one.')
+        }
+        setCredentials({ userId: data.userId, accessToken: data.accessToken, expiresAt: data.expiresAt })
+        setMessage(null)
+        setError(null)
+      })
+      .catch(problem => {
+        setError(problem instanceof Error ? problem.message : 'This sign-in link did not work. Ask for a new one.')
+        window.location.hash = '#login'
+      })
+      .finally(() => setBusy(false))
+  }, [link, linkUsed, checking, enabled])
+
   const signOut = useCallback(() => {
     // Tokens are intentionally never persisted or shared across tabs.
     // This ends the current tab's session; other devices are unaffected.
     setCredentials(null)
     setMessage('This tab is signed out.')
     setError(null)
-    if (window.location.hash === '#groups') window.location.hash = '#discover'
+    if (window.location.hash === '#groups' || window.location.hash === '#login') window.location.hash = '#discover'
   }, [])
 
   const session = useMemo<VerifiedGroupSession | null>(() => credentials
@@ -112,5 +146,5 @@ export function useGroupEmailAuth() {
         Date.now() + 5000 < credentials.expiresAt ? credentials.accessToken : null }
     : null, [credentials])
 
-  return { enabled, checking, busy, error, message, session, requestCode, verifyCode, signOut }
+  return { enabled, features, checking, busy, error, message, session, requestCode, verifyCode, signOut }
 }

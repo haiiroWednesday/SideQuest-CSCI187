@@ -15,11 +15,15 @@ export type ScheduleInput = {
   loading?: boolean
   capacityMessage?: string | null
   unresolvedIds?: readonly string[]
+  /** An event shown on its day before it is planned ("My day" on an event card). Never counted as a plan. */
+  previewId?: string | null
 }
 
 export type PlanStubModel = StubModel & {
   overlap: { title: string; text: string } | null
   done: boolean
+  /** Shown to see where it would fall; not in My Schedule. */
+  preview?: boolean
 }
 
 export type NextUpModel = {
@@ -65,7 +69,7 @@ function presentNextUp(first: PlanStubModel, event: ScreenEvent | undefined, now
 }
 
 export function presentSchedule(input: ScheduleInput, now: Date = new Date()): ScheduleScreen {
-  const ids = new Set(input.entries.map(entry => entry.event.id))
+  const ids = new Set(input.entries.map(entry => entry.event.id).filter(id => id !== input.previewId))
   const sorted = [...input.entries].sort((a, b) => byTime(a.event, b.event))
   const stubs: PlanStubModel[] = sorted.map(({ event, conflict }) => {
     const span = conflict ? overlapSpan(event, conflict) : null
@@ -73,6 +77,7 @@ export function presentSchedule(input: ScheduleInput, now: Date = new Date()): S
       ...toStub(event, now, ids, null),
       overlap: conflict && span ? { title: conflict.title, text: `Overlaps ${conflict.title} by ${spanText(span.to - span.from)}` } : null,
       done: eventPhase(event, now) === 'ended',
+      ...(event.id === input.previewId ? { preview: true } : {}),
     }
   })
   const upcoming = stubs.filter(stub => !stub.done)
@@ -89,12 +94,12 @@ export function presentSchedule(input: ScheduleInput, now: Date = new Date()): S
     return { ...day, overlapNote, timeline, clashes: presentClashes(dayEvents, now) }
   })
 
-  const first = upcoming[0]
+  const first = upcoming.find(stub => !stub.preview)
   const firstEvent = first ? sorted.find(entry => entry.event.id === first.id)?.event : undefined
   const nextUp = first ? presentNextUp(first, firstEvent, now) : null
 
   return {
-    status: input.blocked ? 'blocked' : input.loading ? 'loading' : input.ids.length === 0 ? 'empty' : 'ready',
+    status: input.blocked ? 'blocked' : input.loading ? 'loading' : input.ids.length === 0 && !input.previewId ? 'empty' : 'ready',
     plannedCount: input.ids.length,
     overlapCount: upcoming.filter(stub => stub.overlap).length,
     missingCount: input.missingIds.length,
@@ -105,4 +110,12 @@ export function presentSchedule(input: ScheduleInput, now: Date = new Date()): S
     unresolved: (input.unresolvedIds ?? []).map(id => ({ id })),
     missing: input.missingIds.map(id => ({ id })),
   }
+}
+
+/** Add one unplanned event to the Schedule input so its day shows where it would fall, clashes included.
+ *  The preview overlaps the first planned event that shares its time, so the clash reads the same as a plan's. */
+export function withPreview(input: ScheduleInput, event: ScreenEvent | null): ScheduleInput {
+  if (!event || input.ids.includes(event.id) || input.entries.some(entry => entry.event.id === event.id)) return input
+  const conflict = input.entries.find(entry => overlapSpan(event, entry.event))?.event ?? null
+  return { ...input, entries: [...input.entries, { event, conflict }], previewId: event.id }
 }

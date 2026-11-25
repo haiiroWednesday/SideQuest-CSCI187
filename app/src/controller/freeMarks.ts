@@ -185,6 +185,13 @@ export function addBusy(input: MarkInput & { date: string }, start: string, end:
   return paintMarks(input, first, last, true)
 }
 
+/** A drag on the day bar: the old busy stretch (if any) is lifted and the new one is laid down.
+ *  My Schedule cells and past cells never change, the same as paintMarks. */
+export function reshapeBusy(input: MarkInput & { date: string }, from: { first: number; last: number } | null, first: number, last: number): FreeMarks {
+  const lifted = from ? paintMarks(input, from.first, from.last, false) : input.marks
+  return paintMarks({ ...input, marks: lifted }, first, last, true)
+}
+
 /** "I'm busy then": the whole free gap becomes busy. */
 export function fillGap(input: MarkInput, w: Pick<MarkWindow, 'date' | 'first' | 'last'>): FreeMarks {
   return paintMarks({ ...input, date: w.date }, w.first, w.last, true)

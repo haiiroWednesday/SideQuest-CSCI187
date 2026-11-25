@@ -9,11 +9,13 @@ import type { MapMarkerStyle } from '../controller/viewPreferences'
 import { SideQuestHeader, type SideQuestRoutes } from './DiscoverView'
 import './map.css'
 
-export function MapView({ routes, plannedCount, events, plannedIds, postedIds = [], focus, now, onOpenEvent, designReview = false }: {
+export function MapView({ routes, plannedCount, events, plannedIds, postedIds = [], focus, walk = null, now, onOpenEvent, designReview = false }: {
   routes: SideQuestRoutes
   plannedCount: number
   events: CampusEvent[]
   plannedIds: string[]
+  /** A place to walk to: the map draws a route from your location (asks for location first). */
+  walk?: string | null
   /** A venue to show, from a "Find it on the map" link. */
   focus: string | null
   now: Date
@@ -63,6 +65,9 @@ export function MapView({ routes, plannedCount, events, plannedIds, postedIds = 
   useEffect(() => {
     if (ready && focus) frame.current?.contentWindow?.postMessage({ type: 'sq-focus', location: focus }, window.location.origin)
   }, [ready, focus])
+  useEffect(() => {
+    if (ready && walk) frame.current?.contentWindow?.postMessage({ type: 'sq-walk', location: walk }, window.location.origin)
+  }, [ready, walk])
 
   return (
     <div className="sq-discover-page sq-map-page">

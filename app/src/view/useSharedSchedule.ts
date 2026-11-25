@@ -1,11 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createSharedScheduleController, type SharedScheduleResult } from '../controller/sharedSchedule'
+import { createAccountScheduleController } from '../controller/accountData'
+import type { PersonalStorePort } from '../controller/personalClient'
 import type { EventCatalogPort } from '../controller/postEvent'
 import { SCHEDULE_RECOVERY_CONFIRMATION } from './scheduleRecovery'
 
-export function useSharedSchedule(catalog: EventCatalogPort) {
-  const controller = useMemo(() => createSharedScheduleController(catalog), [catalog])
+/** Signed in, plans live in the account (`store`); signed out, on this device as before. */
+export function useSharedSchedule(catalog: EventCatalogPort, store?: PersonalStorePort | null) {
+  const controller = useMemo(() => store
+    ? createAccountScheduleController(catalog, store)
+    : createSharedScheduleController(catalog), [catalog, store])
   const [result, setResult] = useState(() => controller.initial())
+  // Signing in or out swaps where plans live; start from that place's first state.
+  const shown = useRef(controller)
+  if (shown.current !== controller) { shown.current = controller; setResult(controller.initial()) }
   const generation = useRef(0)
   // Increment for every completed action so repeated identical feedback gets
   // a new toast identity without modifying persisted plans or catalog data.

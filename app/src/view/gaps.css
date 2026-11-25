@@ -9,7 +9,7 @@
 .sq-ds-day { font: 400 40px var(--font-display); }
 .sq-tags { display: flex; flex-wrap: wrap; gap: 8px 6px; margin: 16px 0 6px; }
 .sq-tag { position: relative; min-height: 38px; padding: 0 16px 0 30px; border: 0; background: url('./assets/mat-tag-off.svg') 0 0 / 100% 100% no-repeat; font: 650 14px var(--font-sans); color: var(--sq-ink); cursor: pointer; }
-.sq-tag[aria-pressed="true"] { background-image: url('./assets/mat-tag-on.svg'); color: #fff; }
+.sq-tag[aria-pressed="true"] { background-image: url('./assets/mat-tag-on.svg'); color: #302421; }
 .sq-tag:focus-visible { outline: 3px solid var(--sq-focus, #751728); outline-offset: 2px; }
 .sq-ruler { position: relative; height: 76px; margin: 6px 4px 0; max-width: 760px; }
 .sq-ruler-track { position: absolute; left: 0; right: 0; top: 24px; height: 20px; border-bottom: 1.6px solid var(--sq-ink); }

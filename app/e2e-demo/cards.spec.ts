@@ -93,3 +93,16 @@ test('an opened card puts the end time and the length on their own lines, clear 
   const pic = await page.locator('.sq-quiet-pic').first().boundingBox()
   expect(pic!.x + pic!.width).toBeLessThanOrEqual(x!.x + 2)
 })
+
+// Nov 24: no links out of SideQuest from the card. My day opens My Schedule on that day; Walk there opens our map.
+test('an opened card offers My day and Walk there, both inside SideQuest, and no outside links', async ({ page }, info) => {
+  const shot = shooter(page, info)
+  await open(page, 'discover', 390)
+  const card = page.getByRole('button', { name: 'View details for Stargazing at Ricard' })
+  await card.scrollIntoViewIfNeeded(); await card.click()
+  const acts = page.getByRole('group', { name: 'See it in SideQuest' })
+  await expect(acts.getByRole('link', { name: /^My day/ })).toHaveAttribute('href', /^#day\//)
+  await expect(acts.getByRole('link', { name: /^Walk there/ })).toHaveAttribute('href', /^#walk\//)
+  await expect(page.locator('.sq-sticker-card a[href^="http"], .sq-sticker-card a[target="_blank"]')).toHaveCount(0)
+  await shot('handoffs')
+})

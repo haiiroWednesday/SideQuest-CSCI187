@@ -30,6 +30,9 @@ import type { EventCategorySelection } from '../controller/presentScreens'
 import { useMobileDetailFocus, usePhoneViewport } from './useMobileDetailFocus'
 import { FlipCard, boxOf, slideOthers, snapCards, type Box } from './FlipCard'
 import { readDiscoverLayout, saveDiscoverLayout, type DiscoverLayout } from '../controller/viewPreferences'
+import { presentFitMap } from '../controller/presentMap'
+import { DiscoverMap } from './DiscoverMap'
+import { GoingFaces, useGoing } from './FriendsGoing'
 
 export type { FreeWindow } from '../controller/presentScreens'
 export type DiscoverEvent = ScreenEvent
@@ -126,10 +129,12 @@ export function SideQuestHeader({
 
 /** A closed card in the Discover list. Redraws only when what it shows changes. */
 const ListStub = memo(function ListStub({ stub, selected, fitLabel, onOpen }: { stub: StubModel; selected: boolean; fitLabel: string; onOpen: (id: string) => void }) {
+  const going = useGoing()?.going(stub.id)
   return (
-    <EventStub face stub={stub} selected={selected} dim={stub.fit === 'outside'} onSelect={() => onOpen(stub.id)}>
+    <EventStub face stub={stub} selected={selected} dim={stub.fit === 'outside'} onSelect={() => onOpen(stub.id)} extraLabel={going?.label}>
       {stub.fit === 'fits' && <span className="sq-pill sq-pill-fit">{fitLabel}</span>}
       {stub.planned && <span className="sq-planned-mark"><Bookmark label="In My Schedule" /></span>}
+      <GoingFaces eventId={stub.id} />
     </EventStub>
   )
 }, (a, b) => a.selected === b.selected && a.fitLabel === b.fitLabel && a.onOpen === b.onOpen && JSON.stringify(a.stub) === JSON.stringify(b.stub))
@@ -141,13 +146,17 @@ export type MarkerProps = {
   onAddBusy: (start: string, end: string) => boolean
   onFillGap: (w: MarkWindow) => void
   onUnbusy: (run: MarkRun) => void
+  /** A drag on the day bar. `from` is the busy stretch that was picked up, or null for a new one. */
+  onReshape: (from: { first: number; last: number } | null, first: number, last: number) => void
   onClear: (() => void) | null
 }
 
 /** One ticket stub. Shared by Discover and My Schedule. */
 
-export function EventStub({ stub, selected = false, dim = false, onSelect, children, face = false }: {
+export function EventStub({ stub, selected = false, dim = false, onSelect, children, face = false, extraLabel }: {
   stub: StubModel
+  /** Read after the title by screen readers, e.g. who is going. */
+  extraLabel?: string
   /** Discover cards carry the venue postcard on their right edge. */
   face?: boolean
   selected?: boolean
@@ -182,7 +191,7 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
     </>
   )
   return onSelect ? (
-    <button type="button" className={classes} style={catStyle} aria-pressed={selected} aria-label={`View details for ${stub.title}`} onClick={onSelect}>{body}</button>
+    <button type="button" className={classes} style={catStyle} aria-pressed={selected} aria-label={`View details for ${stub.title}${extraLabel ? `. ${extraLabel}` : ''}`} onClick={onSelect}>{body}</button>
   ) : (
     <div className={classes} style={catStyle}>{body}</div>
   )
@@ -235,6 +244,9 @@ export function DiscoverView({
   const trigger = useRef<HTMLElement | null>(null)
   const phone = usePhoneViewport()
   const [layout, setLayout] = useState<DiscoverLayout>(() => readDiscoverLayout())
+  // Design review: Discover as a list or as a map of what fits (Nov 24, learning from Meetup's map).
+  const [view, setView] = useState<'list' | 'map'>('list')
+  const showMap = Boolean(marker) && view === 'map'
   const flip = layout !== 'panel'
   const [flipFrom, setFlipFrom] = useState<Box | null>(null)
   const [closing, setClosing] = useState(false)
@@ -324,7 +336,23 @@ export function DiscoverView({
   const pills = (stub: StubModel) => <>
     {stub.fit === 'fits' && <span className="sq-pill sq-pill-fit">{marker ? 'Fits your free time' : 'Fits your window'}</span>}
     {stub.planned && <span className="sq-planned-mark"><Bookmark label="In My Schedule" /></span>}
+    <GoingFaces eventId={stub.id} />
   </>
+  // A marker tapped on the map: back to the list with that card open and in view.
+  const fromMap = useRef<string | null>(null)
+  const openFromMap = useCallback((id: string) => {
+    if (!stubs.some(s => s.id === id)) return
+    fromMap.current = id
+    setView('list')
+    openRef.current(id, null)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen])
+  useEffect(() => {
+    if (view !== 'list' || !fromMap.current) return
+    const id = fromMap.current; fromMap.current = null
+    requestAnimationFrame(() => document.querySelector(`[data-flip-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'center' }))
+  }, [view])
+  const mapRows = showMap ? presentFitMap(screen.days) : []
   // Arriving with a pick (from the map): bring its card into view on wide screens.
   useEffect(() => {
     if (!openId || phone) return
@@ -360,7 +388,17 @@ export function DiscoverView({
           }} />
         </div>}
 
-        <div className={`sq-board${flip ? ' sq-flipmode' : ''}`}>
+        {marker && ready && screen.count > 0 && (
+          <div className="sq-viewswitch" role="group" aria-label="Show events as" inert={modal || undefined}>
+            <button type="button" aria-pressed={view === 'list'} onClick={() => setView('list')}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M3.5 6h.5M3.5 12h.5M3.5 18h.5" /></svg>List</button>
+            <button type="button" aria-pressed={view === 'map'} onClick={() => setView('map')}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5l5.5-2.5 7 2.5 5.5-2.5v13.5l-5.5 2.5-7-2.5L3 20z M8.5 4v13.5 M15.5 6.5V20" /></svg>Map</button>
+          </div>
+        )}
+        {showMap && ready && screen.count > 0 && <DiscoverMap rows={mapRows} onOpenEvent={openFromMap} />}
+
+        <div className={`sq-board${flip ? ' sq-flipmode' : ''}`} hidden={(showMap && ready && screen.count > 0) || undefined}>
           <section inert={modal || undefined} className="sq-results" aria-labelledby="sq-events-heading">
             <h2 id="sq-events-heading" className="sq-visually-hidden">{screen.headingText}</h2>
             {layoutSwitcher && (

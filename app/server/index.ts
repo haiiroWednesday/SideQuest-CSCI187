@@ -11,6 +11,8 @@ import { createGroupApi } from './groupApi'
 import { createEmailAuthApi } from './emailAuthApi'
 import { createSupabaseEmailOtpGatewayFromEnv } from './supabaseEmailAuth'
 import { createSupabaseGroupGatewayFromEnv } from './supabaseGroupAccess'
+import { createPersonalApi } from './personalApi'
+import { accountsEnabled, createSupabasePersonalGatewayFromEnv } from './personalSupabase'
 import { createSupabaseEventCatalogFromEnv } from '../src/model/supabaseEventTable'
 
 const catalog = createSupabaseEventCatalogFromEnv(process.env)
@@ -21,12 +23,16 @@ const notifications: CatalogPublisherPort = {
 const api = createCatalogApi(catalog, Date.now, notifications)
 const ai = createAiDiscoverApi(catalog, { apiKey: process.env.OPENAI_API_KEY, model: process.env.SIDEQUEST_AI_MODEL })
 const groupApi = createGroupApi(createSupabaseGroupGatewayFromEnv(process.env))
-const authApi = createEmailAuthApi(createSupabaseEmailOtpGatewayFromEnv(process.env))
+const authApi = createEmailAuthApi(createSupabaseEmailOtpGatewayFromEnv(process.env), Date.now,
+  { groups: process.env.SIDEQUEST_GROUPS_ENABLED === 'true', accounts: accountsEnabled(process.env) })
+const personalApi = createPersonalApi(createSupabasePersonalGatewayFromEnv(process.env))
 const root = resolve(fileURLToPath(new URL('../dist/', import.meta.url)))
 const mime: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff': 'font/woff', '.woff2': 'font/woff2', '.png': 'image/png' }
 const port = Number(process.env.PORT ?? 3000)
 const server = createServer({ requestTimeout: 15_000, headersTimeout: 10_000 }, async (req, res) => {
   if (await authApi(req, res)) return
+  if (await personalApi(req, res)) return
+  if (req.url?.startsWith('/api/google/') && await (await import('./googleApi')).googleApi(req, res)) return
   if (await groupApi(req, res)) return
   if (await ai(req, res)) return
   if (await api(req, res)) return

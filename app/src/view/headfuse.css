@@ -1,0 +1,89 @@
+/* Header fusion (Cyn's picks, Nov 24): maroon glass gradient for depth,
+   a ticket-stub bottom edge with a gold perforation, a faint clock face
+   behind the logo and a few constellation stars. Design mode only. */
+
+:root[data-quiet] header.sq-masthead {
+  --hf-star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='96' viewBox='0 0 300 96'%3E%3Cpath d='M22 30L74 58L130 26L188 52' fill='none' stroke='%23e8aa24' stroke-opacity='.4' stroke-width='1' stroke-dasharray='1.5 4.5'/%3E%3Cg fill='%23e8aa24'%3E%3Cpath transform='translate(22 30) scale(.5)' d='M0 -10C1 -2 2 -1 10 0C2 1 1 2 0 10C-1 2 -2 1 -10 0C-2 -1 -1 -2 0 -10Z' fill-opacity='.9'/%3E%3Cpath transform='translate(74 58) scale(.32)' d='M0 -10C1 -2 2 -1 10 0C2 1 1 2 0 10C-1 2 -2 1 -10 0C-2 -1 -1 -2 0 -10Z' fill-opacity='.7'/%3E%3Cpath transform='translate(130 26) scale(.62)' d='M0 -10C1 -2 2 -1 10 0C2 1 1 2 0 10C-1 2 -2 1 -10 0C-2 -1 -1 -2 0 -10Z' fill-opacity='.95'/%3E%3Cpath transform='translate(188 52) scale(.36)' d='M0 -10C1 -2 2 -1 10 0C2 1 1 2 0 10C-1 2 -2 1 -10 0C-2 -1 -1 -2 0 -10Z' fill-opacity='.75'/%3E%3Cpath transform='translate(250 78) scale(.2)' d='M0 -10C1 -2 2 -1 10 0C2 1 1 2 0 10C-1 2 -2 1 -10 0C-2 -1 -1 -2 0 -10Z' fill-opacity='.5'/%3E%3C/g%3E%3C/svg%3E");
+  position: relative;
+  /* its own layer at the tab bar's old level (30), so the phone tab bar inside it stays on top of the page */
+  z-index: 30;
+  border-bottom: 0;
+  padding-bottom: 14px;
+  /* glass: lighter at the top, deeper at the bottom, a soft sheen on the upper half */
+  background:
+    linear-gradient(180deg, rgba(255, 236, 214, .14), rgba(255, 236, 214, 0) 52%),
+    linear-gradient(180deg, #8e2540 0%, #761829 58%, #5e1020 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 226, 200, .28);
+  --hf-bite: 7px;
+  --hf-tile: 36px;
+}
+
+/* stars drawn on both ends, never behind the logo */
+:root[data-quiet] header.sq-masthead::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 14px;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--hf-star) left 4px top 0 / 300px 96px no-repeat;
+}
+
+/* The ticket edge: half-circle bites in page colour along the bottom, like the event stubs,
+   with the gold perforation just above them. Painted, not masked: a mask on the header
+   would also hide the phone tab bar, which lives inside it. */
+:root[data-quiet] header.sq-masthead::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 14px;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at calc(var(--hf-tile) / 2) 100%, var(--sq-paper, #fbf6ed) var(--hf-bite), transparent calc(var(--hf-bite) + .6px)) 0 0 / var(--hf-tile) 100% repeat-x,
+    repeating-linear-gradient(90deg, rgba(232, 170, 36, .85) 0 6px, transparent 6px 10px) 0 0 / 100% 2px no-repeat;
+}
+
+/* faint clock face, centred on the logo wherever the logo sits */
+:root[data-quiet] .sq-masthead .sq-brand { position: relative; isolation: isolate; }
+:root[data-quiet] .sq-masthead .sq-brand::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 156px;
+  height: 156px;
+  margin: -78px 0 0 -78px;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .5;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cg fill='none' stroke='%23e8aa24' stroke-width='1.6'%3E%3Ccircle cx='100' cy='100' r='94' stroke-opacity='.55'/%3E%3Ccircle cx='100' cy='100' r='74' stroke-opacity='.4' stroke-dasharray='1.5 6'/%3E%3Cg stroke-opacity='.6' stroke-linecap='round'%3E%3Cpath d='M100 8V24M192 100H176M100 192V176M8 100H24'/%3E%3Cpath d='M146 20.3L142 27.3M179.7 54L172.7 58M179.7 146L172.7 142M146 179.7L142 172.7M54 179.7L58 172.7M20.3 146L27.3 142M20.3 54L27.3 58M54 20.3L58 27.3'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+@media (min-width: 761px) {
+    /* laptop: the tabs fill the band, so the stars run as a thin rail along its top edge */
+  :root[data-quiet] header.sq-masthead::before {
+    inset: 0 0 auto clamp(200px, 20vw, 320px);
+    height: 22px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='22' viewBox='0 0 600 22'%3E%3Cpath d='M30 12 L110 7 L190 15 L275 9 L360 14 L450 6 L530 13' fill='none' stroke='%23e8aa24' stroke-opacity='.38' stroke-width='1' stroke-dasharray='1.5 4.5'/%3E%3Cg fill='%23e8aa24'%3E%3Cpath transform='translate(30 12) scale(0.42)' d='M0 -10C1 -2 2 -1 10 0C2 1 1 2 0 10C-1 2 -2 1 -10 0C-2 -1 -1 -2 0 -10Z' fill-opacity='0.9'/%3E%3Cpath transform='translate(110 7) scale(0.28)' d='M0 -10C1 -2 2 -1 10 0C2 1 1 2 0 10C-1 2 -2 1 -10 0C-2 -1 -1 -2 0 -10Z' fill-opacity='0.7'/%3E%3Cpath transform='translate(190 15) scale(0.5)' d='M0 -10C1 -2 2 -1 10 0C2 1 1 2 0 10C-1 2 -2 1 -10 0C-2 -1 -1 -2 0 -10Z' fill-opacity='0.95'/%3E%3Cpath transform='translate(275 9) scale(0.3)' d='M0 -10C1 -2 2 -1 10 0C2 1 1 2 0 10C-1 2 -2 1 -10 0C-2 -1 -1 -2 0 -10Z' fill-opacity='0.7'/%3E%3Cpath transform='translate(360 14) scale(0.38)' d='M0 -10C1 -2 2 -1 10 0C2 1 1 2 0 10C-1 2 -2 1 -10 0C-2 -1 -1 -2 0 -10Z' fill-opacity='0.85'/%3E%3Cpath transform='translate(450 6) scale(0.24)' d='M0 -10C1 -2 2 -1 10 0C2 1 1 2 0 10C-1 2 -2 1 -10 0C-2 -1 -1 -2 0 -10Z' fill-opacity='0.6'/%3E%3Cpath transform='translate(530 13) scale(0.44)' d='M0 -10C1 -2 2 -1 10 0C2 1 1 2 0 10C-1 2 -2 1 -10 0C-2 -1 -1 -2 0 -10Z' fill-opacity='0.9'/%3E%3C/g%3E%3C/svg%3E") left 0 top 0 / 600px 22px repeat-x;
+  }
+  :root[data-quiet] .sq-masthead .sq-brand::before { width: 176px; height: 176px; margin: -88px 0 0 -88px; }
+}
+
+@media (min-width: 761px) and (max-width: 1100px) {
+  :root[data-quiet] header.sq-masthead::before { display: none; }
+  :root[data-quiet] .sq-masthead .sq-brand::before { width: 128px; height: 128px; margin: -64px 0 0 -64px; }
+}
+
+@media (max-width: 760px) {
+  :root[data-quiet] header.sq-masthead { padding-bottom: 12px; }
+  /* phone: stars to the left and mirrored to the right of the centred logo */
+  :root[data-quiet] header.sq-masthead::before {
+    inset: 0 0 12px;
+    background:
+      var(--hf-star) left -36px top -6px / 220px 70px no-repeat,
+      var(--hf-star) right -36px top 4px / 200px 64px no-repeat;
+  }
+  :root[data-quiet] header.sq-masthead::after { height: 13px; }
+  :root[data-quiet] .sq-masthead .sq-brand::before { width: 104px; height: 104px; margin: -52px 0 0 -52px; }
+}

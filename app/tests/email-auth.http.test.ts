@@ -51,9 +51,9 @@ describe('passwordless email-code HTTP contract', () => {
     const response = await post(base, '/api/auth/request-code', { email: ' Person@Example.edu ' })
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({
-      message: 'If this email is eligible, a verification code will arrive.',
+      message: 'If this email can sign in, an email is on its way.',
     })
-    expect(gateway.requestCode).toHaveBeenCalledWith('person@example.edu')
+    expect(gateway.requestCode).toHaveBeenCalledWith('person@example.edu', base)
     expect(response.headers.get('cache-control')).toBe('no-store, private')
   })
   it('verifies an issued code and never accepts a supplied account identity', async () => {
@@ -92,5 +92,38 @@ describe('passwordless email-code HTTP contract', () => {
     const limited = await post(base, '/api/auth/verify-code',
       { email: 'person@example.edu', code: '123456' })
     expect(limited.status).toBe(429)
+  })
+})
+
+describe('sign-in link: POST /api/auth/link-session', () => {
+  const linkToken = 'link-access-token-from-the-address-for-tests'
+  function withLink(): EmailOtpGateway {
+    return {
+      ...sample(),
+      sessionFromLink: vi.fn(async (token: string) => token === linkToken
+        ? { userId: actorId, accessToken: token, expiresAt: Date.now() + 3600000 } : null),
+    }
+  }
+  it('returns the session for a token Supabase Auth accepts', async () => {
+    const gateway = withLink(), base = await start(gateway)
+    const ok = await post(base, '/api/auth/link-session', { accessToken: linkToken })
+    expect(ok.status).toBe(200)
+    expect(await ok.json()).toMatchObject({ userId: actorId, accessToken: linkToken })
+    expect(gateway.sessionFromLink).toHaveBeenCalledWith(linkToken)
+  })
+  it('refuses a token Supabase Auth does not accept, and anything extra', async () => {
+    const gateway = withLink(), base = await start(gateway)
+    expect((await post(base, '/api/auth/link-session', { accessToken: 'made-up-token-that-is-long-enough' })).status).toBe(401)
+    expect((await post(base, '/api/auth/link-session', { accessToken: linkToken, userId: actorId })).status).toBe(400)
+    expect((await post(base, '/api/auth/link-session', { accessToken: 'short' })).status).toBe(400)
+  })
+  it('refuses a link session started from another site', async () => {
+    const gateway = withLink(), base = await start(gateway)
+    expect((await post(base, '/api/auth/link-session', { accessToken: linkToken }, 'https://unrelated.example')).status).toBe(403)
+    expect(gateway.sessionFromLink).not.toHaveBeenCalled()
+  })
+  it('refuses link sign-in when the provider cannot check links', async () => {
+    const base = await start(sample())
+    expect((await post(base, '/api/auth/link-session', { accessToken: linkToken })).status).toBe(400)
   })
 })

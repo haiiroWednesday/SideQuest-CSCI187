@@ -209,9 +209,9 @@ export function ScheduleDayModes({ events, timeline, mode, now, isToday, onOpen,
         const label = labelAt.get(it.id) ?? Y(it.startMinute) - 11
         return (
           <div key={it.id}>
-            <button type="button" className="sqm-plan" data-event-id={it.id} style={style} onClick={() => K ? onOpen(it.id) : onOpenTickets()}
+            <button type="button" className={`sqm-plan${it.stub.preview ? ' sqm-preview' : ''}`} data-event-id={it.id} style={style} onClick={() => K ? onOpen(it.id) : onOpenTickets()}
               tabIndex={K ? 0 : -1} aria-hidden={K ? undefined : true}
-              aria-label={`${it.stub.title}, ${tm}${it.stub.overlap ? `, ${it.stub.overlap.text}` : ''}`}>
+              aria-label={`${it.stub.title}, ${tm}${it.stub.preview ? ', not planned yet' : ''}${it.stub.overlap ? `, ${it.stub.overlap.text}` : ''}`}>
               <span className="sqm-kc" aria-hidden="true">
                 {b.kind === 'stack' ? (() => { const g = stacks.find(s => s.items[0].id === it.id)!
                   return <span className="sqm-stack"><b><i>{g.items.length}</i> plans at {clock(g.start)}</b>

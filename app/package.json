@@ -19,7 +19,9 @@
     "test:regression:journeys": "playwright test e2e/regression.journeys.spec.ts --project=chromium",
     "test:ai:live": "node --env-file=.env.local scripts/verify-ai-live.mjs",
     "test:e2e:demo": "playwright test -c playwright.demo.config.ts",
-    "test:ux": "playwright test -c playwright.demo.config.ts"
+    "test:ux": "playwright test -c playwright.demo.config.ts",
+    "real": "vite build && vite build --ssr server/index.ts --outDir dist-server && node --env-file=.env.local dist-server/index.js",
+    "check:accounts": "node scripts/check-accounts-live.mjs"
   },
   "engines": {
     "node": ">=22.12.0"

@@ -5,7 +5,7 @@ import { GroupEmailLoginView } from '../src/view/GroupEmailLoginView'
 
 afterEach(cleanup)
 
-describe('group email-code sign-in screen', () => {
+describe('email sign-in screen: link first, code second', () => {
   it('asks for an email code, verifies it and continues without displaying access tokens', async () => {
     const requestCode = vi.fn(async () => true)
     const verifyCode = vi.fn(async () => true)
@@ -18,8 +18,12 @@ describe('group email-code sign-in screen', () => {
     fireEvent.change(screen.getByLabelText('Email address'), {
       target: { value: 'student@example.edu' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Send sign-in code' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Email me a sign-in link' }))
     await waitFor(() => expect(requestCode).toHaveBeenCalledWith('student@example.edu'))
+    // The default Supabase email holds a link; the code is the second way in.
+    await screen.findByRole('heading', { name: 'Check your email and tap the link' })
+    expect(screen.queryByLabelText('Verification code')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Have a code instead?' }))
     await waitFor(() => expect(screen.getByLabelText('Verification code')).toBeTruthy())
     expect((screen.getByLabelText('Email address') as HTMLInputElement).disabled).toBe(true)
 
@@ -43,8 +47,9 @@ describe('group email-code sign-in screen', () => {
     fireEvent.change(screen.getByLabelText('Email address'), {
       target: { value: 'student@example.edu' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Send sign-in code' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Email me a sign-in link' }))
     await waitFor(() => expect(requestCode).toHaveBeenCalledOnce())
+    expect(screen.queryByRole('heading', { name: 'Check your email and tap the link' })).toBeNull()
     expect(screen.queryByLabelText('Verification code')).toBeNull()
     expect(onSuccess).not.toHaveBeenCalled()
     rerender(<GroupEmailLoginView routes={{ discover: '#discover', login: '#login' }}

@@ -14,6 +14,10 @@
 @media (max-width: 760px) {
   :root[data-look-density="compact"] body { zoom: .88; }
   :root[data-look-density="dense"] body { zoom: .8; }
+  /* The map frame must not inherit the page zoom: WebKit shrinks its contents (a white strip on the right)
+     and Chromium overflows them. Undo the zoom for the map area only. */
+  :root[data-look-density="compact"] .sq-map-main { zoom: calc(1 / .88); }
+  :root[data-look-density="dense"] .sq-map-main { zoom: 1.25; }
 }
 
 /* Nav layouts: an odd number of places keeps the Post star in the middle */

@@ -259,6 +259,32 @@ body.embed .find{margin-right:0!important}
 /* Key: one button with a chevron, not two labels (Nov 24). */
 #legendBtn{display:inline-flex!important;align-items:center;gap:8px}
 #legendTog{transition:transform .2s}.legend.open #legendTog{transform:rotate(180deg)}
+
+/* In the app (Nov 24): only the search and one row of kinds sit over the map. The event key lives in Key,
+   the walk-minute bar stays off until walking routes are verified, and the location button is an arrow. */
+body.embed #walk{display:none!important}
+body.disc .pills{display:none!important}
+body.embed .pills button{min-height:40px;padding:0 12px;font-size:15px}
+#zme[aria-pressed="true"] svg path{fill:#a32035;stroke:#a32035}
+.legend.open{z-index:7}
+
+/* The walking note sits under the search box so it never covers the route or the place. */
+.me-note.walking{top:78px;bottom:auto!important;width:max-content;max-width:min(520px,calc(100% - 32px));text-align:left;font-size:14px;line-height:1.35}
+.me-note .linkish{all:unset;cursor:pointer;margin-left:6px;font-weight:700;color:#a32035;text-decoration:none}
+.me-note .linkish:focus-visible{outline:3px solid #751728;outline-offset:2px}
+/* Testing Walk there from anywhere (Nov 24): a pretend spot you place yourself, and a walk played for you.
+   Nothing about either is stored or sent; both live in this page's memory only. */
+.me-note .nb{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:0 14px;margin:6px 6px 0 0;border:1.5px solid #a32035;border-radius:3px;background:#fffaf2;color:#a32035;font:700 14px var(--font-sans,system-ui);cursor:pointer;white-space:nowrap;vertical-align:middle}
+.me-note .nb.go{background:#a32035;color:#fffaf2}
+.me-note .nb:focus-visible{outline:3px solid #751728;outline-offset:2px}
+.me-note .nbs{display:block}
+#map.picking{cursor:crosshair}
+.hits{z-index:8} /* search results sit above the walking note while you pick a building */
+.me.pretend .me-ring{animation:none;left:-19px;top:-19px;width:38px;height:38px;border:2px dashed #a32035;display:block}
+.me.pretend .me-spark,.me.pretend .me-acc,.me.pretend .me-beam{display:none}
+.me.pretend .me-dot{background:radial-gradient(circle at 40% 38%,#fffaf2,#f2d48a 60%,#e2b44f);box-shadow:0 0 0 1.5px #a32035}
+.me-tag{display:none;position:absolute;left:0;top:24px;transform:translateX(-50%);padding:3px 8px 4px;background:#fffaf2;border:1.5px dashed #a32035;color:#a32035;font:700 12.5px/1.25 var(--font-sans,system-ui);white-space:nowrap}
+.me.pretend .me-tag{display:block}
 </style>
 </head>
 <body>
@@ -273,7 +299,7 @@ body.embed .find{margin-right:0!important}
     <canvas id="map" role="img" aria-label="Map of the Santa Clara University campus. Every place on it is also in the list beside the map."></canvas>
     <div class="tools">
       <div class="find">
-        <input id="q" type="search" autocomplete="off" placeholder="Find a building, department or number" aria-label="Find a building, department or number" aria-controls="hits">
+        <input id="q" type="search" autocomplete="off" placeholder="Find a building" aria-label="Find a building, department or number" aria-controls="hits">
         <ul class="hits" id="hits" hidden></ul>
       </div>
       <div class="pills" id="themes" role="group" aria-label="Show a kind of place"></div>
@@ -310,7 +336,7 @@ body.embed .find{margin-right:0!important}
     <div class="legend" id="legend" hidden><button id="legendBtn" aria-expanded="false"><span>Key</span><svg id="legendTog" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8L9.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="lg-body" id="legendBody"></div></div>
     <div class="zoom">
       <span class="north" aria-hidden="true"><svg width="34" height="50" viewBox="0 0 34 50"><g id="northG"><path d="M17 5 L23 30 L17 26 L11 30 Z" fill="#a32035"/><path d="M17 26 L17 44" stroke="#302421" stroke-width="1.6" stroke-linecap="round"/></g><text x="17" y="49" text-anchor="middle" font-family="Instrument Sans,Arial" font-weight="700" font-size="10" fill="#655d58">N</text></svg></span>
-      <button id="zme" aria-label="Show where I am" aria-pressed="false"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M13 5.5L16 13L13 20.5L10 13Z" fill="#a32035"/><path d="M13 13L16 13L13 20.5Z" fill="currentColor" opacity=".35"/></svg></button>
+      <button id="zme" aria-label="Show where I am" aria-pressed="false"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5L3.8 10.6c-.7.3-.6 1.3.1 1.5l6.4 1.6 1.6 6.4c.2.7 1.2.8 1.5.1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button>
       <button id="zlist" aria-label="Places with events" aria-expanded="false"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M7 5.5H19M7 11H19M7 16.5H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="3.2" cy="5.5" r="1.3" fill="currentColor"/><circle cx="3.2" cy="11" r="1.3" fill="currentColor"/><circle cx="3.2" cy="16.5" r="1.3" fill="currentColor"/></svg></button>
       <button id="zin" aria-label="Zoom in">+</button>
       <button id="zout" aria-label="Zoom out">−</button>
@@ -448,6 +474,9 @@ const ZONES=[
 const WARM={class:'#a32035',home:'#b9531c',life:'#d99a12',arts:'#7a4a35',sport:'#6f7d38',office:'#6c7c88',park:'#8e7b66',out:'#6f7d38',near:'#6c7c88'};
 const HATCH={class:g=>{for(let i=-16;i<32;i+=8){g.moveTo(i,16);g.lineTo(i+16,0);}},home:g=>{for(let i=0;i<=16;i+=8){g.moveTo(i,0);g.lineTo(i,16);g.moveTo(0,i);g.lineTo(16,i);}},life:g=>{for(const[x,y]of[[4,4],[12,12]]){g.moveTo(x+1.6,y);g.arc(x,y,1.6,0,6.3);}},arts:g=>{for(let i=2;i<16;i+=6){g.moveTo(0,i);g.lineTo(16,i);}},sport:g=>{for(let i=2;i<16;i+=6){g.moveTo(i,0);g.lineTo(i,16);}},office:g=>{for(let i=-16;i<32;i+=8){g.moveTo(i,0);g.lineTo(i+16,16);}},park:g=>{for(let i=-16;i<32;i+=16){g.moveTo(i,16);g.lineTo(i+16,0);}}};
 const ageCol=y=>{const t=Math.max(0,Math.min(1,(y-1900)/121));return t<.5?mix('#b5653a','#ecd09a',t*2):mix('#ecd09a','#9db9cc',(t-.5)*2);};
+/* A route is drawn in deep blue dots on a cream halo, so it never blends into the terracotta paths (Nov 24: she could hardly see it while walking). */
+const ROUTE_INK='#23408e',MUTE={on:false,path:null};
+function routeShown(){try{return !!(WALK.pts||S.route||S.quest||(S.meet&&S.meet.a));}catch{return false;/* first frames, before the walk state exists */}}
 const PCOL={brown:null,sky:'#4974bb',agave:'#3f8296',palm:'#55712e',terra:'#c9552f',wist:'#7f5e9c',slate:'#425766',navy:'#2b3f8f',teal:'#1f6f6b'};
 function recolor(){Object.assign(C,mk(TH));if(LAB.pcol&&PCOL[LAB.pcol])C.walk=PCOL[LAB.pcol];C.block=mix(C.ground,'#b48a55',.2);if(LAB.redline)C.outline=C.red;
   if(LAB.sage){C.campus='#e4e9d2';C.paper=C.campus;C.lawn='#c2d3a2';C.pitch='#cbd9a4';C.stad='#d3ddb6';C.grassTick='#93a878';C.walk='#fffaf0';C.pathCase='#a9b88c';C.mall='#f3ecd6';C.mallEdge='#b6c39b';C.pencil='#b9c3a0';C.haloG=hexA('#e4e9d2',.9);C.grid='#d3dcbf';}
@@ -516,8 +545,10 @@ function buildLegend(PAL){legend.hidden=false;const NAMES={kind:'kind of place',
     if(which==='mins')r=S.run?MINB.map(b=>[b[2],b[1],null]):[['Tap a place, then Walk from here',C.ticket,null]];
     return`<ul>${r.map(x=>`<li>${asPat?pt(x[2]):sw(mix(C.ticket,x[1],which==='mins'?.8:.45))}<span>${esc(x[0])}</span></li>`).join('')}</ul>`;};
   const lnsw=(st)=>`<i class="ln"><svg width="22" height="14" viewBox="0 0 22 14">${st}</svg></i>`;
-  const lines=`<h4>Lines</h4><ul>`+[[lnsw(`<path d="M1 7H21" stroke="${C.walk}" stroke-width="4" stroke-linecap="round"/>`),'Walking paths'],[lnsw(`<path d="M1 7H21" stroke="${C.pencil}" stroke-width="1.6"/>`),'Sidewalks'],[lnsw(`<path d="M1 7H21" stroke="${C.walk}" stroke-width="6" stroke-dasharray="2.2 2.2"/>`),'Steps'],[lnsw(`<g fill="${C.red}"><circle cx="3" cy="7" r="2.2"/><circle cx="11" cy="7" r="2.2"/><circle cx="19" cy="7" r="2.2"/></g>`),'Your walk']].concat(LAB.mk&&LAB.fac==='2d'&&LAB.port?[[lnsw(`<rect x="3" y="2" width="16" height="10" rx="1" fill="#fffdf8" stroke="${C.outline}" stroke-width="1.2" transform="rotate(-6 11 7)"/>`),LAB.hv==='wall'?'Drawn fronts are turned to face you':LAB.hv==='stick'?'Sticker: how it looks from the front':'Drawn front: the shape behind is the real one']]:[]).map(x=>`<li>${x[0]}<span>${x[1]}</span></li>`).join('')+`</ul>`;
-  legendBody.innerHTML=lines+(S.theme!=='gnr'?`<h4>Gold is your pick</h4><ul><li><i style="background:${C.hi}"></i><span>Main use</span></li><li><i style="background:${mix(C.ticket,C.hi,.35)};background-image:${patSVG('wide',mix(C.hi,C.outline,.12))}"></i><span>Also here</span></li></ul>`:'')+(LAB.cm!=='off'?`<h4>Colour is ${NAMES[LAB.cm]}</h4>${rows(LAB.cm,false)}`:'')+(LAB.pm!=='off'?`<h4>Pattern is ${NAMES[LAB.pm]}</h4>${rows(LAB.pm,true)}`:'');}
+  const lines=`<h4>Lines</h4><ul>`+[[lnsw(`<path d="M1 7H21" stroke="${C.walk}" stroke-width="4" stroke-linecap="round"/>`),'Walking paths'],[lnsw(`<path d="M1 7H21" stroke="${C.pencil}" stroke-width="1.6"/>`),'Sidewalks'],[lnsw(`<path d="M1 7H21" stroke="${C.walk}" stroke-width="6" stroke-dasharray="2.2 2.2"/>`),'Steps'],[lnsw(`<g fill="${ROUTE_INK}" stroke="#fffaf2" stroke-width="1.6" paint-order="stroke"><circle cx="3" cy="7" r="2.4"/><circle cx="11" cy="7" r="2.4"/><circle cx="19" cy="7" r="2.4"/></g>`),'Your route']].concat(LAB.mk&&LAB.fac==='2d'&&LAB.port?[[lnsw(`<rect x="3" y="2" width="16" height="10" rx="1" fill="#fffdf8" stroke="${C.outline}" stroke-width="1.2" transform="rotate(-6 11 7)"/>`),LAB.hv==='wall'?'Drawn fronts are turned to face you':LAB.hv==='stick'?'Sticker: how it looks from the front':'Drawn front: the shape behind is the real one']]:[]).map(x=>`<li>${x[0]}<span>${x[1]}</span></li>`).join('')+`</ul>`;
+  const fitsRow=`<li><i style="background:linear-gradient(90deg,#302421 0 34%,#fffaf2 34%);border-color:#302421"></i><span>Fits your free time</span></li>`;
+  const yours=EMBED?`<h4>${DISC?'On the map':'Your events'}</h4><ul>${DISC?fitsRow:''}<li><i style="background:linear-gradient(90deg,#a32035 0 34%,#fffaf2 34%);border-color:#a32035"></i><span>In My Schedule</span></li><li><i style="background:linear-gradient(90deg,#e8aa24 0 34%,#fffaf2 34%);border-color:#e8aa24"></i><span>You posted</span></li></ul>`:'';
+  legendBody.innerHTML=yours+lines+(S.theme!=='gnr'?`<h4>Gold is your pick</h4><ul><li><i style="background:${C.hi}"></i><span>Main use</span></li><li><i style="background:${mix(C.ticket,C.hi,.35)};background-image:${patSVG('wide',mix(C.hi,C.outline,.12))}"></i><span>Also here</span></li></ul>`:'')+(LAB.cm!=='off'?`<h4>Colour is ${NAMES[LAB.cm]}</h4>${rows(LAB.cm,false)}`:'')+(LAB.pm!=='off'?`<h4>Pattern is ${NAMES[LAB.pm]}</h4>${rows(LAB.pm,true)}`:'');}
 document.getElementById('legendBtn').onclick=()=>{const o=legend.classList.toggle('open');document.getElementById('legendBtn').setAttribute('aria-expanded',String(o));};
 if(innerWidth>=900&&!new URLSearchParams(location.search).has('embed')){legend.classList.add('open');document.getElementById('legendBtn').setAttribute('aria-expanded','true');}
 const PALS={pencil:{class:'#2f4f8f',home:'#1f6f6b',life:'#9a5b2e',arts:'#6a4a8c',sport:'#4f6b2a',office:'#5b6b76',park:'#8a7b6a',out:'#55712e',near:'#5b6b76'},first:TC,warm:WARM,duo:{class:'#2f4f8f',home:'#a8572f',life:'#6f6258',arts:'#6f6258',sport:'#6f6258',office:'#6f6258',park:'#6f6258',out:'#6f6258',near:'#6f6258'}};
@@ -980,14 +1011,17 @@ function draw(){
   ctx.setLineDash([14*px,7*px]);ctx.strokeStyle=C.rail;ctx.lineWidth=1.1*px;ctx.stroke(P.rail);ctx.setLineDash([]);
   /* sidewalks and crossings in pencil */
   if(s>.45){ctx.strokeStyle=C.pencil;ctx.lineWidth=Math.max(.9,Math.min(2,1.4*s))*px;ctx.stroke(P.sw);ctx.setLineDash([3*px,3*px]);ctx.lineWidth=Math.max(1.6,2.6*s)*px;ctx.stroke(P.x);ctx.setLineDash([]);}
-  /* campus paths: the loudest lines on the page */
+  /* campus paths: the loudest lines on the page, except while a route is shown: then they step back, lighter and thinner */
   const intro=S.introT<1;
+  const _walk=C.walk,_case=C.pathCase,_mute=routeShown();MUTE.on=_mute;if(_mute){C.walk=mix(_walk,C.campus,.62);C.pathCase=mix(_case,C.campus,.6);}MUTE.path=C.walk;
+  const ppx=_mute?px*.62:px;
   const mall=Math.max(3.5,7*s);
-  if(!intro&&LAB.pth!=='pencil')funPaths(s,px);
+  if(!intro&&LAB.pth!=='pencil')funPaths(s,ppx);
   else if(!intro){ctx.strokeStyle=C.mallEdge;ctx.lineWidth=(mall+2)*px;ctx.stroke(P.pd);ctx.strokeStyle=C.mall;ctx.lineWidth=mall*px;ctx.stroke(P.pd);
-    const PF=LAB.ground==='paths';const pw=(PF?Math.max(2.8,Math.min(6,3.2*s)):Math.max(2,Math.min(4.2,2.3*s)))*(TH.pw||1)*(LAB.thick?1.6:1);ctx.strokeStyle=C.pathCase;ctx.lineWidth=(pw+2.6)*px;ctx.stroke(P.f);ctx.stroke(P.st);
+    const PF=LAB.ground==='paths';const pw=(_mute?.62:1)*(PF?Math.max(2.8,Math.min(6,3.2*s)):Math.max(2,Math.min(4.2,2.3*s)))*(TH.pw||1)*(LAB.thick?1.6:1);ctx.strokeStyle=C.pathCase;ctx.lineWidth=(pw+2.6)*px;ctx.stroke(P.f);ctx.stroke(P.st);
     ctx.strokeStyle=PF?C.red:C.walk;ctx.lineWidth=pw*px;if(TH.dot)ctx.setLineDash([.1,pw*1.9*px]);ctx.stroke(P.f);ctx.setLineDash([]);ctx.setLineDash([2.2*px,2.2*px]);ctx.lineCap='butt';ctx.lineWidth=(pw+3)*px;ctx.stroke(P.st);ctx.setLineDash([]);ctx.lineCap='round';
   }else{const T=S.introT*introMax*1.02;const pw=Math.max(1.7,Math.min(4.2,2.3*s));ctx.strokeStyle=C.walk;ctx.lineWidth=pw*px;ctx.beginPath();edgesUpTo(introRun,T,e=>D.ge[3*e+2]===0);ctx.stroke();}
+  C.walk=_walk;C.pathCase=_case;
   ctx.strokeStyle=C.hedge;ctx.lineWidth=2.5*px;ctx.stroke(P.hedge);
   /* neighbours, then campus buildings with a hard pencil shadow */
   if(LAB.trees)drawGreens(s,px);else if(LAB.mk&&s>.5)drawDooPalms(px);
@@ -1031,6 +1065,7 @@ function draw(){
     if(S.routeT>=1){const[ex,ey]=w2s(pts[0],pts[1]);ctx.fillStyle=C.red;pen(seg([ex-9,ey-9],[ex+10,ey+9],7),4.2,7);pen(seg([ex+9,ey-10],[ex-9,ey+10],7),4.2,13);}
     const[sx,sy]=w2s(pts[2*n-2],pts[2*n-1]);bubble(sx,sy);
   }else if(S.start){const st=S.start;const[sx,sy]=w2s(st.xy[0],st.xy[1]);bubble(sx,sy-(S.sel===st?28:0));}
+  if(WALK.pts)drawWalk();
   /* scale: one grid square is a one-minute walk */
   {const L=80*s;if(L>34&&L<300){const x=14,y=H-(phone()?108:44);ctx.strokeStyle=C.streetInk;ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(x,y-5);ctx.lineTo(x,y);ctx.lineTo(x+L,y);ctx.lineTo(x+L,y-5);ctx.stroke();ctx.font=`700 10.5px ${TH.sans}`;if('letterSpacing'in ctx)ctx.letterSpacing='1.4px';ctx.textAlign='left';ctx.textBaseline='bottom';ctx.lineWidth=3;ctx.strokeStyle=C.haloG;const t=L>120?'ONE SQUARE, A ONE-MINUTE WALK':'1 MIN WALK';ctx.strokeText(t,x+7,y-4);ctx.fillStyle=C.streetInk;ctx.fillText(t,x+7,y-4);if('letterSpacing'in ctx)ctx.letterSpacing='0px';}}
   /* labels */
@@ -1127,7 +1162,10 @@ function burst(x,y,R,txt){ctx.save();ctx.translate(x,y);ctx.rotate(-.18);const n
   ctx.fillStyle=C.paper;ctx.lineWidth=5;ctx.strokeStyle=C.paper;ctx.stroke();ctx.fillStyle=C.red;ctx.fill();ctx.fillStyle=onCol(C.red);ctx.font=`700 ${Math.round(R*.42)}px ${TH.sans}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,0,1);ctx.restore();}
 function numBubble(x,y,t,gold){ctx.fillStyle=C.paper;ctx.beginPath();ctx.arc(x,y,15,0,6.3);ctx.fill();ctx.fillStyle=gold?C.gold:C.red;ctx.beginPath();ctx.arc(x,y,12,0,6.3);ctx.fill();ctx.fillStyle=gold?onCol(C.gold):onCol(C.red);ctx.font=`${TH.dw} ${Math.round(19*Math.max(.62,TH.ds))}px ${TH.disp}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,x,y+1);}
 function trail(pts,t){const n=pts.length/2;if(n<2)return;const gap=LAB.steps?11:9,rad=2.6;let a=w2s(pts[0],pts[1]),total=0;const sp=[a];for(let i=1;i<n;i++){const b=w2s(pts[2*i],pts[2*i+1]);total+=Math.hypot(b[0]-a[0],b[1]-a[1]);sp.push(b);a=b;}
-  const upto=total*(1-t);let run=0,next=0;ctx.fillStyle=C.red;ctx.beginPath();a=sp[0];for(let i=1;i<n;i++){const b=sp[i],d=Math.hypot(b[0]-a[0],b[1]-a[1]);while(next<=run+d){if(next>=upto){const u=(next-run)/(d||1),x=a[0]+(b[0]-a[0])*u,y=a[1]+(b[1]-a[1])*u;if(LAB.steps){const ux=(b[0]-a[0])/(d||1),uy=(b[1]-a[1])/(d||1),sg=(Math.round(next/gap)%2?1:-1)*3.2,cx=x-uy*sg,cy=y+ux*sg,an=Math.atan2(uy,ux);ctx.moveTo(cx+Math.cos(an)*3.6,cy+Math.sin(an)*3.6);ctx.ellipse(cx,cy,3.6,2,an,0,6.3);}else{ctx.moveTo(x+rad,y);ctx.arc(x,y,rad,0,6.3);}}next+=gap;}run+=d;a=b;}ctx.fill();}
+  const upto=total*(1-t),dots=[];let run=0,next=0;a=sp[0];for(let i=1;i<n;i++){const b=sp[i],d=Math.hypot(b[0]-a[0],b[1]-a[1]);while(next<=run+d){if(next>=upto){const u=(next-run)/(d||1),x=a[0]+(b[0]-a[0])*u,y=a[1]+(b[1]-a[1])*u,ux=(b[0]-a[0])/(d||1),uy=(b[1]-a[1])/(d||1);dots.push([x,y,ux,uy,next]);}next+=gap;}run+=d;a=b;}
+  /* A cream halo under every dot, then the dot, so the route reads on paths, lawns and buildings alike. */
+  const shape=(grow)=>{ctx.beginPath();for(const[x,y,ux,uy,nx]of dots){if(LAB.steps){const sg=(Math.round(nx/gap)%2?1:-1)*3.2,cx=x-uy*sg,cy=y+ux*sg,an=Math.atan2(uy,ux);ctx.moveTo(cx+Math.cos(an)*(3.6+grow),cy+Math.sin(an)*(3.6+grow));ctx.ellipse(cx,cy,3.6+grow,2+grow,an,0,6.3);}else{ctx.moveTo(x+rad+grow,y);ctx.arc(x,y,rad+grow,0,6.3);}}ctx.fill();};
+  ctx.fillStyle=hexA(C.paper,.95);shape(2.4);ctx.fillStyle=ROUTE_INK;shape(0);}
 function bubble(x,y){if(LAB.star){burst(x,y-4,26,'Start');return;}ctx.fillStyle=C.paper;ctx.beginPath();ctx.arc(x,y,13,0,6.3);ctx.fill();ctx.fillStyle=C.red;ctx.beginPath();ctx.arc(x,y,9,0,6.3);ctx.fill();ctx.fillStyle=C.paper;ctx.beginPath();ctx.arc(x,y,3,0,6.3);ctx.fill();}
 function sweep(b,k){const len=Math.max(14,Math.min(70,b.h*3.2))*k,dx=len*SH,dy=len*SH,sp=new Path2D();for(const r of b.r){for(let i=0;i<r.length;i+=2){const j=(i+2)%r.length;sp.moveTo(r[i],r[i+1]);sp.lineTo(r[j],r[j+1]);sp.lineTo(r[j]+dx,r[j+1]+dy);sp.lineTo(r[i]+dx,r[i+1]+dy);sp.closePath();}sp.moveTo(r[0]+dx,r[1]+dy);for(let i=2;i<r.length;i+=2)sp.lineTo(r[i]+dx,r[i+1]+dy);sp.closePath();}return sp;}
 function drawLabel(l,x,y,a,col){
@@ -1185,10 +1223,11 @@ function renderTicket(){
   panel.innerHTML=`<article class="sticker" aria-live="polite"><button class="x" id="tkClose" aria-label="Close ${esc(p.name)}">×</button>
     <div class="stub-top"><div class="stub-num"><b class="${stub.length>3?'long':''}">${esc(stub)}</b><small>${esc(lab)}</small></div><div class="stub-name"><h2>${esc(p.name)}</h2><p>${byline(p)}</p></div></div>
     <div class="tk-body">${DOO[p.label]?`<svg class="tk-doo" viewBox="0 0 100 100" aria-hidden="true"><path d="${DOO[p.label]}"/></svg>`:''}${p.note?`<p class="note">${esc(p.note)}</p>`:''}${facts.length?`<dl class="facts">${facts.map(f=>`<dt>${f[0]}</dt><dd>${f[1]}</dd>`).join('')}</dl>`:''}
-    ${evHere(p)}<div class="actions">${isStart?`<span class="started"><img src="marks/pen-tick.svg" alt="">Starting here. Tap any place.</span>`:`<button class="${S.start?'sq-quiet':'sq-plan-button'}" id="tkStart">${S.start?'Walk from here instead':'Walk from here'}</button>`}</div></div></article>`;
+    ${evHere(p)}<div class="actions">${(ME.pretend||ME.on)&&WALK.place!==p?`<button class="sq-plan-button" id="tkWalk">Walk there</button>`:''}${isStart?`<span class="started"><img src="marks/pen-tick.svg" alt="">Starting here. Tap any place.</span>`:`<button class="${S.start?'sq-quiet':'sq-plan-button'}" id="tkStart">${S.start?'Walk from here instead':'Walk from here'}</button>`}</div></div></article>`;
   grabHint.textContent='Close';
   document.getElementById('tkClose').onclick=()=>select(null);
   const b=document.getElementById('tkStart');if(b)b.onclick=()=>setStart(p);
+  const w=document.getElementById('tkWalk');if(w)w.onclick=()=>walkToPlace(p);
 }
 function renderQuest(){const q=S.quest;
   panel.innerHTML=`<article class="sticker"><button class="x" id="tkClose" aria-label="Close ${esc(q.name)}">×</button>
@@ -1253,7 +1292,7 @@ function search(){const v=q.value.trim().toLowerCase();if(!v){hits.hidden=true;r
   hits.hidden=false;hits.innerHTML=r.length?r.map(([s,p],i)=>{const m=s===2&&(p.inside||[]).find(t=>t.toLowerCase().includes(v));return`<li><button data-id="${p.id}" class="${i?'':'on'}"><b>${esc(p.name)}</b><small>${m?esc(m)+' is inside':esc(p.kind)+(p.num?' · Building '+esc(p.num):'')}</small></button></li>`;}).join(''):`<li class="none">Nothing on campus matches “${esc(q.value.trim())}”. Try a building name, a department or a building number.</li>`;}
 q.addEventListener('input',search);q.addEventListener('focus',search);
 q.addEventListener('keydown',e=>{if(e.key==='Enter'){const b=hits.querySelector('button');if(b)b.click();}if(e.key==='Escape'){hits.hidden=true;q.blur();}});
-hits.addEventListener('click',e=>{const b=e.target.closest('button[data-id]');if(b){hits.hidden=true;q.value='';q.blur();select(PL[+b.dataset.id],true);}});
+hits.addEventListener('click',e=>{const b=e.target.closest('button[data-id]');if(b){hits.hidden=true;q.value='';q.blur();const p=PL[+b.dataset.id];if(PICK.on){const c=p.xy||[(p.bb[0]+p.bb[2])/2,(p.bb[1]+p.bb[3])/2];if(p.acc&&p.acc.length){const n=doorNear(p,c[0],c[1]);setPretend(D.gn[2*n],D.gn[2*n+1]);}else setPretend(c[0],c[1]);return;}select(p,true);}});
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('.find'))hits.hidden=true;});
 
 /* ---------- pointer: pan, pinch, wheel, tap ---------- */
@@ -1269,7 +1308,7 @@ cv.addEventListener('pointermove',e=>{const p=loc(e);if(!ptrs.has(e.pointerId)){
   if(ptrs.size===1){const dx=p[0]-last[0],dy=p[1]-last[1];moved+=Math.abs(dx)+Math.abs(dy);cam.x-=dx/cam.s;cam.y-=dy/cam.s;vel=[dx*.6+vel[0]*.4,dy*.6+vel[1]*.4];last=p;clampCam();dirty();}
   else if(ptrs.size===2&&pinch){const[a,b]=[...ptrs.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]),mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;zoomAt(mx,my,pinch.s*d/pinch.d);}});
 const up=e=>{if(!ptrs.has(e.pointerId))return;const p=ptrs.get(e.pointerId);ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(ptrs.size===1){last=[...ptrs.values()][0];}
-  if(ptrs.size===0){cv.classList.remove('drag');if(moved<7&&performance.now()-downAt<450){const h=hit(p[0],p[1]);if(h)select(h);else if(S.sel){select(null);if(phone())openSheet(false);}}else if(!REDUCE&&Math.hypot(vel[0],vel[1])>3){inertia={vx:vel[0],vy:vel[1]};dirty();}}};
+  if(ptrs.size===0){cv.classList.remove('drag');if(moved<7&&performance.now()-downAt<450){if(PICK.on){pickAt(p[0],p[1]);return;}const mv=markerAt(p[0],p[1]);if(mv){if(mv.l.length===1)openEvent(mv.l[0].id);else{select(mv.p,true);if(phone())openSheet(true);}return;}const h=hit(p[0],p[1]);if(h)select(h);else if(S.sel){select(null);if(phone())openSheet(false);}}else if(!REDUCE&&Math.hypot(vel[0],vel[1])>3){inertia={vx:vel[0],vy:vel[1]};dirty();}}};
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
 function zoomAt(x,y,ns){const[wx,wy]=s2w(x,y);cam.s=Math.max(MINS(),Math.min(7,ns));cam.x=wx/10-(x-W/2)/cam.s;cam.y=wy/10-(y-H/2)/cam.s;clampCam();dirty();}
 cv.addEventListener('wheel',e=>{e.preventDefault();const p=loc(e);zoomAt(p[0],p[1],cam.s*Math.exp(-e.deltaY*(e.ctrlKey?.012:.0022)));},{passive:false});
@@ -1313,6 +1352,9 @@ addEventListener('hashchange',fromHash);
 /* ---------- SideQuest events on the map ---------- */
 const EMBED=new URLSearchParams(location.search).has('embed');
 if(EMBED)document.body.classList.add('embed');
+/* Discover's map mode: the events that fit your free time, not only your own. */
+const DISC=EMBED&&new URLSearchParams(location.search).get('mode')==='discover';
+if(DISC)document.body.classList.add('disc');
 const EV={list:[],at:new Map(),ready:false};
 const norm=t=>' '+String(t||'').toLowerCase().replace(/[^a-z0-9' ]+/g,' ').replace(/\s+/g,' ').trim()+' ';
 /* A venue is pinned only when its text names a place on this map (a building name, its short name, an alias or a room inside it). Anything else stays off the map. */
@@ -1320,6 +1362,7 @@ function placeFor(loc){const v=norm(loc);let best=null,bl=0;
   for(const p of PL){for(const k of [p.label,p.name,...(p.alias||[]).filter(a=>a.length>=4),...(p.inside||[])]){const kk=norm(k);if(kk.length>5&&v.includes(kk)&&kk.length>bl){best=p;bl=kk.length;}}}
   return best;}
 function setEvents(list){EV.list=list;EV.at=new Map();for(const e of list){const p=placeFor(e.location);if(!p)continue;if(!EV.at.has(p))EV.at.set(p,[]);EV.at.get(p).push(e);}
+  MK.t0=0;if(DISC&&EV.at.size&&!S.sel){const bb=[...EV.at.keys()].reduce((a,p)=>[Math.min(a[0],p.bb[0]),Math.min(a[1],p.bb[1]),Math.max(a[2],p.bb[2]),Math.max(a[3],p.bb[3])],[1e9,1e9,-1e9,-1e9]);fitBox(growBB(bb,260),2.6,false);}
   if(!S.sel&&!S.quest)renderIndex();else if(S.sel)renderTicket();dirty();}
 function evRow(e){return`<li><button data-ev="${esc(e.id)}"><span class="when">${esc(e.when)}</span><span class="what">${esc(e.title)}</span>${e.planned?'<span class="mine">In My Schedule</span>':''}</button></li>`;}
 function evHere(p){if(!EMBED||!EV.ready)return'';const l=EV.at.get(p)||[];
@@ -1342,7 +1385,8 @@ function mkSize(t,kind){ctx.font=`800 11px ${TH.sans}`;const sw=Math.ceil(ctx.me
   const w=sw+(body?Math.ceil(body)+14:0)+(kind==='flag'?9:0),h=21;return {w,h,sw};}
 function mkBoxes(kind,ax,ay,sz,dir,P){if(kind==='ticket'){const st=Math.max(0,(P||16)-16);return [{x:ax-sz.w/2-2,y:ay-st-sz.h-8,w:sz.w+4,h:sz.h+9},{x:ax-1.5,y:ay-st-1,w:3,h:st+1}];}const top=ay-P-sz.h;
   return [{x:ax-1.5,y:top,w:3,h:ay-top+3},dir>0?{x:ax,y:top-2,w:sz.w+4,h:sz.h+4}:{x:ax-sz.w-4,y:top-2,w:sz.w+4,h:sz.h+4}];}
-function mkDraw(m,el){const {kind,ax,ay,sz,t,mine,dir}=m,col=mine?C.gold:C.red,ink=mine?'#1b1512':'#fff';
+const toneCol=m=>m.tone==='ink'?'#302421':m.mine||m.tone==='gold'?C.gold:C.red;
+function mkDraw(m,el){const {kind,ax,ay,sz,t,mine,dir}=m,col=toneCol(m),ink=mine?'#1b1512':'#fff';
   const dot=Math.min(1,Math.max(0,el/.18));ctx.fillStyle=kind==='flag'?C.ink:col;ctx.beginPath();ctx.arc(ax,ay,2.8*easeBack(dot),0,6.3);ctx.fill();
   const body=(x,y,w,h,flag)=>{ctx.fillStyle=flag?col:C.paper;ctx.strokeStyle=col;ctx.lineWidth=1.5;
       ctx.beginPath();if(flag){ctx.moveTo(x,y);ctx.lineTo(x+w,y);ctx.lineTo(x+w-8,y+h/2);ctx.lineTo(x+w,y+h);ctx.lineTo(x,y+h);ctx.closePath();ctx.fill();}
@@ -1351,7 +1395,7 @@ function mkDraw(m,el){const {kind,ax,ay,sz,t,mine,dir}=m,col=mine?C.gold:C.red,i
       ctx.setLineDash([2,2]);ctx.strokeStyle=flag?(mine?'rgba(27,21,18,.35)':'rgba(255,255,255,.6)'):C.paper;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+sz.sw+.5,y+3);ctx.lineTo(x+sz.sw+.5,y+h-3);ctx.stroke();ctx.setLineDash([]);
       ctx.textBaseline='middle';ctx.textAlign='center';ctx.font=`800 11px ${TH.sans}`;ctx.fillStyle=ink;ctx.fillText(t.time,x+sz.sw/2,y+h/2+.5);
       ctx.textAlign='left';let tx=x+sz.sw+7;if(t.title){ctx.font=`600 11px ${TH.sans}`;ctx.fillStyle=flag?ink:C.ink;ctx.fillText(t.title,tx,y+h/2+.5);tx+=ctx.measureText(t.title).width+6;}
-      if(t.more){ctx.font=`800 11px ${TH.sans}`;ctx.fillStyle=flag?ink:(mine?'#7a5a08':C.red);ctx.fillText(t.more,tx,y+h/2+.5);}};
+      if(t.more){ctx.font=`800 11px ${TH.sans}`;ctx.fillStyle=flag?ink:(mine?'#7a5a08':m.tone==='ink'?'#302421':C.red);ctx.fillText(t.more,tx,y+h/2+.5);}};
   if(kind==='ticket'){const st=Math.max(0,(m.P||16)-16);if(st){const sk=Math.min(1,Math.max(0,(el-.05)/.25));ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax,ay-st*sk);ctx.stroke();}const k=easeBack((el-.08-(st?.22:0))/.5);if(k<=0)return;const y0=ay-st-sz.h-6,x0=ax-sz.w/2;
     ctx.save();ctx.translate(ax,ay-st);ctx.scale(k,k);ctx.translate(-ax,-ay);
     body(x0,y0,sz.w,sz.h,false);ctx.fillStyle=C.paper;ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(ax-4.5,y0+sz.h-.5);ctx.lineTo(ax,ay-st-.5);ctx.lineTo(ax+4.5,y0+sz.h-.5);ctx.fill();ctx.stroke();ctx.fillRect(ax-3.6,y0+sz.h-2.2,7.2,2.4);ctx.restore();return;}
@@ -1363,7 +1407,7 @@ function mkDraw(m,el){const {kind,ax,ay,sz,t,mine,dir}=m,col=mine?C.gold:C.red,i
   if(dir<0&&fk>0){ctx.save();ctx.translate(ax,0);ctx.scale(fk,1);ctx.translate(-ax,0);body(ax-1-sz.w,top,sz.w,sz.h,true);ctx.restore();}}
 function uiBoxes(){const c=cv.getBoundingClientRect(),out=[];document.querySelectorAll('.tools > *, .legend, #zin, #zout, #zfit, .credit, .north').forEach(e=>{const r=e.getBoundingClientRect();if(r.width&&r.height&&getComputedStyle(e).visibility!=='hidden')out.push({x:r.left-c.left-4,y:r.top-c.top-4,w:r.width+8,h:r.height+8});});return out;}
 function planPins(){const labels=labelBoxes().concat(uiBoxes()),placed=[],out=[];const roomy=!phone()||cam.s>=1;
-  const list=[...EV.at].map(([p,l])=>{const f=[...l].sort((a,b)=>(a.at||'').localeCompare(b.at||''))[0];return {p,l,mine:!!f.posted,first:f.at||''};});
+  const list=[...EV.at].map(([p,l])=>{const f=[...l].sort((a,b)=>(a.at||'').localeCompare(b.at||''))[0];return {p,l,mine:!!f.posted,tone:f.posted?'gold':f.planned?'red':'ink',first:f.at||''};});
   list.sort((a,b)=>b.l.length-a.l.length);
   for(const v of list){const[x0,y0]=w2s(v.p.bb[0],v.p.bb[1]),[x1,y1]=w2s(v.p.bb[2],v.p.bb[3]);if(x1<-60||x0>W+60||y1<-60||y0>H+60)continue;
     const kind=MK.style==='flag'?'flag':'ticket';
@@ -1379,33 +1423,36 @@ function planPins(){const labels=labelBoxes().concat(uiBoxes()),placed=[],out=[]
         if(!fromName&&hitAny({x:ax-3,y:ay-3,w:6,h:6},labels))continue;
         for(const extra of [0,16]){const P=(kind==='flag'&&ob&&P0===14?Math.max(14,ob.h+6):16)+extra;
         for(const dir of (kind==='flag'?(ob&&P0===14&&ax>ob.x+ob.w?[1]:ob&&P0===14?[1]:[1,-1]):[1])){const rs=mkBoxes(kind,ax,ay,sz,dir,P);
-          if(rs.some(r=>r.x<4||r.y<4||r.x+r.w>W-4||r.y+r.h>H-4))continue;if(rs.some(r=>hitAny(r,labels)||hitAny(r,placed)))continue;got={kind,ax,ay,sz,t,mine:v.mine,dir,rs,P};break;}
+          if(rs.some(r=>r.x<4||r.y<4||r.x+r.w>W-4||r.y+r.h>H-4))continue;if(rs.some(r=>hitAny(r,labels)||hitAny(r,placed)))continue;got={kind,ax,ay,sz,t,mine:v.mine,tone:v.tone,dir,rs,P};break;}
         if(got)break;}
         if(got)break;}
       if(got)break;}
     if(got){placed.push(...got.rs);out.push({...got,v});continue;}
     const free=anchors.find(([ax,ay])=>!hitAny({x:ax-5,y:ay-5,w:10,h:10},labels)&&!hitAny({x:ax-5,y:ay-5,w:10,h:10},placed));
-    if(free){out.push({dot:true,ax:free[0],ay:free[1],mine:v.mine,v});placed.push({x:free[0]-8,y:free[1]-17,w:16,h:18});}}
+    if(free){out.push({dot:true,ax:free[0],ay:free[1],mine:v.mine,tone:v.tone,v});placed.push({x:free[0]-8,y:free[1]-17,w:16,h:18});}}
   MK.plan=out;return placed;}
 function drawEventPins(){if(!EMBED||!EV.at.size||!MK.plan)return;const now=performance.now();if(!MK.t0)MK.t0=now;const out=MK.plan;
   out.sort((a,b)=>(a.v.first||'').localeCompare(b.v.first||''));
   let busy=false;
   out.forEach((m,i)=>{const el=(now-MK.t0)/1000-(.15+i*.13);if(el<1.1)busy=true;if(el<=0)return;
-    if(m.dot){/* no room yet: a tiny ticket (or pennant, for yours) until you zoom in */const k=easeBack(el/.4);if(k<=0)return;const col=m.mine?C.gold:C.red;ctx.save();ctx.translate(m.ax,m.ay);ctx.scale(k,k);
+    if(m.dot){/* no room yet: a tiny ticket (or pennant, for yours) until you zoom in */const k=easeBack(el/.4);if(k<=0)return;const col=toneCol(m);ctx.save();ctx.translate(m.ax,m.ay);ctx.scale(k,k);
       if(MK.style==='flag'){ctx.strokeStyle=C.ink;ctx.lineWidth=1.4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-15);ctx.stroke();ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(.5,-15);ctx.lineTo(11,-15);ctx.lineTo(8,-11.5);ctx.lineTo(11,-8);ctx.lineTo(.5,-8);ctx.closePath();ctx.fill();}
       else{ctx.fillStyle=col;ctx.strokeStyle=C.paper;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-7,-15);ctx.lineTo(7,-15);ctx.lineTo(7,-12);ctx.arc(7,-10.5,1.5,-Math.PI/2,Math.PI/2,true);ctx.lineTo(7,-6);ctx.lineTo(3,-6);ctx.lineTo(0,-1);ctx.lineTo(-3,-6);ctx.lineTo(-7,-6);ctx.lineTo(-7,-9);ctx.arc(-7,-10.5,1.5,Math.PI/2,-Math.PI/2,true);ctx.closePath();ctx.stroke();ctx.fill();}
       ctx.restore();return;}
     mkDraw(m,el);});
   if(busy&&!REDUCE)dirty();else if(busy){MK.t0=now-99999;dirty();}}
-function evKey(){if(!EMBED||document.getElementById('evKey'))return;const k=document.createElement('p');k.id='evKey';k.className='evkey';
+function evKey(){return;if(!EMBED||document.getElementById('evKey'))return;const k=document.createElement('p');k.id='evKey';k.className='evkey';
   k.innerHTML='<svg width="40" height="18" viewBox="0 0 40 18" aria-hidden="true"><path d="M1 2H39V7A2.2 2.2 0 0 0 39 11V16H1V11A2.2 2.2 0 0 0 1 7Z" fill="#fffaf2" stroke="#a32035" stroke-width="1.4"/><rect x="1.7" y="2.7" width="13" height="12.6" fill="#a32035"/></svg>In My Schedule <svg width="40" height="18" viewBox="0 0 40 18" aria-hidden="true" style="margin-left:10px"><path d="M1 2H39V7A2.2 2.2 0 0 0 39 11V16H1V11A2.2 2.2 0 0 0 1 7Z" fill="#fffaf2" stroke="#e8aa24" stroke-width="1.4"/><rect x="1.7" y="2.7" width="13" height="12.6" fill="#e8aa24"/></svg>You posted';
   document.querySelector('.tools').appendChild(k);}
 function openEvent(id){if(EMBED&&parent!==window)parent.postMessage({type:'sq-open',id},location.origin);}
+/* A tap on a marker: one event opens its card in the app, several open the building's list. */
+function markerAt(x,y){if(!EMBED||!MK.plan)return null;for(const m of MK.plan){const rs=m.dot?[{x:m.ax-9,y:m.ay-18,w:18,h:20}]:m.rs;if(rs&&rs.some(r=>x>=r.x-3&&x<=r.x+r.w+3&&y>=r.y-3&&y<=r.y+r.h+3))return m.v;}return null;}
 function focusVenue(loc){const p=placeFor(loc);if(p){select(p,true);if(phone())openSheet(true);return;}
   q.value=String(loc||'');search();q.focus();}
 addEventListener('message',e=>{if(e.origin!==location.origin||!e.data)return;const d=e.data;
   if(d.type==='sq-events'&&Array.isArray(d.events)){EV.ready=true;evKey();setEvents(d.events.filter(x=>x&&typeof x.id==='string').map(x=>({id:x.id,title:String(x.title||''),location:String(x.location||''),when:String(x.when||''),planned:!!x.planned,posted:!!x.posted,short:String(x.short||''),at:String(x.at||'')})));}
   if(d.type==='sq-focus')focusVenue(d.location);
+  if(d.type==='sq-walk')walkTo(d.location);
   if(d.type==='sq-style'&&['flag','ticket'].includes(d.style))mkStyle(d.style);});
 function mkStyle(st){MK.style=st;MK.t0=0;dirty();}
 if(EMBED){const st=new URLSearchParams(location.search).get('mk');if(['flag','ticket'].includes(st))MK.style=st;}
@@ -1414,18 +1461,19 @@ if(EMBED){const st=new URLSearchParams(location.search).get('mk');if(['flag','ti
 /* ---------- you are here: live location and compass heading (extra credit) ---------- */
 // Same projection the map data was built with (scu/build/geo.py): metres from the SW corner,
 // turned 24 degrees so campus sits square, in tenths of a metre.
-const ME={on:false,follow:false,fix:null,acc:0,heading:null,gpsHeading:null,watch:0,first:true};
+const ME={on:false,follow:false,fix:null,acc:0,heading:null,gpsHeading:null,watch:0,first:true,pretend:false};
+const OFF_CAMPUS=1500; // metres: farther than this, a walking route from you would be nonsense
 const RAD=Math.PI/180;
 function ll2d(lon,lat){const ix=(lon+121.946)*1e7,iy=(lat-37.3425)*1e7,x=ix*Math.cos(37.349*RAD)*111320/1e7,y=iy*110574/1e7,t=24*RAD;
   const X=x*Math.cos(t)+y*Math.sin(t),U=-x*Math.sin(t)+y*Math.cos(t);return[(X-400)*10,(960-U)*10];}
 const meEl=document.createElement('div');meEl.className='me';meEl.hidden=true;meEl.setAttribute('aria-hidden','true');
-meEl.innerHTML='<div class="me-acc"></div><div class="me-beam" hidden></div><div class="me-ring"></div><div class="me-dot"></div><div class="me-spark"></div>';
+meEl.innerHTML='<div class="me-acc"></div><div class="me-beam" hidden></div><div class="me-ring"></div><div class="me-dot"></div><div class="me-spark"></div><span class="me-tag">Pretend spot</span>';
 stage.appendChild(meEl);
 const meEdge=document.createElement('button');meEdge.type='button';meEdge.className='me-edge';meEdge.hidden=true;
 meEdge.innerHTML='<i aria-hidden="true"></i><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 9H15M10 4L15 9L10 14" fill="none" stroke="#a32035" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span></span>';
 stage.appendChild(meEdge);
 const meBtn=document.getElementById('zme'),meNoteEl=document.getElementById('meNote');
-function meNote(html){meNoteEl.innerHTML=html||'';meNoteEl.hidden=!html;}
+function meNote(html){meNoteEl.innerHTML=html||'';meNoteEl.hidden=!html;meNoteEl.dataset.k='';}
 const metres=m=>m<1000?`${Math.round(m/10)*10} m`:`${(m/1000).toFixed(m<10000?1:0)} km`;
 function campusGap(){if(!ME.fix)return 0;const[x,y]=ME.fix,b=campBB;const dx=Math.max(b[0]-x,0,x-b[2]),dy=Math.max(b[1]-y,0,y-b[3]);return Math.hypot(dx,dy)/10;}
 function meSync(){meBtn.setAttribute('aria-pressed',String(ME.on&&ME.follow));meBtn.setAttribute('aria-label',ME.on?(ME.follow?'Following you':'Back to where I am'):'Show where I am');}
@@ -1435,17 +1483,21 @@ function flyToMe(){if(!ME.fix)return;const[x,y]=ME.fix,gap=campusGap();
 function onFix(pos){const c=pos.coords;ME.fix=ll2d(c.longitude,c.latitude);ME.acc=Math.max(5,c.accuracy||0);
   if(ME.heading===null&&typeof c.heading==='number'&&!isNaN(c.heading)&&(c.speed||0)>.6)ME.gpsHeading=c.heading;
   const gap=campusGap();VIEW_MARGIN.m=gap>0?gap+250:0;
-  meNote(gap>0?`You're ${metres(gap)} from campus`:'');
+  if(WALK.place&&gap>OFF_CAMPUS){WALK.pts=null;ME.follow=false;offNote();}
+  else if(WALK.place){const mv=WALK.at?Math.hypot(ME.fix[0]-WALK.at[0],ME.fix[1]-WALK.at[1])/10:1e9;if(mv>15)computeWalk();else walkNote();}
+  else if(gap>OFF_CAMPUS)meNote(`You're ${metres(gap)} from campus. <span class="nbs"><button type="button" class="nb" data-act="pick">Pick a spot to start from</button></span>`);
+  else meNote(gap>0?`You're ${metres(gap)} from campus`:'');
   if(ME.follow){if(ME.first)flyToMe();else{const[x,y]=ME.fix;cam.x=x/10;cam.y=y/10;}}
   meEl.hidden=false;meSync();dirty();}
-function onErr(e){const alone=EMBED?` <a href="${location.pathname}" target="_blank" rel="noopener">Open the map on its own</a>`:'';
-  if(e.code===1){ME.on=false;ME.follow=false;meSync();meNote('Location is off here.'+alone);}
+function onErr(e){if(ME.pretend)return;const pick=` <span class="nbs"><button type="button" class="nb" data-act="pick">Pick a spot to start from</button></span>`;const alone=EMBED?` <a href="${location.pathname}${WALK.place?'?walk='+encodeURIComponent(WALK.place.label):''}" target="_blank" rel="noopener">Open the map on its own</a>`:'';
+  if(e.code===1){ME.on=false;ME.follow=false;meSync();meNote(WALK.place?`Location is off, so there is no route. ${esc(WALK.place.label)} is marked on the map.`+alone+pick:'Location is off here.'+alone+pick);}
   else if(!ME.fix)meNote("Can't find you yet");}
 function onOrient(e){let h=null;
   if(typeof e.webkitCompassHeading==='number'&&!isNaN(e.webkitCompassHeading))h=e.webkitCompassHeading;
   else if((e.absolute||e.type==='deviceorientationabsolute')&&typeof e.alpha==='number')h=360-e.alpha;
   if(h===null)return;h=(h+((screen.orientation&&screen.orientation.angle)||0)+360)%360;ME.heading=h;placeMe();}
 function startMe(){
+  if(ME.pretend)clearPretend();
   if(ME.on){ME.follow=true;meSync();flyToMe();return;}
   // iOS asks for the compass only from a tap, so ask before anything awaits.
   try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function')DeviceOrientationEvent.requestPermission().catch(()=>{});}catch(_){}
@@ -1467,12 +1519,111 @@ function placeMe(){if(!ME.fix){meEl.hidden=true;meEdge.hidden=true;return;}
   meEdge.style.left=cx+dx*k+'px';meEdge.style.top=cy+dy*k+'px';
   meEdge.querySelector('svg').style.transform=`rotate(${Math.atan2(dy,dx)/RAD}deg)`;
   const far=Math.hypot(dx,dy)/cam.s;meEdge.querySelector('span').textContent=metres(far);meEdge.setAttribute('aria-label',`You, ${metres(far)} away. Show me`);}
+
+/* ---------- walk there: an in-app route from you to a place (Nov 24) ----------
+   The route runs on our walking graph (OpenStreetMap paths, not checked on foot yet). It starts at the
+   path point that is best for you: the shortest total of the path plus a straight hop from where you
+   stand, with the hop counted double so the route joins a path quickly. It ends at the place's own
+   entrances (the same entry points the rest of the map uses). It is redrawn when you move 15 m. */
+const WALK={place:null,run:null,pts:null,m:0,hop:0,join:null,at:null,fitted:false};
+function walkTo(loc){const p=placeFor(loc);
+  if(!p){meNote(`Can't find ${esc(String(loc||''))} on our map`);return;}
+  walkToPlace(p);}
+function walkToPlace(p){stopSim();
+  WALK.place=p;WALK.run=dijkstra(p);WALK.pts=null;WALK.at=null;WALK.fitted=false;meNoteEl.dataset.k='';
+  S.quest=null;S.route=null;S.sel=p;render();
+  if(!ME.fix)fitBox(growBB(p.bb,500),phone()?2.3:2.6,true);
+  if(ME.pretend){computeWalk();dirty();return;}
+  if(!ME.on)startMe();else computeWalk();
+  if(!ME.fix)meNote('Finding you…');dirty();}
+function computeWalk(){const p=WALK.place,run=WALK.run;if(!p||!run||!ME.fix)return;
+  if(!ME.pretend&&campusGap()>OFF_CAMPUS){WALK.pts=null;offNote();dirty();return;}
+  const[ux,uy]=ME.fix;let best=-1,bc=1e18,bh=0,near=1e18;
+  // Join a path near you: never cut across more than 40 m farther than the nearest path point.
+  for(let n=0;n<NN;n++){if(run.dist[n]<1e8)near=Math.min(near,Math.hypot(D.gn[2*n]-ux,D.gn[2*n+1]-uy)/10);}
+  for(let n=0;n<NN;n++){const d=run.dist[n];if(d>=1e8)continue;const h=Math.hypot(D.gn[2*n]-ux,D.gn[2*n+1]-uy)/10;if(h>near+40)continue;const c=d+2*h;if(c<bc){bc=c;best=n;bh=h;}}
+  if(best<0){WALK.pts=null;meNote(`No path to ${esc(p.label)} from here.`);return;}
+  const pts=[];for(let n=best;n>=0;n=run.prev[n])pts.push(D.gn[2*n],D.gn[2*n+1]);
+  WALK.pts=pts;WALK.join=[D.gn[2*best],D.gn[2*best+1]];WALK.hop=bh;WALK.m=run.dist[best]+bh;WALK.at=[ux,uy];
+  ME.follow=false;meSync();
+  if(!WALK.fitted){WALK.fitted=true;fitBox(growBB(bbox(pts.concat([ux,uy],p.bb)),400),phone()?2.6:3,true);}
+  walkNote();dirty();}
+const nb=(act,t,go)=>`<button type="button" class="nb${go?' go':''}" data-act="${act}">${t}</button>`;
+/* The note is rebuilt only when its buttons change; while you walk, just the numbers update, so a
+   button is never swapped out from under a finger. */
+function noteSet(key,html,fill){if(meNoteEl.dataset.k!==key||meNoteEl.hidden){meNote(html);meNoteEl.dataset.k=key;}else fill();}
+function walkNote(){const p=WALK.place;if(!p||!WALK.pts)return;meNoteEl.classList.add('walking');
+  const hop=()=>WALK.hop>40?`, ${metres(WALK.hop)} of it before you reach a campus path`:'';
+  const btns=SIM.state==='play'?nb('pause','Pause')+nb('stop','Stop'):SIM.state==='pause'?nb('play','Keep walking',1)+nb('stop','Stop'):ME.pretend?nb('walkit','Walk it for me',1)+nb('pick','Move spot')+nb('stop','Stop'):nb('stop','Stop');
+  noteSet(`w|${p.label}|${SIM.state}|${ME.pretend}`,`<b data-w="m">${metres(WALK.m)}</b> to ${esc(p.label)}<span data-w="hop">${hop()}</span>. ${ME.pretend?'From your pretend spot. ':''}Paths not checked on foot yet.<span class="nbs">${btns}</span>`,
+    ()=>{meNoteEl.querySelector('[data-w="m"]').textContent=metres(WALK.m);meNoteEl.querySelector('[data-w="hop"]').textContent=hop();});}
+function offNote(){meNoteEl.classList.add('walking');noteSet('off',`You're off campus. Pick a spot to start from.<span class="nbs">${nb('pick','Pick a spot',1)}${nb('stop','Stop')}</span>`,()=>{});}
+function stopWalk(){stopSim();WALK.place=null;WALK.run=null;WALK.pts=null;WALK.at=null;meNoteEl.classList.remove('walking');meNoteEl.dataset.k='';meNote('');if(S.sel)render();dirty();}
+function drawWalk(){const pts=WALK.pts,n=pts.length/2;
+  if(WALK.hop>8&&ME.fix){const[a,b]=w2s(ME.fix[0],ME.fix[1]),[c,d]=w2s(WALK.join[0],WALK.join[1]);ctx.save();ctx.strokeStyle=ROUTE_INK;ctx.globalAlpha=.75;ctx.lineWidth=2.2;ctx.setLineDash([2,7]);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke();ctx.restore();}
+  trail(pts,1);
+  const[ex,ey]=w2s(pts[2*n-2],pts[2*n-1]);ctx.fillStyle=C.red;pen(seg([ex-9,ey-9],[ex+10,ey+9],7),4.2,7);pen(seg([ex+9,ey-10],[ex-9,ey+10],7),4.2,13);}
+
+/* ---------- pretend spot: test Walk there from anywhere (Nov 24) ----------
+   Off campus, or where the page may not ask for location, you place a pretend "you" on campus. It is
+   drawn with a dashed ring and a label so it is never mistaken for your real position. */
+const PICK={on:false};
+function pickSpot(){stopSim();PICK.on=true;cv.classList.add('picking');meNoteEl.classList.add('walking');
+  noteSet('pick',`Tap a spot on campus to start from, or search a building.<span class="nbs">${nb('cancelpick','Cancel')}</span>`,()=>{});
+  if(phone())openSheet(false);if(legend.classList.contains('open')){legend.classList.remove('open');document.getElementById('legendBtn').setAttribute('aria-expanded','false');}
+  VIEW_MARGIN.m=0;fitBox(coreBB,0,true);}
+function endPick(){PICK.on=false;cv.classList.remove('picking');}
+function pickAt(x,y){const[wx,wy]=s2w(x,y),b=growBB(campBB,2000);
+  if(wx<b[0]||wx>b[2]||wy<b[1]||wy>b[3]){noteSet('pickoff',`That's off campus. Tap a spot on campus.<span class="nbs">${nb('cancelpick','Cancel')}</span>`,()=>{});return;}
+  // A tap on a building starts at its door nearest the tap.
+  const h=hit(x,y);if(h&&h.acc&&h.acc.length){const n=doorNear(h,wx,wy);setPretend(D.gn[2*n],D.gn[2*n+1]);return;}
+  setPretend(wx,wy);}
+function doorNear(p,x,y){let b=p.acc[0][0],bd=1e18;for(const[n]of p.acc){const d=Math.hypot(D.gn[2*n]-x,D.gn[2*n+1]-y);if(d<bd){bd=d;b=n;}}return b;}
+function setPretend(x,y){if(ME.watch&&navigator.geolocation){navigator.geolocation.clearWatch(ME.watch);}ME.watch=0;ME.on=false;ME.follow=false;meSync();
+  endPick();stopSim();ME.pretend=true;ME.fix=[x,y];ME.acc=0;ME.heading=null;ME.gpsHeading=null;VIEW_MARGIN.m=0;meEl.classList.add('pretend');
+  if(WALK.place){WALK.at=null;WALK.fitted=false;computeWalk();}
+  else{meNoteEl.classList.add('walking');noteSet('set',`Pretend spot set. Tap a place, then Walk there.<span class="nbs">${nb('pick','Move spot')}${nb('clear','Clear')}</span>`,()=>{});}
+  if(S.sel)render();dirty();}
+function clearPretend(){stopSim();ME.pretend=false;ME.fix=null;meEl.classList.remove('pretend');}
+
+/* ---------- walk it for me: the dot follows the route at twelve times an easy pace ----------
+   The same code as a real walk runs: the route is redrawn after each 15 m and the metres count down.
+   With reduced motion the dot jumps 15 m at a time instead of gliding. */
+const SIM={state:'off',path:null,cum:null,d:0,from:null,raf:0,timer:0,t:0,mps:SPEED/60*12};
+function walkIt(again){if(again&&SIM.from){ME.fix=SIM.from.slice();WALK.at=null;computeWalk();}
+  if(!WALK.pts||!ME.fix)return;SIM.from=ME.fix.slice();
+  const pts=[ME.fix[0],ME.fix[1]].concat(WALK.pts),cum=[0];
+  for(let i=1;i<pts.length/2;i++)cum.push(cum[i-1]+Math.hypot(pts[2*i]-pts[2*i-2],pts[2*i+1]-pts[2*i-1])/10);
+  SIM.path=pts;SIM.cum=cum;SIM.d=0;simPlay();}
+function simPlay(){SIM.state='play';SIM.t=performance.now();walkNote();
+  if(REDUCE)SIM.timer=setInterval(()=>simMove(SIM.d+15),700);else SIM.raf=requestAnimationFrame(simTick);}
+function simTick(now){if(SIM.state!=='play')return;const dt=Math.min(.1,(now-SIM.t)/1000);SIM.t=now;simMove(SIM.d+dt*SIM.mps);if(SIM.state==='play')SIM.raf=requestAnimationFrame(simTick);}
+function simHalt(){cancelAnimationFrame(SIM.raf);clearInterval(SIM.timer);SIM.raf=0;SIM.timer=0;}
+function simPause(){simHalt();SIM.state='pause';walkNote();}
+function stopSim(){simHalt();SIM.state='off';}
+function simMove(d){const c=SIM.cum,L=c[c.length-1];d=Math.min(d,L);SIM.d=d;
+  let i=1;while(i<c.length-1&&c[i]<d)i++;const k=c[i]>c[i-1]?(d-c[i-1])/(c[i]-c[i-1]):1,P=SIM.path;
+  ME.fix=[P[2*i-2]+(P[2*i]-P[2*i-2])*k,P[2*i-1]+(P[2*i+1]-P[2*i-1])*k];
+  if(L-d<3){arrive();return;}
+  const mv=WALK.at?Math.hypot(ME.fix[0]-WALK.at[0],ME.fix[1]-WALK.at[1])/10:1e9;if(mv>15)computeWalk();dirty();}
+function arrive(){simHalt();SIM.state='done';const p=WALK.place;WALK.pts=null;meNoteEl.classList.add('walking');
+  noteSet('done',`<b>You're here.</b> ${esc(p?p.label:'')}<span class="nbs">${nb('again','Walk it again')}${nb('stop','Stop')}</span>`,()=>{});dirty();}
+meNoteEl.addEventListener('click',e=>{const b=e.target.closest('button[data-act]');if(!b)return;const a=b.dataset.act;
+  if(a==='stop'){stopWalk();if(ME.pretend){meNoteEl.classList.add('walking');noteSet('set',`Pretend spot set. Tap a place, then Walk there.<span class="nbs">${nb('pick','Move spot')}${nb('clear','Clear')}</span>`,()=>{});}}
+  else if(a==='pick')pickSpot();
+  else if(a==='cancelpick'){endPick();if(WALK.place&&WALK.pts)walkNote();else if(WALK.place&&!ME.pretend)offNote();else{meNoteEl.dataset.k='';meNote('');}}
+  else if(a==='clear'){clearPretend();meNoteEl.classList.remove('walking');meNoteEl.dataset.k='';meNote('');if(S.sel)render();dirty();}
+  else if(a==='walkit')walkIt();
+  else if(a==='pause')simPause();
+  else if(a==='play')simPlay();
+  else if(a==='again'){SIM.state='off';walkIt(true);}});
 /* ---------- start ---------- */
 let lastPhone=phone();
 addEventListener('resize',()=>{resize();if(phone()!==lastPhone){lastPhone=phone();buildLabels();}});
 resize();recolor();paintPlaces();buildLabels();labSync();render();fitBox(coreBB,0,false);dirty();fromHash();
 if(EMBED&&parent!==window)parent.postMessage({type:'sq-map-ready'},location.origin);
-window.__map={ME,ll2d,S,cam,PL,select,setStart,setMins,fitBox,LB,D,LAB,setLab,QUESTS,openQuest,applyTheme,THEMES,paintPlaces};
+{const w=new URLSearchParams(location.search).get('walk');if(w&&!EMBED)setTimeout(()=>walkTo(w),300);}
+window.__map={EV,MK,MUTE,ROUTE_INK,routeShown,ME,WALK,SIM,PICK,walkTo,stopWalk,pickSpot,setPretend,walkIt,ll2d,S,cam,PL,select,setStart,setMins,fitBox,LB,D,LAB,setLab,QUESTS,openQuest,applyTheme,THEMES,paintPlaces};
 })();
 </script>
 </body>

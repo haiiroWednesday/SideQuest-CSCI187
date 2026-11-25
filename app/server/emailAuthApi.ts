@@ -11,8 +11,11 @@ export type VerifiedEmailSession = {
   expiresAt: number // UNIX milliseconds, never an arbitrary client value
 }
 export interface EmailOtpGateway {
-  requestCode(email: string): Promise<void>
+  /** Sends the sign-in email. Default Supabase templates send a link back to `redirectTo`; custom ones can add a code. */
+  requestCode(email: string, redirectTo?: string): Promise<void>
   verifyCode(email: string, code: string): Promise<VerifiedEmailSession | null>
+  /** Checks an access token that came back in a sign-in link with Supabase Auth. */
+  sessionFromLink?(accessToken: string): Promise<VerifiedEmailSession | null>
 }
 
 class AuthHttpError extends Error {
@@ -62,9 +65,13 @@ function emailFrom(data: Record<string, unknown>, allowed: string[]): string {
   return email
 }
 
+/** What a signed-in student can use on this server. Reported by /api/auth/status so the app shows only working pages. */
+export type SignInFeatures = { groups: boolean; accounts: boolean }
+
 export function createEmailAuthApi(
   gateway: EmailOtpGateway | null,
   clock: () => number = Date.now,
+  features?: SignInFeatures,
 ) {
   const pepper = randomBytes(32)
   const counters = new Map<string, { count: number; until: number }>()
@@ -86,12 +93,12 @@ export function createEmailAuthApi(
     let path: string
     try { path = new URL(req.url ?? '/', 'http://sidequest.local').pathname }
     catch { return false }
-    if (!['/api/auth/status', '/api/auth/request-code', '/api/auth/verify-code'].includes(path)) {
+    if (!['/api/auth/status', '/api/auth/request-code', '/api/auth/verify-code', '/api/auth/link-session'].includes(path)) {
       return false
     }
     if (path === '/api/auth/status') {
       if (req.method !== 'GET') json(res, 405, { error: 'Use GET.' })
-      else json(res, 200, { enabled: gateway !== null })
+      else json(res, 200, features && gateway ? { enabled: true, ...features } : { enabled: gateway !== null })
       return true
     }
     if (!gateway) {
@@ -113,14 +120,34 @@ export function createEmailAuthApi(
         throw new AuthHttpError(403, 'Use the SideQuest site to sign in.')
       }
       const request = await body(req)
-      const email = emailFrom(request, path.endsWith('verify-code') ? ['email', 'code'] : ['email'])
       const ip = req.socket.remoteAddress ?? 'unknown'
+      if (path === '/api/auth/link-session') {
+        // A sign-in link put a token in the app's address. The app sends it here once and the
+        // server asks Supabase Auth who it belongs to before the app may use it.
+        limits('link', ip, 'verify')
+        if (!gateway.sessionFromLink || Object.keys(request).join() !== 'accessToken' ||
+            typeof request.accessToken !== 'string' || request.accessToken.length < 20 || request.accessToken.length > 8192) {
+          throw new AuthHttpError(400, 'This sign-in link is not valid. Ask for a new one.')
+        }
+        let session: VerifiedEmailSession | null
+        try { session = await gateway.sessionFromLink(request.accessToken) }
+        catch { session = null }
+        if (!session || !UUID_PATTERN.test(session.userId) || session.accessToken !== request.accessToken ||
+          !Number.isFinite(session.expiresAt) || session.expiresAt <= clock() + 5000) {
+          throw new AuthHttpError(401, 'This sign-in link has expired or was already used. Ask for a new one.')
+        }
+        json(res, 200, { userId: session.userId, accessToken: session.accessToken, expiresAt: session.expiresAt })
+        return true
+      }
+      const email = emailFrom(request, path.endsWith('verify-code') ? ['email', 'code'] : ['email'])
       if (path === '/api/auth/request-code') {
         limits(email, ip, 'request')
         // Regardless of whether account creation was permitted upstream, avoid
         // disclosing whether an email corresponds to an existing account.
-        try { await gateway.requestCode(email) } catch { /* generic response */ }
-        json(res, 200, { message: 'If this email is eligible, a verification code will arrive.' })
+        // The link returns to the page that asked, already checked as same-origin above.
+        // A deployed origin must also be listed in Supabase Auth's Redirect URLs.
+        try { await gateway.requestCode(email, origin) } catch { /* generic response */ }
+        json(res, 200, { message: 'If this email can sign in, an email is on its way.' })
       } else {
         limits(email, ip, 'verify')
         if (typeof request.code !== 'string' || !CODE_PATTERN.test(request.code)) {

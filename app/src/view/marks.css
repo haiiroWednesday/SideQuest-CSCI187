@@ -5,24 +5,35 @@
 .sq-marks .sq-tags { margin-top: 18px; }
 .sq-tag:disabled { opacity: .45; cursor: default; }
 
-/* Seven tear-off calendar leaves */
-.sq-days { display: flex; gap: 6px; margin: 16px 0 4px; max-width: 760px; }
-.sq-dayleaf { position: relative; flex: 1 1 0; min-width: 0; display: grid; justify-items: center; gap: 0; padding: 9px 2px 8px; border: 0; cursor: pointer;
-  background: #fffaf2; color: var(--sq-ink); box-shadow: 0 1px 0 rgba(90, 60, 30, .18), 0 6px 12px -10px rgba(48, 36, 33, .5);
-  -webkit-mask: radial-gradient(circle at 5px 0, #0000 2.4px, #000 2.8px) -1px 0 / 10px 100% repeat-x;
-  mask: radial-gradient(circle at 5px 0, #0000 2.4px, #000 2.8px) -1px 0 / 10px 100% repeat-x;
-  transition: transform .15s ease; }
-.sq-dayleaf::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 5px; background: #e9dccb; }
-.sq-dayleaf-dow { font: 700 11px var(--font-sans); letter-spacing: .12em; text-transform: uppercase; color: var(--sq-muted); }
-.sq-dayleaf-num { font: 400 30px/1 var(--font-display); }
-.sq-dayleaf[aria-pressed="true"] { transform: translateY(-3px) rotate(-1.5deg); background: #fff; }
-.sq-dayleaf[aria-pressed="true"] .sq-dayleaf-num { color: var(--sq-red-deep, #751728); }
+/* The week as beads on a gold thread (D10, her pick Nov 24).
+   Today is the gold bead with a star, the chosen day is the maroon bead,
+   later days are plain cream beads. Busy days carry a tiny hatch swatch. */
+.sq-days { position: relative; display: flex; justify-content: space-between; gap: 2px; margin: 16px 0 4px; max-width: 760px; }
+.sq-days::before { content: ""; position: absolute; left: 6px; right: 6px; top: 38px; height: 2px; border-radius: 2px; background: var(--sq-gold, #e8aa24); }
+.sq-dayleaf { position: relative; flex: 0 1 52px; min-width: 44px; min-height: 62px; display: grid; justify-items: center; align-content: start; gap: 3px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--sq-ink); }
+.sq-dayleaf-dow { font: 700 11px/14px var(--font-sans); letter-spacing: .1em; text-transform: uppercase; color: #7a6a62; }
+.sq-dayleaf-num { position: relative; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; padding-top: 2px; box-sizing: border-box;
+  font: 400 22px/1 var(--font-display); background: #fffaf2; box-shadow: inset 0 0 0 1.4px rgba(48, 36, 33, .35); transition: background-color .15s ease, box-shadow .15s ease; }
+.sq-dayleaf[data-today] .sq-dayleaf-dow { color: var(--sq-red-deep, #751728); font-weight: 800; }
+.sq-dayleaf[data-today] .sq-dayleaf-num { background: var(--sq-gold, #e8aa24); color: #5a1020; box-shadow: none; }
+.sq-dayleaf[data-today] .sq-dayleaf-num::after { content: ""; position: absolute; right: -4px; top: -5px; width: 14px; height: 14px;
+  background: var(--sq-red-deep, #751728); clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); }
 .sq-dayleaf[aria-pressed="true"] .sq-dayleaf-dow { color: var(--sq-red-deep, #751728); }
-.sq-dayleaf[aria-pressed="true"]::after { content: ""; position: absolute; left: 14%; right: 14%; bottom: 3px; height: 5px; background: var(--sq-red-deep, #751728);
-  -webkit-mask: url('./assets/mat-brush-short.svg') 0 0 / 100% 100% no-repeat; mask: url('./assets/mat-brush-short.svg') 0 0 / 100% 100% no-repeat; }
-.sq-dayleaf-dab { position: absolute; bottom: 7px; right: 6px; width: 12px; height: 8px; background: var(--sq-gold, #e8aa24);
-  -webkit-mask: url('./assets/mat-brush-short.svg') 0 0 / 100% 100% no-repeat; mask: url('./assets/mat-brush-short.svg') 0 0 / 100% 100% no-repeat; transform: rotate(-20deg); }
-.sq-dayleaf:focus-visible { outline: 3px solid var(--sq-focus, #751728); outline-offset: 2px; }
+.sq-dayleaf[aria-pressed="true"] .sq-dayleaf-num { background: var(--sq-red-deep, #751728); color: #fff6e2; box-shadow: none; }
+.sq-dayleaf[data-today][aria-pressed="true"] .sq-dayleaf-num { background: var(--sq-gold, #e8aa24); color: #5a1020; box-shadow: 0 0 0 2.5px #fffaf2, 0 0 0 5px var(--sq-red-deep, #751728); }
+.sq-dayleaf[data-today][aria-pressed="true"] .sq-dayleaf-num::after { right: -7px; top: -8px; }
+.sq-dayleaf:not([aria-pressed="true"]):hover .sq-dayleaf-num { box-shadow: inset 0 0 0 1.8px var(--sq-red-deep, #751728); }
+.sq-dayleaf[data-today]:not([aria-pressed="true"]):hover .sq-dayleaf-num { box-shadow: 0 0 0 2px var(--sq-red-deep, #751728); }
+/* busy: the same pencil hatch the day bar uses for busy time */
+.sq-dayleaf-dab { position: absolute; right: -1px; bottom: -1px; width: 15px; height: 8px; z-index: 2;
+  background: repeating-linear-gradient(-45deg, rgba(110, 74, 60, .8) 0 1.4px, transparent 1.4px 4px), #efe4d8; border-left: 1.2px solid #6e4a3c; border-right: 1.2px solid #6e4a3c; }
+.sq-dayleaf:focus-visible { outline: none; }
+.sq-dayleaf:focus-visible .sq-dayleaf-num { outline: 3px solid var(--sq-focus, #751728); outline-offset: 3px; }
+@media (min-width: 900px) {
+  .sq-dayleaf { flex-basis: 62px; min-height: 68px; }
+  .sq-dayleaf-num { width: 50px; height: 50px; font-size: 25px; }
+  .sq-days::before { top: 41px; }
+}
 
 /* The day bar: a strip of paper you paint on */
 .sq-mbar-wrap { position: relative; max-width: 760px; margin: 10px 0 0; }
@@ -77,8 +88,6 @@
 .sq-clear-marks::after { content: "" !important; }
 
 @media (max-width: 760px) {
-  .sq-days { gap: 4px; }
-  .sq-dayleaf-num { font-size: 24px; }
   .sq-dayleaf-dow { font-size: 10px; letter-spacing: .06em; }
   .sq-mbar { height: 64px; }
   .sq-mbar-label { font-size: 15px; }
@@ -86,9 +95,6 @@
   .sq-slip-when { flex-basis: 100%; }
 }
 @media (prefers-reduced-motion: reduce) { .sq-dayleaf { transition: none; } }
-.sq-dayleaf { gap: 3px; }
-.sq-dayleaf-dow { line-height: 1.1; }
-.sq-dayleaf-num { line-height: .95; }
 
 /* Busy-first marking. Free gaps glow gold, like the light in her rooms; busy time you add is cross-hatched ink. */
 .sq-mbar-free { position: absolute; top: 12px; bottom: 12px; border-radius: 99px;
@@ -121,16 +127,27 @@
 .sq-slips { gap: 10px 14px; }
 
 /* The bar is a picture now: no crosshair, no drag. */
-.sq-mbar { cursor: default !important; touch-action: auto !important; }
+/* The bar takes drags again (Nov 24 evening). Sideways drags draw, up-and-down still scrolls the page. */
+.sq-mbar { cursor: crosshair; touch-action: pan-y; }
+.sq-mbar-grab { cursor: grab; }
+.sq-mbar-grab::before, .sq-mbar-grab::after, .sq-mbar-ghost::before, .sq-mbar-ghost::after { content: ""; position: absolute; top: 50%; width: 5px; height: 22px; margin-top: -11px; border-radius: 3px; background: #fffaf2; border: 1.5px solid #6e4a3c; cursor: ew-resize; }
+.sq-mbar-grab::before, .sq-mbar-ghost::before { left: -4px; }
+.sq-mbar-grab::after, .sq-mbar-ghost::after { right: -4px; }
+.sq-mbar-dragging, .sq-mbar-dragging * { cursor: grabbing !important; }
+.sq-mbar-start, .sq-mbar-start *, .sq-mbar-end, .sq-mbar-end * { cursor: ew-resize !important; }
+.sq-mbar-ghost { box-shadow: 0 3px 0 rgba(110, 74, 60, .25); transform: translateY(-2px); z-index: 2; }
+.sq-mbar-drag-time { position: absolute; bottom: calc(100% + 1px); transform: translateX(-50%); padding: 3px 9px; background: #302421; color: #fffaf2; font: 650 13px var(--font-sans); white-space: nowrap; border-radius: 3px; pointer-events: none; z-index: 3; }
+.sq-mbar-blue-note { position: absolute; top: calc(100% + 6px); transform: translateX(-50%); padding: 7px 11px; background: #fffaf2; border: 1.4px solid #5d6f8a; color: #3b4a60; font: 500 13.5px var(--font-sans); white-space: nowrap; z-index: 4; box-shadow: 0 4px 10px rgba(40, 30, 30, .12); }
+.sq-mbar-blue-note a { color: #3b4a60; font-weight: 700; }
+
 .sq-when-note { margin: 6px 0 0; font: 600 14px var(--font-sans); color: #8a5a12; }
 .sq-mbar-key a { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; color: inherit; text-decoration: underline; text-decoration-color: rgba(93, 111, 138, .5); text-underline-offset: 3px; }
 .sq-mbar-key span { display: inline-flex; align-items: center; gap: 6px; }
 .sq-mbar-key a:focus-visible { outline: 3px solid var(--sq-focus, #751728); outline-offset: 2px; }
 .sq-when { margin: 16px 0 4px; }
-@media (max-width: 400px) { .sq-when button { padding: 8px 10px !important; font-size: 13.5px !important; } }
+@media (max-width: 400px) { .sq-when .sq-tag { padding: 0 11px 0 26px; font-size: 13.5px; } }
 /* The brush on the chosen time reaches 4px past its button; keep that inside the page edge. */
-.sq-when { padding: 0 5px !important; box-sizing: border-box; max-width: 100%; }
-.sq-when button { position: relative !important; isolation: isolate !important; z-index: 0; }
+.sq-when { box-sizing: border-box; max-width: 100%; }
 /* Laptop: the week and bar on the left, adding busy time and the gaps on the right, so the row is used (Nov 24). */
 @media (min-width: 1000px) {
   .sq-marks-cols { display: grid; grid-template-columns: minmax(0, 640px) minmax(280px, 1fr); column-gap: 56px; align-items: start; }
@@ -138,3 +155,18 @@
   .sq-marks-right .sq-busy-form { margin-top: 0; }
   .sq-marks-right .sq-slips { flex-direction: column; align-items: flex-start; }
 }
+.sq-mbar-busy { cursor: default; }
+.sq-mbar-wrap:has(.sq-mbar-dragging) .sq-mbar-label { opacity: 0; }
+
+/* Timeline beads (Cyn, Nov 24): the day picker's gold thread turned vertical.
+   Flat beads, no shading: today is the gold bead with the maroon star, other days are cream. */
+:root[data-quiet] .sq-trail::before { border-left: 0 !important; width: 2px; background: var(--sq-gold, #e8aa24); opacity: 1 !important; border-radius: 2px; }
+:root[data-quiet] .sq-trail .sq-bubble { border-radius: 50% !important; background: #fffaf2 !important; color: var(--sq-ink) !important;
+  box-shadow: inset 0 0 0 1.4px rgba(48, 36, 33, .35), 0 0 0 6px var(--sq-paper) !important; outline: 0 !important;
+  -webkit-mask: none !important; mask: none !important; transform: none !important; padding-top: 2px !important; overflow: visible; }
+:root[data-quiet] .sq-trail .sq-trail-day.sq-today .sq-bubble { background: var(--sq-gold, #e8aa24) !important; color: #5a1020 !important;
+  box-shadow: 0 0 0 6px var(--sq-paper) !important; }
+:root[data-quiet] .sq-trail .sq-trail-day.sq-today .sq-bubble::after { content: ""; position: absolute; right: -2px; top: -4px; width: 17px; height: 17px;
+  background: var(--sq-red-deep, #751728); clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); }
+:root[data-quiet] .sq-trail .sq-bubble b { font: 400 26px/1 var(--font-display) !important; }
+:root[data-quiet] .sq-trail .sq-bubble-missing { background: var(--sq-paper) !important; box-shadow: inset 0 0 0 1.6px var(--sq-rule-strong, #b9a99a), 0 0 0 6px var(--sq-paper) !important; }

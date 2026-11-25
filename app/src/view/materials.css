@@ -335,7 +335,6 @@
 .sqm-nowp::before { content: none !important; }
 .sq-mbar-mark { -webkit-mask: none !important; mask: none !important; top: 9px !important; bottom: 9px !important; border-left: 2px solid #b8741f; border-right: 2px solid #b8741f; }
 .sq-key-mark { -webkit-mask: none !important; mask: none !important; }
-.sq-dayleaf[aria-pressed="true"]::after { -webkit-mask: none !important; mask: none !important; height: 3px !important; }
 .sq-bubble::before { content: none !important; }
 :root[data-quiet] .sq-bubble { padding-top: 0; }
 .sq-done-flat { margin-top: 30px; opacity: .92; }
@@ -411,3 +410,94 @@
 .sq-post-panel > .sq-post-back::before { content: none !important; }
 /* Day names read the same everywhere: upright, like My Schedule (Nov 24). */
 .sq-day { font-style: normal !important; font-size: 26px; }
+
+/* Nov 24: the planned bookmark hangs on the left, over the time; the postage stamps are much bigger. */
+.sq-stub .sq-planned-mark { right: auto !important; left: 12px !important; }
+.sq-stamp-square .sq-greet { width: 116px; height: 116px; }
+.sq-stamp-flyer .sq-greet { width: 100px; height: 134px; }
+.sq-stamp-wide .sq-greet { width: 150px; height: 104px; }
+.sq-stamp-paper { padding: 8px; }
+@media (max-width: 760px) {
+  .sq-stamp-square .sq-greet { width: 84px; height: 84px; }
+  .sq-stamp-flyer .sq-greet { width: 72px; height: 96px; }
+  .sq-stamp-wide .sq-greet { width: 104px; height: 72px; }
+  .sq-stamp-paper { padding: 5px; }
+  .sq-stubs .sq-stub-faced { grid-template-columns: 80px minmax(0, 1fr) auto; }
+}
+
+/* Calendar draft and walking directions on the short card (Nov 24): one low torn strip holding both,
+   split by a ticket perforation, instead of two tall boxes. The tap area stays 40px+, the paper is shorter. */
+.sq-handoffs { position: relative; isolation: isolate; display: inline-flex; align-items: stretch; margin: 12px 0 0; }
+.sq-handoffs::before { content: ""; position: absolute; inset: 5px 0; z-index: -1; background: #f3e6d3; filter: drop-shadow(0 1px 1px rgba(60, 40, 30, .12));
+  -webkit-mask: url('./assets/mat-torn.svg') 0 0 / 100% 100% no-repeat; mask: url('./assets/mat-torn.svg') 0 0 / 100% 100% no-repeat; }
+.sq-handoff { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 13px; cursor: pointer;
+  font: 600 14px var(--font-sans); color: var(--sq-ink); }
+.sq-handoff + .sq-handoff { position: relative; }
+.sq-handoff + .sq-handoff::before { content: ""; position: absolute; left: 0; top: 13px; bottom: 13px; border-left: 1.5px dashed rgba(138, 90, 18, .45); }
+.sq-handoff svg { width: 16px; height: 16px; fill: none; stroke: #8a5a12; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.sq-handoff:hover { color: var(--sq-red-deep, #751728); }
+.sq-handoff:focus-visible { outline: 3px solid var(--sq-focus, #751728); outline-offset: 1px; }
+.sq-handoff:disabled { opacity: .6; cursor: default; }
+.sq-handoff-go { color: #6b440c; }
+@media (max-width: 760px) { .sq-handoff { min-height: 46px; } .sq-handoffs::before { inset: 8px 0; } .sq-handoff + .sq-handoff::before { top: 15px; bottom: 15px; } }
+
+/* Type weight (her picks, Nov 24 afternoon). Instrument Serif ships in one weight, so the serif gets
+   heavier with a thin stroke of its own ink (S7): titles .7px, times .9px, am/pm left thin.
+   Happening-now titles go heavier still instead of italic, and the "Now" shout is Urbanist 900.
+   Facts grow a size; the host is bolder; the place stays light because it carries the underline. */
+:root[data-quiet] :is(.sq-stub-body strong, #sq-detail-title) { -webkit-text-stroke: .7px currentColor; paint-order: stroke fill; }
+:root[data-quiet] :is(.sq-stub-time > b, .sq-quiet-time b) { -webkit-text-stroke: .9px currentColor; paint-order: stroke fill; }
+:root[data-quiet] :is(.sq-stub-time > b > i, .sq-quiet-time i) { -webkit-text-stroke: 0; }
+:root[data-quiet] .sq-stub:has(.sq-live) .sq-stub-body strong { -webkit-text-stroke-width: 1.15px; }
+:root[data-quiet] .sq-live { font-weight: 900; }
+:root[data-quiet] .sq-by b { font-weight: 650; font-size: 17px; }
+:root[data-quiet] .sq-by span { font-weight: 400; font-size: 17px; }
+:root[data-quiet] .sq-stub-time small { font-size: 14px; }
+/* Duration as spaced caps (from option F): it is worked out, not typed by the host, so it reads like a label. */
+:root[data-quiet] .sq-stub-time em { font-style: normal; font-weight: 800; font-size: 12.5px; text-transform: uppercase; letter-spacing: .14em; }
+:root[data-quiet] .sq-quiet-facts li:first-child { font-weight: 650; font-size: 19.5px; }
+:root[data-quiet] .sq-quiet-facts li:last-child, :root[data-quiet] .sq-quiet-facts a { font-weight: 400; font-size: 19.5px; }
+:root[data-quiet] .sq-quiet-until { font-size: 19.5px; }
+:root[data-quiet] .sq-quiet-length { font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: .14em; }
+
+/* Nothing cut off (Nov 24 scan). The scan in e2e-demo/clipping.spec.ts measures each word's letter shapes
+   against the boxes that clip it and against anything painted on top. These rules are what it found. */
+/* Titles: room under the last line for the tails of g, y, p, and long words may hyphenate instead of running out. */
+:root[data-quiet] .sq-stub-body strong { line-height: 1.1; padding-bottom: .12em; hyphens: auto; -webkit-hyphens: auto; }
+:root[data-quiet] .sqm-tk strong, :root[data-quiet] .sqm-plan strong { hyphens: auto; -webkit-hyphens: auto; overflow-wrap: break-word; }
+:root[data-quiet] .sq-stub-body { padding-bottom: 3px; }
+/* One-line rows that end in an ellipsis keep their descenders. */
+.sqm-rowt, .sq-fr-hit-what small, .sq-fr-hit-what strong { line-height: 1.3; padding-bottom: .1em; }
+/* The planned ribbon hangs above the time on a phone ticket, never across it. */
+@media (max-width: 760px) { :root[data-quiet] .sq-stub:has(.sq-planned-mark) .sq-stub-time { padding-top: 44px; } }
+/* The postmark sits on the picture's lower right corner, away from the times. */
+@media (max-width: 760px) { .sq-quiet-stamp { left: auto !important; right: -20px; bottom: -22px; } }
+/* The title takes focus when a card opens so screen readers start there; it is not a control, so no ring. */
+#sq-detail-title:focus, #sq-detail-title:focus-visible { outline: none; }
+/* The by-line clamps to two lines; its words now share its line height, so the second line fits whole. */
+:root[data-quiet] .sq-by { font-size: 17px; line-height: 1.32; padding-bottom: .14em; }
+:root[data-quiet] .sq-by > :is(b, span, i) { font-size: inherit !important; line-height: inherit; }
+/* Phone card: the big time shrinks a little so "10:00am" never slides under the picture. */
+@media (max-width: 760px) { .sq-quiet-top .sq-quiet-time b { font-size: 46px; } .sq-quiet-top .sq-quiet-time i { font-size: 22px; } }
+:root[data-quiet] .sq-by { padding-right: 2px; }
+
+/* Apothecary label (B2, her pick): corners cut inward like old jar labels, with a thin second line inside.
+   The inner line follows the cut corners at a small inset, drawn as gradients so it scales with any card. */
+.sq-stub::before { content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background-image: linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), radial-gradient(circle at -5px -5px, #0000 16.80px, rgba(155, 139, 126, .62) 17.00px, rgba(155, 139, 126, .62) 18.00px, #0000 18.20px), radial-gradient(circle at calc(100% + 5px) -5px, #0000 16.80px, rgba(155, 139, 126, .62) 17.00px, rgba(155, 139, 126, .62) 18.00px, #0000 18.20px), radial-gradient(circle at -5px calc(100% + 5px), #0000 16.80px, rgba(155, 139, 126, .62) 17.00px, rgba(155, 139, 126, .62) 18.00px, #0000 18.20px), radial-gradient(circle at calc(100% + 5px) calc(100% + 5px), #0000 16.80px, rgba(155, 139, 126, .62) 17.00px, rgba(155, 139, 126, .62) 18.00px, #0000 18.20px);
+  background-position: left 16.77px top 5px, left 16.77px bottom 5px, left 5px top 16.77px, right 5px top 16.77px, left 5px top 5px, right 5px top 5px, left 5px bottom 5px, right 5px bottom 5px;
+  background-size: calc(100% - 33.54px) 1px, calc(100% - 33.54px) 1px, 1px calc(100% - 33.54px), 1px calc(100% - 33.54px), 13.27px 13.27px, 13.27px 13.27px, 13.27px 13.27px, 13.27px 13.27px;
+  background-repeat: no-repeat; }
+.sq-carded { position: relative; }
+.sq-carded::after { content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background-image: linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), radial-gradient(circle at -6px -6px, #0000 19.80px, rgba(155, 139, 126, .62) 20.00px, rgba(155, 139, 126, .62) 21.00px, #0000 21.20px), radial-gradient(circle at calc(100% + 6px) -6px, #0000 19.80px, rgba(155, 139, 126, .62) 20.00px, rgba(155, 139, 126, .62) 21.00px, #0000 21.20px), radial-gradient(circle at -6px calc(100% + 6px), #0000 19.80px, rgba(155, 139, 126, .62) 20.00px, rgba(155, 139, 126, .62) 21.00px, #0000 21.20px), radial-gradient(circle at calc(100% + 6px) calc(100% + 6px), #0000 19.80px, rgba(155, 139, 126, .62) 20.00px, rgba(155, 139, 126, .62) 21.00px, #0000 21.20px);
+  background-position: left 19.60px top 6px, left 19.60px bottom 6px, left 6px top 19.60px, right 6px top 19.60px, left 6px top 6px, right 6px top 6px, left 6px bottom 6px, right 6px bottom 6px;
+  background-size: calc(100% - 39.20px) 1px, calc(100% - 39.20px) 1px, 1px calc(100% - 39.20px), 1px calc(100% - 39.20px), 15.10px 15.10px, 15.10px 15.10px, 15.10px 15.10px, 15.10px 15.10px;
+  background-repeat: no-repeat; }
+
+/* "My day" preview (Nov 24): an event not planned yet sits on its day with a dashed edge and a tag,
+   so you can see whether it fits before you plan it. */
+.sqm-plan.sqm-preview { border-style: dashed !important; border-width: 2px !important; background-image: repeating-linear-gradient(-45deg, rgba(255, 250, 242, .55) 0 6px, transparent 6px 12px) !important; }
+.sqm-plan.sqm-preview::after { content: "not planned yet"; position: absolute; right: 8px; top: 6px; font: 800 10.5px var(--font-sans); letter-spacing: .1em; text-transform: uppercase; color: var(--sq-red-deep, #751728); }
+.sqm-open-preview .sqm-openhead span { color: var(--sq-red-deep, #751728); }
+.sqm-preview-plan { margin-top: 10px; }

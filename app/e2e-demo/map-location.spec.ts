@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { open } from './helpers'
 
 // Extra credit: the map finds you, shows which way you face, follows you, and widens when you're off campus.
 const MISSION = { latitude: 37.34904, longitude: -121.94098 }
@@ -70,4 +71,19 @@ test('when location is blocked, the map says so and offers to open on its own', 
   await page.getByRole('button', { name: 'Show where I am' }).click()
   await expect(page.locator('#meNote')).toContainText('Location is off here.')
   await expect(page.getByRole('link', { name: 'Open the map on its own' })).toHaveAttribute('href', '/map/index.html')
+})
+
+// Nov 24: on her phone the map left a white strip and stacked four bars over the campus.
+test('the phone map fills the width, keeps only search and kinds on top, and the event key lives in Key', async ({ page }) => {
+  await open(page, 'map', 390)
+  const frame = (await page.locator('.sq-map-frame').boundingBox())!
+  const fr = page.frameLocator('.sq-map-frame')
+  await expect(fr.locator('#map')).toBeVisible()
+  const canvas = (await fr.locator('#map').boundingBox())!
+  expect(Math.abs(canvas.width - frame.width)).toBeLessThan(2)
+  await expect(fr.locator('#walk')).toBeHidden()
+  await expect(fr.locator('#evKey')).toHaveCount(0)
+  await fr.getByRole('button', { name: 'Key' }).click()
+  await expect(fr.locator('#legend')).toContainText('In My Schedule')
+  await expect(fr.getByRole('button', { name: 'Show where I am' })).toBeVisible()
 })

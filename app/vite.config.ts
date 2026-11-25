@@ -9,6 +9,8 @@ import { createGroupApi } from './server/groupApi.ts'
 import { createEmailAuthApi } from './server/emailAuthApi.ts'
 import { createSupabaseEmailOtpGatewayFromEnv } from './server/supabaseEmailAuth.ts'
 import { createSupabaseGroupGatewayFromEnv } from './server/supabaseGroupAccess.ts'
+import { createPersonalApi } from './server/personalApi.ts'
+import { accountsEnabled, createSupabasePersonalGatewayFromEnv } from './server/personalSupabase.ts'
 import { createSupabaseEventCatalogFromEnv } from './src/model/supabaseEventTable.ts'
 
 // 🧪 Vite runs the React development app; Vitest reuses this config
@@ -22,6 +24,7 @@ export default defineConfig(({ mode }) => ({
         ...loadEnv(mode, process.cwd(), 'SUPABASE_'),
         ...loadEnv(mode, process.cwd(), 'SIDEQUEST_GROUPS_'),
         ...loadEnv(mode, process.cwd(), 'SIDEQUEST_AUTH_'),
+        ...loadEnv(mode, process.cwd(), 'SIDEQUEST_ACCOUNTS_'),
         ...loadEnv(mode, process.cwd(), 'OPENAI_'),
         ...loadEnv(mode, process.cwd(), 'SIDEQUEST_AI_'),
         ...process.env,
@@ -34,10 +37,13 @@ export default defineConfig(({ mode }) => ({
       const api = createCatalogApi(catalog, Date.now, notifications)
       const ai = createAiDiscoverApi(catalog, { apiKey: env.OPENAI_API_KEY, model: env.SIDEQUEST_AI_MODEL })
       const groupApi = createGroupApi(createSupabaseGroupGatewayFromEnv(env))
-      const authApi = createEmailAuthApi(createSupabaseEmailOtpGatewayFromEnv(env))
+      const authApi = createEmailAuthApi(createSupabaseEmailOtpGatewayFromEnv(env), Date.now,
+        { groups: env.SIDEQUEST_GROUPS_ENABLED === 'true', accounts: accountsEnabled(env) })
+      const personalApi = createPersonalApi(createSupabasePersonalGatewayFromEnv(env))
       server.middlewares.use((req, res, next) => {
         void (async () => {
           if (await authApi(req, res)) return
+          if (await personalApi(req, res)) return
           if (await groupApi(req, res)) return
           if (await ai(req, res)) return
           if (await api(req, res)) return

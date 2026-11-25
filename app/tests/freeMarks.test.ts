@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addBusy, fillGap, freeWindows, paintMarks, presentMarks } from '../src/controller/freeMarks'
+import { addBusy, fillGap, freeWindows, paintMarks, presentMarks, reshapeBusy } from '../src/controller/freeMarks'
 import type { LegacyCampusEvent } from '../src/model/events'
 
 // Tuesday 24 November 2026, 10:40 in Santa Clara. Planned: class 11:00–12:00 and lab 13:00–18:00.
@@ -95,5 +95,26 @@ describe('free time comes from busy time', () => {
     const marks = addBusy({ ...base, date: '2026-11-24' }, '17:00', '23:00')!
     expect(freeWindows({ ...base, marks, when: 'tonight' })).toEqual([])
     expect(presentMarks({ ...base, marks, when: 'tonight' }).whenNote).toBe('No free time tonight')
+  })
+})
+
+describe('busy blocks you can pick up on the bar', () => {
+  const day = { ...base, date: '2026-11-24' }
+  const seven = paintMarks(day, cell('19:00'), cell('20:30'), true)
+  it('moving a block lifts the old time and lays down the new', () => {
+    const marks = reshapeBusy({ ...day, marks: seven }, { first: cell('19:00'), last: cell('20:30') }, cell('21:00'), cell('22:30'))
+    expect(presentMarks({ ...base, marks }).mine.map(r => r.label)).toEqual(['9–11pm'])
+  })
+  it('stretching an end keeps the other end where it was', () => {
+    const marks = reshapeBusy({ ...day, marks: seven }, { first: cell('19:00'), last: cell('20:30') }, cell('19:00'), cell('21:30'))
+    expect(presentMarks({ ...base, marks }).mine.map(r => r.label)).toEqual(['7–10pm'])
+  })
+  it('a new drag adds a block and never paints over My Schedule', () => {
+    const marks = reshapeBusy(day, null, cell('17:00'), cell('19:30'))
+    expect(marks['2026-11-24']).toEqual([cell('18:00'), cell('18:30'), cell('19:00'), cell('19:30')])
+  })
+  it('a block moved onto My Schedule time keeps only the open half hours', () => {
+    const marks = reshapeBusy({ ...day, marks: seven }, { first: cell('19:00'), last: cell('20:30') }, cell('16:00'), cell('19:00'))
+    expect(marks['2026-11-24']).toEqual([cell('18:00'), cell('18:30'), cell('19:00')])
   })
 })

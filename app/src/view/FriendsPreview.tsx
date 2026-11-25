@@ -9,47 +9,75 @@ import { categoryOfPlan } from '../controller/eventCategory'
 import './friends.css'
 
 type Answer = 'works' | 'if' | 'cant' | null
-type Plan = { id: string; eventId: string; by: string; answers: Record<string, Answer>; note?: Record<string, string> }
-type Group = { id: string; name: string; members: string[]; plans: Plan[] }
+type Status = 'proposed' | 'confirmed' | 'cancelled'
+// Only your own If note is ever stored here. Other people's notes are theirs alone (review v5.1, page 3).
+type Plan = { id: string; eventId: string; by: string; status: Status; answers: Record<string, Answer>; myNote?: string }
+// `invited` are people who have not accepted yet. `inviteFrom` means you are the one invited and have not answered.
+type Group = { id: string; name: string; members: string[]; invited: string[]; plans: Plan[]; inviteFrom?: string }
 type Ev = { id: string; title: string; location: string; date: string; start: string; end: string; hostName?: string }
 
-const KEY = 'sidequest.demo-friend-groups.v1'
+const KEY = 'sidequest.demo-friend-groups.v2'
 const YOU = 'You'
+/** Pending invitations plus members, you included, stay at 12 or fewer (review v5.1, page 3). */
+export const GROUP_LIMIT = 12
 const COLORS = ['#b8741f', '#5f6f30', '#3f5f7f', '#7a2e5a', '#a24a2c', '#3f6f66']
 const ANSWERS: [Exclude<Answer, null>, string][] = [['works', 'Works'], ['if', 'If…'], ['cant', 'Cannot']]
 
-function seed(events: readonly Ev[]): Group[] {
+function seed(): Group[] {
   // Sample plans point at the nth event, resolved when the list has loaded (it may be empty on first render).
   const e = (i: number) => `#${i}`
   return [
-    { id: 'g1', name: 'Swig 7th floor', members: ['Maya', 'Jun', 'Theo', YOU], plans: [
-      { id: 'p1', eventId: e(5), by: 'Maya', answers: { Maya: 'works', Jun: 'if', Theo: null, [YOU]: null }, note: { Jun: 'if I can leave lab early' } },
-      { id: 'p2', eventId: e(9), by: 'Jun', answers: { Maya: 'works', Jun: 'works', Theo: 'cant', [YOU]: 'works' } }] },
-    { id: 'g2', name: 'ACM crew', members: ['Priya', 'Sam', 'Diego', YOU], plans: [
-      { id: 'p3', eventId: e(4), by: 'Priya', answers: { Priya: 'works', Sam: 'works', Diego: 'if', [YOU]: null } }] },
-    { id: 'g3', name: 'Choir altos', members: ['Elena', 'Nora', YOU], plans: [
-      { id: 'p4', eventId: e(6), by: 'Elena', answers: { Elena: 'works', Nora: null, [YOU]: null } }] },
-    { id: 'g4', name: 'Roommates', members: ['Talia', 'Andre', YOU], plans: [] },
+    { id: 'g1', name: 'Swig 7th floor', members: ['Maya', 'Jun', 'Theo', YOU], invited: [], plans: [
+      { id: 'p1', eventId: e(5), by: 'Maya', status: 'proposed', answers: { Maya: 'works', Jun: 'if', Theo: null, [YOU]: null } },
+      { id: 'p2', eventId: e(9), by: YOU, status: 'proposed', answers: { Maya: 'works', Jun: 'works', Theo: 'works', [YOU]: 'works' } }] },
+    { id: 'g2', name: 'ACM crew', members: ['Priya', 'Sam', YOU], invited: ['Diego'], plans: [
+      { id: 'p3', eventId: e(4), by: 'Priya', status: 'proposed', answers: { Priya: 'works', Sam: 'works', [YOU]: null } }] },
+    { id: 'g3', name: 'Choir altos', members: ['Elena', 'Nora', YOU], invited: [], plans: [
+      { id: 'p4', eventId: e(6), by: 'Elena', status: 'confirmed', answers: { Elena: 'works', Nora: 'works', [YOU]: 'works' } }] },
+    { id: 'g4', name: 'Roommates', members: ['Talia', 'Andre', YOU], invited: [], plans: [] },
+    // You were invited here. Until you accept you see the event and the invite, never who else is in it.
+    { id: 'g5', name: 'Film club', members: ['Ana', 'Ben', 'Iris'], invited: [YOU], inviteFrom: 'Ana', plans: [
+      { id: 'p5', eventId: e(7), by: 'Ana', status: 'proposed', answers: { Ana: 'works', Ben: null, Iris: 'if' } }] },
   ]
 }
-function load(events: readonly Ev[]): Group[] {
-  const sample: Record<string, string> = { p1: '#5', p2: '#9', p3: '#4', p4: '#6' }
+/** Friends who chose "Show my friends I'm going" on an event, for the group named. Sample data, like the groups. */
+const SHARES: { name: string; groupId: string; eventId: string }[] = [
+  { name: 'Jun', groupId: 'g1', eventId: '#3' }, { name: 'Theo', groupId: 'g1', eventId: '#3' },
+  { name: 'Priya', groupId: 'g2', eventId: '#3' }, { name: 'Talia', groupId: 'g4', eventId: '#1' },
+  // Ben's group only invited you, so you never see him.
+  { name: 'Ben', groupId: 'g5', eventId: '#3' },
+]
+export const DEMO_YOU = YOU
+export const personColor = (n: string) => n === YOU ? '#a32035' : COLORS[[...n].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length]
+/** The sample groups and shares with "#n" event references turned into event IDs (the nth listed event). */
+export function demoFriendData(events: readonly { id: string }[]) {
+  const ref = (r: string) => {
+    if (!r.startsWith('#') || !events.length) return r
+    const i = Number(r.slice(1))
+    return events[i % events.length]?.id ?? r
+  }
+  const groups = load().map(g => ({ ...g, plans: g.plans.map(p => ({ ...p, eventId: ref(p.eventId) })) }))
+  return { groups, shares: SHARES.map(x => ({ ...x, eventId: ref(x.eventId) })) }
+}
+
+function load(): Group[] {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) ?? 'null')
-    // Older saves stored an empty id when the list had not loaded yet; point those back at their sample event.
-    if (Array.isArray(v) && v.length) return (v as Group[]).map(gr => ({ ...gr, plans: gr.plans.map(p => p.eventId ? p : { ...p, eventId: sample[p.id] ?? '' }) }))
+    if (Array.isArray(v) && v.length) return v as Group[]
   } catch { /* fall back */ }
-  return seed(events)
+  return seed()
 }
 
 export function FriendsPreview({ events, routes, plannedCount }: { events: readonly Ev[]; routes: SideQuestRoutes; plannedCount: number }) {
-  const [groups, setGroups] = useState<Group[]>(() => load(events))
+  const [groups, setGroups] = useState<Group[]>(load)
   const [active, setActive] = useState(groups[0]?.id ?? '')
   const [making, setMaking] = useState(false)
   const [name, setName] = useState('')
   const [people, setPeople] = useState('')
   const [proposing, setProposing] = useState('')
+  const [leaving, setLeaving] = useState(false)
   useEffect(() => { try { localStorage.setItem(KEY, JSON.stringify(groups)) } catch { /* private mode */ } }, [groups])
+  useEffect(() => setLeaving(false), [active])
   const byId = useMemo(() => {
     const m = new Map(events.map(e => [e.id, e]))
     events.forEach((e, i) => m.set(`#${i}`, e))
@@ -57,23 +85,33 @@ export function FriendsPreview({ events, routes, plannedCount }: { events: reado
     return m
   }, [events])
   const g = groups.find(x => x.id === active) ?? groups[0]
-  const color = (n: string) => n === YOU ? '#a32035' : COLORS[[...n].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length]
+  const color = personColor
   const update = (fn: (x: Group) => Group) => setGroups(all => all.map(x => x.id === g.id ? fn(x) : x))
-  const setNote = (planId: string, text: string) => update(x => ({ ...x, plans: x.plans.map(p => p.id === planId ? { ...p, note: { ...(p.note ?? {}), [YOU]: text } } : p) }))
-  const answer = (planId: string, a: Exclude<Answer, null>) => update(x => ({ ...x, plans: x.plans.map(p => p.id === planId ? { ...p, answers: { ...p.answers, [YOU]: p.answers[YOU] === a ? null : a } } : p) }))
+  const updatePlan = (planId: string, fn: (p: Plan) => Plan) => update(x => ({ ...x, plans: x.plans.map(p => p.id === planId ? fn(p) : p) }))
+  const setNote = (planId: string, text: string) => updatePlan(planId, p => ({ ...p, myNote: text }))
+  // Any answer can change to any other while the plan is proposed. The note belongs to If only.
+  const answer = (planId: string, a: Exclude<Answer, null>) => updatePlan(planId, p => p.status !== 'proposed' ? p : { ...p, answers: { ...p.answers, [YOU]: a }, myNote: a === 'if' ? p.myNote : undefined })
   const makeGroup = () => {
     const n = name.trim(); if (!n) return
     const id = 'g' + Date.now()
-    const members = [...people.split(',').map(s => s.trim()).filter(Boolean).slice(0, 12), YOU]
-    setGroups(all => [...all, { id, name: n.slice(0, 40), members, plans: [] }]); setActive(id); setMaking(false); setName(''); setPeople('')
+    const invited = [...new Set(people.split(',').map(s => s.trim()).filter(x => x && x !== YOU))].slice(0, GROUP_LIMIT - 1)
+    setGroups(all => [...all, { id, name: n.slice(0, 40), members: [YOU], invited, plans: [] }]); setActive(id); setMaking(false); setName(''); setPeople('')
   }
   const propose = (eventId: string) => {
     if (!eventId || !g) return
-    update(x => ({ ...x, plans: [{ id: 'p' + Date.now(), eventId, by: YOU, answers: Object.fromEntries(x.members.map(m => [m, m === YOU ? 'works' : null])) }, ...x.plans] }))
+    // Nobody has answered yet, the person who proposed it included (review v5.1, page 11).
+    update(x => ({ ...x, plans: [{ id: 'p' + Date.now(), eventId, by: YOU, status: 'proposed', answers: Object.fromEntries(x.members.map(m => [m, null])) }, ...x.plans] }))
     setProposing('')
   }
+  const accept = () => update(x => ({ ...x, inviteFrom: undefined, invited: x.invited.filter(m => m !== YOU), members: [...x.members, YOU],
+    plans: x.plans.map(p => ({ ...p, answers: { ...p.answers, [YOU]: null } })) }))
+  const decline = () => { setGroups(all => all.filter(x => x.id !== g.id)); setActive(groups.find(x => x.id !== g.id)?.id ?? '') }
+  // Leaving deletes your membership. A confirmed plan that loses a member becomes cancelled for everyone left.
+  const leave = () => { setGroups(all => all.filter(x => x.id !== g.id)); setActive(groups.find(x => x.id !== g.id)?.id ?? ''); setLeaving(false) }
   const dayName = (date: string) => { const [y, m, d] = date.split('-').map(Number); return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(Date.UTC(y, m - 1, d)).getUTCDay()] + ' ' + d }
   const fmt = (t: string) => { const [h, m] = t.split(':').map(Number); return `${h % 12 || 12}${m ? ':' + String(m).padStart(2, '0') : ''}${h < 12 ? 'am' : 'pm'}` }
+  const pendingMe = Boolean(g?.inviteFrom)
+  const confirmedHere = g?.plans.some(p => p.status === 'confirmed') ?? false
 
   return (
     <div className="sq-discover-page sq-friends-page">
@@ -84,19 +122,35 @@ export function FriendsPreview({ events, routes, plannedCount }: { events: reado
             <h1>Groups</h1>
             <ul>{groups.map(x => (
               <li key={x.id}><button type="button" aria-current={x.id === g?.id ? 'true' : undefined} onClick={() => setActive(x.id)}>
-                <b>{x.name}</b><span>{x.members.length} people · {x.plans.length} {x.plans.length === 1 ? 'plan' : 'plans'}</span>
+                <b>{x.name}</b><span>{x.inviteFrom ? <em className="sq-fr-invited-tag">Invited by {x.inviteFrom}</em> : <>{x.members.length} people · {x.plans.length} {x.plans.length === 1 ? 'plan' : 'plans'}</>}</span>
               </button></li>))}</ul>
             {making ? (
               <form className="sq-fr-new" onSubmit={e => { e.preventDefault(); makeGroup() }}>
                 <label>Group name<input value={name} maxLength={40} onChange={e => setName(e.target.value)} placeholder="Study buddies" autoFocus /></label>
-                <label>Who's in it<input value={people} onChange={e => setPeople(e.target.value)} placeholder="Names, with commas" /></label>
+                <label>Who's in it<input value={people} onChange={e => setPeople(e.target.value)} placeholder="Names, with commas" aria-describedby="sq-fr-limit" /></label>
+                <small id="sq-fr-limit" className="sq-fr-limit">Up to {GROUP_LIMIT - 1} people. They join when they accept.</small>
                 <div><button type="submit" className="sq-plan-button">Make the group</button><button type="button" className="sq-dab-link" onClick={() => setMaking(false)}>never mind</button></div>
               </form>
             ) : <button type="button" className="sq-dab-link" onClick={() => setMaking(true)}>New group</button>}
           </nav>
-          {g && <section className="sq-fr-main" aria-labelledby="sq-fr-title">
-            <span className="sq-fr-eyebrow">{g.members.filter(m => m !== YOU).join(', ')} and you</span>
+          {g && pendingMe && <section className="sq-fr-main sq-fr-invite" aria-labelledby="sq-fr-title">
+            <span className="sq-fr-eyebrow">{g.inviteFrom} invited you</span>
             <h2 id="sq-fr-title">{g.name}</h2>
+            {g.plans.slice(0, 1).map(p => { const e = byId.get(p.eventId); if (!e) return null
+              return <div key={p.id} className="sq-fr-card sq-fr-invite-card" style={categoryStyle(categoryOfPlan({ title: e.title, host: e.hostName ?? '' }))}>
+                <span className="sq-fr-time"><b>{fmt(e.start)}</b><small>to {fmt(e.end)}</small><em>{e.date.slice(5).replace('-', '/')}</em></span>
+                <span className="sq-fr-body"><strong>{e.title}</strong><span>{e.location}</span></span>
+                <span className="sq-fr-face" aria-hidden="true"><Greetings location={e.location} small /></span>
+              </div> })}
+            <div className="sq-fr-invite-acts">
+              <button type="button" className="sq-plan-button" onClick={accept}>Join</button>
+              <button type="button" className="sq-dab-link" onClick={decline}>No thanks</button>
+            </div>
+          </section>}
+          {g && !pendingMe && <section className="sq-fr-main" aria-labelledby="sq-fr-title">
+            <span className="sq-fr-eyebrow">{g.members.filter(m => m !== YOU).join(', ') || 'Just you'}{g.members.length > 1 ? ' and you' : ''}</span>
+            <h2 id="sq-fr-title">{g.name}</h2>
+            {g.invited.length > 0 && <p className="sq-fr-waiting"><i aria-hidden="true" />Invited, not in yet: {g.invited.join(', ')}</p>}
             {/* Find something to propose: type to search, or pick from what is coming up (replaces a long dropdown, Nov 24). */}
             <div className="sq-fr-find">
               <label className="sq-fr-find-box">
@@ -120,29 +174,47 @@ export function FriendsPreview({ events, routes, plannedCount }: { events: reado
                 ) : <p className="sq-fr-none">No match</p>
               })()}
             </div>
-            
+
             {g.plans.map(p => { const e = byId.get(p.eventId); if (!e) return null
-              const works = Object.values(p.answers).filter(a => a === 'works').length
+              const works = g.members.filter(m => p.answers[m] === 'works').length
+              const waiting = g.members.filter(m => p.answers[m] !== 'works').length + g.invited.length
+              const locked = p.status !== 'proposed'
               return (
-                <article key={p.id} className="sq-fr-plan" style={categoryStyle(categoryOfPlan({ title: e.title, host: e.hostName ?? '' }))}>
+                <article key={p.id} className={`sq-fr-plan sq-fr-${p.status}`} style={categoryStyle(categoryOfPlan({ title: e.title, host: e.hostName ?? '' }))}>
                   <div className="sq-fr-card">
                     <span className="sq-fr-time"><b>{fmt(e.start)}</b><small>to {fmt(e.end)}</small><em>{e.date.slice(5).replace('-', '/')}</em></span>
-                    <span className="sq-fr-body"><strong>{e.title}</strong><span>{e.location} · proposed by {p.by}</span><i>{works} {works === 1 ? 'says' : 'say'} it works</i></span>
+                    <span className="sq-fr-body"><strong>{e.title}</strong><span>{e.location} · proposed by {p.by}</span>
+                      {p.status === 'proposed' ? <i>{works} {works === 1 ? 'says' : 'say'} it works</i> : <b className={'sq-fr-status sq-fr-status-' + p.status}>{p.status === 'confirmed' ? 'Confirmed' : 'Cancelled'}</b>}</span>
                     <span className="sq-fr-face" aria-hidden="true"><Greetings location={e.location} small /></span>
                   </div>
                   <ul className="sq-fr-reps">{g.members.filter(m => m !== YOU).map(m => { const a = p.answers[m] ?? null
-                    return <li key={m}><i style={{ background: color(m) }}>{m[0]}</i>{m}<span className={'sq-fr-a sq-fr-a-' + (a ?? 'none')}>{a && <AnswerStar kind={a} on small />}{a === 'works' ? 'Works' : a === 'if' ? 'If…' : a === 'cant' ? 'Cannot' : 'not yet'}</span>{a === 'if' && p.note?.[m] && <em>{p.note[m]}</em>}</li> })}</ul>
+                    return <li key={m}><i style={{ background: color(m) }}>{m[0]}</i>{m}<span className={'sq-fr-a sq-fr-a-' + (a ?? 'none')}>{a && <AnswerStar kind={a} on small />}{a === 'works' ? 'Works' : a === 'if' ? 'If…' : a === 'cant' ? 'Cannot' : 'not yet'}</span></li> })}</ul>
                   <div className="sq-fr-mine" role="group" aria-label={`Your answer for ${e.title}`}><span>Your answer</span>
-                    {ANSWERS.map(([k, label]) => <button key={k} type="button" className={'sq-ans sq-ans-' + k} aria-pressed={p.answers[YOU] === k} onClick={() => answer(p.id, k)}><AnswerStar kind={k} on={p.answers[YOU] === k} />{label}</button>)}
+                    {ANSWERS.map(([k, label]) => <button key={k} type="button" className={'sq-ans sq-ans-' + k} aria-pressed={p.answers[YOU] === k} disabled={locked} onClick={() => answer(p.id, k)}><AnswerStar kind={k} on={p.answers[YOU] === k} />{label}</button>)}
                   </div>
-                  {p.answers[YOU] === 'if' && (
+                  {p.answers[YOU] === 'if' && !locked && (
                     <label className="sq-fr-note"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1" /><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" /></svg>
                       <span className="sq-visually-hidden">Your condition, only you see it</span>
-                      <input value={p.note?.[YOU] ?? ''} maxLength={280} onChange={e => setNote(p.id, e.target.value)} placeholder="If… (only you see this)" />
+                      <input value={p.myNote ?? ''} maxLength={280} onChange={e => setNote(p.id, e.target.value)} placeholder="If… (only you see this)" />
                     </label>
+                  )}
+                  {p.by === YOU && p.status === 'proposed' && (
+                    <div className="sq-fr-decide">
+                      <button type="button" className="sq-plan-button" disabled={waiting > 0} aria-describedby={waiting > 0 ? `sq-fr-wait-${p.id}` : undefined}
+                        onClick={() => updatePlan(p.id, x => ({ ...x, status: 'confirmed' }))}>Confirm</button>
+                      {waiting > 0 && <small id={`sq-fr-wait-${p.id}`}>Waiting on {waiting}</small>}
+                      <button type="button" className="sq-dab-link" onClick={() => updatePlan(p.id, x => ({ ...x, status: 'cancelled' }))}>Call it off</button>
+                    </div>
                   )}
                 </article>
               ) })}
+            <div className="sq-fr-leave">
+              {leaving
+                ? <p role="alert">{confirmedHere ? 'Leaving cancels the confirmed plan for everyone. ' : ''}Leave {g.name}?
+                    <button type="button" className="sq-plan-button" onClick={leave}>Leave</button>
+                    <button type="button" className="sq-dab-link" onClick={() => setLeaving(false)}>Stay</button></p>
+                : <button type="button" className="sq-dab-link" onClick={() => setLeaving(true)}>Leave group</button>}
+            </div>
           </section>}
         </div>
       </main>

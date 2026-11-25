@@ -27,3 +27,15 @@ test('the planned bookmark hangs over the top edge of the card', async ({ page }
   const size = await mark.locator('svg').boundingBox()
   expect(size!.height).toBeGreaterThanOrEqual(36)
 })
+
+test('the bookmark hangs on the left over the time, and stamps are big', async ({ page }) => {
+  for (const [w, min] of [[390, 72], [1280, 100]] as const) {
+    await open(page, 'discover', w)
+    const card = page.locator('.sq-stub:has(.sq-planned-mark)').first()
+    await card.evaluate(e => e.scrollIntoView({ block: 'center' })); await page.waitForTimeout(600)
+    const [m, c] = await card.evaluate(e => [e.querySelector('.sq-planned-mark')!.getBoundingClientRect().left, e.getBoundingClientRect().left])
+    expect(m - c).toBeLessThan(40)
+    const stamp = (await card.locator('.sq-stub-stamp').boundingBox())!
+    expect(Math.max(stamp.width, stamp.height)).toBeGreaterThan(min)
+  }
+})

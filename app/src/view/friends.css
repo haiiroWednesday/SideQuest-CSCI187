@@ -108,3 +108,26 @@
 .sq-fr-hit-what small { font: 500 13px var(--font-sans); color: var(--sq-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sq-fr .sq-fr-hit-go { min-width: 0 !important; width: auto; min-height: 48px !important; padding: 0 16px !important; font-size: 14px; }
 .sq-fr-none { margin: 0; color: var(--sq-muted); font: 500 14px var(--font-sans); }
+
+/* Review v5.1 rules made visible (Nov 24): invitations wait, the organizer confirms, leaving warns. */
+.sq-fr-invited-tag { font-style: normal; color: #8a5a12; font-weight: 700; }
+.sq-fr-limit { display: block; margin: -4px 0 10px; font: 500 12.5px var(--font-sans); color: var(--sq-muted); }
+.sq-fr-waiting { display: flex; align-items: center; gap: 8px; margin: 6px 0 14px; font: 500 14px var(--font-sans); color: var(--sq-muted); }
+.sq-fr-waiting i { width: 14px; height: 10px; border: 1.4px dashed #8a7d74; border-radius: 2px; }
+.sq-fr-status { display: inline-block; margin-top: 4px; font: 700 12px var(--font-sans); letter-spacing: .1em; text-transform: uppercase; }
+.sq-fr-status-confirmed { color: #8a5a12; }
+.sq-fr-status-confirmed::before { content: ""; display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: -1px; background: var(--sq-gold, #e8aa24);
+  clip-path: path('M6 0C6.8 4.7 7.3 5.2 12 6C7.3 6.8 6.8 7.3 6 12C5.2 7.3 4.7 6.8 0 6C4.7 5.2 5.2 4.7 6 0Z'); }
+.sq-fr-status-cancelled { color: var(--sq-muted); }
+.sq-fr-cancelled .sq-fr-card { opacity: .6; }
+.sq-fr-cancelled .sq-fr-body strong { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.sq-fr-plan .sq-ans:disabled { cursor: default; opacity: .55; }
+.sq-fr-plan .sq-ans[aria-pressed="true"]:disabled { opacity: 1; }
+.sq-fr-decide { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 12px 0 0; }
+.sq-fr-decide small { font: 500 13px var(--font-sans); color: var(--sq-muted); }
+.sq-fr-decide .sq-plan-button:disabled { opacity: .45; cursor: default; }
+.sq-fr-leave { margin: 8px 0 0; padding-top: 14px; border-top: 1.4px dashed rgba(48, 36, 33, .25); }
+.sq-fr-leave p { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0; font: 500 14.5px var(--font-sans); }
+.sq-fr-invite-card { margin: 14px 0 18px; }
+.sq-fr-invite-acts { display: flex; align-items: center; gap: 14px; }
+@media (max-width: 760px) { .sq-fr-decide button, .sq-fr-leave button, .sq-fr-invite-acts button { min-height: 46px !important; } }
