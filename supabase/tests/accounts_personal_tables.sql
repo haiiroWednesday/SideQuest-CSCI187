@@ -1,4 +1,4 @@
--- Behavior check for 20261124000000_accounts_personal_tables.sql. Run on a scratch database with a fake auth schema.
+-- Behavior check for 20261124000000_accounts_personal_tables_REVIEW_ONLY.sql. Run on a scratch database with a fake auth schema.
 -- Expected: 100 plans then one RLS refusal; ready idea without event refused; 90-character title refused;
 -- valid signed-in post accepted; user B sees 0 of user A's plans and ideas and cannot change them.
 \set ON_ERROR_STOP 0

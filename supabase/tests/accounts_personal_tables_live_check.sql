@@ -1,4 +1,4 @@
--- Live privacy check for 20261124000000_accounts_personal_tables.sql, run in the hosted SQL editor
+-- Live privacy check for 20261124000000_accounts_personal_tables_REVIEW_ONLY.sql, run in the hosted SQL editor
 -- on 24 Nov 2026. It creates two throwaway users, tests access, then raises an error so the whole
 -- block rolls back and nothing is kept. Result on Daven's project:
 -- A sees own plans: 1 | ready without event: refused | 90-char title: refused | B sees A plans: 0 |

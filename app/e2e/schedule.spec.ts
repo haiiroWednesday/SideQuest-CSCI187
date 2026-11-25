@@ -83,6 +83,7 @@ test('Schedule reveals legacy-length event text by keyboard on narrow screens', 
 })
 
 test('Schedule timeline uses event minutes and prevents horizontal overflow at phone width', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.setViewportSize({ width: 320, height: 812 })
   await seed(page)
   await page.goto('/#schedule')
@@ -91,12 +92,16 @@ test('Schedule timeline uses event minutes and prevents horizontal overflow at p
   const second = page.locator('.sqm-tickets .sqm-plan[data-event-id="' + ids[1] + '"]')
   await expect(first).toBeVisible()
   await expect(second).toBeVisible()
-  await expect.poll(() => first.evaluate(node => node.getBoundingClientRect().height)).toBeGreaterThan(50) // after the switch animation
-  // Both plans last 60 minutes, so they are drawn the same height (56px an hour, less a small gap).
-  expect(Math.abs(await first.evaluate(node => node.getBoundingClientRect().height) - await second.evaluate(node => node.getBoundingClientRect().height))).toBeLessThan(1)
-  const firstLeft = await first.evaluate(node => node.getBoundingClientRect().left)
-  const secondLeft = await second.evaluate(node => node.getBoundingClientRect().left)
-  expect(firstLeft).not.toBe(secondLeft) // 30-minute overlap is laid out side by side
+  const sizes = await page.locator('.sqm-tickets .sqm-plan[data-event-id]').evaluateAll(nodes =>
+    nodes.map(node => {
+      const { height, left } = node.getBoundingClientRect()
+      return { height, left }
+    }),
+  )
+  // Both plans last an hour. Their half-hour overlap puts them in separate lanes.
+  expect(sizes[0].height).toBeGreaterThan(50)
+  expect(Math.abs(sizes[0].height - sizes[1].height)).toBeLessThan(1)
+  expect(sizes[0].left).not.toBe(sizes[1].left)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
   await expect(page.getByText('2 plans have conflicts')).toBeVisible()
   await expect(page.locator('.sqm-tickets .sqm-plan[data-event-id]')).toHaveCount(2)

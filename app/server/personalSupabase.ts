@@ -1,6 +1,6 @@
 // SERVER-ONLY Supabase adapter for /api/me. Each request builds a client that carries the
 // caller's own access token, so every query runs as that student under the RLS policies in
-// supabase/migrations/20261124000000_accounts_personal_tables.sql. Only the publishable key is
+// supabase/proposals/20261124000000_accounts_personal_tables_REVIEW_ONLY.sql. Only the publishable key is
 // used. No service-role key, no user_id sent from the app: the database fills it from auth.uid().
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { createSupabaseEventCatalogFromEnv } from '../src/model/supabaseEventTable'

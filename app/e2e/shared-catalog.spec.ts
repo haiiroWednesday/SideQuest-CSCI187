@@ -61,18 +61,33 @@ test('independent browser sessions share public posts and keep their personal pl
 test('a shared catalog read failure offers retry and never silently switches to browser storage', async ({ browser }) => {
   const backend = sharedCatalogHttpFixture([row]), context = await browser.newContext()
   try {
-    await backend.attach(context)
-    const page = await context.newPage()
-    await page.clock.install({ time: PAGE_NOW })
-    await backend.failReads(true)
-    await page.goto(SHARED_APP)
-    await expect(page.getByText('Events could not be loaded.')).toBeVisible()
-    await expect(page.getByTestId('catalog-not-shared')).toHaveCount(0)
-    await backend.failReads(false)
-    await page.getByRole('button', { name: 'Try again' }).click()
-    await expect(page.getByRole('button', { name: 'View details for Shared workshop' })).toBeVisible()
-    expect(await page.evaluate(() => localStorage.getItem('sidequest.local-catalog.v1'))).toBeNull()
-  } finally { await context.close() }
+    const page = await test.step('prepare isolated catalog and browser', async () => {
+      await backend.attach(context)
+      const page = await context.newPage()
+      // Only the calendar date is relevant here. Keep native timers for real network I/O.
+      await page.clock.setFixedTime(PAGE_NOW)
+      // Exercise manual retry without a socket open triggering its own read.
+      await page.addInitScript(() => { Object.defineProperty(window, 'WebSocket', { value: undefined }) })
+      await backend.failReads(true)
+      return page
+    })
+    await test.step('observe a failed shared read without a local fallback', async () => {
+      await page.goto(SHARED_APP)
+      await expect(page.getByText('Events could not be loaded.')).toBeVisible()
+      await expect(page.getByTestId('catalog-not-shared')).toHaveCount(0)
+      expect(await page.evaluate(() => localStorage.getItem('sidequest.local-catalog.v1'))).toBeNull()
+    })
+    await test.step('restore the provider and retry through the UI', async () => {
+      await backend.failReads(false)
+      await page.getByRole('button', { name: 'Try again' }).click()
+      await expect(page.getByRole('button', { name: 'View details for Shared workshop' })).toBeVisible()
+      await expect(page.getByText('Events could not be loaded.')).toHaveCount(0)
+      await expect(page.getByTestId('catalog-not-shared')).toHaveCount(0)
+      expect(await page.evaluate(() => localStorage.getItem('sidequest.local-catalog.v1'))).toBeNull()
+    })
+  } finally {
+    await test.step('close browser context', async () => { await context.close() })
+  }
 })
 
 test('failed plan lookups retain the ID, allow retry, and still allow local removal while offline', async ({ browser }) => {

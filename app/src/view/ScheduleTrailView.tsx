@@ -58,6 +58,7 @@ function ScheduleEventDetails({ event }: { event: PlanStubModel }) {
 
 export type ScheduleTrailViewProps = {
   screen: ScheduleScreen
+  accountStorage?: boolean
   onRemove?: (eventId: string) => void
   onRecover?: () => void
   onRetry?: () => void
@@ -74,7 +75,7 @@ export type ScheduleTrailViewProps = {
   onPlan?: (eventId: string) => void
 }
 
-export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes, message = null, error = null, now, forcedMode, focusId = null, onPlan }: ScheduleTrailViewProps) {
+export function ScheduleTrailView({ screen, accountStorage = false, onRemove, onRecover, onRetry, routes, message = null, error = null, now, forcedMode, focusId = null, onPlan }: ScheduleTrailViewProps) {
   const quiet = useQuiet()
   const next = screen.nextUp
   const [chosen, setModeState] = useState<ScheduleMode>(() => readScheduleMode())
@@ -113,8 +114,8 @@ export function ScheduleTrailView({ screen, onRemove, onRecover, onRetry, routes
         <section className="sq-hero sq-hero-schedule" aria-labelledby="sq-schedule-title">
           <div>
             <h1 id="sq-schedule-title">My Schedule</h1>
-            <nav className="sq-look-links" aria-label="Also in My Schedule"><a className="sq-look-link sq-look-link-someday" href="#someday">Someday ideas</a><a className="sq-look-link sq-look-link-groups" href="#groups">Groups</a></nav>
-            <p className="sq-device">Saved on this device</p>
+            <nav className="sq-look-links" aria-label="Also in My Schedule"><a className="sq-look-link sq-look-link-someday" href="#someday">Someday ideas</a>{routes?.groups && <a className="sq-look-link sq-look-link-groups" href={routes.groups}>Groups</a>}</nav>
+            <p className="sq-device">{accountStorage ? 'Saved to your account' : 'Saved on this device'}</p>
           </div>
           {screen.status === 'ready' && (
             <dl className="sq-stats">

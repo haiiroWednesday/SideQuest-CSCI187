@@ -1,3 +1,4 @@
+-- REVIEW ONLY: personal accounts need team schema approval before deployment.
 -- SideQuest accounts, personal part. Signed-in students keep My Schedule, Someday ideas and
 -- busy time on every device. Supabase Auth (email code) provides auth.users.
 --

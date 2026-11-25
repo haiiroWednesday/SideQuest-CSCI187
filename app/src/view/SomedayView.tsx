@@ -8,6 +8,7 @@ import './someday.css'
 
 export type SomedayViewProps = {
   ideas: readonly Intention[]
+  accountStorage?: boolean
   blocked: boolean
   error: string | null
   events: readonly CampusEvent[]
@@ -21,7 +22,7 @@ export type SomedayViewProps = {
 }
 
 export function SomedayView({
-  ideas, blocked, error, events, plannedIds, routes,
+  ideas, accountStorage = false, blocked, error, events, plannedIds, routes,
   onAdd, onLink, onStatus, onPlan, onRecover,
 }: SomedayViewProps) {
   const quiet = useQuiet()
@@ -54,7 +55,7 @@ export function SomedayView({
           <div>
             <h1 id="sq-someday-title">Someday</h1>
             <p>Keep an activity idea even when you do not have a date, event, or friends ready yet.</p>
-            <p className="sq-device">Saved on this device. Linking an event does not RSVP or invite anyone.</p>
+            <p className="sq-device">{accountStorage ? 'Saved to your account.' : 'Saved on this device.'} Linking an event does not RSVP or invite anyone.</p>
           </div>
         </section>
 
