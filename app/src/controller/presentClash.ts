@@ -13,6 +13,7 @@ export type ClashPlan = {
   time: string
   /** Minutes of this plan that overlap any other plan in the clash. */
   overlapText: string
+  conflictingIds: string[]
   /** Bar position on the shared ruler, in percent. */
   left: number
   width: number
@@ -74,12 +75,14 @@ export function presentClashes(events: readonly ScreenEvent[], now: Date = new D
       return out
     }, [])
     const plans = g.map(t => {
-      let over = 0
-      for (let m = t.a; m < t.b; m += 5) if (g.some(o => o !== t && m >= o.a && m < o.b)) over += 5
+      const conflictingIds = g.filter(other => other !== t && t.a < other.b && other.a < t.b)
+        .map(other => other.e.id)
+      const over = merged.reduce((minutes, { a, b }) =>
+        minutes + Math.max(0, Math.min(b, t.b) - Math.max(a, t.a)), 0)
       const nowMin = toMin(today.time)
       return {
         id: t.e.id, title: t.e.title, host: t.e.hostName ?? '', location: t.e.location ?? '',
-        time: span(t.a, t.b), overlapText: `${dur(over)} overlap`,
+        time: span(t.a, t.b), overlapText: `${dur(over)} overlap`, conflictingIds,
         left: pct(t.a), width: pct(t.b) - pct(t.a),
         live: date === today.date && nowMin >= t.a && nowMin < t.b,
         category: categoryOfPlan({ title: t.e.title, host: t.e.hostName ?? '' }),

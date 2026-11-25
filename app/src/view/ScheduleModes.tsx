@@ -7,6 +7,7 @@ import type { PlanStubModel } from '../controller/presentSchedule'
 import type { DayTimeline, TimelineEntry } from '../controller/scheduleTimeline'
 import { categoryOfPlan, type EventCategory } from '../controller/eventCategory'
 import { CATEGORY_COLORS } from './categoryColors'
+import { useQuiet } from './quietContext'
 import './schedule-modes.css'
 
 export type ScheduleMode = 'trail' | 'tickets' | 'wisteria'
@@ -105,6 +106,7 @@ export function ScheduleDayModes({ events, timeline, mode, now, isToday, onOpen,
   selectedId: string | null
   compact?: boolean
 }) {
+  const reviewLayout = useQuiet()
   const [ref, measured] = useWidth<HTMLDivElement>()
   const fam = useFamilies(ref)
   const W = Math.max(measured || 300, 200)
@@ -215,8 +217,11 @@ export function ScheduleDayModes({ events, timeline, mode, now, isToday, onOpen,
       const place = fitText(it.stub.location || '', fam.sans, 600, [12, 11.5, 11], cw - 12)
       const roomForPlace = !small && b.h - (7 + 16 + titleH + 3) >= 17
       const need = small ? 6 + titleH + 7 : 7 + 16 + titleH + 9
-      if (need > b.h) b.h = Math.ceil(need)
-      fits.set(it.id, { title, showPlace: roomForPlace && place.lines === 1 && !!it.stub.location, place, rows: [], small, time })
+      // The standard timeline keeps the ticket height tied to event minutes.
+      // The full title is available on the button and in the opened details.
+      if (reviewLayout && need > b.h) b.h = Math.ceil(need)
+      const ticketTitle = reviewLayout ? title : { ...title, lines: 1 }
+      fits.set(it.id, { title: ticketTitle, showPlace: roomForPlace && place.lines === 1 && !!it.stub.location, place, rows: [], small, time })
     } else if (b.kind === 'stack') {
       const g = stacks.find(st => st.items[0].id === it.id)
       if (!g) continue

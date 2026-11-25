@@ -1,6 +1,6 @@
 // MODEL: a signed-in student's own saved things (profile name, My Schedule plan IDs,
 // Someday ideas and busy time) and the port every storage adapter implements.
-// The rules here mirror supabase/migrations/20261124000000_accounts_personal_tables.sql,
+// The rules here mirror supabase/proposals/20261124000000_accounts_personal_tables_REVIEW_ONLY.sql,
 // so the server rejects a bad request before the database has to.
 // No React, View or Controller imports.
 import { MAX_PLANNED_EVENTS } from './schedule'

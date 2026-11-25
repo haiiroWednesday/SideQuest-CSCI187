@@ -56,7 +56,7 @@ Writing rules the tests can't judge: say it once, name the thing, drop the sente
 | Planned cards wear a ribbon bookmark over their top edge | `smooth.spec.ts` |
 | Typed busy time that ends before it starts says "End after start" and changes nothing | `free-time.spec.ts` |
 | "Busy then" turns a whole gap busy in one tap | `free-time.spec.ts` |
-| Tap a clash: every clashing plan on one time ruler, the overlap marked with its time, where / who / how long; keep one, remove one, or keep both | `clash.spec.ts` |
+| Tap a clash: every clashing plan on one time ruler, the overlap marked with its time, where / who / how long; keep an event and remove its direct conflicts, remove a single event, or keep all events | `clash.spec.ts` |
 | Three plans chained into one clash; removing the middle one ends it | `clash.spec.ts` |
 | Escape, the backdrop and Keep both close the clash sheet and hand focus back | `clash.spec.ts` |
 | Group answers wear the stars: Works gold, If dotted with an optional author-only note, Cannot struck through. New proposals start unanswered; changing away from If clears the note. | `stars-stamp.spec.ts` |

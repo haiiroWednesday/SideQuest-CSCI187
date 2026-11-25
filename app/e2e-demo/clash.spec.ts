@@ -59,7 +59,7 @@ for (const width of [390, 1280]) {
     await noSidewaysScroll(page)
     await shot('sheet')
 
-    await climb.getByRole('button', { name: /Keep only this/ }).click()
+    await climb.getByRole('button', { name: /Keep this, remove conflicts/ }).click()
     await expect(sheet).toHaveCount(0)
     await expect(page.getByRole('button', { name: /clash/ })).toHaveCount(0)
     await expect(page.getByText('Choir open rehearsal')).toHaveCount(0)
@@ -102,4 +102,22 @@ test('three plans in a chain show as one clash, and removing one leaves the othe
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page.getByRole('button', { name: /clash/ })).toHaveCount(0)
   await shot('chain-broken')
+})
+
+test('keeping an event removes its direct conflict and preserves a compatible event in the same chain', async ({ page }) => {
+  await seed(page, [
+    ['13:00', '15:00', 'Hackathon kickoff', 'ACM', 'SCDI'],
+    ['14:58', '15:30', 'Office hours', 'CSEN 20', 'SCDI 1308'],
+    ['15:15', '16:00', 'Boba run', 'Chinese Student Association', 'Palm Drive'],
+  ], 1280)
+  await page.getByRole('button', { name: /^3 clash/ }).click()
+  const sheet = page.getByRole('dialog')
+  const firstPlan = sheet.locator('.sq-clash-plan', { hasText: 'Hackathon kickoff' })
+  await expect(firstPlan).toContainText('2 min overlap')
+  await firstPlan.getByRole('button', { name: /Keep this, remove conflicts/ }).click()
+  await expect(sheet).toHaveCount(0)
+  await expect(page.getByText('Office hours')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /2 plans: Hackathon kickoff.*Boba run/ })).toBeVisible()
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1') ?? '[]')))
+    .toEqual([id(0), id(2)])
 })

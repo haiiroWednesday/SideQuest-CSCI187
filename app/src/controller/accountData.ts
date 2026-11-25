@@ -18,6 +18,12 @@ const problem = (error: unknown, fallback: string) => error instanceof PersonalS
 export function createAccountScheduleController(catalog: EventCatalogPort, store: PersonalStorePort) {
   let ids: string[] = []
   let loaded = false
+  let queue = Promise.resolve()
+  function run(action: () => Promise<SharedScheduleResult>) {
+    const result = queue.then(action)
+    queue = result.then(() => {}, () => {})
+    return result
+  }
   // The shared controller keeps every rule; it reads and writes this list instead of localStorage.
   const memory: PlanStorage = {
     getItem: key => key === PLANNED_IDS_KEY ? JSON.stringify(ids) : null,
@@ -28,7 +34,7 @@ export function createAccountScheduleController(catalog: EventCatalogPort, store
     try { ids = await store.listPlans(); loaded = true; return null }
     catch (error) { return problem(error, 'Your saved plans could not be loaded. Try again.') }
   }
-  async function change(apply: () => Promise<SharedScheduleResult>, save: (before: string[], after: string[]) => Promise<void>) {
+  async function change(apply: () => Promise<SharedScheduleResult>, save: () => Promise<void>) {
     if (!loaded) {
       const error = await pull()
       if (error) return { ...(await shared.read()), error }
@@ -36,7 +42,7 @@ export function createAccountScheduleController(catalog: EventCatalogPort, store
     const before = [...ids]
     const result = await apply()
     if (before.join() === ids.join()) return result
-    try { await save(before, ids); return result }
+    try { await save(); return result }
     catch (error) {
       ids = before
       return { ...(await shared.read()), error: problem(error, 'Your change was not saved. Try again.'), message: null, warning: null }
@@ -44,17 +50,17 @@ export function createAccountScheduleController(catalog: EventCatalogPort, store
   }
   return {
     initial(): SharedScheduleResult { return { ...shared.initial(), loading: true } },
-    async read(): Promise<SharedScheduleResult> {
+    read: () => run(async () => {
       const error = await pull()
       const result = await shared.read()
       return error ? { ...result, error } : result
-    },
-    add: (id: string) => change(() => shared.add(id), async (before, after) => {
-      for (const added of after.filter(item => !before.includes(item))) await store.addPlan(added)
     }),
-    remove: (id: string) => change(() => shared.remove(id), async (before, after) => {
-      for (const gone of before.filter(item => !after.includes(item))) await store.removePlan(gone)
-    }),
+    add: (id: string) => run(() => change(() => shared.add(id), async () => {
+      await store.addPlan(id)
+    })),
+    remove: (id: string) => run(() => change(() => shared.remove(id), async () => {
+      await store.removePlan(id)
+    })),
     /** Nothing on the server can be unreadable the way a damaged browser list can; reload instead. */
     recover(): Promise<SharedScheduleResult> { return this.read() },
     handlesStorageChange: (_event: StorageEvent) => false,

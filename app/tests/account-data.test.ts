@@ -39,6 +39,24 @@ describe('signed-in My Schedule', () => {
     expect(result.schedule.ids).toEqual([])
     expect(result.error).toContain('not saved')
   })
+  it('keeps a successful removal when a second queued removal fails', async () => {
+    const store = createMemoryPersonalTables().forUser(A)
+    await store.addPlan(E1)
+    await store.addPlan(E2)
+    const remove = store.removePlan
+    store.removePlan = async id => {
+      if (id === E2) throw new PersonalStoreError('unavailable', 'Removal could not be saved.')
+      await remove(id)
+    }
+    const schedule = createAccountScheduleController(catalog, store)
+    await schedule.read()
+    const [first, second] = await Promise.all([schedule.remove(E1), schedule.remove(E2)])
+    expect(first.schedule.ids).toEqual([E2])
+    expect(second.schedule.ids).toEqual([E2])
+    expect(second.error).toContain('could not be saved')
+    expect(await store.listPlans()).toEqual([E2])
+  })
+
   it('loads plans another device saved', async () => {
     const tables = createMemoryPersonalTables()
     await tables.forUser(A).addPlan(E2)

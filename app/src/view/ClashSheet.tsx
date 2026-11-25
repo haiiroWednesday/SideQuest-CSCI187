@@ -18,7 +18,10 @@ export function ClashSheet({ clashes, onClose, onRemove }: {
     const d = ref.current
     if (d && !d.open) { d.showModal?.(); d.querySelector<HTMLButtonElement>('.sq-clash-close')?.focus() }
   }, [])
-  const keepOnly = (clash: ClashModel, id: string) => { clash.plans.filter(p => p.id !== id).forEach(p => onRemove(p.id)); if (clashes.length === 1) onClose() }
+  const keepPlan = (ids: readonly string[]) => {
+    ids.forEach(onRemove)
+    if (clashes.length === 1) onClose()
+  }
   const removeOne = (clash: ClashModel, id: string) => { onRemove(id); if (clashes.length === 1 && clash.plans.length <= 2) onClose() }
   const many = clashes.length > 1
   const plansCount = clashes.reduce((n, c) => n + c.plans.length, 0)
@@ -60,7 +63,7 @@ export function ClashSheet({ clashes, onClose, onRemove }: {
                   <dt>Overlap</dt><dd className="sq-clash-over">{p.overlapText}</dd>
                 </dl>
                 <div className="sq-clash-acts">
-                  <button type="button" className="sq-plan-button" onClick={() => keepOnly(clash, p.id)}>Keep only this<span className="sq-visually-hidden">: {p.title}</span></button>
+                  <button type="button" className="sq-plan-button" onClick={() => keepPlan(p.conflictingIds)}>Keep this, remove conflicts<span className="sq-visually-hidden">: {p.title}</span></button>
                   <button type="button" className="sq-text-button sq-clash-drop" onClick={() => removeOne(clash, p.id)}>Remove<span className="sq-visually-hidden"> {p.title}</span></button>
                 </div>
               </li>

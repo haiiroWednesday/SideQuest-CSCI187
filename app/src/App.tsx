@@ -197,13 +197,13 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
         <MapView routes={routes} plannedCount={plans.schedule.ids.length} events={events.events}
           plannedIds={plans.schedule.ids} postedIds={postedIds} focus={mapFocus} walk={mapWalk} now={now?.() ?? new Date()} onOpenEvent={openFromMap} designReview={designReview} />
       ) : page === 'schedule' ? (
-        <ScheduleTrailView screen={schedule} routes={routes} now={now?.() ?? new Date()} focusId={dayFocus}
+        <ScheduleTrailView screen={schedule} routes={routes} accountStorage={Boolean(personalStore)} now={now?.() ?? new Date()} focusId={dayFocus}
           onPlan={id => { void plans.add(id) }}
           onRemove={id => { void plans.remove(id) }} onRecover={plans.recover}
           onRetry={() => { void plans.refresh() }} />
       ) : page === 'someday' ? (
         <SomedayView
-          ideas={someday.items} blocked={someday.blocked} error={someday.error}
+          ideas={someday.items} accountStorage={Boolean(personalStore)} blocked={someday.blocked} error={someday.error}
           events={events.events} plannedIds={plans.schedule.ids} routes={routes}
           onAdd={someday.add}
           onLink={(id, eventId) => {

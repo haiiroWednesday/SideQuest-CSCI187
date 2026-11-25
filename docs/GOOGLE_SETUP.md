@@ -2,6 +2,8 @@
 
 Everything stays off until these steps are done. Keys and secrets go only into the server's protected environment (Render or a local `.env` that Git ignores), never into the browser, Git, screenshots or chat.
 
+Personal account storage and Google token storage both have review-only SQL in `supabase/proposals/`. Use a disposable environment for these checks and obtain the team's schema decision before enabling the connected experience.
+
 ## 1. Google Cloud project
 
 - [ ] Create one project for SideQuest at console.cloud.google.com (for example `sidequest-csci187`).
