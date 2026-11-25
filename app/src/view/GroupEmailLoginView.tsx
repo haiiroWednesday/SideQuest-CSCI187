@@ -1,12 +1,16 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { SideQuestHeader, type SideQuestRoutes } from './DiscoverView'
 import './group-login.css'
+
+/** A code email takes a while; waiting a minute before resending keeps students under the sender's hourly limit. */
+const RESEND_WAIT_SECONDS = 60
 
 export type GroupEmailLoginProps = {
   routes: SideQuestRoutes
   busy: boolean
   error: string | null
   message: string | null
+  /** The server's own note after a request. The screen states the next step itself. */
   /** Accounts on: signing in keeps your plans, ideas and busy time, so the words say that. */
   accounts?: boolean
   requestCode: (email: string) => Promise<boolean>
@@ -15,19 +19,32 @@ export type GroupEmailLoginProps = {
 }
 
 export function GroupEmailLoginView({
-  routes, busy, error, message, requestCode, verifyCode, onSuccess, accounts = false,
+  routes, busy, error, requestCode, verifyCode, onSuccess, accounts = false,
 }: GroupEmailLoginProps) {
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
-  // email: ask for the email. sent: the email is on its way, tap its link. code: type a code instead.
-  const [step, setStep] = useState<'email' | 'sent' | 'code'>('email')
+  // email: ask for the email. code: the email is on its way, type the code it holds.
+  const [step, setStep] = useState<'email' | 'code'>('email')
+  // Seconds until another email may be asked for, so a second click can't use up the hourly limit.
+  const [wait, setWait] = useState(0)
+  useEffect(() => {
+    if (wait <= 0) return
+    const timer = setTimeout(() => setWait(seconds => seconds - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [wait])
+  const send = async () => {
+    if (await requestCode(email)) {
+      setStep('code')
+      setWait(RESEND_WAIT_SECONDS)
+    }
+  }
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (busy) return
     if (step === 'email') {
-      if (await requestCode(email)) setStep('sent')
-    } else if (step === 'code') {
+      await send()
+    } else {
       if (await verifyCode(email, code)) {
         setCode('')
         onSuccess()
@@ -49,12 +66,11 @@ export function GroupEmailLoginView({
           </>}
         </section>
         <form className="sq-login-form" onSubmit={event => { void submit(event) }}>
-          <h2>{step === 'email' ? 'Get a sign-in email' : step === 'sent' ? 'Check your email and tap the link' : 'Enter your email code'}</h2>
-          {step === 'sent'
-            ? <p className="sq-login-sent">We sent a link to <strong>{email}</strong>. It opens SideQuest signed in.</p>
-            : <p>For account security, SideQuest keeps your sign-in only in this tab's memory. Reloading or closing this tab ends your session, and you'll need a new email.</p>}
+          <h2>{step === 'email' ? 'Get a sign-in code' : 'Enter the code from your email'}</h2>
+          {step === 'code'
+            ? <p className="sq-login-sent">We sent a 6-digit code to <strong>{email}</strong>. It can take a minute. Read it on any device.</p>
+            : <p>SideQuest keeps your sign-in only in this tab. Closing the tab signs you out.</p>}
           {error && <p role="alert" className="sq-login-error">{error}</p>}
-          {message && step !== 'sent' && <p role="status" className="sq-login-status">{message}</p>}
           <label htmlFor="sq-login-email">Santa Clara email</label>
           <input id="sq-login-email" type="email" required autoComplete="email"
             value={email} maxLength={254} disabled={busy || step !== 'email'}
@@ -64,20 +80,17 @@ export function GroupEmailLoginView({
             <input id="sq-login-code" type="text" inputMode="numeric" autoComplete="one-time-code"
               required pattern="[0-9]{6,8}" minLength={6} maxLength={8}
               value={code} disabled={busy} onChange={event => setCode(event.target.value)}
-              placeholder="6 or 8 digits" />
+              placeholder="123456" />
           </>}
-          {step !== 'sent' && <button type="submit" disabled={busy}>
-            {busy ? 'Checking…' : step === 'email' ? 'Email me a sign-in link' : 'Verify and continue'}
-          </button>}
+          <button type="submit" disabled={busy}>
+            {busy ? 'Checking…' : step === 'email' ? 'Email me a code' : 'Sign in'}
+          </button>
           {step !== 'email' && <div className="sq-login-alternatives">
-            {step === 'sent' && <button type="button" disabled={busy} onClick={() => setStep('code')}>
-              Have a code instead?
-            </button>}
             <button type="button" disabled={busy} onClick={() => { setStep('email'); setCode('') }}>
               Use another email
             </button>
-            <button type="button" disabled={busy} onClick={() => { void requestCode(email) }}>
-              Send another email
+            <button type="button" disabled={busy || wait > 0} onClick={() => { void send() }}>
+              {wait > 0 ? `Send a new code in ${wait}s` : 'Send a new code'}
             </button>
           </div>}
           <p className="sq-login-foot">{accounts

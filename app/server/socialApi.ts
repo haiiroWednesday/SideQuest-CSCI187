@@ -45,7 +45,9 @@ const ALLOWED_INVITE = ['title', 'place', 'eventId', 'date', 'start', 'end', 'gr
 
 export function createSocialApi(store: SocialStorePort | null, clock: () => Date = () => new Date()) {
   return async function socialApi(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
-    const url = new URL(req.url ?? '/', 'http://local')
+    let url: URL
+    // A malformed request line (for example "GET //[") must not throw out of the server.
+    try { url = new URL(req.url ?? '/', 'http://local') } catch { return false }
     if (!url.pathname.startsWith('/api/social/')) return false
     if (url.pathname === '/api/social/status') { json(res, 200, { enabled: Boolean(store) }); return true }
     if (!store) { json(res, 404, { error: 'not_enabled' }); return true }

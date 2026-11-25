@@ -3,7 +3,7 @@
 // Only the existing publishable key is allowed. No service role or privileged key.
 import { createClient } from '@supabase/supabase-js'
 import { createSupabaseEventCatalogFromEnv } from '../src/model/supabaseEventTable'
-import type { EmailOtpGateway } from './emailAuthApi'
+import { EmailSendError, type EmailOtpGateway } from './emailAuthApi'
 
 /** The exp claim of a token Supabase Auth has just accepted, in milliseconds. */
 export function tokenExpiry(accessToken: string): number | null {
@@ -45,7 +45,13 @@ export function createSupabaseEmailOtpGatewayFromEnv(
       const { error } = await client.auth.signInWithOtp({
         email, options: { shouldCreateUser: allowSignup, ...(redirectTo ? { emailRedirectTo: redirectTo } : {}) },
       })
-      if (error) throw Error('Code request was not accepted.')
+      if (error) {
+        // 429: Supabase's hourly email limit. 5xx: its mail service is down. Neither reveals
+        // whether the address has an account, so the student is told and can try later.
+        if (error.status === 429 || error.code === 'over_email_send_rate_limit') throw new EmailSendError('limit')
+        if (typeof error.status === 'number' && error.status >= 500) throw new EmailSendError('outage')
+        throw Error('Code request was not accepted.')
+      }
     },
     async verifyCode(email, code) {
       const client = newClient()

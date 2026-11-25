@@ -1,6 +1,6 @@
 // Production HTTP server: serves the built UI and same-origin catalog API.
 import { createSocialApiFromEnv } from './socialApi'
-import { createServer } from 'node:http'
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { resolve, sep, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -34,7 +34,14 @@ const socialApi = createSocialApiFromEnv(process.env)
 const root = resolve(fileURLToPath(new URL('../dist/', import.meta.url)))
 const mime: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff': 'font/woff', '.woff2': 'font/woff2', '.png': 'image/png' }
 const port = Number(process.env.PORT ?? 3000)
-const server = createServer({ requestTimeout: 15_000, headersTimeout: 10_000 }, async (req, res) => {
+const server = createServer({ requestTimeout: 15_000, headersTimeout: 10_000 }, (req, res) => {
+  // One bad request must never stop the server for everyone: any handler that throws gets a 500.
+  handle(req, res).catch(() => {
+    if (!res.headersSent) res.writeHead(500)
+    res.end()
+  })
+})
+async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (await authApi(req, res)) return
   if (await personalApi(req, res)) return
   if (req.url?.startsWith('/api/google/') && await (await import('./googleApi')).googleApi(req, res)) return
@@ -52,6 +59,6 @@ const server = createServer({ requestTimeout: 15_000, headersTimeout: 10_000 }, 
     res.writeHead(200, { 'Content-Type': mime[extname(path)] ?? 'application/octet-stream', 'X-Content-Type-Options': 'nosniff', 'Cache-Control': extname(path) === '.html' ? 'no-store' : 'public, max-age=3600' })
     res.end(req.method === 'HEAD' ? undefined : body)
   } catch { res.writeHead(404); res.end('Not found') }
-})
+}
 realtime = attachCatalogRealtime(server)
 server.listen(port, '0.0.0.0', () => console.log(`SideQuest listening on port ${port}`))

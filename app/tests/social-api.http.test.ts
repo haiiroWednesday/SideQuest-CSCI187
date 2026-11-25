@@ -85,3 +85,12 @@ describe('/api/social', () => {
     expect((await call(base, 'PUT', '/api/social/free', T.you, { slots: [], where: 'home' })).status).toBe(400)
   })
 })
+
+describe('malformed request lines', () => {
+  it('declines "//[" instead of throwing out of the server (crashed the whole process before)', async () => {
+    const api = createSocialApi(null)
+    const req = { url: '//[', method: 'GET', headers: {} } as unknown as import('node:http').IncomingMessage
+    const res = { writeHead: () => res, end: () => res } as unknown as import('node:http').ServerResponse
+    await expect(api(req, res)).resolves.toBe(false)
+  })
+})

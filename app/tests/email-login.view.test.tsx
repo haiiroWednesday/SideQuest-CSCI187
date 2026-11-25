@@ -1,60 +1,70 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { GroupEmailLoginView } from '../src/view/GroupEmailLoginView'
 
-afterEach(cleanup)
+afterEach(() => { cleanup(); vi.useRealTimers() })
 
-describe('email sign-in screen: link first, code second', () => {
-  it('asks for an email code, verifies it and continues without displaying access tokens', async () => {
+const routes = { discover: '#discover', login: '#login' }
+
+describe('email sign-in screen: code first', () => {
+  it('goes straight to the code after sending, verifies it and never shows tokens', async () => {
     const requestCode = vi.fn(async () => true)
     const verifyCode = vi.fn(async () => true)
     const onSuccess = vi.fn()
-    const { container } = render(<GroupEmailLoginView
-      routes={{ discover: '#discover', login: '#login' }}
+    const { container } = render(<GroupEmailLoginView routes={routes}
       busy={false} error={null} message={null}
       requestCode={requestCode} verifyCode={verifyCode} onSuccess={onSuccess} />)
 
-    fireEvent.change(screen.getByLabelText('Santa Clara email'), {
-      target: { value: 'student@example.edu' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Email me a sign-in link' }))
-    await waitFor(() => expect(requestCode).toHaveBeenCalledWith('student@example.edu'))
-    // The default Supabase email holds a link; the code is the second way in.
-    await screen.findByRole('heading', { name: 'Check your email and tap the link' })
     expect(screen.queryByLabelText('Verification code')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Have a code instead?' }))
-    await waitFor(() => expect(screen.getByLabelText('Verification code')).toBeTruthy())
+    fireEvent.change(screen.getByLabelText('Santa Clara email'), { target: { value: 'student@scu.edu' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Email me a code' }))
+    await waitFor(() => expect(requestCode).toHaveBeenCalledWith('student@scu.edu'))
+    await screen.findByRole('heading', { name: 'Enter the code from your email' })
+    expect(container.textContent).toContain('student@scu.edu')
+    expect(screen.queryByText(/tap the link/i)).toBeNull()
     expect((screen.getByLabelText('Santa Clara email') as HTMLInputElement).disabled).toBe(true)
 
-    fireEvent.change(screen.getByLabelText('Verification code'), {
-      target: { value: '123456' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Verify and continue' }))
-    await waitFor(() => expect(verifyCode).toHaveBeenCalledWith('student@example.edu', '123456'))
+    fireEvent.change(screen.getByLabelText('Verification code'), { target: { value: '123456' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+    await waitFor(() => expect(verifyCode).toHaveBeenCalledWith('student@scu.edu', '123456'))
     await waitFor(() => expect(onSuccess).toHaveBeenCalledOnce())
     expect(container.textContent).not.toContain('access_token')
   })
 
-  it('shows a failure without advancing to a verified session', async () => {
+  it('makes the student wait a minute before asking for another code', async () => {
+    vi.useFakeTimers()
+    const requestCode = vi.fn(async () => true)
+    render(<GroupEmailLoginView routes={routes} busy={false} error={null} message={null}
+      requestCode={requestCode} verifyCode={vi.fn(async () => false)} onSuccess={vi.fn()} />)
+    fireEvent.change(screen.getByLabelText('Santa Clara email'), { target: { value: 'student@scu.edu' } })
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Email me a code' })) })
+    const resend = screen.getByRole('button', { name: /Send a new code in 60s/ }) as HTMLButtonElement
+    expect(resend.disabled).toBe(true)
+    for (let second = 0; second < 59; second++) await act(async () => { vi.advanceTimersByTime(1000) })
+    expect((screen.getByRole('button', { name: /Send a new code in 1s/ }) as HTMLButtonElement).disabled).toBe(true)
+    await act(async () => { vi.advanceTimersByTime(1000) })
+    const ready = screen.getByRole('button', { name: 'Send a new code' }) as HTMLButtonElement
+    expect(ready.disabled).toBe(false)
+    await act(async () => { fireEvent.click(ready) })
+    expect(requestCode).toHaveBeenCalledTimes(2)
+  })
+
+  it('stays on the email step when the email did not send', async () => {
     const onSuccess = vi.fn()
     const requestCode = vi.fn(async () => false)
-    const { rerender } = render(<GroupEmailLoginView
-      routes={{ discover: '#discover', login: '#login' }}
-      busy={false} error="The sign-in service is unavailable." message={null}
+    const { rerender } = render(<GroupEmailLoginView routes={routes}
+      busy={false} error="The email limit was reached. Try again in an hour." message={null}
       requestCode={requestCode} verifyCode={vi.fn(async () => false)} onSuccess={onSuccess} />)
-    expect(screen.getByRole('alert').textContent).toContain('sign-in service')
-    fireEvent.change(screen.getByLabelText('Santa Clara email'), {
-      target: { value: 'student@example.edu' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Email me a sign-in link' }))
+    expect(screen.getByRole('alert').textContent).toContain('limit')
+    fireEvent.change(screen.getByLabelText('Santa Clara email'), { target: { value: 'student@scu.edu' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Email me a code' }))
     await waitFor(() => expect(requestCode).toHaveBeenCalledOnce())
-    expect(screen.queryByRole('heading', { name: 'Check your email and tap the link' })).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Enter the code from your email' })).toBeNull()
     expect(screen.queryByLabelText('Verification code')).toBeNull()
     expect(onSuccess).not.toHaveBeenCalled()
-    rerender(<GroupEmailLoginView routes={{ discover: '#discover', login: '#login' }}
-      busy={true} error={null} message={null} requestCode={requestCode}
-      verifyCode={vi.fn(async () => false)} onSuccess={onSuccess} />)
+    rerender(<GroupEmailLoginView routes={routes} busy={true} error={null} message={null}
+      requestCode={requestCode} verifyCode={vi.fn(async () => false)} onSuccess={onSuccess} />)
     expect((screen.getByRole('button', { name: 'Checking…' }) as HTMLButtonElement).disabled).toBe(true)
   })
 })

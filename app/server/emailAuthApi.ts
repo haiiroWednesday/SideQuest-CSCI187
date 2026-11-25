@@ -21,6 +21,13 @@ export interface EmailOtpGateway {
   sessionFromLink?(accessToken: string): Promise<VerifiedEmailSession | null>
 }
 
+/** The email provider refused to send for a reason that says nothing about the account. */
+export class EmailSendError extends Error {
+  constructor(readonly reason: 'limit' | 'outage') {
+    super(reason === 'limit' ? 'Email limit reached.' : 'Email service unavailable.')
+  }
+}
+
 class AuthHttpError extends Error {
   constructor(readonly status: number, message: string) { super(message) }
 }
@@ -153,8 +160,17 @@ export function createEmailAuthApi(
         // disclosing whether an email corresponds to an existing account.
         // The link returns to the page that asked, already checked as same-origin above.
         // A deployed origin must also be listed in Supabase Auth's Redirect URLs.
-        try { await gateway.requestCode(email, origin) } catch { /* generic response */ }
-        json(res, 200, { message: 'If this email can sign in, an email is on its way.' })
+        // A send that failed for reasons unrelated to the account (the sender's hourly limit, an
+        // outage) is reported, so nobody waits for an email that never left. Anything else stays generic.
+        try { await gateway.requestCode(email, origin) }
+        catch (error) {
+          if (error instanceof EmailSendError) {
+            throw new AuthHttpError(error.reason === 'limit' ? 429 : 503, error.reason === 'limit'
+              ? 'The email limit was reached. Try again in an hour.'
+              : 'The email did not send. Try again in a few minutes.')
+          }
+        }
+        json(res, 200, { message: 'If this email can sign in, a code is on its way.' })
       } else {
         limits(email, ip, 'verify')
         if (typeof request.code !== 'string' || !CODE_PATTERN.test(request.code)) {
