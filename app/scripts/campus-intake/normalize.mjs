@@ -38,6 +38,32 @@ function sourceLink(value, source) {
   } catch { return null }
 }
 
+function modifiedAt(value) {
+  // SCU sends Unix seconds (checked Nov 24, 2026); older captures may carry a date string.
+  const seconds = unixSeconds(value)
+  if (seconds !== null) return new Date(seconds * 1000).toISOString()
+  return text(value) || null
+}
+function idText(value) {
+  return (typeof value === 'string' || typeof value === 'number') && /^\d{1,20}$/.test(String(value)) ? String(value) : null
+}
+function list(value) {
+  const items = Array.isArray(value) ? value : typeof value === 'string' ? value.split(/[,|]/) : []
+  return items.map(item => text(typeof item === 'string' ? item : item?.title)).filter(Boolean)
+}
+const DEADLINE = /\b(deadline|due|last day|apply by|applications? (?:due|close)|registration closes)\b/i
+/**
+ * single: one attendable occurrence. showtime: one of several bookable performances of a production
+ * (each keeps its own provider ID). repeating: a series row (weekly mass, office hours). deadline: a date to
+ * remember, never a Discover event.
+ */
+export function occurrenceKind(record, title, start, end) {
+  if (DEADLINE.test(title) && (end === null || end === start || marked(record.is_all_day))) return 'deadline'
+  if (marked(record.repeats) && record.repeats !== '' || marked(record.is_repeating)) return 'repeating'
+  if (record.parent != null && idText(record.parent) !== idText(record.id)) return 'showtime'
+  return 'single'
+}
+
 export function normalizeLiveWhale(record, source, checkedAt) {
   if (!record || typeof record !== 'object' || Array.isArray(record)) throw new Error('Invalid event row')
   const providerId = typeof record.id === 'string' || typeof record.id === 'number' ? String(record.id) : ''
@@ -67,6 +93,9 @@ export function normalizeLiveWhale(record, source, checkedAt) {
   // A repeat ID alone is not a verified occurrence identity.
   if (marked(record.is_repeating) || marked(record.repeats) && record.repeats !== '' || record.parent != null) reasons.push('recurrence-review')
   if (marked(record.is_canceled)) reasons.push(flag(record.is_canceled) ? 'canceled' : 'cancellation-status-review')
+  // A deadline ("applications due", "last day to ...") is a date, not something to attend.
+  const kind = occurrenceKind(record, title, start, end)
+  if (kind === 'deadline') reasons.push('deadline-not-attendable')
   const now = Date.parse(checkedAt)
   if (!Number.isFinite(now)) throw new Error('Invalid collection timestamp')
   if (start !== null && start * 1000 <= now) reasons.push('already-started')
@@ -76,6 +105,10 @@ export function normalizeLiveWhale(record, source, checkedAt) {
     occurrenceKey, providerId, provider: source.id, sourceUrl: link, checkedAt,
     title: title || null, listedCalendar: calendar || null, location: location || null,
     endEvidence: end === null ? 'missing' : 'source-json',
+    // Upstream identity and freshness, kept so a moved occurrence keeps its SideQuest UUID.
+    groupId: idText(record.gid), parentId: idText(record.parent), lastModified: modifiedAt(record.last_modified),
+    eventTypes: list(record.event_types), registration: text(typeof record.registration === 'string' ? record.registration : '') || null,
+    occurrenceKind: kind,
     date: startLocal?.date ?? null, start: startLocal?.time ?? null, end: endLocal?.time ?? null,
     startEpochSeconds: start, endEpochSeconds: end,
     reviewState: reasons.length ? 'held' : 'awaiting-review',

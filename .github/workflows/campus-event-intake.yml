@@ -33,6 +33,7 @@ jobs:
         with:
           node-version: '22'
       - run: node --test app/scripts/campus-intake/intake.test.mjs
+      - run: node --test app/scripts/campus-intake/knownAnswers.test.mjs
       - run: node app/scripts/refresh-campus-events.mjs
   collect:
     needs: offline-tests

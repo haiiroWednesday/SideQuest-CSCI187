@@ -3,6 +3,8 @@
 import { setTimeout as delay } from 'node:timers/promises'
 import { normalizePage, reconcileRecords, campusParts } from './normalize.mjs'
 
+// Requested explicitly: without response_fields, SCU's JSON has no location or organizer.
+export const RESPONSE_FIELDS = ['location', 'group_title', 'event_types', 'summary', 'last_modified', 'registration', 'status']
 const MAX_PAGES = 12
 const MAX_PAGE_BYTES = 2_000_000
 const MAX_RECORDS = 1000
@@ -27,7 +29,7 @@ function requestUrl(source, now, horizonDays) {
   const last = new Date(today + 'T12:00:00Z')
   last.setUTCDate(last.getUTCDate() + horizonDays)
   return checkedFeedUrl(source.feed + 'start_date/' + today + '/end_date/' +
-    last.toISOString().slice(0, 10) + '/paginate/100/response_fields/group_title,location/', source)
+    last.toISOString().slice(0, 10) + '/paginate/100/response_fields/' + RESPONSE_FIELDS.join(',') + '/', source)
 }
 
 async function readBoundedJson(response) {
