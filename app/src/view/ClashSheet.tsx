@@ -1,20 +1,27 @@
-// VIEW: one clash, laid out to decide. All the clashing plans share one time ruler, so the
-// overlap shows as a band you can see. Each plan says where and who, and offers one choice.
-import { useEffect, useRef } from 'react'
-import type { ClashModel } from '../controller/presentClash'
+// VIEW: the clash chooser. Clashing plans share one time strip, so the overlap shows as a hatched band.
+// Under each ticket sit only the facts the plans do not share, in the same order, so the eye compares
+// rows. One tap keeps a plan and removes the ones it clashes with. The comparing is done by the controller.
+import { Fragment, useEffect, useRef, type CSSProperties } from 'react'
+import { goingCell, rowsBelowTickets, whatDiffers, type ClashModel } from '../controller/presentClash'
 import { categoryStyle } from './categoryColors'
 import { EventStub } from './DiscoverView'
+import { useGoing } from './FriendsGoing'
 import './clash.css'
+import './clash-chooser.css'
+
+const listed = (names: readonly string[]) => names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
 
 export function ClashSheet({ clashes, onClose, onRemove, onRemoveMany }: {
   /** Every clash on one day. */
   clashes: ClashModel[]
   onClose: () => void
   onRemove: (id: string) => void
-  /** "Keep this, remove conflicts" as one change, so one toast names every plan removed and one Undo brings them back. */
+  /** "Keep this one" as one change, so one toast names every plan removed and one Undo brings them back. */
   onRemoveMany?: (ids: readonly string[]) => void
 }) {
   const ref = useRef<HTMLDialogElement>(null)
+  // Friends going shows only where the page provides it (your groups, opted in). Without it the row is left out.
+  const going = useGoing()
   useEffect(() => {
     const d = ref.current
     if (d && !d.open) { d.showModal?.(); d.querySelector<HTMLButtonElement>('.sq-clash-close')?.focus() }
@@ -23,12 +30,11 @@ export function ClashSheet({ clashes, onClose, onRemove, onRemoveMany }: {
     if (onRemoveMany) onRemoveMany(ids); else ids.forEach(onRemove)
     if (clashes.length === 1) onClose()
   }
-  const removeOne = (clash: ClashModel, id: string) => { onRemove(id); if (clashes.length === 1 && clash.plans.length <= 2) onClose() }
   const many = clashes.length > 1
   const plansCount = clashes.reduce((n, c) => n + c.plans.length, 0)
 
   return (
-    <dialog ref={ref} className="sq-clash" aria-labelledby="sq-clash-title" onCancel={e => { e.preventDefault(); onClose() }}
+    <dialog ref={ref} className="sq-clash sq-clash-chooser" aria-labelledby="sq-clash-title" onCancel={e => { e.preventDefault(); onClose() }}
       onClick={e => { if (e.target === ref.current) onClose() }}>
       <div className="sq-clash-inner">
         <header className="sq-clash-head">
@@ -36,39 +42,58 @@ export function ClashSheet({ clashes, onClose, onRemove, onRemoveMany }: {
           <button type="button" className="sq-clash-close" aria-label="Close" onClick={onClose}>×</button>
         </header>
 
-        {clashes.map(clash => (
-          <section key={clash.key} className="sq-clash-group" aria-label={clash.summary}>
-            {many && <h3 className="sq-clash-when">{clash.summary}</h3>}
-          <figure className="sq-clash-ruler" aria-label={`${clash.summary}. Overlap ${clash.overlaps.map(o => o.label).join(' and ')}.`}>
-            <div className="sq-clash-rows" aria-hidden="true">
-              {clash.overlaps.map(o => <i key={o.left} className="sq-clash-band" style={{ left: o.left + '%', width: o.width + '%' }}><b>{o.label}</b></i>)}
-              {clash.plans.map(p => (
-                <div key={p.id} className="sq-clash-row" style={categoryStyle(p.category)}>
-                  <span className="sq-clash-bar" style={{ left: p.left + '%', width: p.width + '%' }}><span>{p.title}</span></span>
+        {clashes.map(clash => {
+          const rows = rowsBelowTickets(whatDiffers(clash.plans.map(p => ({ ...p.facts, going: goingCell(going?.going(p.id)) }))))
+          const pair = clash.plans.length === 2
+          return (
+            <section key={clash.key} className="sq-clash-group" aria-label={clash.summary}>
+              {many && <h3 className="sq-clash-when">{clash.summary}</h3>}
+              <figure className={`sq-clash-ruler sq-clash-strip${clash.overlaps.length > 1 ? ' sq-clash-strip-many' : ''}`} aria-label={`${clash.summary}. Overlap ${clash.overlaps.map(o => o.label).join(' and ')}.`}>
+                <div className="sq-clash-lanes" aria-hidden="true" style={{ '--lanes': clash.plans.length } as CSSProperties}>
+                  {clash.plans.map(p => (
+                    <Fragment key={p.id}>
+                      <span className="sq-clash-name">{p.title}</span>
+                      <div className="sq-clash-row" style={categoryStyle(p.category)}>
+                        <span className="sq-clash-bar" style={{ left: p.left + '%', width: p.width + '%' }} />
+                      </div>
+                    </Fragment>
+                  ))}
+                  <div className="sq-clash-bands">
+                    {clash.overlaps.map(o => <i key={o.left} className="sq-clash-band" style={{ left: o.left + '%', width: o.width + '%' }}><b>{o.label}</b></i>)}
+                  </div>
+                  <div className="sq-clash-ticks">{clash.ticks.map(t => <span key={t.left} style={{ left: t.left + '%' }}>{t.label}</span>)}</div>
                 </div>
-              ))}
-            </div>
-            <div className="sq-clash-ticks" aria-hidden="true">{clash.ticks.map(t => <span key={t.left} style={{ left: t.left + '%' }}>{t.label}</span>)}</div>
-          </figure>
+              </figure>
 
-          <ul className="sq-stubs sq-clash-plans">
-            {clash.plans.map(p => (
-              <li key={p.id} className="sq-clash-plan">
-                <EventStub compact stub={p.stub}>
-                  <span className="sq-clash-over">{p.overlapText}</span>
-                  <span className="sq-clash-acts">
-                    <button type="button" className="sq-text-button sq-ink-act sq-clash-keep" onClick={() => keepPlan(p.conflictingIds)}>Keep this one<span className="sq-visually-hidden">: {p.title}, and remove the plans it clashes with</span></button>
-                    <button type="button" className="sq-text-button sq-clash-drop" onClick={() => removeOne(clash, p.id)}>Remove<span className="sq-visually-hidden"> {p.title}</span></button>
-                  </span>
-                </EventStub>
-              </li>
-            ))}
-          </ul>
-          </section>
-        ))}
+              <ul className={`sq-clash-choices ${pair ? 'sq-clash-pair' : 'sq-clash-list'}`} style={{ '--rows': rows.length } as CSSProperties}>
+                {clash.plans.map((p, i) => (
+                  <li key={p.id} className="sq-clash-plan">
+                    {/* The shared ticket, inside the list shape every ticket sits in, so it is drawn the same way here. */}
+                    <ul className="sq-stubs sq-stubs-one sq-clash-plans" role="presentation">
+                      <li role="presentation"><EventStub compact stub={p.stub} /></li>
+                    </ul>
+                    {rows.length > 0 && (
+                      <dl className="sq-clash-differs">
+                        {rows.map(row => (
+                          <div key={row.key} className="sq-clash-differ" data-differs={row.key}>
+                            <dt>{row.label}</dt>
+                            <dd>{row.cells[i]}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    )}
+                    <p className="sq-clash-act">
+                      <button type="button" className="sq-text-button sq-ink-act sq-clash-keep" onClick={() => keepPlan(p.conflictingIds)}>Keep this one<span className="sq-visually-hidden">: {p.title}, and remove {listed(p.removes)}</span></button>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        })}
 
         <footer className="sq-clash-foot">
-          <button type="button" className="sq-text-button" onClick={onClose}>{plansCount > 2 ? 'Keep all' : 'Keep both'}</button>
+          <button type="button" className="sq-text-button sq-clash-all" onClick={onClose}>{plansCount > 2 ? 'Keep all' : 'Keep both'}</button>
         </footer>
       </div>
     </dialog>

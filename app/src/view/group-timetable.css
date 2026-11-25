@@ -1,0 +1,57 @@
+/* The group timetable on Groups (GroupTimetable.tsx). One narrow column per person who shares, time
+   down the page. Gold is free time. Everything else is blank paper: busy time is never drawn.
+   Flat shapes only: no pills, no glows, no gradients, no tilt, no shadows. */
+.sq-gt { --gt-head: 46px; margin: 14px 0 18px; max-width: 560px; }
+/* Without the row of initials the first hour mark needs room under the day bar and its hour labels. */
+.sq-gt[data-mode="band"] { --gt-head: 0px; margin-top: 40px; }
+/* More than six columns scroll inside this box. The page itself never scrolls sideways. */
+.sq-gt-scroll { overflow-x: auto; }
+.sq-gt-grid { position: relative; display: flex; align-items: flex-start; gap: 3px; padding: 8px 0 10px; min-width: min-content; }
+
+/* The left edge: hour marks, and each band's time written once. */
+.sq-gt-axis { position: relative; flex: none; min-width: 46px; margin-top: var(--gt-head); }
+.sq-gt-sizer { display: grid; justify-items: end; height: 0; padding: 0 10px 0 2px; visibility: hidden; overflow: hidden; }
+.sq-gt-tick { position: absolute; right: 10px; transform: translateY(-50%); font: 700 12px/1 var(--font-sans); color: var(--sq-muted, #655d58); white-space: nowrap; }
+.sq-gt-band { position: absolute; left: 0; right: 0; display: grid; align-content: center; justify-items: end; gap: 2px; margin: 0; padding: 0 10px 0 2px;
+  border: 0; background: none; color: var(--sq-red-deep, #751728); text-align: right; cursor: pointer; }
+.sq-gt-band b, .sq-gt-sizer b { font: 400 21px/1 var(--font-display); -webkit-text-stroke: .7px currentColor; paint-order: stroke fill; white-space: nowrap; }
+.sq-gt-band > span:not(.sq-visually-hidden), .sq-gt-sizer span { font: 700 12px/1.1 var(--font-sans); white-space: nowrap; }
+/* A band's time is maroon ink like every other secondary action. Chosen, its band takes maroon rules. */
+.sq-gt-band:focus-visible { outline: 3px solid var(--sq-focus, #751728); outline-offset: -3px; }
+
+/* The columns of people who share, and the layers under and over them. */
+.sq-gt-share { position: relative; flex: 1 1 0; }
+.sq-gt-cols { display: grid; gap: 3px; list-style: none; margin: 0; padding: 0; }
+.sq-gt-col { display: grid; grid-template-rows: var(--gt-head) auto; justify-items: center; min-width: 0; }
+.sq-gt-face { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fffaf2; color: #fffaf2; font: 700 12px/1 var(--font-sans); }
+.sq-gt-lane { position: relative; display: block; width: 100%; }
+.sq-gt-free { position: absolute; left: 0; right: 0; background: #f3d68f; }
+.sq-gt-under, .sq-gt-over { position: absolute; left: 0; right: 0; top: var(--gt-head); pointer-events: none; }
+.sq-gt-line { position: absolute; left: 0; right: 0; border-top: 1px dashed #ddd0bd; }
+.sq-gt-cols { position: relative; }
+/* Everyone who shared is free: one band across their columns. */
+.sq-gt-fill { position: absolute; left: 0; right: 0; box-sizing: border-box; background: var(--sq-gold, #e8aa24); border: solid #8a5a12; border-width: 1.5px 0; pointer-events: auto; cursor: pointer; }
+.sq-gt-fill[data-on] { border-color: var(--sq-red-deep, #751728); border-width: 3px 0; }
+
+/* People who have not shared: a dotted outline and two words, never a guess. */
+.sq-gt-rest { flex: 1 1 0; }
+.sq-gt-face-off { background: none; border: 1.5px dotted #8a7d74; color: var(--sq-ink, #302421); }
+.sq-gt-off .sq-gt-lane { box-sizing: border-box; border: 1.5px dotted #8a7d74; }
+/* Always two lines ("not" over "shared"), so a narrow and a wide column read the same. */
+.sq-gt-not { display: block; width: min-content; margin: 0 auto; padding-top: 8px; font: 700 12px/1.25 var(--font-sans); color: var(--sq-muted, #655d58); text-align: center; }
+
+.sq-gt-few { margin: 2px 0 0; font: 500 14px/1.4 var(--font-sans); color: var(--sq-muted, #655d58); }
+
+/* Above the propose list while it shows what fits a band. */
+.sq-gt-fits { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; margin: 0; padding: 4px 14px; scroll-margin-top: 84px;
+  background: #fbefd9; border-left: 4px solid var(--sq-gold, #e8aa24); font: 650 15px/1.4 var(--font-sans); color: var(--sq-ink, #302421); }
+
+@media (max-width: 760px) { .sq-gt-fits .sq-ink-act { min-height: 50px; } }
+
+/* On a laptop the timetable sits beside the propose list: when on the left, what on the right. */
+@media (min-width: 1180px) {
+  .sq-fr-main:not(.sq-fr-invite) { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 5fr); column-gap: 34px; align-items: start; }
+  .sq-fr-main:not(.sq-fr-invite) > * { grid-column: 1 / -1; }
+  .sq-fr-main:not(.sq-fr-invite) > .sq-ft { grid-column: 1; }
+  .sq-fr-main:not(.sq-fr-invite) > .sq-fr-find { grid-column: 2; margin: 4px 0 26px; padding-top: 16px; border-top: 1.5px dashed #d8c9b8; }
+}

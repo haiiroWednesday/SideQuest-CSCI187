@@ -47,6 +47,9 @@ export type MarkModel = {
   /** Said under the choice when "Now" had to look ahead, or today has no free time left. */
   whenNote: string | null
   stamp: { dow: string; day: number; month: string; year: number }
+  /** Every day this week for the fit mark on a ticket: its free stretches, and whether the student
+   *  has said anything about the day. Nothing known means no mark is drawn. */
+  fitDays: { date: string; known: boolean; windows: { date: string; start: string; end: string }[] }[]
 }
 export type MarkInput = {
   events: readonly LegacyCampusEvent[]
@@ -164,6 +167,15 @@ export function freeWindows(input: MarkInput): { date: string; start: string; en
   })
 }
 
+/** One day for the fit mark. Busy mode knows a day once it holds a plan or a busy mark: the rest of
+ *  it is free. Free mode knows a day only once free time is marked on it, because a plan alone
+ *  says nothing about when you are free. */
+function fitDay(input: MarkInput, date: string): MarkModel['fitDays'][number] {
+  const marked = (drawnMarks(input)[date] ?? []).length > 0
+  const known = marked || (modeOf(input) === 'busy' && scheduleCells(input, date).size > 0)
+  return { date, known, windows: gapsOf(input, date).map(([a, b]) => ({ date, start: hhmmOf(cellStart(a)), end: hhmmOf(cellStart(b + 1)) })) }
+}
+
 /** True once the student has said anything about their time in the current mode. */
 export function hasTold(input: Pick<MarkInput, 'marks' | 'open' | 'mode' | 'when'>): boolean {
   const drawn = (input.mode ?? 'busy') === 'free' ? input.open ?? {} : input.marks
@@ -222,6 +234,7 @@ export function presentMarks(input: MarkInput): MarkModel {
   const whenNote = when === 'week' ? null : todayFor(input, when).note
   return {
     mode, days, date, cells, windows, shortcuts, whenNote,
+    fitDays: days.map(day => fitDay(input, day.date)),
     busy: runsOf([...sched].filter(i => !past.has(i))).map(toRun),
     mine: runsOf([...mine].filter(i => !past.has(i) && !sched.has(i))).map(toRun),
     free: gapsOf(input, date).map(toRun),

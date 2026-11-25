@@ -4,9 +4,9 @@
 //   free stretch, expires at its end, reaches only groups you are a full member of, and can become a
 //   confirmed group plan.
 // - Click (2018) shared free time between friends; EasyMe found one slot for everyone. Here each person
-//   opts in per group, shares free/busy only (never titles or places), and the group sees only the
-//   overlap of everyone who shared. Nobody's own calendar is ever shown, and nobody who hasn't shared
-//   is guessed at.
+//   opts in per group and shares free/busy only (never titles or places). A pair sees only the overlap.
+//   From three sharers up the group timetable also draws each sharer's free stretches as a column
+//   (MIN_COLUMN_SHARERS). Nobody's calendar is ever shown, and nobody who hasn't shared is guessed at.
 // - The Hive tied a group to one event. Here an invite may carry a catalog event or just an activity
 //   with an optional place (review v5.1's open Activity proposal).
 // No location is read, stored or sent. An invite's place is what the sender typed.
@@ -197,6 +197,25 @@ export type CommonTime = {
   locked: boolean
 }
 
+/** One sharer's free stretches for the group timetable. The type has no room for titles or places. */
+export type PersonFree = { person: string; slots: Slot[] }
+/**
+ * Per-person columns need at least this many people sharing. With two sharers the other column would
+ * be one person's whole free week read by exactly one other person (security review M4), so a pair
+ * gets the common windows and nothing else.
+ */
+export const MIN_COLUMN_SHARERS = 3
+// Kept beside a result, never on it. CommonTime is what the server sends as JSON (server/socialApi.ts)
+// and stays the overlap alone. A copy of a result has no columns: this fails closed.
+const columnsOf = new WeakMap<CommonTime, PersonFree[]>()
+/**
+ * Each sharer's own free stretches behind one commonTime result, you first: free or busy only. Null
+ * unless the viewer shares and at least MIN_COLUMN_SHARERS people do.
+ */
+export function personColumns(c: CommonTime): PersonFree[] | null {
+  return (!c.locked && c.shared.length >= MIN_COLUMN_SHARERS && columnsOf.get(c)) || null
+}
+
 export function commonTime(group: SocialGroup, shares: readonly FreeShare[], you: string, now: Date): CommonTime {
   const mine = shares.filter(s => s.groupId === group.id && group.members.includes(s.person))
   const shared = group.members.filter(m => mine.some(s => s.person === m))
@@ -204,12 +223,16 @@ export function commonTime(group: SocialGroup, shares: readonly FreeShare[], you
   const locked = !shared.includes(you)
   if (locked || shared.length < 2) return { windows: [], shared, notShared, locked }
   let acc: Slot[] | null = null
+  const own: PersonFree[] = []
   for (const m of shared) {
     const slots = cleanSlots(mine.filter(s => s.person === m).flatMap(s => s.slots), now)
     acc = acc === null ? slots : intersect(acc, slots)
+    if (m === you) own.unshift({ person: m, slots }); else own.push({ person: m, slots })
   }
   const windows = cleanSlots(acc ?? [], now).filter(w => toMin(w.end) - toMin(w.start) >= MIN_COMMON_MIN)
-  return { windows, shared, notShared, locked }
+  const result: CommonTime = { windows, shared, notShared, locked }
+  if (shared.length >= MIN_COLUMN_SHARERS) columnsOf.set(result, own)
+  return result
 }
 
 /** Common windows per day for the bead row: next SHARE_DAYS days, with a count each. */

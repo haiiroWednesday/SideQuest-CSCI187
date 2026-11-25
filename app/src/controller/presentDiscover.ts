@@ -5,8 +5,9 @@ import { EVENT_CATEGORIES, suggestedEventCategory, type EventCategorySelection }
 import { findEvents } from './findEvents'
 import { EVENT_TAGS, hasAllTags, type EventTag } from '../model/eventTags'
 import { campusNow } from '../model/eventCatalog'
-import { toMinutes } from '../model/events'
-import { byTime, groupDays, spanText, toStub, type ScreenEvent, type FreeWindow, type FreeWindowModel, type DiscoverScreen, type NearMissModel } from './screenModels'
+import { byTime, groupDays, toStub, type ScreenEvent, type FreeWindow, type FreeWindowModel, type DiscoverScreen, type NearMissModel } from './screenModels'
+import { fitSpan } from '../model/fitMark'
+import { missText, presentFitMark } from './presentFitMark'
 
 // ---------- Discover
 
@@ -109,7 +110,14 @@ export function presentDiscover(input: {
   if (allUpcoming.length === 0) return { ...base, status: 'empty', errorMessage: null, days: [], count: 0, headingText: 'Coming up' }
 
   const visible = fitting ? upcoming.filter(event => fitting.has(event.id)) : upcoming
-  const stubs = visible.map(event => toStub(event, now, planned, fitting))
+  // The stretches the list was filtered by also draw each kept ticket's fit mark, so the mark
+  // never disagrees with the list.
+  const fitWindows = freeActive && input.freeWindow ? [input.freeWindow] : input.freeWindows ?? []
+  const stubs = visible.map(event => {
+    const stub = toStub(event, now, planned, fitting)
+    const fitMark = fitting?.has(event.id) ? presentFitMark(event, fitWindows) : null
+    return fitMark ? { ...stub, fitMark } : stub
+  })
   return {
     ...base,
     status: 'ready',
@@ -126,22 +134,17 @@ export function presentDiscover(input: {
 export function fitLineFor(events: readonly ScreenEvent[], count: number, windows: readonly { date: string; start: string; end: string }[]): string {
   if (count === 1) return '1 event fits your free time'
   if (count > 1) return `${count} events fit your free time`
+  // The Model measures each event against its nearest free stretch. The same numbers draw the fit mark.
   let best: { title: string; early: number; over: number; start: number } | null = null
   for (const event of events) {
-    const a = toMinutes(event.start), b = event.end ? toMinutes(event.end) : null
-    if (a === null || b === null || b <= a) continue
-    for (const w of windows) {
-      const from = toMinutes(w.start), to = toMinutes(w.end)
-      if (w.date !== event.date || from === null || to === null || Math.min(b, to) <= Math.max(a, from)) continue
-      const early = Math.max(0, from - a), over = Math.max(0, b - to)
-      const miss = early + over
-      if (!best || miss < best.early + best.over || (miss === best.early + best.over && a < best.start)) best = { title: event.title, early, over, start: a }
-    }
+    const span = fitSpan(event, windows)
+    if (!span) continue
+    const { early, over, eventStart: start } = span
+    const miss = early + over
+    if (!best || miss < best.early + best.over || (miss === best.early + best.over && start < best.start)) best = { title: event.title, early, over, start }
   }
   if (!best) return 'Nothing fits your free time'
-  const how = best.early && best.over ? `runs ${spanText(best.early + best.over)} longer than your free time`
-    : best.over ? `runs ${spanText(best.over)} over` : `starts ${spanText(best.early)} before you're free`
-  return `Nothing fits. ${best.title} ${how}.`
+  return `Nothing fits. ${best.title} ${missText(best.early, best.over)}.`
 }
 
 /** A complete window that ends before the campus clock (an earlier day, or earlier today). */

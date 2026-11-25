@@ -7,7 +7,9 @@ import { EventStub, SideQuestHeader, type SideQuestRoutes } from './DiscoverView
 import { Bookmark } from './Marks'
 import { presentBrowseDetail, type StubModel } from '../controller/screenModels'
 import { FindATime, OpenInvites, useSocial } from './Social'
-import { GROUP_SIZE_LIMIT, YOU, answerOf, canConfirm, leaveCancels, noteOf, personColor, waitingOn, type Answer, type GroupsPreview } from '../controller/groupsPreview'
+import { BandFit, GroupTimetable } from './GroupTimetable'
+import { GROUP_SIZE_LIMIT, YOU, answerOf, canConfirm, eventsInWindow, leaveCancels, noteOf, personColor, waitingOn, type Answer, type GroupsPreview } from '../controller/groupsPreview'
+import type { Slot } from '../controller/socialPlans'
 import './friends.css'
 
 type Ev = { id: string; title: string; location: string; date: string; start: string; end: string; hostName?: string }
@@ -40,7 +42,9 @@ export function FriendsPreview({ events, routes, plannedCount, plannedIds = [], 
   const [people, setPeople] = useState('')
   const [proposing, setProposing] = useState('')
   const [leaving, setLeaving] = useState(false)
-  useEffect(() => setLeaving(false), [active])
+  // The common stretch tapped on the group timetable: the propose list shows what fits it.
+  const [band, setBand] = useState<Slot | null>(null)
+  useEffect(() => { setLeaving(false); setBand(null) }, [active])
   const byId = useMemo(() => {
     const m = new Map(events.map(e => [e.id, e]))
     events.forEach((e, i) => m.set(`#${i}`, e))
@@ -112,7 +116,8 @@ export function FriendsPreview({ events, routes, plannedCount, plannedIds = [], 
             <span className="sq-fr-eyebrow">{g.members.filter(m => m !== YOU).join(', ') || 'Just you'}{g.members.length > 1 ? ' and you' : ''}</span>
             <h2 id="sq-fr-title">{g.name}</h2>
             {g.invited.length > 0 && <p className="sq-fr-waiting"><i aria-hidden="true" />Invited, not in yet: {g.invited.join(', ')}</p>}
-            <FindATime key={g.id} groupId={g.id} groupName={g.name} />
+            <FindATime key={g.id} groupId={g.id} groupName={g.name} band={band} onBand={setBand}
+              timetable={(common, date, day) => <GroupTimetable common={common} date={date} day={day} chosen={band} onBand={setBand} />} />
             {/* Find something to propose: type to search, or pick from what is coming up (replaces a long dropdown, Nov 24). */}
             <div className="sq-fr-find">
               <label className="sq-fr-find-box">
@@ -122,9 +127,10 @@ export function FriendsPreview({ events, routes, plannedCount, plannedIds = [], 
               </label>
               {(() => {
                 const q = proposing.trim().toLowerCase(), taken = new Set(g.plans.map(p => p.eventId))
-                const hits = events.filter(e => !taken.has(e.id) && (!q || `${e.title} ${e.location} ${e.hostName ?? ''}`.toLowerCase().includes(q))).slice(0, q ? 8 : 3)
-                return hits.length ? (
-                  <ul className="sq-stubs sq-stubs-one sq-fr-hits" aria-label={q ? 'Matches' : 'Coming up'}>
+                const pool = band ? eventsInWindow(events, band) : events
+                const hits = pool.filter(e => !taken.has(e.id) && (!q || `${e.title} ${e.location} ${e.hostName ?? ''}`.toLowerCase().includes(q))).slice(0, q || band ? 8 : 3)
+                return <>{band && <BandFit band={band} count={hits.length} onClear={() => setBand(null)} />}{hits.length ? (
+                  <ul className="sq-stubs sq-stubs-one sq-fr-hits" aria-label={band ? 'Events that fit' : q ? 'Matches' : 'Coming up'}>
                     {hits.map(e => (
                       <li key={e.id}>
                         <GroupTicket compact stub={ticketOf(e)}>
@@ -133,7 +139,7 @@ export function FriendsPreview({ events, routes, plannedCount, plannedIds = [], 
                       </li>
                     ))}
                   </ul>
-                ) : <p className="sq-fr-none">No match</p>
+                ) : !band && <p className="sq-fr-none">No match</p>}</>
               })()}
             </div>
 

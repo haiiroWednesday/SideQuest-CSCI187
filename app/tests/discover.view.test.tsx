@@ -178,7 +178,11 @@ describe('Discover View: draws the Controller screen', () => {
     expect((within(row).getByLabelText('Free on') as HTMLInputElement).value).toBe('2030-11-07')
     expect(within(row).getByRole('status').textContent).toBe('1 fit')
     const ceramics = screen.getByRole('button', { name: 'View details for Ceramics Workshop' })
-    expect(within(ceramics).getByText('Fits your free time')).toBeTruthy()
+    // The fit mark replaced the "Fits your free time" line: one bar, a few words, said once.
+    expect(within(ceramics).queryByText('Fits your free time')).toBeNull()
+    const mark = within(ceramics).getByRole('img', { name: 'Fits your free time, 2–3:45pm, with 45 min spare.' })
+    expect(mark.textContent).toBe('45 min spare')
+    expect(ceramics.getAttribute('aria-describedby')).toBe(mark.id)
     expect(screen.queryByRole('button', { name: 'View details for Poetry Reading' })).toBeNull()
 
     fireEvent.change(within(row).getByLabelText('until'), { target: { value: '16:00' } })

@@ -368,7 +368,7 @@
 }
 .sq-quiet-top .sq-quiet-time b { font-size: 58px; line-height: 1; }
 @media (max-width: 380px) { .sq-quiet-top .sq-quiet-time b { font-size: 46px; } }
-@media (max-width: 760px) { .sq-quiet-pic { margin-right: 14px; } .sq-quiet-pic .sq-pic-wide .sq-greet { width: 168px; } .sq-quiet-pic .sq-pic-square .sq-greet { width: 132px; } .sq-quiet-pic .sq-pic-flyer .sq-greet { width: 116px; } }
+@media (max-width: 760px) { .sq-quiet-pic { margin-right: 14px; } .sq-quiet-pic .sq-pic-wide .sq-greet { width: 138px; } .sq-quiet-pic .sq-pic-square .sq-greet { width: 112px; } .sq-quiet-pic .sq-pic-flyer .sq-greet { width: 98px; } }
 
 /* The date stamp over a picture: red ink over a crisp cream outline (drawn in DateStamp), so it reads
    on dark pictures without a misty glow (Nov 24). One gold sparkle at its edge, cheap to animate. */

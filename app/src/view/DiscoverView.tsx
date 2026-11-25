@@ -5,7 +5,7 @@ import type { StretchAdvice, FoodNoticeModel } from '../controller/presentAdvice
 import { categoryStyle } from './categoryColors'
 import { categoryOfPlan } from '../controller/eventCategory'
 import { Icon } from './Icon'
-import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { Fragment, memo, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import {
   presentDiscover, type DiscoverScreen, type FreeWindow, type ScreenEvent, type StubModel,
 } from '../controller/presentScreens'
@@ -39,6 +39,8 @@ import { presentFitMap } from '../controller/presentMap'
 import { useInboxCount } from './Social'
 import { DiscoverMap } from './DiscoverMap'
 import { GoingFaces, useGoing } from './FriendsGoing'
+import { FitMark } from './FitMark'
+import { withFitMarks } from '../controller/presentFitMark'
 
 export type { FreeWindow } from '../controller/presentScreens'
 export type DiscoverEvent = ScreenEvent
@@ -143,17 +145,16 @@ export function SideQuestHeader({
 }
 
 /** A closed card in the Discover list. Redraws only when what it shows changes. */
-const ListStub = memo(function ListStub({ stub, selected, fitLabel, onOpen, note }: { stub: StubModel; selected: boolean; fitLabel: string; onOpen: (id: string) => void; note?: { text: string; warn: boolean } }) {
+const ListStub = memo(function ListStub({ stub, selected, onOpen, note }: { stub: StubModel; selected: boolean; onOpen: (id: string) => void; note?: { text: string; warn: boolean } }) {
   const going = useGoing()?.going(stub.id)
   return (
     <EventStub face stub={stub} selected={selected} dim={stub.fit === 'outside'} onSelect={() => onOpen(stub.id)} extraLabel={going?.label}>
-      {stub.fit === 'fits' && <span className="sq-pill sq-pill-fit">{fitLabel}</span>}
       {stub.planned && <span className="sq-planned-mark"><Bookmark label="In My Schedule" /></span>}
       <GoingFaces eventId={stub.id} />
       <LeaveNote note={note} />
     </EventStub>
   )
-}, (a, b) => a.selected === b.selected && a.fitLabel === b.fitLabel && a.onOpen === b.onOpen && a.note?.text === b.note?.text && JSON.stringify(a.stub) === JSON.stringify(b.stub))
+}, (a, b) => a.selected === b.selected && a.onOpen === b.onOpen && a.note?.text === b.note?.text && JSON.stringify(a.stub) === JSON.stringify(b.stub))
 
 export type MarkerProps = {
   model: MarkModel
@@ -200,6 +201,8 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
   const classes = ['sq-stub', face && !compact && 'sq-stub-faced', compact && 'sq-stub-compact', selected && 'sq-stub-selected', dim && 'sq-stub-dim', stub.live && `sq-stub-${stub.live.kind}`].filter(Boolean).join(' ')
   // Discover buttons use phrasing content; static Schedule cards may contain disclosures.
   const BodyTag = onSelect ? 'span' : 'div'
+  // The ticket's name stays its title. The fit mark is read after it, as its description.
+  const fitId = useId()
   const body = (
     <>
       <span className="sq-stub-time">
@@ -218,6 +221,7 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
           // Happening now: a painted NOW mark, with the end time beside it.
           ? <NowMark until={stub.endText} />
           : <span className={`sq-live sq-live-${stub.live.kind}`}>{stub.live.text}</span>)}
+        {stub.fitMark && <FitMark mark={stub.fitMark} id={fitId} />}
         <StubTags labels={stub.tagLabels} source={stub.tagSourceText} />
         {children}
       </BodyTag>
@@ -225,7 +229,7 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
     </>
   )
   return onSelect ? (
-    <button type="button" className={classes} style={catStyle} aria-pressed={selected} aria-label={`View details for ${stub.title}${extraLabel ? `. ${extraLabel}` : ''}`} onClick={onSelect}>{body}</button>
+    <button type="button" className={classes} style={catStyle} aria-pressed={selected} aria-label={`View details for ${stub.title}${extraLabel ? `. ${extraLabel}` : ''}`} aria-describedby={stub.fitMark ? fitId : undefined} onClick={onSelect}>{body}</button>
   ) : (
     <div className={classes} style={catStyle}>{body}</div>
   )
@@ -281,11 +285,13 @@ export type DiscoverViewProps = {
 const LAYOUT_NAMES: [DiscoverLayout, string][] = [['panel', 'Side panel'], ['flip-row', 'Flip across'], ['flip-down', 'Flip down'], ['lift', 'Lift up']]
 
 export function DiscoverView({
-  screen, onRetry, onPlan, onRemove, onFreeWindowChange, onCategoryChange, routes, sourceNote, aiSearchEnabled = false,
+  screen: listed, onRetry, onPlan, onRemove, onFreeWindowChange, onCategoryChange, routes, sourceNote, aiSearchEnabled = false,
   detail, onSelectEvent, onRetryDetail, openId = null, layoutSwitcher = false, marker,
   onTagsChange, foodNotices = [], stretchAdvice = [], onPlanMany, leaveNotes, foodControlFor, onShareFood,
 }: DiscoverViewProps) {
   const quiet = useQuiet()
+  // With the day bar, every ticket on a day the student has told us about carries its fit mark.
+  const screen = withFitMarks(listed, marker?.model.fitDays)
   const [requestedId, setRequestedId] = useState<string | null>(openId)
   // Phones show the ticket as a sheet; it opens when a stub is picked.
   const [sheetOpen, setSheetOpen] = useState(Boolean(openId))
@@ -392,7 +398,6 @@ export function DiscoverView({
   const openRef = useRef(openStub); openRef.current = openStub
   const openStable = useCallback((id: string) => openRef.current(id, document.activeElement as HTMLElement), [])
   const pills = (stub: StubModel) => <>
-    {stub.fit === 'fits' && <span className="sq-pill sq-pill-fit">{'Fits your free time'}</span>}
     {stub.planned && <span className="sq-planned-mark"><Bookmark label="In My Schedule" /></span>}
     <GoingFaces eventId={stub.id} />
     <LeaveNote note={stub.fit === 'fits' ? leaveNotes?.get(stub.id) : undefined} />
@@ -443,7 +448,8 @@ export function DiscoverView({
         {/* The pick for your free time comes first; filters sit just above the list they filter. */}
         {ready && <div inert={modal || undefined}>
           <FoodNowBoard notices={foodNotices} onOpen={openListed} />
-          {marker && onPlanMany && <StretchAdviceList items={stretchAdvice} onOpen={openListed} onPlanAll={onPlanMany} blocked={screen.planningBlocked} />}
+          {marker && onPlanMany && <StretchAdviceList items={stretchAdvice} onOpen={openListed} onPlanAll={onPlanMany} blocked={screen.planningBlocked}
+            fitMarks={new Map(stubs.flatMap(stub => stub.fitMark ? [[stub.id, stub.fitMark] as const] : []))} />}
         </div>}
         {onCategoryChange && <div inert={modal || undefined}>
           <CategoryFilters categories={screen.categories} onChange={onCategoryChange} />
@@ -519,7 +525,7 @@ export function DiscoverView({
                         )
                         return (
                           <li key={stub.id} data-flip-id={stub.id} className={isOpen ? 'sq-flip-hidden' : undefined}>
-                            <ListStub stub={stub} selected={!flip && selected?.id === stub.id} fitLabel={'Fits your free time'} onOpen={openStable}
+                            <ListStub stub={stub} selected={!flip && selected?.id === stub.id} onOpen={openStable}
                               note={stub.fit === 'fits' ? leaveNotes?.get(stub.id) : undefined} />
                           </li>
                         )

@@ -4,6 +4,8 @@
 import type { StretchAdvice, FoodNoticeModel } from '../controller/presentAdvice'
 import type { TagFiltersModel } from '../controller/screenModels'
 import { LEAVE_NOTE_LABEL } from '../controller/presentAdvice'
+import type { FitMarkModel } from '../controller/presentFitMark'
+import { FitMark } from './FitMark'
 import './foodtime.css'
 
 export function TagFilters({ model, onChange }: { model: TagFiltersModel; onChange: (tags: string[]) => void }) {
@@ -49,7 +51,9 @@ export function FoodNowBoard({ notices, onOpen }: { notices: readonly FoodNotice
 const pickTimes = (time: string): string[] => time.split(' to ')
 
 /** One pick per free stretch, and when two or more chain, a plan for the whole stretch. */
-export function StretchAdviceList({ items, onOpen, onPlanAll, blocked }: {
+export function StretchAdviceList({ items, onOpen, onPlanAll, blocked, fitMarks }: {
+  /** The pick's fit mark, the same one its ticket carries in the list below, keyed by event ID. */
+  fitMarks?: ReadonlyMap<string, FitMarkModel>
   items: readonly StretchAdvice[]
   onOpen: (id: string) => void
   onPlanAll: (ids: string[]) => void
@@ -69,6 +73,7 @@ export function StretchAdviceList({ items, onOpen, onPlanAll, blocked }: {
               <span className="sq-onepick-label">Our pick</span>
               <strong>{item.pick.title}</strong>
               <span className="sq-onepick-facts">{item.pick.location}</span>
+              {fitMarks?.has(item.pick.id) && <FitMark mark={fitMarks.get(item.pick.id)!} />}
               <span className="sq-onepick-why">{item.pick.reason}</span>
             </span>
           </button>

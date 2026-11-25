@@ -11,8 +11,10 @@ import { GROUP_SIZE_LIMIT, MAX_IF_CONDITION, type Participant, type PlanStatus, 
 import type { GroupAction, GroupDetail } from './groupClient'
 import type { GoingGroup, GoingShare } from './friendsGoing'
 import { YOU, personColor } from './groupPeople'
-import { bestPlanGroup, callOff as callOffInvite, canMakePlan, join, leaveInvite, makeInvite, markPlanned,
-  type InviteDraft, type OpenInvite, type SocialGroup } from './socialPlans'
+import { MIN_COLUMN_SHARERS, bestPlanGroup, callOff as callOffInvite, canMakePlan, join, leaveInvite, makeInvite, markPlanned, personColumns,
+  type CommonTime, type InviteDraft, type OpenInvite, type Slot, type SocialGroup } from './socialPlans'
+import { findEvents } from './findEvents'
+import { DAY_END, DAY_START, span } from './freeMarks'
 import { readSocial, sampleJoiners, unreadCount, writeSocial, type Notice, type SocialState } from './socialStore'
 
 export { GROUP_SIZE_LIMIT, MAX_IF_CONDITION }
@@ -165,6 +167,72 @@ export function mergePlanRecord(plan: PreviewPlan, rec: PlanRecord): PreviewPlan
   const organizer = plan.participants.find(p => p.userId === rec.organizerId) ?? { userId: rec.organizerId, response: 'works' as const, ifCondition: null }
   return { ...plan, status: rec.status, revision: rec.revision,
     participants: [organizer, ...rec.participants.map(p => ({ userId: p.userId, response: p.response, ifCondition: p.response === 'if' ? p.ifCondition ?? null : null }))] }
+}
+
+// ---------- the group timetable: one column per person, time down the page (Japanese festival timetables)
+
+/** Columns a 390px phone holds with initials only. Past it, people who have not shared fold into one column. */
+export const MAX_PERSON_COLUMNS = 6
+
+/** Minutes from midnight, inside the day's hours. */
+export type TimetableBlock = { from: number; to: number }
+export type TimetableColumn = {
+  key: string
+  /** One person. Or everyone who has not shared, once they are folded into one column. */
+  people: string[]
+  shared: boolean
+  /** Free stretches only. Busy time has no block and no reason: it stays blank paper. Empty when not shared. */
+  free: TimetableBlock[]
+}
+/** A stretch when everyone who shared is free. `label` is its real time ("3–5pm"), even when drawn clipped. */
+export type TimetableBand = Slot & TimetableBlock & { label: string }
+export type GroupTimetable = {
+  date: string
+  /** The hours drawn: the same as Discover's day bar. */
+  from: number
+  to: number
+  /** null while fewer than MIN_COLUMN_SHARERS share: the common band alone, nobody's own column. */
+  columns: TimetableColumn[] | null
+  bands: TimetableBand[]
+}
+
+const minutes = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + (m || 0) }
+const inDay = (s: Pick<Slot, 'start' | 'end'>): TimetableBlock => ({ from: Math.max(DAY_START, minutes(s.start)), to: Math.min(DAY_END, minutes(s.end)) })
+
+/** A window's time in words: "3–5pm". */
+export const windowLabel = (w: Pick<Slot, 'start' | 'end'>) => span(minutes(w.start), minutes(w.end))
+
+/**
+ * The open group's day as a timetable, from one commonTime result (the overlap rule stays there).
+ * Null until you share and one other person does: nothing is shown before then. A pair gets bands
+ * only. From MIN_COLUMN_SHARERS up each sharer gets a column, you first, and people who have not
+ * shared get an empty marked column: never a guess.
+ */
+export function groupTimetable(c: CommonTime, date: string): GroupTimetable | null {
+  if (c.locked || c.shared.length < 2) return null
+  const bands = c.windows.filter(w => w.date === date)
+    .map(w => ({ ...w, ...inDay(w), label: windowLabel(w) }))
+    .filter(b => b.to > b.from)
+  // Asked for here as well as in socialPlans, so the page cannot draw columns for a pair.
+  const free = c.shared.length >= MIN_COLUMN_SHARERS ? personColumns(c) : null
+  if (!free) return { date, from: DAY_START, to: DAY_END, columns: null, bands }
+  const sharers: TimetableColumn[] = free.filter(p => c.shared.includes(p.person)).map(p => ({
+    key: p.person, people: [p.person], shared: true,
+    free: p.slots.filter(s => s.date === date).map(inDay).filter(b => b.to > b.from),
+  }))
+  const fold = sharers.length + c.notShared.length > MAX_PERSON_COLUMNS && c.notShared.length > 1
+  const rest: TimetableColumn[] = fold
+    ? [{ key: 'not-shared', people: [...c.notShared], shared: false, free: [] }]
+    : c.notShared.map(p => ({ key: p, people: [p], shared: false, free: [] }))
+  return { date, from: DAY_START, to: DAY_END, columns: [...sharers, ...rest], bands }
+}
+
+/** Events that fit inside one common window: Discover's own full-fit rule (findEvents), never a second one. */
+export function eventsInWindow<E extends { id: string; title: string; location: string; date: string; start: string; end: string }>(events: readonly E[], window: Slot): E[] {
+  const found = findEvents([...events], window.date, window.start, window.end)
+  if (found.error) return []
+  const fits = new Set(found.matches.map(e => e.id))
+  return events.filter(e => fits.has(e.id))
 }
 
 // ---------- the local port: this browser, design review only

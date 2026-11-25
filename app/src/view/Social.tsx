@@ -2,7 +2,7 @@
 // Rules live in controller/socialPlans; the state (groups, invites, storage) in controller/groupsPreview,
 // handed in by the design-review provider (DesignReview.tsx, loaded only in that build).
 // This file draws them and passes taps back. Nothing here reads or sends a location.
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   audienceOf, canMakePlan, commonDays, inviteErrors, joinBlock, reachableGroups, PLACE_MAX, TITLE_MAX,
   type CommonTime, type InviteDraft, type OpenInvite, type SocialGroup, type Slot,
@@ -189,10 +189,20 @@ export function OpenInvites({ onMakePlan }: { onMakePlan: (invite: OpenInvite, g
   )
 }
 
-/** When is everyone free: only the overlap of people who chose to share, never anyone's own calendar. */
-export function FindATime({ groupId, groupName }: { groupId: string; groupName: string }) {
+/**
+ * When is everyone free: free or busy only, from people who chose to share, never what or where.
+ * `timetable` draws the chosen day (the Groups page hands in GroupTimetable, so the shipped app never
+ * carries it). `band` is the common stretch the propose list is narrowed to, kept by the page.
+ */
+export function FindATime({ groupId, groupName, band = null, onBand, timetable }: {
+  groupId: string; groupName: string; band?: Slot | null; onBand?: (band: Slot | null) => void
+  timetable?: (common: CommonTime, date: string, day: string) => ReactNode
+}) {
   const api = useSocial()
   const [day, setDay] = useState<string | null>(null)
+  // A band that is no longer common time (sharing turned off, another day's free time changed) lets go.
+  const gone = Boolean(api && band && !api.common(groupId).windows.some(w => w.date === band.date && w.start === band.start && w.end === band.end))
+  useEffect(() => { if (gone) onBand?.(null) }, [gone, onBand])
   if (!api) return null
   const on = api.sharing(groupId)
   const c = api.common(groupId)
@@ -221,7 +231,7 @@ export function FindATime({ groupId, groupName }: { groupId: string; groupName: 
             return (
               <button key={d.date} type="button" className="sq-dayleaf" data-today={d.today || undefined} aria-pressed={d.date === chosen}
                 aria-label={`${dayLabel(d.date, today)}: ${d.count ? `${d.count} ${d.count === 1 ? 'time' : 'times'} everyone is free` : 'no shared free time'}`}
-                onClick={() => setDay(d.date)}>
+                onClick={() => { setDay(d.date); if (band && band.date !== d.date) onBand?.(null) }}>
                 <span className="sq-dayleaf-dow">{d.today ? 'Today' : dayLabel(d.date, today).slice(0, 3)}</span>
                 <span className="sq-dayleaf-num">{dd}</span>
                 <span className={`sq-ft-count${d.count ? '' : ' sq-ft-zero'}`} aria-hidden="true">{d.count || '·'}</span>
@@ -233,6 +243,7 @@ export function FindATime({ groupId, groupName }: { groupId: string; groupName: 
           {dayWindows.map(w => <i key={w.start} style={{ left: pct(w.start) + '%', width: (pct(w.end) - pct(w.start)) + '%' }} />)}
           <span style={{ left: '0%' }}>8am</span><span style={{ left: pct('12:00') + '%' }}>noon</span><span style={{ left: pct('18:00') + '%' }}>6pm</span>
         </div>
+        {timetable?.(c, chosen, dayLabel(chosen, today))}
         {dayWindows.length ? (
           <ul className="sq-ft-list" aria-label={`Everyone who shared is free, ${dayLabel(chosen, today)}`}>
             {dayWindows.map(w => (

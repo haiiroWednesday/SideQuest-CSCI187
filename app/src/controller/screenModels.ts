@@ -7,6 +7,7 @@ import { campusNow } from '../model/eventCatalog'
 import { calendarDay, eventDuration, eventPhase, minutesUntilStart } from '../model/eventTiming'
 import { displayDate, displayTime } from './findEvents'
 import { googleCalendarDraftUrl } from './calendarExport'
+import type { FitMarkModel } from './presentFitMark'
 
 /** Keep archived M1 screen fixtures, which lack hostName, readable. */
 export type ScreenEvent = LegacyCampusEvent & { hostName?: string; organizer?: string; contact?: string; accessibility?: string; tags?: readonly string[]; tagsBy?: string; source?: string }
@@ -52,6 +53,11 @@ export type StubModel = {
   fit: 'fits' | 'outside' | null
   /** a clock-driven note: the event is under way, or starts within the hour */
   live: { kind: 'now' | 'soon'; text: string } | null
+  /** The event's own start and end as "HH:mm", for presenters that measure it against free time. */
+  clock?: { start: string; end: string }
+  /** The fit mark: the free stretch around the event and where the event sits in it.
+   *  Left out when nothing is known about the student's time that day. */
+  fitMark?: FitMarkModel
 }
 
 export type DayModel = {
@@ -201,6 +207,7 @@ export function toStub(event: ScreenEvent, now: Date, planned: ReadonlySet<strin
     planned: planned.has(event.id),
     fit: fitting ? (fitting.has(event.id) ? 'fits' : 'outside') : null,
     live: liveNote(event, now),
+    clock: { start: event.start, end: event.end },
   }
 }
 
