@@ -14,6 +14,7 @@ test('post, discover, full-fit filter, plan, reload and remove a plan through th
   await form.getByLabel('HOST NAME', { exact: true }).fill('SCU Art Club')
   await form.getByLabel('DESCRIPTION', { exact: true }).fill('Paint with friends. '.repeat(40)) // valid >500 chars
   await form.getByLabel('LOCATION', { exact: true }).fill('Arts Building')
+  await form.getByLabel('CONTACT', { exact: true }).fill('SCU Art Club')
   await form.getByLabel('DATE', { exact: true }).fill('2030-11-08')
   await form.getByLabel('START', { exact: true }).fill('14:30')
   await form.getByLabel('END', { exact: true }).fill('15:30')

@@ -526,3 +526,10 @@
   .sq-nav .sq-post > span { font-size: 0; }
   .sq-nav .sq-post > span::after { content: "Post" / ""; font: 600 12.5px/1.1 var(--font-sans); }
 }
+
+/* Contact and accessibility note on the opened card (SCU posting policy). Same type rules as the facts above. */
+:root[data-quiet] .sq-quiet-access { margin-top: -4px; }
+.sq-quiet-access li { align-items: flex-start; }
+.sq-quiet-access li svg { margin-top: 3px; }
+:root[data-quiet] .sq-quiet-access li:last-child span { line-height: 1.35; }
+.sq-quiet-access li { min-width: 0; overflow-wrap: break-word; }

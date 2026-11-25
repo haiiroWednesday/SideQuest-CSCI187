@@ -5,7 +5,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import { LOCAL_CATALOG_KEY, createBrowserEventTable } from './model/browserEventTable'
-import { createEventCatalog } from './model/eventCatalog'
+import { accessStatement, createEventCatalog } from './model/eventCatalog'
 import { PLANNED_IDS_KEY } from './model/schedule'
 import { todayLocalISO } from './model/events'
 import { DISCOVER_LAYOUT_KEY } from './controller/viewPreferences'
@@ -15,7 +15,13 @@ import './view/look/fonts'
 import { LookPanel, applyLook } from './view/look/LookPanel'
 import { readLook } from './controller/lookPreferences'
 
-const SEED_KEY = 'sidequest.demo-seed.v6'
+const SEED_KEY = 'sidequest.demo-seed.v7'
+const ORGANIZERS = ['Maya Chen', 'Jun Park', 'Priya Nair', 'Theo Alvarez', 'Elena Rossi', 'Sam Okafor', 'Nora Kim', 'Diego Ramos']
+const samplePolicy = (i: number) => {
+  const organizer = ORGANIZERS[i % ORGANIZERS.length]
+  const contact = `${organizer.toLowerCase().replace(' ', '.')}@example.edu`
+  return { organizer, contact, accessibility: accessStatement(organizer, contact) }
+}
 const uid = (i: number) => `00000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`
 const day = (offset: number) => { const d = new Date(); d.setDate(d.getDate() + offset); return todayLocalISO(d) }
 type Row = [number, string, string, string, string, string, boolean]
@@ -58,17 +64,62 @@ const ROWS: Row[] = [
   [4, "15:00", "17:00", "Ignatian Family Teach-In for Justice Watch Party", "SCU Mission and Ministry", "Center for Spirituality and Faith, Benson 105", false],
   [4, "11:45", "12:50", "Signs of the Times: Solidarity and Social Justice Panel", "SCU Mission and Ministry", "Forbes, Lucas Hall", false],
 ]
+const EXTRAS_KEY = 'sidequest.demo-extras.v1'
+const SAMPLE_TAGS: Record<string, string[]> = {
+  'Dinner with the Games Society': ['free-food'],
+  'Lunch talk on climate': ['free-food', 'guest-speaker'],
+  'Bronco Hackathon': ['free-food', 'registration'],
+  'Hack night': ['free-food'],
+  'Stargazing at Ricard': ['registration'],
+  'Coffee tasting': ['free-food'],
+  'Resume review drop-in': ['registration'],
+  'Night market tasting': ['free-food'],
+  'Bay Area hike': ['off-campus', 'registration'],
+}
+// [day offset, start, end, title, host, location]: free stretches where two events chain with a walk.
+const EXTRA_ROWS: [number, string, string, string, string, string][] = [
+  [0, '19:45', '20:45', 'Night market tasting', 'Hospitality Society', 'Benson'],
+  [1, '14:45', '15:30', 'Coffee tasting', 'Coffee Club', 'Benson'],
+  [1, '15:45', '16:45', 'Resume review drop-in', 'Career Center', 'Lucas Hall'],
+  [3, '08:00', '10:30', 'Bay Area hike', 'Outdoors Club', 'Meet at the North Garage'],
+]
 try {
   if (localStorage.getItem(SEED_KEY) !== day(0)) {
     const rows = ROWS.map(([d, start, end, title, host, location], i) => ({
       id: uid(i), title, host_name: host, description: `${title}, hosted by ${host}. Sample data for the design review.`,
       location, event_date: day(d), start_time: `${start}:00`, end_time: `${end}:00`,
+      // SCU posting policy: the primary student organizer, their contact and the Access Policy
+      // Statement. Sample people with example.edu addresses (a reserved domain that reaches no one).
+      ...samplePolicy(i),
     }))
     localStorage.setItem(LOCAL_CATALOG_KEY, JSON.stringify(rows))
     localStorage.setItem(PLANNED_IDS_KEY, JSON.stringify(ROWS.flatMap((r, i) => r[6] ? [uid(i)] : [])))
     // Two sample events you posted yourself: Stargazing and the Volunteer fair.
     localStorage.setItem(POSTED_IDS_KEY, JSON.stringify([uid(9), uid(24)]))
     localStorage.setItem(SEED_KEY, day(0))
+  }
+  // Tags, sources and a few more sample events (Nov 24). Added only to the standard sample week,
+  // never to a catalog a test put in place. Tags go on made-up sample events only: real SCU
+  // listings keep no tags, because a tag is a fact a host or reviewer has to set.
+  const catalogRows = JSON.parse(localStorage.getItem(LOCAL_CATALOG_KEY) ?? '[]') as Record<string, unknown>[]
+  if (localStorage.getItem(EXTRAS_KEY) !== day(0) && catalogRows[0]?.id === uid(0) && catalogRows[0]?.title === ROWS[0][3]) {
+    const extra = EXTRA_ROWS.map(([d, start, end, title, host, location], i) => ({
+      id: uid(100 + i), title, host_name: host, description: `${title}, hosted by ${host}. Sample data for the design review.`,
+      location, event_date: day(d), start_time: `${start}:00`, end_time: `${end}:00`, ...samplePolicy(100 + i),
+    }))
+    const next = [...catalogRows.filter(row => !extra.some(e => e.id === row.id)), ...extra].map(row => {
+      const title = String(row.title), tagged = SAMPLE_TAGS[title]
+      return {
+        ...row,
+        ...(tagged ? { tags: tagged, tags_by: 'host' } : {}),
+        ...(String(row.host_name).startsWith('SCU ') ? { source: 'scu-calendar' } : {}),
+      }
+    })
+    localStorage.setItem(LOCAL_CATALOG_KEY, JSON.stringify(next))
+    // You also host the Ceramics Club workshop, which is happening at 10:40, so the "food left" control shows.
+    const posted = JSON.parse(localStorage.getItem(POSTED_IDS_KEY) ?? '[]') as string[]
+    localStorage.setItem(POSTED_IDS_KEY, JSON.stringify([...new Set([...posted, uid(2)])]))
+    localStorage.setItem(EXTRAS_KEY, day(0))
   }
   // The review starts on the flip cards; the switch on Discover changes it.
   // Round five picks: cards flip down like a postcard.
@@ -81,6 +132,9 @@ const root = document.getElementById('root')
 if (!root) throw new Error('Root element missing')
 // The demo clock is fixed at 10:40 today, for the catalog and the screens alike.
 const catalog = { catalog: createEventCatalog(createBrowserEventTable(localStorage), now), shared: false }
+// Another host already said there are bagels left at Study Jam, six minutes before the demo clock.
+const foodPostedAt = now().getTime() - 6 * 60_000
+const initialFoodNotices = [{ eventId: uid(1), postedAt: foodPostedAt, expiresAt: foodPostedAt + 30 * 60_000 }]
 document.documentElement.dataset.sqMotion = 'review'
 applyLook(readLook())
 document.documentElement.dataset.quiet = '1'
@@ -94,4 +148,4 @@ function LookWhenAsked() {
   }, [])
   return on ? <LookPanel /> : null
 }
-createRoot(root).render(<StrictMode><App catalog={catalog} now={now} designReview /><LookWhenAsked /></StrictMode>)
+createRoot(root).render(<StrictMode><App catalog={catalog} now={now} designReview initialFoodNotices={initialFoodNotices} /><LookWhenAsked /></StrictMode>)

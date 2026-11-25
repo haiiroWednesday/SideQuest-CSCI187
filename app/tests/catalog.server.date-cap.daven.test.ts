@@ -7,7 +7,7 @@ import { createEventCatalog } from '../src/model/eventCatalog'
 import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 
 const HORIZON_ERROR = 'Events can be posted up to one year ahead'
-const draft = { title: 'Server workshop', hostName: 'Art Club', description: 'Paint together', location: 'Library', start: '14:30', end: '15:30' }
+const draft = { title: 'Server workshop', hostName: 'Art Club', organizer: 'Ana Ruiz', contact: 'ana@scu.edu', spaceConfirmed: true, description: 'Paint together', location: 'Library', start: '14:30', end: '15:30' }
 const servers: Server[] = []
 
 // A same-origin API over an in-memory table, with a fixed catalog clock.

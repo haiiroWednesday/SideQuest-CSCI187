@@ -59,7 +59,7 @@ export function createSupabaseEmailOtpGatewayFromEnv(
       if (userResult.error || userResult.data.user?.id !== data.user.id) return null
       const expiresAt = (data.session?.expires_at ?? 0) * 1000
       if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) return null
-      return { userId: data.user.id, accessToken, expiresAt }
+      return { userId: data.user.id, email: userResult.data.user?.email ?? undefined, accessToken, expiresAt }
     },
     async sessionFromLink(accessToken) {
       // Supabase Auth is the judge: an expired, revoked or forged token gets no user.
@@ -67,7 +67,7 @@ export function createSupabaseEmailOtpGatewayFromEnv(
       if (error || !data.user?.id) return null
       const expiresAt = tokenExpiry(accessToken)
       if (!expiresAt || expiresAt <= Date.now()) return null
-      return { userId: data.user.id, accessToken, expiresAt }
+      return { userId: data.user.id, email: data.user.email ?? undefined, accessToken, expiresAt }
     },
   }
 }

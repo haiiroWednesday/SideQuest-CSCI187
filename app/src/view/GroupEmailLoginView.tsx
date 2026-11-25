@@ -55,10 +55,10 @@ export function GroupEmailLoginView({
             : <p>For account security, SideQuest keeps your sign-in only in this tab's memory. Reloading or closing this tab ends your session, and you'll need a new email.</p>}
           {error && <p role="alert" className="sq-login-error">{error}</p>}
           {message && step !== 'sent' && <p role="status" className="sq-login-status">{message}</p>}
-          <label htmlFor="sq-login-email">Email address</label>
+          <label htmlFor="sq-login-email">Santa Clara email</label>
           <input id="sq-login-email" type="email" required autoComplete="email"
             value={email} maxLength={254} disabled={busy || step !== 'email'}
-            placeholder="student@example.edu" onChange={event => setEmail(event.target.value)} />
+            placeholder="you@scu.edu" onChange={event => setEmail(event.target.value)} />
           {step === 'code' && <>
             <label htmlFor="sq-login-code">Verification code</label>
             <input id="sq-login-code" type="text" inputMode="numeric" autoComplete="one-time-code"

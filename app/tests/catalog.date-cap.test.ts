@@ -16,7 +16,7 @@ import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 // 12:00 noon in Santa Clara on 2026-11-08 (PST, UTC-8).
 const NOW = new Date('2026-11-08T20:00:00Z')
 const draft = (date: string): EventDraft => ({
-  title: 'Photo Walk', hostName: 'SCU Photography Club', description: 'Bring any camera.',
+  title: 'Photo Walk', hostName: 'SCU Photography Club', organizer: 'Ana Ruiz', contact: 'ana@scu.edu', spaceConfirmed: true, description: 'Bring any camera.',
   location: 'Mission Gardens', date, start: '14:00', end: '15:30',
 })
 const HORIZON_ERROR = 'Events can be posted up to one year ahead.'

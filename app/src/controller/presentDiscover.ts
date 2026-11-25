@@ -3,6 +3,7 @@ import { eventPhase } from '../model/eventTiming'
 import { assessEventFit } from '../model/fitAssessment'
 import { EVENT_CATEGORIES, suggestedEventCategory, type EventCategorySelection } from '../model/eventCategories'
 import { findEvents } from './findEvents'
+import { EVENT_TAGS, hasAllTags, type EventTag } from '../model/eventTags'
 import { campusNow } from '../model/eventCatalog'
 import { byTime, groupDays, toStub, type ScreenEvent, type FreeWindow, type FreeWindowModel, type DiscoverScreen, type NearMissModel } from './screenModels'
 
@@ -13,6 +14,8 @@ export function presentDiscover(input: {
   loading?: boolean
   error?: string | null
   category?: EventCategorySelection
+  /** Host-set tags the student picked (free food, guest speaker, ...). An event shows when it has all of them. */
+  tags?: readonly EventTag[]
   plannedIds?: readonly string[]
   planningBlocked?: boolean
   /** pass a window to show the "When are you free?" row; omit to hide it */
@@ -45,8 +48,15 @@ export function presentDiscover(input: {
       })),
     ],
   }
-  const upcoming = categorized.filter(entry => selectedCategory === 'all' || entry.category === selectedCategory)
+  const chosenTags = input.tags ?? []
+  const inCategory = categorized.filter(entry => selectedCategory === 'all' || entry.category === selectedCategory)
     .map(entry => entry.event)
+  const upcoming = inCategory.filter(event => hasAllTags(event, chosenTags))
+  // Counts show how many events in the chosen category carry each tag, so a chip never promises more than it shows.
+  const tagFilters = {
+    selected: [...chosenTags],
+    options: EVENT_TAGS.map(tag => ({ id: tag.id, label: tag.label, count: inCategory.filter(event => event.tags?.includes(tag.id)).length })),
+  }
 
   let freeWindow: FreeWindowModel | null = null
   let fitting: Set<string> | null = null
@@ -91,7 +101,7 @@ export function presentDiscover(input: {
   if (!freeActive && input.freeWindows) {
     fitting = new Set(input.freeWindows.flatMap(w => { const r = findEvents(upcoming, w.date, w.start, w.end); return r.error ? [] : r.matches.map(e => e.id) }))
   }
-  const base = { plannedCount, freeWindow, nearMisses, categories, planningBlocked: Boolean(input.planningBlocked) }
+  const base = { plannedCount, freeWindow, nearMisses, categories, tagFilters, planningBlocked: Boolean(input.planningBlocked) }
   if (input.loading) return { ...base, status: 'loading', errorMessage: null, days: [], count: 0, headingText: 'Coming up' }
   if (input.error) return { ...base, status: 'error', errorMessage: input.error, days: [], count: 0, headingText: 'Coming up' }
   if (allUpcoming.length === 0) return { ...base, status: 'empty', errorMessage: null, days: [], count: 0, headingText: 'Coming up' }

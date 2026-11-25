@@ -11,7 +11,7 @@ import { campusDateFromToday } from './fixtures/campusDates'
 const servers: Server[] = []
 const clients: WebSocket[] = []
 const draft = {
-  title: 'Live workshop', hostName: 'SCU Club', description: 'A shared catalog event.',
+  title: 'Live workshop', hostName: 'SCU Club', organizer: 'Ana Ruiz', contact: 'ana@scu.edu', spaceConfirmed: true, description: 'A shared catalog event.',
   location: 'Benson', date: campusDateFromToday(30), start: '14:30', end: '15:30',
 }
 

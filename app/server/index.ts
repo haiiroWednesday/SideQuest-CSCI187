@@ -1,4 +1,5 @@
 // Production HTTP server: serves the built UI and same-origin catalog API.
+import { createSocialApiFromEnv } from './socialApi'
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { resolve, sep, extname } from 'node:path'
@@ -8,6 +9,7 @@ import type { CatalogPublisherPort } from '../src/model/catalogChanged'
 import { attachCatalogRealtime } from './catalogRealtime'
 import { createAiDiscoverApi } from './aiDiscover'
 import { createGroupApi } from './groupApi'
+import { createSignInPolicy } from './signInPolicy'
 import { createEmailAuthApi } from './emailAuthApi'
 import { createSupabaseEmailOtpGatewayFromEnv } from './supabaseEmailAuth'
 import { createSupabaseGroupGatewayFromEnv } from './supabaseGroupAccess'
@@ -24,8 +26,11 @@ const api = createCatalogApi(catalog, Date.now, notifications)
 const ai = createAiDiscoverApi(catalog, { apiKey: process.env.OPENAI_API_KEY, model: process.env.SIDEQUEST_AI_MODEL })
 const groupApi = createGroupApi(createSupabaseGroupGatewayFromEnv(process.env))
 const authApi = createEmailAuthApi(createSupabaseEmailOtpGatewayFromEnv(process.env), Date.now,
-  { groups: process.env.SIDEQUEST_GROUPS_ENABLED === 'true', accounts: accountsEnabled(process.env) })
+  { groups: process.env.SIDEQUEST_GROUPS_ENABLED === 'true', accounts: accountsEnabled(process.env) },
+  createSignInPolicy(process.env))
 const personalApi = createPersonalApi(createSupabasePersonalGatewayFromEnv(process.env))
+// Open invites and find-a-time: off until supabase/proposals/20261125020000_open_invites_REVIEW_ONLY.sql is approved.
+const socialApi = createSocialApiFromEnv(process.env)
 const root = resolve(fileURLToPath(new URL('../dist/', import.meta.url)))
 const mime: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff': 'font/woff', '.woff2': 'font/woff2', '.png': 'image/png' }
 const port = Number(process.env.PORT ?? 3000)
@@ -33,6 +38,7 @@ const server = createServer({ requestTimeout: 15_000, headersTimeout: 10_000 }, 
   if (await authApi(req, res)) return
   if (await personalApi(req, res)) return
   if (req.url?.startsWith('/api/google/') && await (await import('./googleApi')).googleApi(req, res)) return
+  if (await socialApi(req, res)) return
   if (await groupApi(req, res)) return
   if (await ai(req, res)) return
   if (await api(req, res)) return

@@ -4,9 +4,12 @@
 // code exchange and must be kept in tab memory by the client.
 import { createHmac, randomBytes } from 'node:crypto'
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import type { SignInPolicy } from './signInPolicy'
 
 export type VerifiedEmailSession = {
   userId: string
+  /** The address Supabase Auth holds for this user, checked against the sign-in policy. */
+  email?: string
   accessToken: string
   expiresAt: number // UNIX milliseconds, never an arbitrary client value
 }
@@ -72,6 +75,7 @@ export function createEmailAuthApi(
   gateway: EmailOtpGateway | null,
   clock: () => number = Date.now,
   features?: SignInFeatures,
+  policy?: SignInPolicy,
 ) {
   const pepper = randomBytes(32)
   const counters = new Map<string, { count: number; until: number }>()
@@ -136,10 +140,13 @@ export function createEmailAuthApi(
           !Number.isFinite(session.expiresAt) || session.expiresAt <= clock() + 5000) {
           throw new AuthHttpError(401, 'This sign-in link has expired or was already used. Ask for a new one.')
         }
+        if (policy && !policy.allows(session.email)) throw new AuthHttpError(403, policy.message)
         json(res, 200, { userId: session.userId, accessToken: session.accessToken, expiresAt: session.expiresAt })
         return true
       }
       const email = emailFrom(request, path.endsWith('verify-code') ? ['email', 'code'] : ['email'])
+      // Only addresses the policy allows get an email at all (Santa Clara accounts by default).
+      if (policy && !policy.allows(email)) throw new AuthHttpError(403, policy.message)
       if (path === '/api/auth/request-code') {
         limits(email, ip, 'request')
         // Regardless of whether account creation was permitted upstream, avoid
@@ -162,6 +169,7 @@ export function createEmailAuthApi(
           !Number.isFinite(session.expiresAt) || session.expiresAt <= clock() + 5000) {
           throw new AuthHttpError(401, 'The verification code is invalid or expired.')
         }
+        if (policy && !policy.allows(session.email ?? email)) throw new AuthHttpError(403, policy.message)
         json(res, 200, {
           userId: session.userId,
           accessToken: session.accessToken,

@@ -9,7 +9,10 @@ import { loadPostedEvents } from '../src/controller/postEvent'
 const ID = '11111111-1111-4111-8111-111111111111'
 const key = 'sb_publishable_http_fixture'
 const clock = () => new Date('2030-11-07T17:00:00Z')
-const draft: EventDraft = { title: 'HTTP workshop', hostName: 'Art Club', description: 'A shared activity', location: 'Library', date: '2030-11-08', start: '14:30', end: '15:30' }
+const draft: EventDraft = { title: 'HTTP workshop', hostName: 'Art Club', organizer: 'Ana Ruiz', contact: 'ana@scu.edu', spaceConfirmed: true, description: 'A shared activity', location: 'Library', date: '2030-11-08', start: '14:30', end: '15:30' }
+// What the catalog returns: no space confirmation, plus the access statement it builds.
+const { spaceConfirmed: _s, ...posted } = draft
+const returned = { ...posted, accessibility: 'In compliance with the ADA/504, please direct your accommodation requests to Ana Ruiz at ana@scu.edu.' }
 const row: EventRow = { id: ID, title: draft.title, host_name: draft.hostName, description: draft.description, location: draft.location, event_date: draft.date, start_time: '14:30:00', end_time: '15:30:00' }
 const response = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } })
 const catalog = (fetcher: typeof fetch) => createEventCatalog(createSupabaseEventTable(createClient('https://sidequest-http.test', key, {
@@ -26,7 +29,7 @@ describe('Supabase EventTable over the actual SDK HTTP boundary', () => {
       expect(request.headers.get('apikey')).toBe(key)
       if (request.method === 'POST') {
         const body = await request.json()
-        expect(Object.keys(body).sort()).toEqual(['title', 'host_name', 'description', 'location', 'event_date', 'start_time', 'end_time'].sort())
+        expect(Object.keys(body).sort()).toEqual(['title', 'host_name', 'description', 'location', 'event_date', 'start_time', 'end_time', 'organizer', 'contact', 'accessibility'].sort())
         expect(body).not.toHaveProperty('id')
         stored.push({ ...body, id: ID, start_time: `${body.start_time}:00`, end_time: `${body.end_time}:00` })
         return response(stored[0], 201)
@@ -41,9 +44,9 @@ describe('Supabase EventTable over the actual SDK HTTP boundary', () => {
       return response(stored)
     })
     const poster = catalog(fetcher), reader = catalog(fetcher)
-    expect(await poster.create(draft)).toEqual({ id: ID, ...draft })
-    expect(await reader.getById(ID)).toEqual({ id: ID, ...draft })
-    expect(await reader.listUpcoming()).toEqual([{ id: ID, ...draft }])
+    expect(await poster.create(draft)).toEqual({ id: ID, ...returned })
+    expect(await reader.getById(ID)).toEqual({ id: ID, ...returned })
+    expect(await reader.listUpcoming()).toEqual([{ id: ID, ...returned }])
     expect(requests.map(r => r.method)).toEqual(['POST', 'GET', 'GET'])
   })
   it('does not automatically repeat an insert when its response is lost after storage', async () => {

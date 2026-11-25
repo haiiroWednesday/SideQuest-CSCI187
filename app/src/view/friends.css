@@ -136,3 +136,6 @@
 .sq-fr-new > * { margin: 0 !important; }
 .sq-fr-time { padding: 10px 8px; }
 @media (max-width: 560px) { .sq-fr-time b { font-size: 25px; } }
+
+/* Who's free runs across the whole Groups page, above the group list and the chosen group. */
+.sq-fr-open { grid-column: 1 / -1; min-width: 0; }

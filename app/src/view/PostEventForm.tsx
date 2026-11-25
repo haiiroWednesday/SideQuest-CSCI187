@@ -38,7 +38,8 @@ function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props
   const { catalog, shared } = connection
   const [restored] = useState(() => readPostDraft(connection))
   const [draft, setDraft] = useState<EventDraft>(() => ({
-    title: '', hostName: '', description: '', location: '', ...initialCampusWindow(now()), ...(restored ?? {}),
+    title: '', hostName: '', description: '', location: '', ...initialCampusWindow(now()),
+    hostKind: 'student-org', organizer: '', contact: '', spaceConfirmed: false, ...(restored ?? {}),
   }))
   // An unfinished post survives switching tabs (kept in memory by the controller).
   useEffect(() => { keepPostDraft(connection, draft) }, [connection, draft])
@@ -73,6 +74,15 @@ function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props
     setFormError(null)
   }
 
+  const confirmSpace = (confirmed: boolean) => {
+    const nextDraft = { ...draft, spaceConfirmed: confirmed }
+    setDraft(nextDraft)
+    if (validatedFields.spaceConfirmed || fieldErrors.spaceConfirmed) {
+      setFieldErrors(previous => ({ ...previous, spaceConfirmed: postingDraftErrors(nextDraft, now()).spaceConfirmed }))
+    }
+    setFormError(null)
+  }
+
   const validateOnBlur = (field: keyof EventDraft) => {
     setValidatedFields(previous => ({ ...previous, [field]: true }))
     const errors = postingDraftErrors(draft, now())
@@ -89,7 +99,7 @@ function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props
     setSubmitting(false)
     if (result.status === 'invalid') {
       setFieldErrors(result.fieldErrors)
-      setValidatedFields({ title: true, hostName: true, description: true, location: true, date: true, start: true, end: true })
+      setValidatedFields({ title: true, hostName: true, description: true, location: true, date: true, start: true, end: true, organizer: true, contact: true, spaceConfirmed: true })
       setFormError(result.error)
       setInvalidSubmit(count => count + 1)
       return
@@ -102,15 +112,18 @@ function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props
     setFieldErrors({})
     setValidatedFields({})
     setNotice(result.message)
-    // Keep host name, date and times to make posting a similar event quicker.
-    setDraft(current => ({ ...current, title: '', description: '', location: '' }))
+    // Keep host name, organizer, contact, date and times to make posting a similar event quicker.
+    // The room or space has to be confirmed again for the next event.
+    setDraft(current => ({ ...current, title: '', description: '', location: '', tags: [], spaceConfirmed: false }))
     onPosted?.(result.event)
   }
 
   return (
     <div ref={formArea} className="sq-post-editor">
       {restored && !notice && <p className="sq-draft-note" role="status">Your unfinished post is still here.</p>}
-      <PostEventFields draft={draft} fieldErrors={fieldErrors} submitting={submitting} now={now} onSubmit={handleSubmit} onChange={update} onBlur={validateOnBlur} />
+      <PostEventFields draft={draft} fieldErrors={fieldErrors} submitting={submitting} now={now} onSubmit={handleSubmit} onChange={update} onBlur={validateOnBlur}
+        onConfirmSpace={confirmSpace}
+        onTags={tags => setDraft(current => ({ ...current, tags }))} />
       {formError && <p className="error" role="alert">{formError}</p>}
       {notice && <p className="success" role="status">{notice}</p>}
     </div>

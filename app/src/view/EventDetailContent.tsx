@@ -3,6 +3,7 @@ import { EventPicture } from './EventPicture'
 import type { StubModel } from '../controller/presentScreens'
 import { titleSizeClass } from './titleSize'
 import { OFFICIAL_SCU_CAMPUS_MAP, googleMapsVenueSearchUrl } from '../controller/campusMapLinks'
+import { ACCESS_POLICY_ON } from '../controller/postEvent'
 import { DeviceWalkingDirections } from './DeviceWalkingDirections'
 import { useQuiet } from './quietContext'
 import { DateStamp } from './DateStamp'
@@ -23,6 +24,8 @@ type DetailProps = {
   onPlan?: (eventId: string) => void
   planningBlocked: boolean
   onClose: () => void
+  /** More for this card from Discover, drawn inside it (the host's food control, where the event came from). */
+  extras?: React.ReactNode
 }
 
 function VerifiedEventDetails({ event, onPlan, planningBlocked }: {
@@ -55,6 +58,8 @@ function VerifiedEventDetails({ event, onPlan, planningBlocked }: {
           <dd className={event.host ? undefined : 'sq-unset'}>{event.host ?? 'Host not provided'}</dd>
           <dt>Where</dt><dd>{event.location}</dd>
           <dt>Date</dt><dd>{event.dateText}</dd>
+          {(event.organizer || event.contact) && <><dt>Contact</dt><dd>{[event.organizer, event.contact].filter(Boolean).join(', ')}</dd></>}
+          {event.accessibility && <><dt>Access</dt><dd>{event.accessibility}</dd></>}
         </dl>
         <p className="sq-sticker-desc">{event.description ?? 'No description was provided.'}</p>
         <div className="sq-venue-map-links">
@@ -116,6 +121,11 @@ function QuietDetails({ event, onPlan, planningBlocked }: { event: StubModel; on
           <li><svg viewBox="0 0 24 24" aria-label="Where" role="img"><path d="M12 22s7-7 7-12a7 7 0 1 0-14 0c0 5 7 12 7 12z" /><circle cx="12" cy="10" r="2.5" /></svg>
             {event.location.trim() ? <a href={`#map/${encodeURIComponent(event.location.trim())}`}>{event.location}</a> : 'Place not given'}</li>
         </ul>
+        {(event.organizer || event.contact || (ACCESS_POLICY_ON && event.accessibility)) && <ul className="sq-quiet-facts sq-quiet-access">
+          {(event.organizer || event.contact) && <li><svg viewBox="0 0 24 24" aria-label="Contact" role="img"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3.5 6.5 8.5 6 8.5-6" /></svg>
+            <span>{event.organizer}{event.organizer && event.contact && <span className="sq-access-sep">{' · '}</span>}{event.contact}</span></li>}
+          {ACCESS_POLICY_ON && event.accessibility && <li><svg viewBox="0 0 24 24" aria-label="Accessibility" role="img"><circle cx="12" cy="4.5" r="2" /><path d="M5 8.5c2.3.7 4.6 1 7 1s4.7-.3 7-1M12 9.5v5m0 0-3 6.5m3-6.5 3 6.5" /></svg><span>{event.accessibility}</span></li>}
+        </ul>}
         <GoingFaces eventId={event.id} big />
         {event.description && !/Sample data for the design review/.test(event.description) && <p className="sq-sticker-desc">{event.description}</p>}
         <QuietHandoffs event={event} />
@@ -128,7 +138,7 @@ function QuietDetails({ event, onPlan, planningBlocked }: { event: StubModel; on
   )
 }
 
-export function EventDetailContent({ selected, verified, onRetryDetail, onPlan, planningBlocked, onClose }: DetailProps) {
+export function EventDetailContent({ selected, verified, onRetryDetail, onPlan, planningBlocked, onClose, extras }: DetailProps) {
   const quiet = useQuiet()
   if (!selected) {
     return (
@@ -164,6 +174,7 @@ export function EventDetailContent({ selected, verified, onRetryDetail, onPlan, 
       ) : (
         <VerifiedEventDetails event={selected} onPlan={onPlan} planningBlocked={planningBlocked} />
       )}
+      {extras && <div className="sq-detail-extras">{extras}</div>}
     </div>
   )
 }

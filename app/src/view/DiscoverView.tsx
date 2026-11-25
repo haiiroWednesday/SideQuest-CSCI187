@@ -1,5 +1,7 @@
 // VIEW: draw the Discover screen the Controller prepared. No storage, matching,
 // clock reads, date or time comparisons, or Model imports belong here.
+import { TagFilters, FoodNowBoard, StretchAdviceList, LeaveNote, StubTags, FoodNowControl } from './TimeAdvice'
+import type { StretchAdvice, FoodNoticeModel } from '../controller/presentAdvice'
 import { categoryStyle } from './categoryColors'
 import { categoryOfPlan } from '../controller/eventCategory'
 import { Icon } from './Icon'
@@ -31,6 +33,7 @@ import { useMobileDetailFocus, usePhoneViewport } from './useMobileDetailFocus'
 import { FlipCard, boxOf, slideOthers, snapCards, type Box } from './FlipCard'
 import { readDiscoverLayout, saveDiscoverLayout, type DiscoverLayout } from '../controller/viewPreferences'
 import { presentFitMap } from '../controller/presentMap'
+import { useInboxCount } from './Social'
 import { DiscoverMap } from './DiscoverMap'
 import { GoingFaces, useGoing } from './FriendsGoing'
 
@@ -75,6 +78,8 @@ export function SideQuestHeader({
   plannedCount?: number
 }) {
   const current = (key: typeof active) => (active === key ? 'page' : undefined)
+  // New open invites and answers since Groups was last open. Zero outside the design review.
+  const inbox = useInboxCount()
   return (
     <header className="sq-masthead">
       <div className="sq-masthead-inner">
@@ -104,6 +109,7 @@ export function SideQuestHeader({
           {routes.groups && (
             <a aria-current={current('groups')} className="sq-tab sq-tab-groups" href={routes.groups}>
               <i className="sq-ic" aria-hidden="true"><Icon name="groups" /></i><span>Groups</span>
+              {inbox > 0 && <><b className="sq-badge sq-badge-inbox" aria-hidden="true">{inbox}</b><span className="sq-visually-hidden">, {inbox} new</span></>}
             </a>
           )}
           {routes.login && (
@@ -128,19 +134,22 @@ export function SideQuestHeader({
 }
 
 /** A closed card in the Discover list. Redraws only when what it shows changes. */
-const ListStub = memo(function ListStub({ stub, selected, fitLabel, onOpen }: { stub: StubModel; selected: boolean; fitLabel: string; onOpen: (id: string) => void }) {
+const ListStub = memo(function ListStub({ stub, selected, fitLabel, onOpen, note }: { stub: StubModel; selected: boolean; fitLabel: string; onOpen: (id: string) => void; note?: { text: string; warn: boolean } }) {
   const going = useGoing()?.going(stub.id)
   return (
     <EventStub face stub={stub} selected={selected} dim={stub.fit === 'outside'} onSelect={() => onOpen(stub.id)} extraLabel={going?.label}>
       {stub.fit === 'fits' && <span className="sq-pill sq-pill-fit">{fitLabel}</span>}
       {stub.planned && <span className="sq-planned-mark"><Bookmark label="In My Schedule" /></span>}
       <GoingFaces eventId={stub.id} />
+      <LeaveNote note={note} />
     </EventStub>
   )
-}, (a, b) => a.selected === b.selected && a.fitLabel === b.fitLabel && a.onOpen === b.onOpen && JSON.stringify(a.stub) === JSON.stringify(b.stub))
+}, (a, b) => a.selected === b.selected && a.fitLabel === b.fitLabel && a.onOpen === b.onOpen && a.note?.text === b.note?.text && JSON.stringify(a.stub) === JSON.stringify(b.stub))
 
 export type MarkerProps = {
   model: MarkModel
+  /** Design review: "Who's in?" on a free stretch, and the note while Discover fits a whole group. */
+  social?: boolean
   onDate: (date: string) => void
   onWhen: (key: When) => void
   onAddBusy: (start: string, end: string) => boolean
@@ -185,6 +194,7 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
           // Happening now: a painted NOW mark, with the end time beside it.
           ? <NowMark until={stub.endText} />
           : <span className={`sq-live sq-live-${stub.live.kind}`}>{stub.live.text}</span>)}
+        <StubTags labels={stub.tagLabels} source={stub.tagSourceText} />
         {children}
       </BodyTag>
       {face && <span className={`sq-stub-stamp sq-stamp-${stampFormatFor(stub.title)}`} aria-hidden="true"><span className="sq-stamp-paper"><Greetings location={stub.location} format={stampFormatFor(stub.title)} /></span></span>}
@@ -228,6 +238,18 @@ export type DiscoverViewProps = {
   layoutSwitcher?: boolean
   /** Design review: mark free time on a day bar instead of the single time form. */
   marker?: MarkerProps
+  /** Host-set tag chips (free food, guest speaker, ...). */
+  onTagsChange?: (tags: string[]) => void
+  /** Live "food left, come now" notices from hosts. */
+  foodNotices?: readonly FoodNoticeModel[]
+  /** One pick, and a short plan, for each free stretch. */
+  stretchAdvice?: readonly StretchAdvice[]
+  onPlanMany?: (ids: string[]) => void
+  /** "Leave by 1:42pm for Chem lab" on fitting cards, keyed by event ID. */
+  leaveNotes?: ReadonlyMap<string, { text: string; warn: boolean }>
+  /** The host's "food left" control on their own live event; null where it doesn't apply. */
+  foodControlFor?: (eventId: string) => 'available' | 'shared' | 'too-soon' | null
+  onShareFood?: (eventId: string) => void
 }
 
 const LAYOUT_NAMES: [DiscoverLayout, string][] = [['panel', 'Side panel'], ['flip-row', 'Flip across'], ['flip-down', 'Flip down'], ['lift', 'Lift up']]
@@ -235,6 +257,7 @@ const LAYOUT_NAMES: [DiscoverLayout, string][] = [['panel', 'Side panel'], ['fli
 export function DiscoverView({
   screen, onRetry, onPlan, onFreeWindowChange, onCategoryChange, routes, sourceNote, aiSearchEnabled = false,
   detail, onSelectEvent, onRetryDetail, openId = null, layoutSwitcher = false, marker,
+  onTagsChange, foodNotices = [], stretchAdvice = [], onPlanMany, leaveNotes, foodControlFor, onShareFood,
 }: DiscoverViewProps) {
   const quiet = useQuiet()
   const [requestedId, setRequestedId] = useState<string | null>(openId)
@@ -327,8 +350,17 @@ export function DiscoverView({
     setSheetOpen(true)
     onSelectEvent?.(id)
   }
+  const detailExtras = (stub: StubModel | null) => {
+    if (!stub) return null
+    const food = foodControlFor?.(stub.id) ?? null
+    return <>
+      {food && onShareFood && <FoodNowControl state={food} onShare={() => onShareFood(stub.id)} />}
+      {stub.sourceText && <p className="sq-source-line">{stub.sourceText}</p>}
+    </>
+  }
   const detailFor = (stub: StubModel) => (
-    <EventDetailContent selected={selected?.id === stub.id ? selected : stub} verified={verified} onRetryDetail={onRetryDetail} onPlan={onPlan} planningBlocked={screen.planningBlocked} onClose={requestClose} />
+    <EventDetailContent selected={selected?.id === stub.id ? selected : stub} verified={verified} onRetryDetail={onRetryDetail} onPlan={onPlan} planningBlocked={screen.planningBlocked} onClose={requestClose}
+      extras={detailExtras(stub)} />
   )
   // Opening a card re-renders Discover; unchanged cards skip it (that render was the lag on phones).
   const openRef = useRef(openStub); openRef.current = openStub
@@ -337,7 +369,15 @@ export function DiscoverView({
     {stub.fit === 'fits' && <span className="sq-pill sq-pill-fit">{marker ? 'Fits your free time' : 'Fits your window'}</span>}
     {stub.planned && <span className="sq-planned-mark"><Bookmark label="In My Schedule" /></span>}
     <GoingFaces eventId={stub.id} />
+    <LeaveNote note={stub.fit === 'fits' ? leaveNotes?.get(stub.id) : undefined} />
   </>
+  // A pick or a food notice opens its card in the list, like a tap on the map does.
+  const openListed = (id: string) => {
+    if (!stubs.some(s => s.id === id)) return
+    setView('list')
+    openRef.current(id, null)
+    requestAnimationFrame(() => document.querySelector(`[data-flip-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'center' }))
+  }
   // A marker tapped on the map: back to the list with that card open and in view.
   const fromMap = useRef<string | null>(null)
   const openFromMap = useCallback((id: string) => {
@@ -378,6 +418,11 @@ export function DiscoverView({
 
         {onCategoryChange && <div inert={modal || undefined}>
           <CategoryFilters categories={screen.categories} onChange={onCategoryChange} />
+          {screen.tagFilters && onTagsChange && <TagFilters model={screen.tagFilters} onChange={onTagsChange} />}
+        </div>}
+        {ready && <div inert={modal || undefined}>
+          <FoodNowBoard notices={foodNotices} onOpen={openListed} />
+          {marker && onPlanMany && <StretchAdviceList items={stretchAdvice} onOpen={openListed} onPlanAll={onPlanMany} blocked={screen.planningBlocked} />}
         </div>}
 
         {free && onFreeWindowChange && !marker && <FreeWindowForm free={free} ready={ready} onWindowChange={onFreeWindowChange} disabledByDialog={modal} />}
@@ -449,7 +494,8 @@ export function DiscoverView({
                         )
                         return (
                           <li key={stub.id} data-flip-id={stub.id} className={isOpen ? 'sq-flip-hidden' : undefined}>
-                            <ListStub stub={stub} selected={!flip && selected?.id === stub.id} fitLabel={marker ? 'Fits your free time' : 'Fits your window'} onOpen={openStable} />
+                            <ListStub stub={stub} selected={!flip && selected?.id === stub.id} fitLabel={marker ? 'Fits your free time' : 'Fits your window'} onOpen={openStable}
+                              note={stub.fit === 'fits' ? leaveNotes?.get(stub.id) : undefined} />
                           </li>
                         )
                       })}
@@ -463,7 +509,8 @@ export function DiscoverView({
             )}
           </section>
           {ready && !flip && <aside ref={sheet} className={`sq-sticker${sheetOpen ? ' sq-open' : ''}`} hidden={phone && !sheetOpen} role={modal ? 'dialog' : undefined} aria-modal={modal || undefined} aria-labelledby="sq-detail-title">
-            <EventDetailContent selected={selected} verified={verified} onRetryDetail={onRetryDetail} onPlan={onPlan} planningBlocked={screen.planningBlocked} onClose={closeSheet} />
+            <EventDetailContent selected={selected} verified={verified} onRetryDetail={onRetryDetail} onPlan={onPlan} planningBlocked={screen.planningBlocked} onClose={closeSheet}
+              extras={detailExtras(selected)} />
           </aside>}
         </div>
         {free?.active && ready && screen.nearMisses.length > 0 && (

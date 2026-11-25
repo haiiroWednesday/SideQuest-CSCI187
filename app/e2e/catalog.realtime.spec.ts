@@ -23,6 +23,7 @@ for (const app of [SHARED_APP, 'http://127.0.0.1:5177']) {
         'HOST NAME': 'Student Art Club',
         DESCRIPTION: 'Appears while another browser is already viewing Discover.',
         LOCATION: 'Learning Commons',
+        CONTACT: 'Ana Ruiz',
         DATE: campusDateFromToday(30),
         START: '14:30',
         END: '15:30',

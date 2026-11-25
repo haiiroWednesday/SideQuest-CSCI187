@@ -15,7 +15,7 @@ import { createInMemoryEventTable } from '../src/model/inMemoryEventTable'
 const NOW = new Date('2026-11-08T20:00:00Z')
 const clock = () => NOW
 const draft = (extra: Partial<EventDraft> = {}): EventDraft => ({
-  title: 'Photo Walk', hostName: 'Art Club', description: 'Bring a camera.', location: 'Library',
+  title: 'Photo Walk', hostName: 'Art Club', organizer: 'Ana Ruiz', contact: 'ana@scu.edu', spaceConfirmed: true, description: 'Bring a camera.', location: 'Library',
   date: '2026-11-15', start: '14:30', end: '15:30', ...extra,
 })
 const FIELDS = ['title', 'hostName', 'description', 'location'] as const

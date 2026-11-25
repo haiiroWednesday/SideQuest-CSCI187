@@ -41,6 +41,7 @@ test('live catalog updates remain selectable through AI Discover without exposin
       'HOST NAME': 'Student Art Club',
       DESCRIPTION: 'An open watercolor workshop.',
       LOCATION: 'Learning Commons',
+      CONTACT: 'Ana Ruiz',
       DATE: date,
       START: '14:30',
       END: '15:30',

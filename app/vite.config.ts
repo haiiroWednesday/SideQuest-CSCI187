@@ -7,6 +7,7 @@ import { attachCatalogRealtime } from './server/catalogRealtime.ts'
 import { createAiDiscoverApi } from './server/aiDiscover.ts'
 import { createGroupApi } from './server/groupApi.ts'
 import { createEmailAuthApi } from './server/emailAuthApi.ts'
+import { createSignInPolicy } from './server/signInPolicy.ts'
 import { createSupabaseEmailOtpGatewayFromEnv } from './server/supabaseEmailAuth.ts'
 import { createSupabaseGroupGatewayFromEnv } from './server/supabaseGroupAccess.ts'
 import { createPersonalApi } from './server/personalApi.ts'
@@ -38,7 +39,7 @@ export default defineConfig(({ mode }) => ({
       const ai = createAiDiscoverApi(catalog, { apiKey: env.OPENAI_API_KEY, model: env.SIDEQUEST_AI_MODEL })
       const groupApi = createGroupApi(createSupabaseGroupGatewayFromEnv(env))
       const authApi = createEmailAuthApi(createSupabaseEmailOtpGatewayFromEnv(env), Date.now,
-        { groups: env.SIDEQUEST_GROUPS_ENABLED === 'true', accounts: accountsEnabled(env) })
+        { groups: env.SIDEQUEST_GROUPS_ENABLED === 'true', accounts: accountsEnabled(env) }, createSignInPolicy(env))
       const personalApi = createPersonalApi(createSupabasePersonalGatewayFromEnv(env))
       server.middlewares.use((req, res, next) => {
         void (async () => {

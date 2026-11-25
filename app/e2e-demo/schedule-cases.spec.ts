@@ -18,7 +18,7 @@ async function seed(page: Page, events: Ev[], width: number) {
     localStorage.clear()
     localStorage.setItem('sidequest.local-catalog.v1', JSON.stringify(rows))
     localStorage.setItem('sidequest.planned-event-ids.v1', JSON.stringify(ids))
-    localStorage.setItem('sidequest.demo-seed.v6', today)
+    localStorage.setItem('sidequest.demo-seed.v7', today)
   }, [rows, rows.map(r => r.id), D(0)] as const)
   await page.goto('/demo.html#schedule')
   await page.addStyleTag({ content: '[class*=toast],.sq-look{visibility:hidden!important}' })

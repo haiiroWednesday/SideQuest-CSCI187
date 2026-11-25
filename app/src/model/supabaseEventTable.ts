@@ -4,30 +4,83 @@
 // Never expose privileged keys or Supabase configuration in the browser bundle.
 // Browser requests use the same-origin HTTP catalog API.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { createEventCatalog, type EventCatalogPort, type EventRow, type EventTable } from './eventCatalog'
+import { createEventCatalog, type EventCatalogPort, type EventRow, type EventTable, type NewEventRow } from './eventCatalog'
 
 const EVENT_COLUMNS = 'id,title,host_name,description,location,event_date,start_time,end_time'
+// SCU posting-policy columns, added by 20261125010000_event_access_contact.sql.
+const ACCESS_COLUMNS = ',organizer,contact,accessibility,host_kind'
+// Host-set tags (free food, guest speaker, ...), added by 20261125020000_event_tags.sql.
+const TAG_COLUMNS = ',tags,tags_by'
 
-export function createSupabaseEventTable(client: SupabaseClient): EventTable {
+type PostgrestLikeError = { code?: string; message?: string } | null
+
+// True when the live table has not had the posting-policy migration yet.
+// 42703 is Postgres "undefined column"; PGRST204 is PostgREST's "column not in the schema cache".
+export function isMissingAccessColumn(error: PostgrestLikeError): boolean {
+  if (!error) return false
+  if (error.code !== '42703' && error.code !== 'PGRST204') return false
+  return /organizer|contact|accessibility|host_kind/i.test(error.message ?? '')
+}
+
+// True when the live table has no tags column yet (same error codes as above).
+export function isMissingTagsColumn(error: PostgrestLikeError): boolean {
+  if (!error) return false
+  if (error.code !== '42703' && error.code !== 'PGRST204') return false
+  return /\btags(_by)?\b/i.test(error.message ?? '')
+}
+
+export function createSupabaseEventTable(client: SupabaseClient, warn: (message: string) => void = message => console.warn(message)): EventTable {
   const events = () => client.from('events')
+  // Feature-detected once: until the migration is applied, posting and reading keep
+  // working with the seven original columns and the two new fields are dropped.
+  let accessColumns: boolean | null = null
+  let tagColumns: boolean | null = null
+  const columns = () => EVENT_COLUMNS + (accessColumns === false ? '' : ACCESS_COLUMNS) + (tagColumns === false ? '' : TAG_COLUMNS)
+  const markTagsMissing = () => {
+    if (tagColumns === false) return
+    tagColumns = false
+    warn('public.events has no tags column yet; apply 20261125020000_event_tags.sql. Posting continues without tags.')
+  }
+  const markMissing = () => {
+    if (accessColumns === false) return
+    accessColumns = false
+    warn('public.events has no organizer/contact/accessibility columns yet; apply 20261125010000_event_access_contact.sql. Posting continues without them.')
+  }
+  async function run<T>(attempt: () => PromiseLike<{ data: T; error: PostgrestLikeError }>): Promise<T> {
+    let { data, error } = await attempt()
+    // Each optional column group is dropped at most once, so this retries at most twice.
+    for (let tries = 0; error && tries < 2; tries++) {
+      if (accessColumns !== false && isMissingAccessColumn(error)) markMissing()
+      else if (tagColumns !== false && isMissingTagsColumn(error)) markTagsMissing()
+      else break
+      ;({ data, error } = await attempt())
+    }
+    if (error) throw error
+    if (accessColumns === null) accessColumns = true
+    if (tagColumns === null) tagColumns = true
+    return data
+  }
+  const withoutAccess = (row: NewEventRow): NewEventRow => {
+    let out = row
+    if (accessColumns === false) { const { organizer: _o, accessibility: _a, contact: _c, host_kind: _k, ...base } = out; out = base }
+    if (tagColumns === false) { const { tags: _t, tags_by: _b, ...base } = out; out = base }
+    return out
+  }
   return {
     async insert(row) {
-      // The database fills in id and created_at. Anonymous callers may only
-      // INSERT the seven columns listed in toEventRow.
-      const { data, error } = await events().insert(row).select(EVENT_COLUMNS).single()
-      if (error) throw error
-      return data as EventRow
+      // The database fills in id and created_at. Callers may only INSERT the
+      // columns granted in the migrations (the seven originals plus the posting-policy and tag columns).
+      const data = await run(() => events().insert(withoutAccess(row)).select(columns()).single())
+      return data as unknown as EventRow
     },
     async selectFromDate(date) {
-      const { data, error } = await events().select(EVENT_COLUMNS).gte('event_date', date)
-        .order('event_date').order('start_time').order('id')
-      if (error) throw error
-      return (data ?? []) as EventRow[]
+      const data = await run(() => events().select(columns()).gte('event_date', date)
+        .order('event_date').order('start_time').order('id'))
+      return ((data ?? []) as unknown) as EventRow[]
     },
     async selectById(id) {
-      const { data, error } = await events().select(EVENT_COLUMNS).eq('id', id).maybeSingle()
-      if (error) throw error
-      return (data as EventRow | null) ?? null
+      const data = await run(() => events().select(columns()).eq('id', id).maybeSingle())
+      return ((data as unknown) as EventRow | null) ?? null
     },
   }
 }

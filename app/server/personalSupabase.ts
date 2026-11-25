@@ -11,6 +11,7 @@ import {
 } from '../src/model/personalData'
 import type { Intention, IntentionStatus } from '../src/model/someday'
 import type { PersonalGateway } from './personalApi'
+import { createSignInPolicy } from './signInPolicy'
 
 const DEADLINE_MS = 10_000
 type Fetch = typeof fetch
@@ -140,7 +141,8 @@ export function createSupabasePersonalGatewayFromEnv(
   fetchImpl: Fetch = fetch,
 ): PersonalGateway | null {
   if (!accountsEnabled(env)) return null
-  if (!createSupabaseEventCatalogFromEnv(env)) return null // same publishable-key-only validation
+  if (!createSupabaseEventCatalogFromEnv(env)) return null
+  const policy = createSignInPolicy(env as Record<string, string | undefined>) // same publishable-key-only validation
   const url = String(env.SUPABASE_URL).trim()
   const key = String(env.SUPABASE_PUBLISHABLE_KEY).trim()
   const limited: Fetch = (input, init) => fetchImpl(input, {
@@ -155,7 +157,9 @@ export function createSupabasePersonalGatewayFromEnv(
   return {
     async userFor(token) {
       const { data, error } = await auth.auth.getUser(token)
-      return error || !data.user?.id ? null : data.user.id
+      if (error || !data.user?.id) return null
+      // Same account rule as sign-in: a token for an address outside the policy reads nothing.
+      return policy.allows(data.user.email) ? data.user.id : null
     },
     storeFor(token, userId) { return createSupabasePersonalStore(clientFor(token), userId) },
   }

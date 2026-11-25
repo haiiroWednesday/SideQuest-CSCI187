@@ -2,7 +2,9 @@
 import type { FormEvent } from 'react'
 import { useQuiet } from './quietContext'
 import { DatePick, TimePick } from './Pickers'
-import { POSTING_LIMITS, campusNow, trimDraft, latestPostingDate, type CatalogFieldErrors, type EventDraft } from '../controller/postEvent'
+import { EVENT_TAGS, type EventTag } from '../controller/tags'
+import './foodtime.css'
+import { ACCESS_LIMITS, ACCESS_POLICY_ON, ACCESS_STATEMENT_START, HOST_KINDS, POSTING_LIMITS, campusNow, trimDraft, latestPostingDate, type CatalogFieldErrors, type EventDraft } from '../controller/postEvent'
 
 type PostEventFieldsProps = {
   draft: EventDraft
@@ -12,28 +14,35 @@ type PostEventFieldsProps = {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   onChange: (field: keyof EventDraft, value: string) => void
   onBlur: (field: keyof EventDraft) => void
+  /** The host confirms the room or space is booked before advertising (SCU posting policy). */
+  onConfirmSpace: (confirmed: boolean) => void
+  /** Optional host-set tags students can filter on. Left out, the form shows no tag choices. */
+  onTags?: (tags: EventTag[]) => void
 }
 
 // The description always shows its counter. Short one-line fields show it
 // only near the limit, so typical names and places stay uncluttered.
 const NEAR_LIMIT_RATIO = 0.8
-type CountedField = keyof typeof POSTING_LIMITS
+type CountedField = keyof typeof POSTING_LIMITS | keyof typeof ACCESS_LIMITS
+const LIMITS: Record<CountedField, number> = { ...POSTING_LIMITS, ...ACCESS_LIMITS }
 
 // Limited fields have no maxLength on purpose: pasted text that is too long
 // stays visible, the counter shows how far over it is, and the posting rule in
 // the Model reports the error and blocks the post.
 const limitOf = (field: keyof EventDraft): number | null =>
-  field in POSTING_LIMITS ? POSTING_LIMITS[field as CountedField] : null
+  field in LIMITS ? LIMITS[field as CountedField] : null
 
-export function PostEventFields({ draft, fieldErrors, submitting, now, onSubmit, onChange, onBlur }: PostEventFieldsProps) {
+export function PostEventFields({ draft, fieldErrors, submitting, now, onSubmit, onChange, onBlur, onConfirmSpace, onTags }: PostEventFieldsProps) {
   // Count the trimmed length in UTF-16 units: the same value catalogPostingErrors()
   // checks, so the counter turns red exactly when posting would fail. The input
   // itself still shows the raw draft text.
   const trimmed = trimDraft(draft)
+  const department = draft.hostKind === 'department'
   const counter = (field: keyof EventDraft) => {
     const limit = limitOf(field)
     if (limit === null) return null
-    const length = trimmed[field].length
+    const raw = trimmed[field]
+    const length = typeof raw === 'string' ? raw.length : 0
     return field === 'description' || length >= Math.ceil(limit * NEAR_LIMIT_RATIO) ? { length, limit } : null
   }
   // Link each control to its error, its limit hint and its counter, in that
@@ -130,6 +139,76 @@ export function PostEventFields({ draft, fieldErrors, submitting, now, onSubmit,
             {fieldError('end')}
           </div>
         </div>
+        {ACCESS_POLICY_ON && (<>
+        {/* SCU's posting policy: the primary student organizer, their email or phone, and the
+            Access Policy Statement built from them word for word. The statement cannot be edited.
+            University department events may skip it (team decision); student organizations may not. */}
+        <fieldset className="field sq-host-kind">
+          <legend><span>HOSTED BY</span></legend>
+          <div className="sq-host-kind-row">
+            {HOST_KINDS.map(kind => (
+              <label key={kind} className={`sq-host-kind-option${(draft.hostKind ?? 'student-org') === kind ? ' sq-on' : ''}`}>
+                <input type="radio" name="post-hostKind" value={kind} checked={(draft.hostKind ?? 'student-org') === kind}
+                  onChange={() => onChange('hostKind', kind)} />
+                <span>{kind === 'department' ? 'University department' : 'Student organization'}</span>
+              </label>
+            ))}
+          </div>
+          {department && <p className="sq-host-kind-hint" id="post-hostKind-hint">Department events may skip the access statement.</p>}
+        </fieldset>
+        <div className="field">
+          <label htmlFor="post-organizer"><span>ORGANIZER</span></label>
+          <input id="post-organizer" type="text" value={draft.organizer ?? ''} required autoComplete="off" {...fieldProps('organizer')}
+            placeholder="Primary student organizer" onChange={(e) => onChange('organizer', e.target.value)} onBlur={() => onBlur('organizer')} />
+          {fieldCount('organizer')}
+          {fieldError('organizer')}
+          {fieldHint('organizer')}
+        </div>
+        <div className="field">
+          <label htmlFor="post-contact"><span>CONTACT</span></label>
+          <input id="post-contact" type="text" value={draft.contact ?? ''} required autoComplete="off" inputMode="email" {...fieldProps('contact')}
+            placeholder="Email or phone" onChange={(e) => onChange('contact', e.target.value)} onBlur={() => onBlur('contact')} />
+          {fieldCount('contact')}
+          {fieldError('contact')}
+          {fieldHint('contact')}
+        </div>
+        <div className="field sq-access-preview" aria-live="off">
+          <span className="sq-access-preview-label" id="post-access-label">ACCESS STATEMENT</span>
+          <p aria-labelledby="post-access-label" data-testid="access-statement">
+            {department && !trimmed.organizer && !trimmed.contact
+              ? 'None. Add an organizer and contact to include it.'
+              : <>{ACCESS_STATEMENT_START}<b>{trimmed.organizer || 'NAME'}</b> at <b>{trimmed.contact || 'EMAIL ADDRESS'}</b>.</>}
+          </p>
+        </div>
+        <div className="field sq-space-confirm">
+          <label>
+            <input type="checkbox" checked={draft.spaceConfirmed === true} required
+              {...(fieldErrors.spaceConfirmed ? { 'aria-invalid': true as const, 'aria-describedby': 'post-spaceConfirmed-error' } : {})}
+              onChange={(e) => onConfirmSpace(e.target.checked)} />
+            <span>Room or space is confirmed</span>
+          </label>
+          {fieldError('spaceConfirmed')}
+        </div>
+        </>)}
+        {onTags && (
+          <fieldset className="field sq-post-tags">
+            <legend><span>GOOD TO KNOW</span></legend>
+            <p className="sq-post-tags-hint" id="post-tags-hint">Students can filter on these.</p>
+            <div className="sq-post-tag-row" aria-describedby="post-tags-hint">
+              {EVENT_TAGS.map(tag => {
+                const on = draft.tags?.includes(tag.id) ?? false
+                return (
+                  <label key={tag.id} className={`sq-post-tag${on ? ' sq-on' : ''}`}>
+                    <input type="checkbox" checked={on}
+                      onChange={e => onTags(EVENT_TAGS.map(t => t.id).filter(id => id === tag.id ? e.target.checked : draft.tags?.includes(id)))} />
+                    <span>{tag.label}</span>
+                  </label>
+                )
+              })}
+            </div>
+            {fieldError('tags')}
+          </fieldset>
+        )}
         <button className="primary-button" type="submit" disabled={submitting}>
           {submitting ? 'Posting…' : '+ Post event'}
         </button>

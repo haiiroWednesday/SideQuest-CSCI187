@@ -6,12 +6,16 @@ import { SideQuestHeader, type SideQuestRoutes } from './DiscoverView'
 import { Greetings } from './Greetings'
 import { categoryStyle } from './categoryColors'
 import { categoryOfPlan } from '../controller/eventCategory'
+import { FindATime, OpenInvites, useSocial } from './Social'
+import type { OpenInvite } from '../controller/socialPlans'
 import './friends.css'
 
 type Answer = 'works' | 'if' | 'cant' | null
 type Status = 'proposed' | 'confirmed' | 'cancelled'
 // Only your own If note is ever stored here. Other people's notes are theirs alone (review v5.1, page 3).
-type Plan = { id: string; eventId: string; by: string; status: Status; answers: Record<string, Answer>; myNote?: string }
+// An open invite can become a plan with no catalog event: an activity with an optional place (review v5.1, page 1).
+type Activity = { title: string; place?: string; date: string; start: string; end: string }
+type Plan = { id: string; eventId: string; by: string; status: Status; answers: Record<string, Answer>; myNote?: string; activity?: Activity }
 // `invited` are people who have not accepted yet. `inviteFrom` means you are the one invited and have not answered.
 type Group = { id: string; name: string; members: string[]; invited: string[]; plans: Plan[]; inviteFrom?: string }
 type Ev = { id: string; title: string; location: string; date: string; start: string; end: string; hostName?: string }
@@ -85,6 +89,16 @@ export function FriendsPreview({ events, routes, plannedCount }: { events: reado
     return m
   }, [events])
   const g = groups.find(x => x.id === active) ?? groups[0]
+  const social = useSocial()
+  // Opening Groups is reading the inbox.
+  const markRead = social?.markRead
+  useEffect(() => { markRead?.() }, [markRead, social?.unread])
+  const planFromInvite = (inv: OpenInvite, groupId: string) => {
+    const answers: Record<string, Answer> = Object.fromEntries((groups.find(x => x.id === groupId)?.members ?? []).map(m => [m, inv.joins.includes(m) || m === YOU ? 'works' : null]))
+    const plan: Plan = { id: 'p' + Date.now(), eventId: inv.eventId ?? '', by: YOU, status: 'confirmed', answers,
+      ...(inv.eventId ? {} : { activity: { title: inv.title, ...(inv.place ? { place: inv.place } : {}), date: inv.date, start: inv.start, end: inv.end } }) }
+    setGroups(all => all.map(x => x.id === groupId ? { ...x, plans: [plan, ...x.plans] } : x)); setActive(groupId)
+  }
   const color = personColor
   const update = (fn: (x: Group) => Group) => setGroups(all => all.map(x => x.id === g.id ? fn(x) : x))
   const updatePlan = (planId: string, fn: (p: Plan) => Plan) => update(x => ({ ...x, plans: x.plans.map(p => p.id === planId ? fn(p) : p) }))
@@ -118,6 +132,7 @@ export function FriendsPreview({ events, routes, plannedCount }: { events: reado
       <SideQuestHeader routes={routes} active="groups" plannedCount={plannedCount} />
       <main className="sq-main" id="content">
         <div className="sq-fr">
+          <div className="sq-fr-open"><OpenInvites onMakePlan={planFromInvite} /></div>
           <nav className="sq-fr-groups" aria-label="Your groups">
             <h1>Groups</h1>
             <p>Design preview: groups and responses stay in this browser. No invitations are sent.</p>
@@ -152,6 +167,7 @@ export function FriendsPreview({ events, routes, plannedCount }: { events: reado
             <span className="sq-fr-eyebrow">{g.members.filter(m => m !== YOU).join(', ') || 'Just you'}{g.members.length > 1 ? ' and you' : ''}</span>
             <h2 id="sq-fr-title">{g.name}</h2>
             {g.invited.length > 0 && <p className="sq-fr-waiting"><i aria-hidden="true" />Invited, not in yet: {g.invited.join(', ')}</p>}
+            <FindATime key={g.id} groupId={g.id} groupName={g.name} />
             {/* Find something to propose: type to search, or pick from what is coming up (replaces a long dropdown, Nov 24). */}
             <div className="sq-fr-find">
               <label className="sq-fr-find-box">
@@ -176,7 +192,7 @@ export function FriendsPreview({ events, routes, plannedCount }: { events: reado
               })()}
             </div>
 
-            {g.plans.map(p => { const e = byId.get(p.eventId); if (!e) return null
+            {g.plans.map(p => { const e = byId.get(p.eventId) ?? (p.activity ? { id: '', title: p.activity.title, location: p.activity.place ?? 'Place to pick', date: p.activity.date, start: p.activity.start, end: p.activity.end } : undefined); if (!e) return null
               const works = g.members.filter(m => p.answers[m] === 'works').length
               const waiting = g.members.filter(m => p.answers[m] !== 'works').length + g.invited.length
               const locked = p.status !== 'proposed'

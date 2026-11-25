@@ -64,6 +64,9 @@ test('Post: the Art Club posts "Moonlight Sketch Walk" for tomorrow 7–8:30pm a
   await main.getByLabel('Host name').fill('Art Club')
   await main.getByLabel('Description').fill('Bring a sketchbook and a warm layer.')
   await main.getByLabel('Location').fill('Mission Gardens')
+  await main.getByLabel('Organizer').fill('Maya Chen')
+  await main.getByLabel('Contact').fill('maya.chen@example.edu')
+  await main.getByLabel('Room or space is confirmed').check()
   // Our own pickers (Nov 24): a month of days, then hour and minutes.
   await pickDate(page, 'Date', '2026-11-25', main)
   await pickTime(page, 'Start', '19:00', main)

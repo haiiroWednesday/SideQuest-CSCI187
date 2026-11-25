@@ -69,7 +69,8 @@ test('When to look is one choice: This week, Now, This afternoon, Tonight', asyn
   await when.getByRole('button', { name: 'Tonight' }).click()
   await expect(when.locator('[aria-pressed="true"]')).toHaveText('Tonight')
   // Cards from the week view fade out first, so wait for the list to settle before reading times.
-  await expect.poll(async () => (await page.locator('.sq-stub .sq-stub-time b').allInnerTexts()).every(t => Number(t.split(':')[0]) >= 5 && /pm$/.test(t))).toBe(true)
+  // textContent, not innerText: cards below the screen skip rendering (content-visibility) and read as empty.
+  await expect.poll(async () => (await page.locator('.sq-stub .sq-stub-time b').allTextContents()).every(t => Number(t.split(':')[0]) >= 5 && /pm$/.test(t))).toBe(true)
   await shot('tonight')
   await when.getByRole('button', { name: 'This afternoon' }).click()
   await expect(when.locator('[aria-pressed="true"]')).toHaveText('This afternoon')

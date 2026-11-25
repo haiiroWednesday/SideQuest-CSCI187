@@ -1,4 +1,6 @@
 // VIEW: compose the shared catalog, posting form and device-local Schedule.
+import { postFoodNotice, presentFoodNotices, presentLeaveNotes, presentStretchAdvice, type FoodNotice } from './controller/presentAdvice'
+import { isEventTag, type EventTag } from './controller/tags'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MapView } from './view/MapView'
 import type { EventCategorySelection } from './controller/presentScreens'
@@ -21,6 +23,8 @@ import { createAuthenticatedGroupClient, type GroupAccessTokenProvider } from '.
 import { presentBrowseDetail, withPreview, type FreeWindow } from './controller/presentScreens'
 import { FriendsPreview } from './view/FriendsPreview'
 import { FriendsGoingProvider } from './view/FriendsGoing'
+import { SocialProvider, type GroupFit } from './view/Social'
+import { OpenNowProvider } from './view/OpenNow'
 import { QuietContext } from './view/quietContext'
 import { addBusy, fillGap, freeWindows, paintMarks, presentMarks, reshapeBusy, type FreeMarks, type When } from './controller/freeMarks'
 import type { MarkerProps } from './view/DiscoverView'
@@ -65,8 +69,10 @@ const pageFromHash = () => {
   return ['#post', '#create-heading'].includes(window.location.hash) ? 'post' : 'discover'
 }
 
-export default function App({ catalog, now, groupSession, emailAuth, realtimeEnabled = false, designReview = false, quiet = false, signedIn = false, personalStore = null }: {
+export default function App({ catalog, now, groupSession, emailAuth, realtimeEnabled = false, designReview = false, quiet = false, signedIn = false, personalStore = null, initialFoodNotices = [] }: {
   catalog?: ConnectedCatalog
+  /** Design review: "food left, come now" notices already shared by hosts. */
+  initialFoodNotices?: FoodNotice[]
   /** The designed look (paper, tickets, the busy-time bar) on real data, without the review's sample groups. */
   quiet?: boolean
   /** A verified email-code session exists in this tab. */
@@ -105,6 +111,10 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   const details = useBrowseDetail(connection.catalog)
   const markInput = { events: events.events, plannedIds: plans.schedule.ids, now: now?.() ?? new Date(), marks, when: markWhen }
   const markModel = presentMarks({ ...markInput, date: markDate })
+  // Design review: open invites and finding a time for a group. Your free stretches (free/busy only) feed both.
+  const [groupFit, setGroupFit] = useState<GroupFit | null>(null)
+  const nowFn = useCallback(() => now?.() ?? new Date(), [now])
+  const myFree = designReview ? freeWindows({ ...markInput, when: 'week' }) : []
   const marker: MarkerProps = {
     model: markModel,
     onDate: setMarkDate,
@@ -114,13 +124,20 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
     onReshape: (from, first, last) => setMarks(reshapeBusy({ ...markInput, date: markModel.date }, from, first, last)),
     onUnbusy: r => setMarks(paintMarks({ ...markInput, date: markModel.date }, r.first, r.last, false)),
     onClear: Object.keys(marks).length || markWhen !== 'week' ? () => { setMarks({}); setMarkWhen('week') } : null,
+    social: designReview,
   }
+  const [eventTags, setEventTags] = useState<EventTag[]>([])
+  // Food notices: in the design review they live in this tab. Shared, they would travel as a public
+  // catalog notice over the same WebSocket as catalog.changed, and expire on the server after 30 minutes.
+  const [foodNotices, setFoodNotices] = useState<FoodNotice[]>(initialFoodNotices)
+  const [foodRefused, setFoodRefused] = useState<string | null>(null)
   // Discover narrows to the free gaps once the student has said something about their time.
   const told = Object.keys(marks).length > 0 || markWhen !== 'week'
   const discover = useDiscoverScreen({
     events: events.events, loading: events.loading, error: events.error,
-    plannedIds: plans.schedule.ids, freeWindow, category,
-    ...(look && told ? { freeWindows: freeWindows(markInput) } : {}),
+    plannedIds: plans.schedule.ids, freeWindow, category, tags: eventTags,
+    // While Discover shows what fits a whole group, the group's common free time replaces your own.
+    ...(designReview && groupFit ? { freeWindows: groupFit.windows } : look && told ? { freeWindows: freeWindows(markInput) } : {}),
     planningBlocked: plans.schedule.blocked || plans.loading,
     ...(now ? { now: now() } : {}),
   })
@@ -139,6 +156,27 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
     ...plans.schedule, loading: plans.loading, unresolvedIds: plans.unresolvedIds,
   }, previewEvent), now?.())
   const [postedIds, setPostedIds] = useState(() => readPostedIds())
+  const nowDate = now?.() ?? new Date()
+  const fittingIds = discover.days.flatMap(day => day.events.filter(stub => stub.fit === 'fits').map(stub => stub.id))
+  const leaveNotes = look ? presentLeaveNotes({ events: events.events, fittingIds, plannedIds: plans.schedule.ids }) : undefined
+  const stretchAdvice = look && discover.status === 'ready'
+    ? presentStretchAdvice({ events: events.events, windows: markModel.windows, plannedIds: plans.schedule.ids, now: nowDate }) : []
+  const foodModels = presentFoodNotices({ notices: foodNotices, events: events.events, now: nowDate })
+  const foodControlFor = (id: string) => {
+    if (!designReview || !postedIds.includes(id)) return null
+    const event = events.events.find(e => e.id === id)
+    if (!event) return null
+    const result = postFoodNotice({ notices: foodNotices, event, postedByHost: true, now: nowDate })
+    if (result.ok) return 'available' as const
+    if (result.reason === 'too-soon') return foodRefused === id ? 'too-soon' as const : 'shared' as const
+    return null
+  }
+  const shareFood = (id: string) => {
+    const event = events.events.find(e => e.id === id)
+    if (!event) return
+    const result = postFoodNotice({ notices: foodNotices, event, postedByHost: postedIds.includes(id), now: nowDate })
+    if (result.ok) { setFoodNotices(result.notices); setFoodRefused(null) } else setFoodRefused(id)
+  }
   useEffect(() => {
     const navigate = () => { setPage(pageFromHash()); setMapFocus(mapFocusFromHash()); setMapWalk(walkFromHash()); setDayFocus(dayFromHash()) }
     window.addEventListener('hashchange', navigate)
@@ -242,11 +280,19 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
             detail={selectedDetail} onSelectEvent={details.open} onRetryDetail={details.retry}
             onRetry={() => { void events.refresh() }}
             onPlan={id => { void plans.add(id) }} onFreeWindowChange={setFreeWindow}
-            onCategoryChange={setCategory} marker={look ? marker : undefined} openId={mapPick} key={mapPick ?? 'list'} layoutSwitcher={false} />
+            onCategoryChange={setCategory} marker={look ? marker : undefined} openId={mapPick} key={mapPick ?? 'list'} layoutSwitcher={false}
+            onTagsChange={tags => setEventTags(tags.filter(isEventTag))} foodNotices={foodModels}
+            stretchAdvice={stretchAdvice} leaveNotes={leaveNotes}
+            onPlanMany={ids => { void (async () => { for (const id of ids) await plans.add(id) })() }}
+            foodControlFor={foodControlFor} onShareFood={shareFood} />
       )
   return (
     <QuietContext.Provider value={look}>
-      <FriendsGoingProvider events={events.events} enabled={designReview}>{content}</FriendsGoingProvider>
+      <FriendsGoingProvider events={events.events} enabled={designReview}>
+        <SocialProvider events={events.events} enabled={designReview} now={nowFn} myFree={myFree} groupFit={groupFit} onGroupFit={setGroupFit}>
+          <OpenNowProvider events={events.events} plannedIds={plans.schedule.ids} now={nowFn} enabled={designReview}>{content}</OpenNowProvider>
+        </SocialProvider>
+      </FriendsGoingProvider>
       <ToastStack toasts={toasts} />
     </QuietContext.Provider>
   )

@@ -29,7 +29,7 @@ const empty = () => {
   if (sessionStorage.getItem('polish-empty')) return
   sessionStorage.setItem('polish-empty', '1')
   localStorage.clear()
-  localStorage.setItem('sidequest.demo-seed.v6', '2026-11-24')
+  localStorage.setItem('sidequest.demo-seed.v7', '2026-11-24')
   localStorage.setItem('sidequest.local-catalog.v1', '[]')
   localStorage.setItem('sidequest.planned-event-ids.v1', '[]')
   localStorage.setItem('sidequest.someday-intentions.v1', '[]')

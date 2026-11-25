@@ -8,10 +8,12 @@ import { useEffect, useRef, useState } from 'react'
 import { span, type MarkModel, type MarkRun, type MarkWindow, type When } from '../controller/freeMarks'
 import { DateStamp } from './DateStamp'
 import { TimePick } from './Pickers'
+import { GroupFitNote, WhosInButton } from './Social'
+import { OpenNowLine } from './OpenNow'
 import './gaps.css'
 import './marks.css'
 
-export function FreeMarker({ model, fitText, onDate, onWhen, onAddBusy, onFillGap, onUnbusy, onReshape, onClear }: {
+export function FreeMarker({ model, fitText, onDate, onWhen, onAddBusy, onFillGap, onUnbusy, onReshape, onClear, social = false }: {
   model: MarkModel
   fitText: string | null
   onDate: (date: string) => void
@@ -22,6 +24,7 @@ export function FreeMarker({ model, fitText, onDate, onWhen, onAddBusy, onFillGa
   onUnbusy: (run: MarkRun) => void
   onReshape: (from: { first: number; last: number } | null, first: number, last: number) => void
   onClear: (() => void) | null
+  social?: boolean
 }) {
   const [from, setFrom] = useState('')
   const [until, setUntil] = useState('')
@@ -97,7 +100,9 @@ export function FreeMarker({ model, fitText, onDate, onWhen, onAddBusy, onFillGa
           {model.windows.map(w => (
             <li key={'f' + w.first} className="sq-slip sq-slip-free">
               <span className="sq-slip-when"><i className="sq-key-free" aria-hidden="true" /><b>Free</b> {w.label}</span>
+              {social && <WhosInButton slot={{ date: w.date, start: w.start, end: w.end, label: `${w.dayLabel} ${w.label}` }} />}
               <button type="button" className="sq-slip-act" aria-label={`Busy then, ${w.dayLabel} ${w.label}`} onClick={() => onFillGap(w)}>Busy then</button>
+              <OpenNowLine slot={{ date: w.date, start: w.start, end: w.end }} />
             </li>
           ))}
           {model.mine.map(r => (
@@ -109,6 +114,7 @@ export function FreeMarker({ model, fitText, onDate, onWhen, onAddBusy, onFillGa
         </ul>
       )}
 
+      {social && <GroupFitNote />}
       <div className="sq-marks-foot">
         {fitText && <p className="sq-fit-note" role="status">{fitText}</p>}
         {onClear && <button type="button" className="sq-text-button sq-clear-marks" onClick={onClear}>Show everything</button>}

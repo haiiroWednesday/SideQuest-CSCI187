@@ -112,6 +112,12 @@ main{flex:1;min-height:0;display:flex;position:relative}
 .facts dt{font:var(--di) var(--dw) calc(21px*var(--ds))/1.2 var(--font-display);color:var(--sq-red);padding:10px 0;border-bottom:1px solid var(--sq-rule)}
 .facts dd{margin:0;padding:11px 0 11px 6px;border-bottom:1px solid var(--sq-rule);font:500 16px/1.45 var(--font-sans)}
 .facts dd .est{display:block;color:var(--sq-muted);font-weight:400;font-size:14.5px}
+.hrs{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.hrs li{display:flex;flex-wrap:wrap;column-gap:8px;align-items:baseline}
+.hrs b{font-weight:700}
+.hrs span{color:var(--sq-muted)}
+.hrs .hrs-open span{color:var(--sq-ink);font-weight:650}
+.hrs .hrs-open b::before{content:"";display:inline-block;width:8px;height:8px;margin:0 6px 1px 0;border-radius:50%;background:#3d7a4f;vertical-align:middle}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}
 .sq-plan-button{min-height:50px;border:0;border-radius:var(--r-pill);background:var(--sq-red);color:var(--sq-on-red);font:700 17px var(--font-sans);padding:0 24px;cursor:pointer;transition:background .15s ease}
 .sq-plan-button:hover{background:var(--sq-red-deep)}
@@ -415,6 +421,26 @@ const C=mk(THEMES.index);
 const REVIEW=new URLSearchParams(location.search).has('motion');if(REVIEW)document.documentElement.classList.add('review-motion');
 const REDUCE=!REVIEW&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 const D=await (await fetch('data.json')).json();
+/* Opening hours from SCU's own pages (hours.json, also read by the app's model in src/model/placeHours.ts).
+   A missing weekday means not posted: never guessed. Same rules as the model; e2e-demo/open-now.spec.ts checks they agree. */
+const HOURS=await fetch('hours.json').then(r=>r.ok?r.json():null).catch(()=>null);
+const HDAY=['sun','mon','tue','wed','thu','fri','sat'];
+const hMin=t=>{const[a,b]=t.split(':').map(Number);return a*60+b;};
+const hAdd=(d,n)=>{const[y,m,x]=d.split('-').map(Number);return new Date(Date.UTC(y,m-1,x+n)).toISOString().slice(0,10);};
+const hDow=d=>{const[y,m,x]=d.split('-').map(Number);return HDAY[new Date(Date.UTC(y,m-1,x)).getUTCDay()];};
+const hClock=t=>{const m=((t%1440)+1440)%1440;if(!m)return'midnight';if(m===720)return'noon';const h=Math.floor(m/60),mm=m%60;return`${h%12||12}${mm?':'+String(mm).padStart(2,'0'):''}${h<12?'am':'pm'}`;};
+function hOn(v,d){const ex=v.exceptions.find(e=>e.from<=d&&d<=e.to);if(ex)return ex.unclear||!ex.hours?{k:'unclear'}:{k:'h',sp:ex.hours.map(([a,b])=>{const s=hMin(a);let e=hMin(b);if(e<=s)e+=1440;return[s,e];})};
+  const w=v.week[hDow(d)];return w?{k:'h',sp:w.map(([a,b])=>{const s=hMin(a);let e=hMin(b);if(e<=s)e+=1440;return[s,e];})}:{k:'unknown'};}
+function hNow(){const f=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());const g=t=>f.find(x=>x.type===t).value;return{d:`${g('year')}-${g('month')}-${g('day')}`,m:+g('hour')*60+ +g('minute')};}
+function hStatus(v,d,m){const y=hOn(v,hAdd(d,-1));if(y.k==='h')for(const[s,e]of y.sp)if(e>1440&&m<e-1440)return{st:'open',label:'Open until '+hClock(e)};
+  const t=hOn(v,d);if(t.k==='unknown')return{st:'unknown',label:'Hours not posted'};if(t.k==='unclear')return{st:'unclear',label:'Hours unclear today'};
+  for(const[s,e]of t.sp)if(m>=s&&m<e){let end=e;for(const[s2,e2]of t.sp)if(s2===end)end=e2;return{st:'open',label:'Open until '+hClock(end)};}
+  const DN={sun:'Sun',mon:'Mon',tue:'Tue',wed:'Wed',thu:'Thu',fri:'Fri',sat:'Sat'};
+  for(let i=0;i<=7;i++){const dd=hAdd(d,i),day=hOn(v,dd);if(day.k!=='h'){if(i===0)continue;return{st:'closed',label:'Closed. Next hours not posted'};}
+    const nx=day.sp.map(x=>x[0]).filter(s=>i>0||s>m).sort((a,b)=>a-b)[0];if(nx===undefined)continue;return{st:'closed',label:'Closed, opens '+(i===0?'':i===1?'tomorrow ':DN[hDow(dd)]+' ')+hClock(nx)};}
+  return{st:'closed',label:'Closed. Next hours not posted'};}
+function hoursAt(label){if(!HOURS)return[];const n=hNow();return HOURS.places.filter(v=>v.place===label).map(v=>({name:v.name,...hStatus(v,n.d,n.m)}));}
+const openNowAt=label=>hoursAt(label).some(h=>h.st==='open');
 const imgs={};
 await Promise.all(['pen-loop','pen-arrow','pen-tick'].map(n=>new Promise(r=>{const i=new Image();i.onload=i.onerror=()=>r();i.src='marks/'+n+'.svg';imgs[n]=i;})));
 try{await Promise.all([document.fonts.load('18px "Instrument Serif"'),document.fonts.load('italic 18px "Instrument Serif"'),document.fonts.load('700 11px "Instrument Sans"')]);}catch(e){}
@@ -451,7 +477,7 @@ const PL=D.places;
 for(const p of PL){p.blds=[];p.areas=[];}
 for(const b of CB)if(b.p>=0)PL[b.p].blds.push(b);
 for(const a of D.a)if(a.p>=0){a.path=pathOf(a.r,a.hl);a.bb=bbox(a.r.flat());PL[a.p].areas.push(a);}
-const THEME=Object.fromEntries(D.themes);THEME.out='Outdoors';THEME.near='Getting here';
+const THEME=Object.fromEntries(D.themes);THEME.out='Outdoors';THEME.near='Getting here';THEME.open='Open now';
 for(const p of PL){p.path=new Path2D();for(const b of p.blds)p.path.addPath(b.path);for(const a of p.areas)p.path.addPath(a.path);p.kind=THEME[p.th[0]]||'';
   p.hay=[p.name,p.label,p.num||'',...(p.alias||[]),...(p.inside||[])].join(' | ').toLowerCase();}
 
@@ -521,8 +547,8 @@ const ERAS=[['Before 1940','#a5532c','bricks',y=>y<1940],['1940 to 1979','#c99a3
 const INSIDE=[['Food','dots',p=>['Benson','Adobe Lodge','Library'].includes(p.label)],['Shows, games, exhibits','diag',p=>['Mayer Theatre','Music and Dance','de Saisset Museum','Dowd','Mission Church','Leavey Center','Locatelli'].includes(p.label)],['All-gender restroom','plus',p=>!!p.gnr],['People live here','grid',p=>p.th[0]==='home']];
 const ALSO=[['Food','dots',['Library','Athletic Excellence'],'life'],['Classes or studios','diag',['Dowd','Music and Dance','Mayer Theatre'],'class'],['Offices and help desks','horiz',['Varsi',"O'Connor",'Library','Kenna','Heafey','Nobili','Mayer Theatre','Main Parking'],'office'],['Study space','grid',['Athletic Excellence','Heafey'],'life'],['Events','back',['Locatelli','Stevens Stadium','Mission Church'],'arts']];
 for(const p of PL){p.also=ALSO.filter(t=>t[2].includes(p.label)&&!p.th.includes(t[3]));p.alsoTh=new Set(p.also.map(t=>t[3]));}
-const isTheme=(p,t)=>t&&(t==='gnr'?p.gnr:p.th.includes(t));
-const isAlso=(p,t)=>t&&t!=='gnr'&&!isTheme(p,t)&&p.alsoTh.has(t);
+const isTheme=(p,t)=>t&&(t==='gnr'?p.gnr:t==='open'?openNowAt(p.label):p.th.includes(t));
+const isAlso=(p,t)=>t&&t!=='gnr'&&t!=='open'&&!isTheme(p,t)&&p.alsoTh.has(t);
 const MINB=[[2,'#12564f','2 min or less'],[5,'#3f8f82','5 min'],[10,'#93c5b6','10 min'],[1e9,'#dbe7dd','Farther']];
 const ZPAT=['horiz','diag','vert','dots','grid','back','wide'];
 for(const p of PL){p.school=SCHOOLS.find(sc=>sc[3].includes(p.label))||null;p.era=p.year?ERAS.find(e=>e[3](p.year)):null;}
@@ -1193,7 +1219,7 @@ function renderIndex(){
   const list=PL.filter(p=>!S.theme||isTheme(p,S.theme)||isAlso(p,S.theme)).sort((a,b)=>(isAlso(a,S.theme)-isAlso(b,S.theme))||a.name.localeCompare(b.name));
   const head=S.theme?THEME[S.theme]:'The index';
   let qh='';if(LAB.quests&&!S.theme){prepQuests();qh=`<p class="count-line">Side quests · ${QUESTS.length}</p><ul class="quests">${QUESTS.map(q=>`<li><button data-q="${q.i}"><span class="qmin"><b>${mins(q.m)}</b><small>min</small></span><span class="qbody"><span class="nm">${esc(q.name)}</span><span class="by">${q.stops.map(p=>esc(p.label)).join(', ')}</span></span></button></li>`).join('')}</ul>`;}
-  panel.innerHTML=evIndex()+qh+`<p class="count-line">${esc(head)} · ${list.length}</p><ul class="index">${list.map(p=>`<li><button data-id="${p.id}"><span class="num">${esc((p.num||'').split(',')[0])}</span><span><span class="nm">${esc(p.name)}</span><span class="by">${S.run?`about ${mins(p.reach)} min from ${esc(S.start.label)}`:(isAlso(p,S.theme)?'Also has '+esc(p.also.find(t=>t[3]===S.theme)[0].toLowerCase()):esc(p.kind))}</span></span>${DOO[p.label]?`<svg class="doo" viewBox="0 0 100 100" aria-hidden="true"><path d="${DOO[p.label]}"/></svg>`:'<span></span>'}</button></li>`).join('')}</ul>`;
+  panel.innerHTML=evIndex()+qh+`<p class="count-line">${esc(head)} · ${list.length}</p><ul class="index">${list.map(p=>`<li><button data-id="${p.id}"><span class="num">${esc((p.num||'').split(',')[0])}</span><span><span class="nm">${esc(p.name)}</span><span class="by">${S.run?`about ${mins(p.reach)} min from ${esc(S.start.label)}`:(S.theme==='open'?hoursAt(p.label).filter(h=>h.st==='open').map(h=>esc(h.name+': '+h.label.toLowerCase())).join(', '):isAlso(p,S.theme)?'Also has '+esc(p.also.find(t=>t[3]===S.theme)[0].toLowerCase()):esc(p.kind))}</span></span>${DOO[p.label]?`<svg class="doo" viewBox="0 0 100 100" aria-hidden="true"><path d="${DOO[p.label]}"/></svg>`:'<span></span>'}</button></li>`).join('')}</ul>`;
   grabHint.textContent=side.classList.contains('open')?'Close':'Index';
 }
 
@@ -1217,6 +1243,8 @@ function renderTicket(){
   else{stub=p.grid||'SCU';lab=p.grid?'on the SCU map':'outdoors';}
   const facts=[];
   if(S.route&&S.start!==p)facts.push(['Walk',`About ${mins(S.route.m)} min from ${esc(S.start.label)}, ${feet(S.route.m)}<span class="est">An estimate at an easy pace. Doors and shortcuts are not checked yet.</span>`]);
+  const hrs=hoursAt(p.label);
+  if(hrs.length)facts.push(['Hours',`<ul class="hrs">${hrs.map(h=>`<li class="hrs-${h.st}"><b>${esc(h.name)}</b><span>${esc(h.label)}</span></li>`).join('')}</ul><span class="est">From SCU's posted hours. Holiday hours can change.</span>`]);
   if(p.inside)facts.push(['Inside',p.inside.map(esc).join(', ')]);
   const built=[];if(p.year)built.push(p.year);if(p.fl)built.push(p.fl+(p.fl===1?' floor':' floors'));if(p.sqft)built.push(p.sqft.toLocaleString('en-US')+' sq ft');
   if(built.length)facts.push(['Built',built.join(' · ')]);
@@ -1284,7 +1312,7 @@ function setMins(m){S.mins=m;S.reachT=REDUCE?1:0;for(const b of walk.querySelect
 walk.addEventListener('click',e=>{const b=e.target.closest('[data-min]');if(b){const m=+b.dataset.min;setMins(S.mins===m?0:m);}});
 document.getElementById('walkClear').onclick=()=>{setStart(null);if(S.sel)select(S.sel);};
 const themes=document.getElementById('themes');
-themes.innerHTML=D.themes.map(([k,n])=>`<button class="pill" data-th="${k}" aria-pressed="false"><i class="dot"></i>${esc(n)}</button>`).join('');
+themes.innerHTML=D.themes.map(([k,n])=>`<button class="pill" data-th="${k}" aria-pressed="false"><i class="dot"></i>${esc(n)}</button>`).join('')+(HOURS?`<button class="pill" data-th="open" aria-pressed="false"><i class="dot"></i>Open now</button>`:'');
 themes.addEventListener('click',e=>{const b=e.target.closest('[data-th]');if(!b)return;S.theme=S.theme===b.dataset.th?null:b.dataset.th;buildLegend(PALS[LAB.pal]||TC);for(const x of themes.children)x.setAttribute('aria-pressed',String(x.dataset.th===S.theme));if(!S.sel)render();else{S.sel=null;S.route=null;render();}dirty();});
 
 /* ---------- search ---------- */
@@ -1626,7 +1654,7 @@ addEventListener('resize',()=>{resize();if(phone()!==lastPhone){lastPhone=phone(
 resize();recolor();paintPlaces();buildLabels();labSync();render();fitBox(coreBB,0,false);dirty();fromHash();
 if(EMBED&&parent!==window)parent.postMessage({type:'sq-map-ready'},location.origin);
 {const w=new URLSearchParams(location.search).get('walk');if(w&&!EMBED)setTimeout(()=>walkTo(w),300);}
-window.__map={EV,MK,MUTE,ROUTE_INK,routeShown,ME,WALK,SIM,PICK,walkTo,stopWalk,pickSpot,setPretend,walkIt,ll2d,S,cam,PL,select,setStart,setMins,fitBox,LB,D,LAB,setLab,QUESTS,openQuest,applyTheme,THEMES,paintPlaces};
+window.__map={hoursAt,openNowAt,EV,MK,MUTE,ROUTE_INK,routeShown,ME,WALK,SIM,PICK,walkTo,stopWalk,pickSpot,setPretend,walkIt,ll2d,S,cam,PL,select,setStart,setMins,fitBox,LB,D,LAB,setLab,QUESTS,openQuest,applyTheme,THEMES,paintPlaces};
 })();
 </script>
 </body>

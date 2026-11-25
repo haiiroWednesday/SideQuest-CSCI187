@@ -10,6 +10,7 @@ async function fillOtherFields(page: Page, title: string) {
   await page.getByLabel('EVENT NAME', { exact: true }).fill(title)
   await page.getByLabel('HOST NAME', { exact: true }).fill('SCU Club')
   await page.getByLabel('LOCATION', { exact: true }).fill('Benson 101')
+  await page.getByLabel('CONTACT', { exact: true }).fill('Ana Ruiz')
   await page.getByLabel('DATE', { exact: true }).fill('2030-11-08')
   await page.getByLabel('START', { exact: true }).fill('14:30')
   await page.getByLabel('END', { exact: true }).fill('15:30')

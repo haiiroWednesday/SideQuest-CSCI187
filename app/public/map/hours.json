@@ -1,0 +1,103 @@
+{
+  "about": "Opening hours read from SCU's own pages on 2026-11-24. A weekday that is missing means SCU has not posted hours for it; SideQuest says 'hours not posted' and never guesses. 'unclear' marks dates where SCU's pages contradict themselves. Times are Santa Clara wall-clock (America/Los_Angeles). 24:00 is midnight; an end earlier than its start runs past midnight.",
+  "timeZone": "America/Los_Angeles",
+  "places": [
+    {
+      "id": "marketplace", "name": "Marketplace", "kind": "dining", "place": "Benson", "where": "Benson Memorial Center",
+      "week": {
+        "mon": [["07:00", "10:30"], ["11:00", "21:00"]], "tue": [["07:00", "10:30"], ["11:00", "21:00"]],
+        "wed": [["07:00", "10:30"], ["11:00", "21:00"]], "thu": [["07:00", "10:30"], ["11:00", "21:00"]],
+        "fri": [["07:00", "10:30"], ["11:00", "21:00"]], "sat": [["10:00", "21:00"]], "sun": [["10:00", "21:00"]]
+      },
+      "exceptions": [
+        { "from": "2026-11-23", "to": "2026-11-24", "hours": [["08:00", "19:00"]], "note": "Thanksgiving break: Grab 'n' Go only" },
+        { "from": "2026-11-25", "to": "2026-11-27", "hours": [], "note": "Closed for Thanksgiving" },
+        { "from": "2026-11-28", "to": "2026-11-28", "unclear": true, "note": "SCU's page lists Closed and Mission Bakery 9 to 2 on the same day" }
+      ],
+      "source": { "url": "https://scudining.cafebonappetit.com/cafe/marketplace-2/", "checkedAt": "2026-11-24" }
+    },
+    {
+      "id": "mission-bakery", "name": "Mission Bakery", "kind": "dining", "place": "Benson", "where": "Benson Memorial Center",
+      "week": {
+        "mon": [["07:00", "20:00"]], "tue": [["07:00", "20:00"]], "wed": [["07:00", "20:00"]], "thu": [["07:00", "20:00"]],
+        "fri": [["07:00", "20:00"]], "sat": [["08:00", "20:00"]], "sun": [["08:00", "20:00"]]
+      },
+      "exceptions": [
+        { "from": "2026-11-23", "to": "2026-11-23", "hours": [["08:00", "18:00"]], "note": "Thanksgiving break hours" },
+        { "from": "2026-11-24", "to": "2026-11-25", "unclear": true, "note": "SCU's two dining pages disagree for these days (8 to 4 or 8 to 6 on the 24th, 8 to 1 or 8 to 4 on the 25th)" },
+        { "from": "2026-11-26", "to": "2026-11-27", "hours": [], "note": "Closed for Thanksgiving" },
+        { "from": "2026-11-28", "to": "2026-11-28", "hours": [["09:00", "14:00"]], "note": "Thanksgiving break hours" }
+      ],
+      "source": { "url": "https://scudining.cafebonappetit.com/cafe/mission-bakery/", "checkedAt": "2026-11-24" }
+    },
+    {
+      "id": "cellar", "name": "The Cellar", "kind": "dining", "place": "Benson", "where": "Benson Memorial Center, lower level",
+      "week": {
+        "mon": [["09:30", "23:00"]], "tue": [["09:30", "23:59"]], "wed": [["09:30", "23:59"]], "thu": [["09:30", "23:59"]],
+        "fri": [["09:30", "23:59"]], "sat": [["10:00", "23:59"]], "sun": [["10:00", "23:00"]]
+      },
+      "exceptions": [
+        { "from": "2026-11-23", "to": "2026-11-25", "unclear": true, "note": "SCU's page says open 8 to 6 on request and Closed for these days" },
+        { "from": "2026-11-26", "to": "2026-11-27", "hours": [], "note": "Closed for Thanksgiving" },
+        { "from": "2026-11-28", "to": "2026-11-28", "unclear": true, "note": "SCU's page says open 9 to 2 on request and Closed" }
+      ],
+      "source": { "url": "https://scudining.cafebonappetit.com/cafe/cellar-market/", "checkedAt": "2026-11-24" }
+    },
+    {
+      "id": "sunstream", "name": "Sunstream Café", "kind": "dining", "place": "Library", "where": "Learning Commons entrance",
+      "week": {
+        "mon": [["08:30", "23:00"]], "tue": [["08:30", "23:00"]], "wed": [["08:30", "23:00"]], "thu": [["08:30", "23:00"]],
+        "fri": [["08:30", "17:00"]], "sun": [["11:30", "23:00"]]
+      },
+      "exceptions": [
+        { "from": "2026-11-23", "to": "2026-11-29", "hours": [], "note": "Closed for Thanksgiving break" }
+      ],
+      "source": { "url": "https://scudining.cafebonappetit.com/cafe/the-sunstream-cafe/", "checkedAt": "2026-11-24" }
+    },
+    {
+      "id": "fresh-bytes", "name": "Fresh Bytes", "kind": "dining", "place": "SCDI", "where": "SCDI",
+      "week": {
+        "mon": [["07:30", "17:00"]], "tue": [["07:30", "17:00"]], "wed": [["07:30", "17:00"]], "thu": [["07:30", "17:00"]], "fri": [["07:30", "17:00"]]
+      },
+      "exceptions": [
+        { "from": "2026-11-23", "to": "2026-11-27", "hours": [], "note": "Closed for Thanksgiving break" }
+      ],
+      "source": { "url": "https://scudining.cafebonappetit.com/cafe/fresh-bytes/", "checkedAt": "2026-11-24" }
+    },
+    {
+      "id": "cadence", "name": "Cadence Café", "kind": "dining", "place": "Lucas", "where": "Lucas Hall entrance",
+      "week": {
+        "mon": [["08:30", "19:30"]], "tue": [["08:30", "19:30"]], "wed": [["08:30", "19:30"]], "thu": [["08:30", "19:30"]],
+        "fri": [["08:30", "17:00"]], "sat": [], "sun": []
+      },
+      "exceptions": [
+        { "from": "2026-11-23", "to": "2026-11-29", "hours": [], "note": "Closed for Thanksgiving break" }
+      ],
+      "source": { "url": "https://scudining.cafebonappetit.com/cafe/cadence-cyber-cafe/", "checkedAt": "2026-11-24" }
+    },
+    {
+      "id": "side-bar", "name": "Side Bar Café", "kind": "dining", "place": "Charney", "where": "Charney Hall",
+      "week": {
+        "mon": [["08:00", "17:00"]], "tue": [["08:00", "17:00"]], "wed": [["08:00", "17:00"]], "thu": [["08:00", "17:00"]],
+        "fri": [["08:00", "13:30"]], "sat": [], "sun": []
+      },
+      "exceptions": [
+        { "from": "2026-11-25", "to": "2026-11-27", "hours": [], "note": "Closed for Thanksgiving break" }
+      ],
+      "source": { "url": "https://scudining.cafebonappetit.com/cafe/side-bar-cafe/", "checkedAt": "2026-11-24" }
+    },
+    {
+      "id": "malley", "name": "Malley Center", "kind": "recreation", "place": "Malley", "where": "Pat Malley Fitness and Recreation Center",
+      "week": {
+        "mon": [["06:30", "24:00"]], "tue": [["06:30", "24:00"]], "wed": [["06:30", "24:00"]], "thu": [["06:30", "24:00"]],
+        "fri": [["06:30", "21:00"]], "sat": [["08:00", "21:00"]], "sun": [["08:00", "24:00"]]
+      },
+      "exceptions": [
+        { "from": "2026-11-20", "to": "2026-11-20", "hours": [["06:30", "18:00"]], "note": "Thanksgiving break hours" },
+        { "from": "2026-11-21", "to": "2026-11-24", "hours": [["12:00", "16:00"]], "note": "Thanksgiving break hours" },
+        { "from": "2026-11-25", "to": "2026-11-29", "hours": [], "note": "Closed for Thanksgiving break" }
+      ],
+      "source": { "url": "https://www.scu.edu/recreation/facilities/hours/", "checkedAt": "2026-11-24", "also": "https://www.scu.edu/email/recreation/november-campus-recreation-news/" }
+    }
+  ]
+}

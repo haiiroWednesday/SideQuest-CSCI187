@@ -29,7 +29,8 @@ async function words(page: Page, scope: string) {
       const cs = getComputedStyle(el), r = el.getBoundingClientRect()
       // Invisible text (opacity 0, like the Trail's hidden clash notes) is not read, so it is not counted.
       const faded = (e: Element | null): boolean => !!e && (getComputedStyle(e).opacity === '0' || faded(e.parentElement))
-      if (cs.visibility === 'hidden' || cs.display === 'none' || r.width < 2 || faded(el) || el.closest('.sq-visually-hidden, .sq-look, nav, option, select, script, style, [data-dup]')) continue
+      if (cs.visibility === 'hidden' || cs.display === 'none' || r.width < 2 || faded(el) || el.closest('.sq-visually-hidden, .sq-look, nav, option, select, script, style, [data-dup], .sq-quiet-access, .sq-access-preview')) continue
+      // SCU's required ADA/504 sentence (.sq-quiet-access, .sq-access-preview) is policy wording, not our interface, so it is not counted.
       // Only what one screen shows: people judge a screen, not a scroll.
       if (r.bottom < 0 || r.top > innerHeight || r.left > innerWidth || r.right < 0) continue
       n += (t.textContent ?? '').trim().split(/\s+/).filter(w => /\w/.test(w)).length
@@ -138,7 +139,8 @@ for (const s of SCREENS) {
     const lines = await page.evaluate(sel => {
       const root = document.querySelector(sel) ?? document.body, out: string[] = []
       // Event names and host descriptions are other people's words, so only the interface is checked.
-      const skip = '.sq-stub, .sq-sticker-desc, #sq-detail-title, .sq-quiet-facts, .sqm-label, .sqm-kc, .sq-visually-hidden, option'
+      // SCU's required ADA/504 sentence is policy wording, so its "please" is not ours.
+      const skip = '.sq-stub, .sq-sticker-desc, #sq-detail-title, .sq-quiet-facts, .sq-access-preview, .sqm-label, .sqm-kc, .sq-visually-hidden, option'
       const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
       while (w.nextNode()) { const el = (w.currentNode as Text).parentElement!; if (el.closest(skip)) continue; const t = (w.currentNode.textContent ?? '').trim(); if (t) out.push(t) }
       root.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('[placeholder]').forEach(i => out.push(i.placeholder))

@@ -1,5 +1,6 @@
 // CONTROLLER: share typed presentation models and event/date formatters.
 // Clock-sensitive presenters accept injected time for deterministic tests.
+import { EVENT_SOURCE_TEXT, TAG_SOURCE_TEXT, isEventSource, isEventTag, isTagSource, tagLabel } from '../model/eventTags'
 import type { LegacyCampusEvent } from '../model/events'
 import type { EventCategorySelection } from '../model/eventCategories'
 import { campusNow } from '../model/eventCatalog'
@@ -8,7 +9,7 @@ import { displayDate, displayTime } from './findEvents'
 import { googleCalendarDraftUrl } from './calendarExport'
 
 /** Keep archived M1 screen fixtures, which lack hostName, readable. */
-export type ScreenEvent = LegacyCampusEvent & { hostName?: string }
+export type ScreenEvent = LegacyCampusEvent & { hostName?: string; organizer?: string; contact?: string; accessibility?: string; tags?: readonly string[]; tagsBy?: string; source?: string }
 export type FreeWindow = { date: string; start: string; end: string }
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
@@ -24,6 +25,17 @@ export type StubModel = {
   host: string | null
   location: string
   description: string | null
+  /** SCU posting policy fields; null on events posted before the rule. */
+  organizer: string | null
+  contact: string | null
+  /** SCU's Access Policy Statement, shown word for word. */
+  accessibility: string | null
+  /** Host-set tags as words to show ("Free food"); left out when the event has none. */
+  tagLabels?: string[]
+  /** Who set the tags, said beside them: "set by the host" or "checked by a reviewer". */
+  tagSourceText?: string
+  /** Where the event came from, for the opened card: "Posted by the host", "From SCU's events calendar, checked". */
+  sourceText?: string
   date: string
   dateText: string
   dow: string
@@ -75,6 +87,7 @@ export type CategoryFiltersModel = {
   options: { id: EventCategorySelection; label: string; symbol: string; count: number }[]
 }
 
+export type TagFiltersModel = { selected: string[]; options: { id: string; label: string; count: number }[] }
 export type DiscoverScreen = {
   status: 'loading' | 'error' | 'empty' | 'ready'
   errorMessage: string | null
@@ -83,6 +96,8 @@ export type DiscoverScreen = {
   headingText: string
   nearMisses: NearMissModel[]
   categories: CategoryFiltersModel
+  /** Host-set tag chips; optional so older screen fixtures stay valid. */
+  tagFilters?: TagFiltersModel
   plannedCount: number
   planningBlocked: boolean
   freeWindow: FreeWindowModel | null
@@ -150,6 +165,14 @@ export function toStub(event: ScreenEvent, now: Date, planned: ReadonlySet<strin
     host,
     location: event.location,
     description,
+    organizer: event.organizer?.trim() || null,
+    contact: event.contact?.trim() || null,
+    accessibility: event.accessibility?.trim() || null,
+    ...(event.tags?.some(isEventTag) ? {
+      tagLabels: event.tags.filter(isEventTag).map(tagLabel),
+      tagSourceText: TAG_SOURCE_TEXT[isTagSource(event.tagsBy) ? event.tagsBy : 'host'],
+    } : {}),
+    sourceText: EVENT_SOURCE_TEXT[isEventSource(event.source) ? event.source : 'host'],
     date: event.date,
     dateText: displayDate(event.date),
     dow: day.dow,

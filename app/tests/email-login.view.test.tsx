@@ -15,7 +15,7 @@ describe('email sign-in screen: link first, code second', () => {
       busy={false} error={null} message={null}
       requestCode={requestCode} verifyCode={verifyCode} onSuccess={onSuccess} />)
 
-    fireEvent.change(screen.getByLabelText('Email address'), {
+    fireEvent.change(screen.getByLabelText('Santa Clara email'), {
       target: { value: 'student@example.edu' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Email me a sign-in link' }))
@@ -25,7 +25,7 @@ describe('email sign-in screen: link first, code second', () => {
     expect(screen.queryByLabelText('Verification code')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Have a code instead?' }))
     await waitFor(() => expect(screen.getByLabelText('Verification code')).toBeTruthy())
-    expect((screen.getByLabelText('Email address') as HTMLInputElement).disabled).toBe(true)
+    expect((screen.getByLabelText('Santa Clara email') as HTMLInputElement).disabled).toBe(true)
 
     fireEvent.change(screen.getByLabelText('Verification code'), {
       target: { value: '123456' },
@@ -44,7 +44,7 @@ describe('email sign-in screen: link first, code second', () => {
       busy={false} error="The sign-in service is unavailable." message={null}
       requestCode={requestCode} verifyCode={vi.fn(async () => false)} onSuccess={onSuccess} />)
     expect(screen.getByRole('alert').textContent).toContain('sign-in service')
-    fireEvent.change(screen.getByLabelText('Email address'), {
+    fireEvent.change(screen.getByLabelText('Santa Clara email'), {
       target: { value: 'student@example.edu' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Email me a sign-in link' }))
