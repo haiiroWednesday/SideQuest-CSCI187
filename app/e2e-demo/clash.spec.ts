@@ -29,10 +29,10 @@ const TWO: Ev[] = [
 ]
 
 for (const width of [390, 1280]) {
-  test(`Jun taps "2 clash", weighs choir against climbing on one ruler, keeps climbing (${width}px)`, async ({ page }, info) => {
+  test(`Jun taps "1 clash" (two plans, one clash), weighs choir against climbing on one ruler, keeps climbing (${width}px)`, async ({ page }, info) => {
     const shot = shooter(page, info)
     await seed(page, TWO, width)
-    const open = page.getByRole('button', { name: /^2 clash/ })
+    const open = page.getByRole('button', { name: /^1 clash/ })
     await expect(open).toBeVisible()
     await shot('schedule')
     await open.click()
@@ -45,11 +45,14 @@ for (const width of [390, 1280]) {
     await expect(sheet.locator('.sq-clash-band')).toHaveText('4–5pm')
     // Each side says when, where, who and how much it overlaps.
     const choir = sheet.locator('.sq-clash-plan', { hasText: 'Choir open rehearsal' })
-    await expect(choir).toContainText('3–5pm')
+    // each plan is the same ticket as Discover now (Nov 24), so its time reads the same way
+    await expect(choir.locator('.sq-stub-time')).toContainText('3:00pm')
+    await expect(choir.locator('.sq-stub-time')).toContainText('to 5:00pm')
     await expect(choir).toContainText('Music and Dance')
     await expect(choir).toContainText('1 hr overlap')
     const climb = sheet.locator('.sq-clash-plan', { hasText: 'Climbing club intro' })
-    await expect(climb).toContainText('4–5:30pm')
+    await expect(climb.locator('.sq-stub-time')).toContainText('4:00pm')
+    await expect(climb.locator('.sq-stub-time')).toContainText('to 5:30pm')
     await expect(climb).toContainText('1 hr overlap')
     // The band sits where the bars overlap.
     const band = (await sheet.locator('.sq-clash-band').boundingBox())!
@@ -59,10 +62,12 @@ for (const width of [390, 1280]) {
     await noSidewaysScroll(page)
     await shot('sheet')
 
-    await climb.getByRole('button', { name: /Keep this, remove conflicts/ }).click()
+    await climb.getByRole('button', { name: /Keep this one/ }).click()
     await expect(sheet).toHaveCount(0)
     await expect(page.getByRole('button', { name: /clash/ })).toHaveCount(0)
-    await expect(page.getByText('Choir open rehearsal')).toHaveCount(0)
+    // Gone from the page itself; the toast names it and offers Undo.
+    await expect(page.locator('main').getByText('Choir open rehearsal')).toHaveCount(0)
+    await expect(page.locator('.sq-toast', { hasText: 'Removed “Choir open rehearsal” from My Schedule.' }).getByRole('button', { name: 'Undo', includeHidden: true })).toBeAttached()
     await expect(page.getByText('Climbing club intro').first()).toBeVisible()
     await shot('kept-climbing')
   })
@@ -71,14 +76,14 @@ for (const width of [390, 1280]) {
 test('Keep both closes the sheet and keeps every plan; Escape and the backdrop close it too', async ({ page }, info) => {
   const shot = shooter(page, info)
   await seed(page, TWO, 1280)
-  await page.getByRole('button', { name: /^2 clash/ }).click()
+  await page.getByRole('button', { name: /^1 clash/ }).click()
   await page.getByRole('button', { name: 'Keep both' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
-  await expect(page.getByRole('button', { name: /^2 clash/ })).toBeFocused()
-  await page.getByRole('button', { name: /^2 clash/ }).click()
+  await expect(page.getByRole('button', { name: /^1 clash/ })).toBeFocused()
+  await page.getByRole('button', { name: /^1 clash/ }).click()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)
-  await page.getByRole('button', { name: /^2 clash/ }).click()
+  await page.getByRole('button', { name: /^1 clash/ }).click()
   await page.mouse.click(5, 5)
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page.locator('.sq-clash-plan')).toHaveCount(0)
@@ -92,7 +97,7 @@ test('three plans in a chain show as one clash, and removing one leaves the othe
     ['14:30', '15:30', 'Office hours', 'CSEN 20', 'SCDI 1308'],
     ['15:15', '16:00', 'Boba run', 'Chinese Student Association', 'Palm Drive'],
   ], 1280)
-  await page.getByRole('button', { name: /^3 clash/ }).click()
+  await page.getByRole('button', { name: /^1 clash/ }).click()
   const sheet = page.getByRole('dialog')
   await expect(sheet.locator('.sq-clash-bar')).toHaveCount(3)
   await expect(sheet.locator('.sq-clash-band')).toHaveText(['2:30–3pm', '3:15–3:30pm'])
@@ -110,13 +115,13 @@ test('keeping an event removes its direct conflict and preserves a compatible ev
     ['14:58', '15:30', 'Office hours', 'CSEN 20', 'SCDI 1308'],
     ['15:15', '16:00', 'Boba run', 'Chinese Student Association', 'Palm Drive'],
   ], 1280)
-  await page.getByRole('button', { name: /^3 clash/ }).click()
+  await page.getByRole('button', { name: /^1 clash/ }).click()
   const sheet = page.getByRole('dialog')
   const firstPlan = sheet.locator('.sq-clash-plan', { hasText: 'Hackathon kickoff' })
   await expect(firstPlan).toContainText('2 min overlap')
-  await firstPlan.getByRole('button', { name: /Keep this, remove conflicts/ }).click()
+  await firstPlan.getByRole('button', { name: /Keep this one/ }).click()
   await expect(sheet).toHaveCount(0)
-  await expect(page.getByText('Office hours')).toHaveCount(0)
+  await expect(page.locator('main').getByText('Office hours')).toHaveCount(0)
   await expect(page.getByRole('button', { name: /2 plans: Hackathon kickoff.*Boba run/ })).toBeVisible()
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1') ?? '[]')))
     .toEqual([id(0), id(2)])

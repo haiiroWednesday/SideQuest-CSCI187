@@ -7,17 +7,19 @@
 <style>
 @font-face{font-family:"Instrument Serif";src:url("fonts/InstrumentSerif-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:"Instrument Serif";src:url("fonts/InstrumentSerif-Italic.woff2") format("woff2");font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:"Urbanist";src:url("fonts/Urbanist-Variable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Urbanist Variable";src:url("fonts/Urbanist-Variable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:"Instrument Sans";src:url("fonts/InstrumentSans-Variable.woff2") format("woff2");font-weight:400 700;font-stretch:75% 100%;font-style:normal;font-display:swap}
 @font-face{font-family:"Instrument Sans";src:url("fonts/InstrumentSans-Variable-Italic.woff2") format("woff2");font-weight:400 700;font-stretch:75% 100%;font-style:italic;font-display:swap}
 :root{
-  --ds:1;--dw:400;--di:italic;--on-hi:#302421;--on-deep:#fff9ec;--sq-row-hover:var(--sq-row-hover);--r-sticker:30px;--r-stub:18px;--r-pill:999px;
+  --ds:1;--dw:400;--di:normal;--on-hi:#302421;--on-deep:#fff9ec;--sq-row-hover:var(--sq-row-hover);--r-sticker:30px;--r-stub:18px;--r-pill:999px;
   /* SideQuest "Paper" theme. A printed campus index, marked up in red pen. One theme by design. */
   --sq-paper:#fbf6ed; --sq-sand:#f1e7d7; --sq-ink:#302421; --sq-muted:#655d58;
   --sq-red:#a32035; --sq-red-deep:#751728; --sq-gold:#e8aa24; --sq-on-red:#fff9ec;
   --sq-rule:#d8c9b7; --sq-rule-strong:#cbb6a5; --sq-ticket-bg:#fffaf2; --sq-ticket-stub:#fff3df;
   --sq-row-selected:#f3e4d9; --sq-sticky:#fff3d3;
   --font-display:"Instrument Serif",Georgia,"Times New Roman",serif;
-  --font-sans:"Instrument Sans","Avenir Next",Arial,sans-serif;
+  --font-sans:"Urbanist","Avenir Next",Arial,sans-serif;
   /* layout: masthead band, then the map as the page. Ticket rides beside it (sheet on phones). */
   color-scheme:light;
 }
@@ -42,7 +44,7 @@ main{flex:1;min-height:0;display:flex;position:relative}
 @media (min-width:900px){.pills,.walk{flex-wrap:wrap;overflow:visible}}
 .tools>*{pointer-events:auto}
 .find{position:relative;max-width:420px}
-.find input{width:100%;min-height:48px;border:1.5px solid var(--sq-rule-strong);border-radius:var(--r-pill);background:var(--sq-ticket-bg);font:500 17px var(--font-sans);color:var(--sq-ink);padding:8px 18px}
+.find input{width:100%;min-height:48px;border:1.5px solid var(--sq-rule-strong);border-radius:var(--r-pill);background:var(--sq-ticket-bg);font:500 16px var(--font-sans);color:var(--sq-ink);padding:8px 18px}
 .find input::placeholder{color:var(--sq-muted)}
 .find input:focus{outline:none;border-color:var(--sq-ink)}
 .hits{position:absolute;left:0;right:0;top:54px;margin:0;padding:6px;list-style:none;background:var(--sq-ticket-bg);border:1.5px solid var(--sq-rule-strong);border-radius:var(--r-stub);max-height:min(52vh,420px);overflow:auto;z-index:5}
@@ -54,7 +56,7 @@ main{flex:1;min-height:0;display:flex;position:relative}
 .hits .none{padding:12px;color:var(--sq-muted)}
 .pills{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 4px;margin:0 -2px}
 .pills::-webkit-scrollbar{display:none}
-.pill{flex:none;min-height:44px;padding:0 16px;border:1.5px solid var(--sq-rule-strong);border-radius:var(--r-pill);background:var(--sq-ticket-bg);font:600 15.5px var(--font-sans);color:var(--sq-muted);cursor:pointer;white-space:nowrap;transition:background .15s ease}
+.pill{flex:none;min-height:44px;padding:0 16px;border:1.5px solid var(--sq-rule-strong);border-radius:var(--r-pill);background:var(--sq-ticket-bg);font:650 15px var(--font-sans);color:var(--sq-muted);cursor:pointer;white-space:nowrap;transition:background .15s ease}
 .pill:hover{color:var(--sq-ink)}
 .pill[aria-pressed="true"]{background:var(--sq-gold);border-color:var(--sq-gold);color:var(--on-hi)}
 .walk{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:2px}
@@ -80,7 +82,7 @@ main{flex:1;min-height:0;display:flex;position:relative}
 .grab{display:none}
 .hero{font:normal var(--dw) calc(68px*var(--ds))/.92 var(--font-display);letter-spacing:-.01em;margin:4px 0 6px;text-wrap:balance}
 .hero em{color:var(--sq-red)}.hero em,.grab span em{font-style:var(--di)}
-.count-line{font:700 13.5px var(--font-sans);letter-spacing:1.8px;text-transform:uppercase;color:var(--sq-red);margin:14px 0 4px;display:flex;align-items:center;gap:12px}
+.count-line{font:800 12px var(--font-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--sq-red);margin:14px 0 4px;display:flex;align-items:center;gap:12px}
 .count-line::after{content:"";flex:1;border-top:1px solid var(--sq-rule-strong)}
 .index{list-style:none;margin:0;padding:0}
 .index li{border-bottom:1px solid var(--sq-rule)}
@@ -133,7 +135,8 @@ body.dots .pill .dot{display:inline-block}
 .legend[hidden]{display:none}
 .legend.sticky{background:#f7e196;border-color:transparent;border-radius:3px;box-shadow:4px 5px 0 rgba(48,36,33,.16);transform:rotate(-1.3deg)}
 .legend.sticky::before{content:"";position:absolute;top:-14px;left:50%;width:88px;height:27px;margin-left:-44px;background:url(marks/tape.svg) center/contain no-repeat;pointer-events:none}
-.legend>button{display:flex;justify-content:space-between;align-items:center;gap:16px;width:100%;border:0;background:none;padding:6px 0 4px;cursor:pointer;font:700 12px var(--font-sans);letter-spacing:1.5px;text-transform:uppercase;color:var(--sq-red);min-height:32px}
+.legend>button{display:flex;justify-content:space-between;align-items:center;gap:16px;width:100%;border:0;background:none;padding:6px 0 4px;cursor:pointer;font:800 12px var(--font-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--sq-red);min-height:32px}
+.legend h4,.lab-pop h3,.facts dt,.walk-label,.qbody .nm,.stops span{-webkit-text-stroke:.7px currentColor;paint-order:stroke fill}
 .legend h4{margin:8px 0 5px;font:var(--di) var(--dw) calc(19px*var(--ds))/1 var(--font-display);color:var(--sq-ink)}
 .legend ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
 .legend li{display:flex;align-items:center;gap:7px;min-width:0}
@@ -170,7 +173,7 @@ body.dots .pill .dot{display:inline-block}
   .grab{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:62px;border:0;background:none;padding:8px 20px 6px;cursor:pointer;text-align:left;flex:none}
   .grab::before{content:"";position:absolute;left:50%;top:7px;width:44px;height:4px;margin-left:-22px;border-radius:4px;background:var(--sq-rule-strong)}
   .grab span{font:normal var(--dw) calc(27px*var(--ds))/1 var(--font-display);margin-top:8px}.grab span em{color:var(--sq-red)}
-  .grab i{font:700 12.5px var(--font-sans);letter-spacing:1.5px;text-transform:uppercase;color:var(--sq-red);font-style:normal;margin-top:8px}
+  .grab i{font:800 12px var(--font-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--sq-red);font-style:normal;margin-top:8px}
   .side-scroll{padding:4px 16px 26px}
   .hero{display:none}
   main.has-ticket #themes{display:none}
@@ -190,14 +193,35 @@ body.dots .pill .dot{display:inline-block}
 /* inside the SideQuest app */
 body.embed .lab-btn,body.embed .lab-pop,body.embed>.sq-masthead{display:none!important}
 body.embed .find{margin-right:0!important}
-.evs{list-style:none;margin:0 0 6px;padding:0;border-top:1px solid var(--sq-rule)}
-.evs li{border-bottom:1px solid var(--sq-rule)}
-.evs button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:96px 1fr;gap:2px 10px;width:100%;min-height:48px;padding:9px 2px;cursor:pointer}
-.evs button:hover{background:rgba(163,32,53,.05)}
-.evs button:focus-visible{outline:3px solid var(--sq-focus,#2f6fdb);outline-offset:-3px}
-.evs .when{font:700 12.5px/1.25 var(--font-sans);color:var(--sq-red)}
-.evs .what{font:400 20px/1.15 var(--font-display);color:var(--sq-ink)}
-.evs .mine{grid-column:2;font:700 12px/1 var(--font-sans);color:#7a5a08}
+/* Events here are the same ticket as Discover (Nov 24): time stub, bites, inner line, bookmark, same type. */
+.evs{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:10px}
+.evs li{filter:drop-shadow(1.2px 0 0 #9b8b7e) drop-shadow(-1.2px 0 0 #9b8b7e) drop-shadow(0 1.2px 0 #9b8b7e) drop-shadow(0 -1.2px 0 #9b8b7e)}
+.evs .sq-stub{all:unset;box-sizing:border-box;position:relative;display:grid;grid-template-columns:90px minmax(0,1fr);width:100%;min-height:110px;background:#fffdf8;color:#302421;cursor:pointer;
+  -webkit-mask:radial-gradient(circle 13px at 0 0,#0000 12px,#000 12.5px) top left,radial-gradient(circle 13px at 100% 0,#0000 12px,#000 12.5px) top right,radial-gradient(circle 13px at 0 100%,#0000 12px,#000 12.5px) bottom left,radial-gradient(circle 13px at 100% 100%,#0000 12px,#000 12.5px) bottom right;
+  -webkit-mask-size:51% 51%;-webkit-mask-repeat:no-repeat;mask:radial-gradient(circle 13px at 0 0,#0000 12px,#000 12.5px) top left,radial-gradient(circle 13px at 100% 0,#0000 12px,#000 12.5px) top right,radial-gradient(circle 13px at 0 100%,#0000 12px,#000 12.5px) bottom left,radial-gradient(circle 13px at 100% 100%,#0000 12px,#000 12.5px) bottom right;mask-size:51% 51%;mask-repeat:no-repeat}
+.evs .sq-stub::before{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+  background-image:linear-gradient(rgba(155,139,126,.62),rgba(155,139,126,.62)),linear-gradient(rgba(155,139,126,.62),rgba(155,139,126,.62)),linear-gradient(rgba(155,139,126,.62),rgba(155,139,126,.62)),linear-gradient(rgba(155,139,126,.62),rgba(155,139,126,.62)),radial-gradient(circle at -5px -5px,#0000 16.8px,rgba(155,139,126,.62) 17px,rgba(155,139,126,.62) 18px,#0000 18.2px),radial-gradient(circle at calc(100% + 5px) -5px,#0000 16.8px,rgba(155,139,126,.62) 17px,rgba(155,139,126,.62) 18px,#0000 18.2px),radial-gradient(circle at -5px calc(100% + 5px),#0000 16.8px,rgba(155,139,126,.62) 17px,rgba(155,139,126,.62) 18px,#0000 18.2px),radial-gradient(circle at calc(100% + 5px) calc(100% + 5px),#0000 16.8px,rgba(155,139,126,.62) 17px,rgba(155,139,126,.62) 18px,#0000 18.2px);
+  background-position:left 16.77px top 5px,left 16.77px bottom 5px,left 5px top 16.77px,right 5px top 16.77px,left 5px top 5px,right 5px top 5px,left 5px bottom 5px,right 5px bottom 5px;
+  background-size:calc(100% - 33.54px) 1px,calc(100% - 33.54px) 1px,1px calc(100% - 33.54px),1px calc(100% - 33.54px),13.27px 13.27px,13.27px 13.27px,13.27px 13.27px,13.27px 13.27px;background-repeat:no-repeat}
+.evs .sq-stub:hover{background:#fff8ea}
+.evs .sq-stub:focus-visible{outline:3px solid var(--sq-focus,#2f6fdb);outline-offset:-3px}
+.evs .sq-stub-time{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:14px 8px;background:#f3e6dc;color:#7d1f52;border-right:2px dashed #cdbfae;text-align:center}
+.evs .sq-stub-time::before,.evs .sq-stub-time::after{content:"";position:absolute;right:-11px;width:20px;height:20px;border-radius:50%;background:var(--sq-paper,#f8f5ee);border:1.5px solid #9b8b7e;box-sizing:border-box}
+.evs .sq-stub-time::before{top:-11px}.evs .sq-stub-time::after{bottom:-11px}
+.evs .sq-stub-time b{font:400 26px/.9 var(--font-display);letter-spacing:-1px;white-space:nowrap;-webkit-text-stroke:.9px currentColor;paint-order:stroke fill}
+.evs .sq-stub-time b i{font:italic 400 17px var(--font-display);letter-spacing:0;margin-left:1px;-webkit-text-stroke:0}
+.evs .sq-stub-time small{display:block;margin-top:8px;font:600 14px/1.25 "Urbanist Variable",var(--font-sans);color:#302421}
+.evs .sq-stub-time em{display:block;margin-top:4px;font:normal 800 12.5px/1.25 "Urbanist Variable",var(--font-sans);text-transform:uppercase;letter-spacing:.14em;color:#655d58}
+.evs .sq-dur-part{display:inline-block}
+.evs .sq-stub-body{display:block;min-width:0;padding:14px 14px 16px 14px}
+.evs .sq-stub-date{display:block;margin-bottom:4px;font:700 15px/1.3 "Urbanist Variable",var(--font-sans);color:var(--sq-red)}
+.evs .sq-stub-body strong{display:block;font:400 23px/1.1 var(--font-display);-webkit-text-stroke:.7px currentColor;paint-order:stroke fill;padding-bottom:.12em;text-wrap:pretty}
+.evs .sq-by{display:block;margin-top:4px;font:400 17px/1.32 "Urbanist Variable",var(--font-sans)}
+.evs .sq-by b{font-weight:650;font-size:17px}.evs .sq-by i{font-style:normal}
+.evs .sq-place-part{display:inline-block}
+.evs .sq-stub-mine .sq-stub-time{padding-top:50px}
+.evs .sq-planned-mark{position:absolute;top:-5px;left:12px;z-index:4;pointer-events:none;line-height:0}
+.evs .sq-bookmark{display:inline-block;width:30px;height:46px}.evs .sq-bookmark svg{width:100%;height:100%;overflow:visible;display:block}
 .evs-head{font:var(--di) var(--dw) calc(21px*var(--ds))/1.2 var(--font-display);color:var(--sq-red);margin:14px 0 6px}
 .evs-none{font:400 15px/1.4 var(--font-sans);color:var(--sq-muted);margin:6px 0 12px}
 .index .evn{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:10px;background:#a32035;color:#fff;font:700 12px/18px var(--font-sans);text-align:center;vertical-align:3px}
@@ -260,7 +284,7 @@ body.embed .find{margin-right:0!important}
 @media (max-width:899px){
   #zlist{display:grid}
   .side:not(.open):not(.ticket){transform:translateY(100%)!important}
-  .grab span{font:700 13px var(--font-sans)!important;letter-spacing:.08em;text-transform:uppercase}
+  .grab span{font:800 12px var(--font-sans)!important;letter-spacing:.12em;text-transform:uppercase}
 }
 /* Key: one button with a chevron, not two labels (Nov 24). */
 #legendBtn{display:inline-flex!important;align-items:center;gap:8px}
@@ -344,7 +368,7 @@ body.embed .pills button{min-height:40px;padding:0 12px;font-size:15px}
     </div>
     <div class="legend" id="legend" hidden><button id="legendBtn" aria-expanded="false"><span>Key</span><svg id="legendTog" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8L9.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="lg-body" id="legendBody"></div></div>
     <div class="zoom">
-      <span class="north" aria-hidden="true"><svg width="34" height="50" viewBox="0 0 34 50"><g id="northG"><path d="M17 5 L23 30 L17 26 L11 30 Z" fill="#a32035"/><path d="M17 26 L17 44" stroke="#302421" stroke-width="1.6" stroke-linecap="round"/></g><text x="17" y="49" text-anchor="middle" font-family="Instrument Sans,Arial" font-weight="700" font-size="10" fill="#655d58">N</text></svg></span>
+      <span class="north" aria-hidden="true"><svg width="34" height="50" viewBox="0 0 34 50"><g id="northG"><path d="M17 5 L23 30 L17 26 L11 30 Z" fill="#a32035"/><path d="M17 26 L17 44" stroke="#302421" stroke-width="1.6" stroke-linecap="round"/></g><text x="17" y="49" text-anchor="middle" font-family="Urbanist,Arial" font-weight="700" font-size="10" fill="#655d58">N</text></svg></span>
       <button id="zme" aria-label="Show where I am" aria-pressed="false"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5L3.8 10.6c-.7.3-.6 1.3.1 1.5l6.4 1.6 1.6 6.4c.2.7 1.2.8 1.5.1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button>
       <button id="zlist" aria-label="Places with events" aria-expanded="false"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M7 5.5H19M7 11H19M7 16.5H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="3.2" cy="5.5" r="1.3" fill="currentColor"/><circle cx="3.2" cy="11" r="1.3" fill="currentColor"/><circle cx="3.2" cy="16.5" r="1.3" fill="currentColor"/></svg></button>
       <button id="zin" aria-label="Zoom in">+</button>
@@ -361,6 +385,7 @@ body.embed .pills button{min-height:40px;padding:0 12px;font-size:15px}
     </div>
   </aside>
 </main>
+<script src="route.js"></script>
 <script>
 (async function(){
 "use strict";
@@ -371,7 +396,7 @@ const lum=h=>{const n=parseInt(h.slice(1,7),16);return(.2126*(n>>16&255)+.7152*(
 const onCol=c=>lum(c)>.55?'#1b1512':'#fff9ec';
 const THEMES={
  index:{name:'Campus index',ground:'#f3eadb',campus:'#fbf6ed',bld:'#fffaf2',ink:'#302421',path:'#8b5a44',accent:'#a32035',deep:'#751728',hi:'#e8aa24',lawn:'#e9e6c9',water:'#d9e6e4',road:'#fffdf8',shadow:'#c7ae98',
-   disp:'"Instrument Serif"',dw:400,di:'italic',ds:1,sans:'"Instrument Sans"',lab:{f:'"Instrument Serif"',w:400,size:19},r:[30,18,999],grid:1,shadowOn:1},
+   disp:'"Instrument Serif"',dw:400,di:'normal',ds:1,sans:'"Urbanist"',lab:{f:'"Instrument Serif"',w:400,size:19},r:[30,18,999],grid:1,shadowOn:1},
  graph:{name:'Graph paper',ground:'#e9f0f2',campus:'#f7fbfb',bld:'#ffffff',ink:'#1d2a4d',path:'#d7263d',accent:'#d7263d',deep:'#1d2a4d',hi:'#ffd23f',lawn:'#d5eccd',water:'#c8e2f4',road:'#ffffff',grid:'#b5d3e6',shadow:'#b9c6d6',
    disp:'"Young Serif"',dw:400,di:'normal',ds:.7,sans:'"Barlow Semi Condensed"',lab:{f:'"Barlow Semi Condensed"',w:600,size:15},r:[14,10,999],gridOn:1,shadowOn:1,ground0:'tint',label0:'color'},
  blueprint:{name:'Blueprint',ground:'#0f3358',campus:'#134173',bld:'#184d88',ink:'#eef6ff',path:'#8fe6ff',accent:'#ffd166',deep:'#0a2440',hi:'#ffd166',lawn:'#155a72',water:'#0d6aa3',road:'#1f5390',outline:'#cfe6ff',grid:'#2a5f96',
@@ -443,7 +468,7 @@ function hoursAt(label){if(!HOURS)return[];const n=hNow();return HOURS.places.fi
 const openNowAt=label=>hoursAt(label).some(h=>h.st==='open');
 const imgs={};
 await Promise.all(['pen-loop','pen-arrow','pen-tick'].map(n=>new Promise(r=>{const i=new Image();i.onload=i.onerror=()=>r();i.src='marks/'+n+'.svg';imgs[n]=i;})));
-try{await Promise.all([document.fonts.load('18px "Instrument Serif"'),document.fonts.load('italic 18px "Instrument Serif"'),document.fonts.load('700 11px "Instrument Sans"')]);}catch(e){}
+try{await Promise.all([document.fonts.load('18px "Instrument Serif"'),document.fonts.load('italic 18px "Instrument Serif"'),document.fonts.load('700 11px "Urbanist"')]);}catch(e){}
 
 /* ---------- geometry helpers (world units are decimetres) ---------- */
 const pathOf=(rings,holes)=>{const p=new Path2D();for(const r of rings.concat(holes||[])){p.moveTo(r[0],r[1]);for(let i=2;i<r.length;i+=2)p.lineTo(r[i],r[i+1]);p.closePath();}return p;};
@@ -611,24 +636,12 @@ function buildPatterns(){
 buildPatterns();
 
 /* ---------- routing graph ---------- */
-const NN=D.gn.length/2,NE=D.ge.length/3;
-const FACT=[1,1.04,1.1,1.25,1];
-const elen=new Float32Array(NE),deg=new Int32Array(NN+1);
-for(let e=0;e<NE;e++){const a=D.ge[3*e],b=D.ge[3*e+1];elen[e]=Math.hypot(D.gn[2*a]-D.gn[2*b],D.gn[2*a+1]-D.gn[2*b+1])/10;deg[a+1]++;deg[b+1]++;}
-for(let i=0;i<NN;i++)deg[i+1]+=deg[i];
-const adjN=new Int32Array(2*NE),adjE=new Int32Array(2*NE),fillp=deg.slice(0,NN);
-for(let e=0;e<NE;e++){const a=D.ge[3*e],b=D.ge[3*e+1];adjN[fillp[a]]=b;adjE[fillp[a]++]=e;adjN[fillp[b]]=a;adjE[fillp[b]++]=e;}
-function dijkstra(place){
-  const dist=new Float64Array(NN).fill(1e9),prev=new Int32Array(NN).fill(-1),heap=[];
-  const push=(d,n)=>{heap.push([d,n]);let i=heap.length-1;while(i>0){const p=(i-1)>>1;if(heap[p][0]<=heap[i][0])break;[heap[p],heap[i]]=[heap[i],heap[p]];i=p;}};
-  const pop=()=>{const t=heap[0],l=heap.pop();if(heap.length){heap[0]=l;let i=0;for(;;){let a=2*i+1,b=a+1,m=i;if(a<heap.length&&heap[a][0]<heap[m][0])m=a;if(b<heap.length&&heap[b][0]<heap[m][0])m=b;if(m===i)break;[heap[m],heap[i]]=[heap[i],heap[m]];i=m;}}return t;};
-  for(const[n,g]of place.acc){const d=g/10;if(d<dist[n]){dist[n]=d;push(d,n);}}
-  while(heap.length){const[d,n]=pop();if(d>dist[n])continue;for(let k=deg[n];k<deg[n+1];k++){const m=adjN[k],e=adjE[k],nd=d+elen[e]*FACT[D.ge[3*e+2]];if(nd<dist[m]){dist[m]=nd;prev[m]=n;push(nd,m);}}}
-  return{dist,prev};
-}
+/* The router itself is in route.js, shared with tests/map.route.test.ts. */
+const RG=SQRoute.buildGraph(D),NN=RG.NN,NE=RG.NE,elen=RG.elen;
+function dijkstra(place){return SQRoute.dijkstra(RG,place);}
 const SPEED=80; /* metres a minute: an easy walk */
-function reachOf(run,place){let best=1e9,node=-1;for(const[n,g]of place.acc){const d=run.dist[n]+g/10;if(d<best){best=d;node=n;}}return{m:best,node};}
-function routeTo(run,place){const r=reachOf(run,place);if(r.node<0||r.m>=1e8)return null;const pts=[];let n=r.node;while(n>=0){pts.push(D.gn[2*n],D.gn[2*n+1]);n=run.prev[n];}return{m:r.m,pts};}
+function reachOf(run,place){return SQRoute.reachOf(run,place);}
+function routeTo(run,place){return SQRoute.routeTo(RG,run,place);}
 
 /* ---------- view state ---------- */
 const stage=document.getElementById('stage'),cv=document.getElementById('map'),ctx=cv.getContext('2d');
@@ -1395,7 +1408,11 @@ function placeFor(loc){const v=norm(loc);let best=null,bl=0;
 function setEvents(list){EV.list=list;EV.at=new Map();for(const e of list){const p=placeFor(e.location);if(!p)continue;if(!EV.at.has(p))EV.at.set(p,[]);EV.at.get(p).push(e);}
   MK.t0=0;if(DISC&&EV.at.size&&!S.sel){const bb=[...EV.at.keys()].reduce((a,p)=>[Math.min(a[0],p.bb[0]),Math.min(a[1],p.bb[1]),Math.max(a[2],p.bb[2]),Math.max(a[3],p.bb[3])],[1e9,1e9,-1e9,-1e9]);fitBox(growBB(bb,260),2.6,false);}
   if(!S.sel&&!S.quest)renderIndex();else if(S.sel)renderTicket();dirty();}
-function evRow(e){return`<li><button data-ev="${esc(e.id)}"><span class="when">${esc(e.when)}</span><span class="what">${esc(e.title)}</span>${e.planned?'<span class="mine">In My Schedule</span>':''}</button></li>`;}
+const BOOKMARK='<span class="sq-planned-mark"><span class="sq-bookmark" role="img" aria-label="In My Schedule"><svg viewBox="0 0 40 62" aria-hidden="true"><defs><linearGradient id="bmMap" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8e1a30"/><stop offset=".45" stop-color="#c42e4a"/><stop offset="1" stop-color="#9a1f37"/></linearGradient></defs><path d="M6 3H38V60L22 47L6 60Z" fill="rgba(60,30,30,.22)"/><path d="M3 0H35V57L19 44L3 57Z" fill="url(#bmMap)"/><path d="M3 0H35V5H3Z" fill="rgba(60,10,20,.35)"/><path d="M7 8V50M31 8V50" fill="none" stroke="rgba(255,214,140,.75)" stroke-width=".9" stroke-dasharray="2 2"/><path d="M3 31C9 30 15 36 20 46C27 27 40 12 61 3C45 17 32 34 23 56C19 47 12 38 3 31Z" fill="#fff8e8" transform="translate(8 13) scale(.38)"/></svg></span></span>';
+function evRow(e){const t=e.ticket;if(!t)return`<li><button class="sq-stub sq-stub-compact" data-ev="${esc(e.id)}"><span class="sq-stub-body"><strong>${esc(e.title)}</strong><span class="sq-by"><span>${esc(e.when)}</span></span></span>${e.planned?BOOKMARK:''}</button></li>`;
+  const dur=/^(\d+\s*hr)\s+(\d+\s*min)$/i.exec(t.durationText),durs=dur?[dur[1],dur[2]]:[t.durationText];
+  const place=String(e.location).split(/,\s*/).filter(Boolean).map((p,i,a)=>`<span class="sq-place-part">${esc(p)}${i<a.length-1?',':''}</span>${i<a.length-1?' ':''}`).join('');
+  return`<li><button class="sq-stub sq-stub-compact${e.planned?' sq-stub-mine':''}" data-ev="${esc(e.id)}" aria-label="View details for ${esc(e.title)}"><span class="sq-stub-time"><b>${esc(t.time)}<i>${esc(t.ampm)}</i></b><small>to ${esc(t.endText)}</small><em>${durs.map((d,i)=>`${i?' ':''}<span class="sq-dur-part">${esc(d)}</span>`).join('')}</em></span><span class="sq-stub-body"><span class="sq-stub-date">${esc(t.day)}</span><strong>${esc(e.title)}</strong><span class="sq-by">${t.host&&t.host.trim().toLowerCase()!==String(e.location).trim().toLowerCase()?`<b>${esc(t.host)}</b>${e.location?'<i> · </i>':''}`:''}<span>${place}</span></span></span>${e.planned?BOOKMARK:''}</button></li>`;}
 function evHere(p){if(!EMBED||!EV.ready)return'';const l=EV.at.get(p)||[];
   return l.length?`<p class="evs-head">Happening here · ${l.length}</p><ul class="evs">${l.map(evRow).join('')}</ul>`:`<p class="evs-none">No SideQuest events listed here yet.</p>`;}
 function evIndex(){if(!EMBED||!EV.ready||!EV.at.size)return'';const ps=[...EV.at.keys()].sort((a,b)=>EV.at.get(b).length-EV.at.get(a).length||a.name.localeCompare(b.name));
@@ -1481,7 +1498,7 @@ function markerAt(x,y){if(!EMBED||!MK.plan)return null;for(const m of MK.plan){c
 function focusVenue(loc){const p=placeFor(loc);if(p){select(p,true);if(phone())openSheet(true);return;}
   q.value=String(loc||'');search();q.focus();}
 addEventListener('message',e=>{if(e.origin!==location.origin||!e.data)return;const d=e.data;
-  if(d.type==='sq-events'&&Array.isArray(d.events)){EV.ready=true;evKey();setEvents(d.events.filter(x=>x&&typeof x.id==='string').map(x=>({id:x.id,title:String(x.title||''),location:String(x.location||''),when:String(x.when||''),planned:!!x.planned,posted:!!x.posted,short:String(x.short||''),at:String(x.at||'')})));}
+  if(d.type==='sq-events'&&Array.isArray(d.events)){EV.ready=true;evKey();setEvents(d.events.filter(x=>x&&typeof x.id==='string').map(x=>({id:x.id,title:String(x.title||''),location:String(x.location||''),when:String(x.when||''),planned:!!x.planned,posted:!!x.posted,short:String(x.short||''),at:String(x.at||''),ticket:x.ticket&&typeof x.ticket==='object'?{time:String(x.ticket.time||''),ampm:String(x.ticket.ampm||''),endText:String(x.ticket.endText||''),durationText:String(x.ticket.durationText||''),host:x.ticket.host?String(x.ticket.host):null,day:String(x.ticket.day||'')}:null})));}
   if(d.type==='sq-focus')focusVenue(d.location);
   if(d.type==='sq-walk')walkTo(d.location);
   if(d.type==='sq-style'&&['flag','ticket'].includes(d.style))mkStyle(d.style);});

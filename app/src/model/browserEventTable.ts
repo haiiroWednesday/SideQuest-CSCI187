@@ -49,3 +49,17 @@ export function createBrowserEventTable(
     },
   }
 }
+
+/** True when this browser holds catalog data that cannot be read (damaged), as opposed to none. */
+export function browserCatalogUnreadable(storage: CatalogStorage): boolean {
+  try { readRows(storage); return false } catch { return true }
+}
+
+/** Recovery, only after the student agrees: keep every row that still reads as an event and drop
+ *  the rest, the same way My Schedule recovers valid plans. Returns false when it could not save. */
+export function recoverBrowserCatalog(storage: CatalogStorage): boolean {
+  let parsed: unknown = []
+  try { parsed = JSON.parse(storage.getItem(LOCAL_CATALOG_KEY) ?? '[]') } catch { parsed = [] }
+  const rows = Array.isArray(parsed) ? parsed.filter(isEventRow) : []
+  try { storage.setItem(LOCAL_CATALOG_KEY, JSON.stringify(rows)); return true } catch { return false }
+}

@@ -10,8 +10,8 @@
 //  - short units stay whole: a duration ("1 hr 30 min"), "until 12:00pm", "5 going", a host name or one part
 //    of a place ("Benson Memorial Center") never breaks across lines when it would fit on one line, and no
 //    word is split in the middle.
-//  - no row is squashed: a fact that wraps only because something sits beside it (it would fit across the
-//    card's text column on its own) counts as squashed.
+//  - no row is squashed: a fact that wraps only because something other than the stub or the stamp column
+//    sits beside it counts as squashed, and the words between stub and stamp keep a column of 120px or more.
 //  - nothing overlaps: words do not run into the stamp, the bookmark, the bites or other words.
 //  - the card is at least 44px tall and wide, so it stays easy to tap.
 (function cardFit(selector) {
@@ -190,15 +190,27 @@
     // whole units broken across lines
     // the room a fact would have with nothing beside it: the card inside its line, less a stub that runs down the side
     const t = card.querySelector('.sq-stub-time'), tr = t && t.getBoundingClientRect()
+    // In the chosen layout (L0, Cyn Nov 24) the stamp column runs down the right side of a Discover card,
+    // like the stub on the left: both are part of the design. Anything else beside a row squashes it, and the
+    // words between stub and stamp must keep a real column (MIN_COLUMN px), so the stamp can't crowd them.
+    const MIN_COLUMN = 120
+    const st = [...card.querySelectorAll(':scope > .sq-stub-stamp')].find(visible), sr = st && st.getBoundingClientRect()
+    const body = card.querySelector('.sq-stub-body'), br = body && body.getBoundingClientRect()
+    if (br && br.width > 2 && visible(body)) {
+      const bs = getComputedStyle(body), col = br.width - (parseFloat(bs.paddingLeft) + parseFloat(bs.paddingRight)) * zoomOf(body)
+      if (col < MIN_COLUMN * L.z) add('text column too narrow', `${Math.round(col)}px`)
+    }
     for (const p of phrasesOf(card)) {
       if (!visible(p.el) || !p.text.trim()) continue
       if (linesOfText(p.el, p.text) < 2) continue
       if (fitsOneLine(p.el, p.text)) { add('unit split across lines', `"${short(p.text)}"`); continue }
       if (p.el.closest('.sq-stub-time')) continue
-      // a stub running down beside this row is part of the design; anything else beside it squashes it
+      // a stub or stamp running down beside this row is part of the design; anything else beside it squashes it
       const pr = p.el.getBoundingClientRect()
-      const side = tr && tr.top < pr.bottom && tr.bottom > pr.top && tr.right <= pr.left + 1 ? tr.width : 0
-      const bodyRoom = L.r.width - 2 * L.inset - side - 32 * L.z
+      const left = tr && tr.top < pr.bottom && tr.bottom > pr.top && tr.right <= pr.left + 1 ? tr.width : 0
+      // the stamp's whole grid column counts, even below a short stamp: the words keep their column all the way down
+      const right = sr && br && sr.left >= br.right - 1 && body.contains(p.el) ? Math.max(0, L.r.right - L.inset - br.right) : 0
+      const bodyRoom = L.r.width - 2 * L.inset - left - right - 32 * L.z
       if (needOf(p.el, p.text) <= bodyRoom) add('squashed by its neighbour', `"${short(p.text)}"`)
     }
   }

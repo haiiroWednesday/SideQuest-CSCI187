@@ -113,3 +113,7 @@
 .sqm-row.sqm-wrap .sqm-rowt { white-space: normal; line-height: 16px; }
 .sqm-row em { white-space: nowrap; }
 .sqm-tk strong[style*="normal"] { overflow: visible; }
+
+/* Busy or free time marked on Discover, under its day (Nov 25): the same time on both pages. */
+.sqm-owntime { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 2px 0 6px; font: 600 14px var(--font-sans); }
+.sqm-owntime a { color: #6e4a3c; text-decoration: underline; text-decoration-style: wavy; text-decoration-color: rgba(110, 74, 60, .45); text-underline-offset: 4px; }

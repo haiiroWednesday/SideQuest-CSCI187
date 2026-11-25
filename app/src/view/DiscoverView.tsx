@@ -5,13 +5,13 @@ import type { StretchAdvice, FoodNoticeModel } from '../controller/presentAdvice
 import { categoryStyle } from './categoryColors'
 import { categoryOfPlan } from '../controller/eventCategory'
 import { Icon } from './Icon'
-import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import {
   presentDiscover, type DiscoverScreen, type FreeWindow, type ScreenEvent, type StubModel,
 } from '../controller/presentScreens'
 import '@fontsource/instrument-serif/400.css'
 import '@fontsource/instrument-serif/400-italic.css'
-import '@fontsource-variable/instrument-sans/wdth.css'
+import '@fontsource-variable/urbanist'
 import './discover.css'
 import './post.css'
 import './toasts.css'
@@ -22,10 +22,13 @@ import { EventDetailContent, type SelectedDetailState } from './EventDetailConte
 import { FreeWindowForm } from './FreeWindowForm'
 import { FreeMarker } from './FreeMarker'
 import { Bookmark, NowMark } from './Marks'
+import { shownHost } from './shownHost'
 import { shortDay, useQuiet } from './quietContext'
-import type { MarkModel, MarkRun, MarkWindow, When } from '../controller/freeMarks'
+import type { MarkMode, MarkModel, MarkRun, MarkWindow, When } from '../controller/freeMarks'
+import { useClashCount } from './clashCount'
 import { Greetings, stampFormatFor } from './Greetings'
 import './materials.css'
+import './card-fit.css'
 import { CategoryFilters } from './CategoryFilters'
 import { AiDiscoverPanel } from './AiDiscoverPanel'
 import type { EventCategorySelection } from '../controller/presentScreens'
@@ -70,13 +73,17 @@ export function useDiscoverScreen(input: Parameters<typeof presentDiscover>[0]):
 export function SideQuestHeader({
   routes = {},
   active = 'discover',
-  plannedCount = 0,
+  clashCount,
 }: {
   routes?: SideQuestRoutes
   active?: 'discover' | 'schedule' | 'someday' | 'groups' | 'login' | 'post' | 'map'
-  /** Shown as a badge on My Schedule, so a student sees where a planned event went. */
+  /** No longer shown (owner decision, Nov 25). Still accepted so pages that pass it keep compiling. */
   plannedCount?: number
+  /** Clashes across upcoming days: the My Schedule badge. Left out, the App-level number is used. */
+  clashCount?: number
 }) {
+  const appClashes = useClashCount()
+  const clashes = clashCount ?? appClashes
   const current = (key: typeof active) => (active === key ? 'page' : undefined)
   // New open invites and answers since Groups was last open. Zero outside the design review.
   const inbox = useInboxCount()
@@ -96,9 +103,11 @@ export function SideQuestHeader({
             </a>
           )}
           {routes.schedule && (
-            <a aria-current={current('schedule')} className="sq-tab sq-tab-schedule" href={routes.schedule}>
+            <a aria-current={current('schedule')} className="sq-tab sq-tab-schedule" href={routes.schedule}
+              aria-label={clashes > 0 ? `My Schedule, ${clashes} ${clashes === 1 ? 'clash' : 'clashes'}` : undefined}>
               <i className="sq-ic" aria-hidden="true"><Icon name="schedule" /></i><span>My Schedule</span>
-              {plannedCount > 0 && <b className="sq-badge" aria-hidden="true">{plannedCount}</b>}
+              {/* Only clashes earn a badge: something to sort out. No number when there are none. */}
+              {clashes > 0 && <b className="sq-badge sq-badge-clash" aria-hidden="true">{clashes}</b>}
             </a>
           )}
           {routes.someday && (
@@ -119,7 +128,7 @@ export function SideQuestHeader({
           )}
           {routes.onSignOut && (
             <button type="button" className="sq-tab sq-tab-signout" onClick={routes.onSignOut}>
-              <i className="sq-ic" aria-hidden="true"><Icon name="login" /></i><span>End session</span>
+              <i className="sq-ic" aria-hidden="true"><Icon name="login" /></i><span>Sign out</span>
             </button>
           )}
           {routes.post && (
@@ -154,16 +163,30 @@ export type MarkerProps = {
   onWhen: (key: When) => void
   onAddBusy: (start: string, end: string) => boolean
   onFillGap: (w: MarkWindow) => void
-  onUnbusy: (run: MarkRun) => void
+  onUnbusy: (run: Pick<MarkRun, 'first' | 'last'>) => void
   /** A drag on the day bar. `from` is the busy stretch that was picked up, or null for a new one. */
   onReshape: (from: { first: number; last: number } | null, first: number, last: number) => void
+  /** "Show all events": stop filtering by free time, keep every mark. */
   onClear: (() => void) | null
+  /** "Clear busy time": remove all busy marks (with Undo). */
+  onClearBusy?: (() => void) | null
+  /** The Busy/Free switch on the day bar. */
+  onMode?: (mode: MarkMode) => void
 }
+
+/** "1 hr 30 min" stays as two whole parts that stack in a narrow stub, never "1 hr 30 / min". */
+const durationParts = (text: string) => { const m = text.match(/^(\d+\s*hr)\s+(\d+\s*min)$/i); return m ? [m[1], m[2]] : [text] }
+/** "Williman Room, Benson Memorial Center" breaks only at its commas. */
+const placeParts = (text: string) => text.split(/,\s*/).filter(Boolean)
 
 /** One ticket stub. Shared by Discover and My Schedule. */
 
-export function EventStub({ stub, selected = false, dim = false, onSelect, children, face = false, extraLabel }: {
+export function EventStub({ stub, selected = false, dim = false, onSelect, children, face = false, extraLabel, compact = false, dated = false }: {
   stub: StubModel
+  /** A shorter ticket for lists (Groups search rows, Someday matches): same parts, smaller type, no stamp. */
+  compact?: boolean
+  /** Off the day list (Groups, Someday, open invites), so the day is said above the title. */
+  dated?: boolean
   /** Read after the title by screen readers, e.g. who is going. */
   extraLabel?: string
   /** Discover cards carry the venue postcard on their right edge. */
@@ -174,7 +197,7 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
   children?: ReactNode
 }) {
   const catStyle = categoryStyle(categoryOfPlan({ title: stub.title, host: stub.host }))
-  const classes = ['sq-stub', face && 'sq-stub-faced', selected && 'sq-stub-selected', dim && 'sq-stub-dim', stub.live && `sq-stub-${stub.live.kind}`].filter(Boolean).join(' ')
+  const classes = ['sq-stub', face && !compact && 'sq-stub-faced', compact && 'sq-stub-compact', selected && 'sq-stub-selected', dim && 'sq-stub-dim', stub.live && `sq-stub-${stub.live.kind}`].filter(Boolean).join(' ')
   // Discover buttons use phrasing content; static Schedule cards may contain disclosures.
   const BodyTag = onSelect ? 'span' : 'div'
   const body = (
@@ -182,13 +205,14 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
       <span className="sq-stub-time">
         <b>{stub.start.time}<i>{stub.start.ampm}</i></b>
         <small>to {stub.endText}</small>
-        <em>{stub.durationText}</em>
+        <em>{durationParts(stub.durationText).map((part, i) => <Fragment key={i}>{i ? ' ' : ''}<span className="sq-dur-part">{part}</span></Fragment>)}</em>
       </span>
       <BodyTag className="sq-stub-body">
+        {dated && <span className="sq-stub-date">{stub.dayLabel ?? stub.dateText}</span>}
         <strong>{stub.title}</strong>
         <span className="sq-by">
-          {stub.host && <><b>{stub.host}</b><i> · </i></>}
-          <span>{stub.location}</span>
+          {shownHost(stub) && <><b>{stub.host}</b>{stub.location && <i> · </i>}</>}
+          <span>{placeParts(stub.location).map((part, i, all) => <Fragment key={i}><span className="sq-place-part">{part}{i < all.length - 1 ? ',' : ''}</span>{i < all.length - 1 ? ' ' : ''}</Fragment>)}</span>
         </span>
         {stub.live && (stub.live.kind === 'now'
           // Happening now: a painted NOW mark, with the end time beside it.
@@ -197,7 +221,7 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
         <StubTags labels={stub.tagLabels} source={stub.tagSourceText} />
         {children}
       </BodyTag>
-      {face && <span className={`sq-stub-stamp sq-stamp-${stampFormatFor(stub.title)}`} aria-hidden="true"><span className="sq-stamp-paper"><Greetings location={stub.location} format={stampFormatFor(stub.title)} /></span></span>}
+      {face && !compact && <span className={`sq-stub-stamp sq-stamp-${stampFormatFor(stub.title)}`} aria-hidden="true"><span className="sq-stamp-paper"><Greetings location={stub.location} format={stampFormatFor(stub.title)} /></span></span>}
     </>
   )
   return onSelect ? (
@@ -229,6 +253,8 @@ export type DiscoverViewProps = {
   openId?: string | null
   onRetryDetail?: () => void
   onPlan?: (eventId: string) => void
+  /** Take a planned event out of My Schedule from its open card. */
+  onRemove?: (eventId: string) => void
   onFreeWindowChange?: (window: FreeWindow) => void
   onCategoryChange?: (category: EventCategorySelection) => void
   routes?: SideQuestRoutes
@@ -255,7 +281,7 @@ export type DiscoverViewProps = {
 const LAYOUT_NAMES: [DiscoverLayout, string][] = [['panel', 'Side panel'], ['flip-row', 'Flip across'], ['flip-down', 'Flip down'], ['lift', 'Lift up']]
 
 export function DiscoverView({
-  screen, onRetry, onPlan, onFreeWindowChange, onCategoryChange, routes, sourceNote, aiSearchEnabled = false,
+  screen, onRetry, onPlan, onRemove, onFreeWindowChange, onCategoryChange, routes, sourceNote, aiSearchEnabled = false,
   detail, onSelectEvent, onRetryDetail, openId = null, layoutSwitcher = false, marker,
   onTagsChange, foodNotices = [], stretchAdvice = [], onPlanMany, leaveNotes, foodControlFor, onShareFood,
 }: DiscoverViewProps) {
@@ -359,14 +385,14 @@ export function DiscoverView({
     </>
   }
   const detailFor = (stub: StubModel) => (
-    <EventDetailContent selected={selected?.id === stub.id ? selected : stub} verified={verified} onRetryDetail={onRetryDetail} onPlan={onPlan} planningBlocked={screen.planningBlocked} onClose={requestClose}
+    <EventDetailContent selected={selected?.id === stub.id ? selected : stub} verified={verified} onRetryDetail={onRetryDetail} onPlan={onPlan} onRemove={onRemove} planningBlocked={screen.planningBlocked} onClose={requestClose}
       extras={detailExtras(stub)} />
   )
   // Opening a card re-renders Discover; unchanged cards skip it (that render was the lag on phones).
   const openRef = useRef(openStub); openRef.current = openStub
   const openStable = useCallback((id: string) => openRef.current(id, document.activeElement as HTMLElement), [])
   const pills = (stub: StubModel) => <>
-    {stub.fit === 'fits' && <span className="sq-pill sq-pill-fit">{marker ? 'Fits your free time' : 'Fits your window'}</span>}
+    {stub.fit === 'fits' && <span className="sq-pill sq-pill-fit">{'Fits your free time'}</span>}
     {stub.planned && <span className="sq-planned-mark"><Bookmark label="In My Schedule" /></span>}
     <GoingFaces eventId={stub.id} />
     <LeaveNote note={stub.fit === 'fits' ? leaveNotes?.get(stub.id) : undefined} />
@@ -407,22 +433,21 @@ export function DiscoverView({
       <main className="sq-main" id="content">
         {marker ? <div inert={modal || undefined}>
           <FreeMarker {...marker}
-            fitText={marker.onClear && ready
-              ? (screen.count === 0 ? 'Nothing fits your gaps' : screen.count === 1 ? '1 event fits your gaps' : `${screen.count} events fit your gaps`)
-              : null} />
+            fitText={marker.onClear && ready ? screen.fitLine ?? null : null} />
         </div> : <section inert={modal || undefined} className="sq-hero" aria-labelledby="sq-discover-title">
           <h1 id="sq-discover-title">More to do. <em>Right here.</em></h1>
           {/* Original drawing, not an SCU mark. The red trail ending in an X is the side quest. */}
           <img className="sq-campus-drawing" src={drawingUrl} alt="" aria-hidden="true" />
         </section>}
 
-        {onCategoryChange && <div inert={modal || undefined}>
-          <CategoryFilters categories={screen.categories} onChange={onCategoryChange} />
-          {screen.tagFilters && onTagsChange && <TagFilters model={screen.tagFilters} onChange={onTagsChange} />}
-        </div>}
+        {/* The pick for your free time comes first; filters sit just above the list they filter. */}
         {ready && <div inert={modal || undefined}>
           <FoodNowBoard notices={foodNotices} onOpen={openListed} />
           {marker && onPlanMany && <StretchAdviceList items={stretchAdvice} onOpen={openListed} onPlanAll={onPlanMany} blocked={screen.planningBlocked} />}
+        </div>}
+        {onCategoryChange && <div inert={modal || undefined}>
+          <CategoryFilters categories={screen.categories} onChange={onCategoryChange} />
+          {screen.tagFilters && onTagsChange && <TagFilters model={screen.tagFilters} onChange={onTagsChange} />}
         </div>}
 
         {free && onFreeWindowChange && !marker && <FreeWindowForm free={free} ready={ready} onWindowChange={onFreeWindowChange} disabledByDialog={modal} />}
@@ -494,7 +519,7 @@ export function DiscoverView({
                         )
                         return (
                           <li key={stub.id} data-flip-id={stub.id} className={isOpen ? 'sq-flip-hidden' : undefined}>
-                            <ListStub stub={stub} selected={!flip && selected?.id === stub.id} fitLabel={marker ? 'Fits your free time' : 'Fits your window'} onOpen={openStable}
+                            <ListStub stub={stub} selected={!flip && selected?.id === stub.id} fitLabel={'Fits your free time'} onOpen={openStable}
                               note={stub.fit === 'fits' ? leaveNotes?.get(stub.id) : undefined} />
                           </li>
                         )
@@ -503,13 +528,13 @@ export function DiscoverView({
                   </section>
                 ))}
                 {routes?.post && (
-                  <div className="sq-endcap2"><p>That's everything.</p><a className="sq-plan-button sq-endcap-post" href={routes.post}>Post something</a></div>
+                  <div className="sq-endcap2"><p>That's everything.</p><a className="sq-plan-button sq-endcap-post" href={routes.post}>Post an event</a></div>
                 )}
               </div>
             )}
           </section>
           {ready && !flip && <aside ref={sheet} className={`sq-sticker${sheetOpen ? ' sq-open' : ''}`} hidden={phone && !sheetOpen} role={modal ? 'dialog' : undefined} aria-modal={modal || undefined} aria-labelledby="sq-detail-title">
-            <EventDetailContent selected={selected} verified={verified} onRetryDetail={onRetryDetail} onPlan={onPlan} planningBlocked={screen.planningBlocked} onClose={closeSheet}
+            <EventDetailContent selected={selected} verified={verified} onRetryDetail={onRetryDetail} onPlan={onPlan} onRemove={onRemove} planningBlocked={screen.planningBlocked} onClose={closeSheet}
               extras={detailExtras(selected)} />
           </aside>}
         </div>

@@ -6,6 +6,7 @@ import {
   marksToRanges, planBusySync, rangesToMarks,
 } from '../src/controller/accountData'
 import { createServerPersonalStore } from '../src/controller/personalClient'
+import { CELL, DAY_START } from '../src/controller/freeMarks'
 import { PersonalStoreError, createMemoryPersonalTables } from '../src/model/personalData'
 import type { CampusEvent, EventCatalogPort } from '../src/model/eventCatalog'
 
@@ -92,27 +93,30 @@ describe('signed-in Someday', () => {
 })
 
 describe('signed-in busy time', () => {
-  it('turns marked half hours into stretches and back', () => {
-    const marks = { '2030-11-08': [2, 3, 4, 10] }
+  // Five-minute steps of the bar from 8am: cells('09:00', '10:30') is every step in that stretch.
+  const step = (t: string) => { const [h, m] = t.split(':').map(Number); return (h * 60 + m - DAY_START) / CELL }
+  const cells = (from: string, to: string) => Array.from({ length: step(to) - step(from) }, (_, i) => step(from) + i)
+  it('turns marked steps into stretches and back', () => {
+    const marks = { '2030-11-08': [...cells('09:00', '10:30'), ...cells('13:00', '13:30')] }
     expect(marksToRanges(marks)).toEqual([
       { date: '2030-11-08', start: '09:00', end: '10:30' },
       { date: '2030-11-08', start: '13:00', end: '13:30' },
     ])
     expect(rangesToMarks(marksToRanges(marks))).toEqual(marks)
   })
-  it('keeps an imported 9:15 class as it is while the bar still covers it', () => {
-    const rows = [{ id: 'c1', date: '2030-11-08', start: '09:15', end: '10:05', source: 'calendar' as const }]
-    const marks = { '2030-11-08': [2, 3, 4, 5] }
-    expect(planBusySync(rows, marks)).toEqual({ remove: [], add: [{ date: '2030-11-08', start: '10:30', end: '11:00', source: 'typed' }] })
-    expect(planBusySync(rows, { '2030-11-08': [2, 3] }).remove).toEqual(rows)
+  it('keeps an imported 9:12 class as it is while the bar still covers it', () => {
+    const rows = [{ id: 'c1', date: '2030-11-08', start: '09:12', end: '10:03', source: 'calendar' as const }]
+    const marks = { '2030-11-08': cells('09:10', '11:00') }
+    expect(planBusySync(rows, marks)).toEqual({ remove: [], add: [{ date: '2030-11-08', start: '10:05', end: '11:00', source: 'typed' }] })
+    expect(planBusySync(rows, { '2030-11-08': cells('09:10', '09:40') }).remove).toEqual(rows)
   })
   it('saves a drag, a stretch and a clear to the account', async () => {
     const tables = createMemoryPersonalTables()
     const busy = createAccountBusyController(tables.forUser(A))
     expect((await busy.load()).marks).toEqual({})
-    await busy.save({ '2030-11-08': [2, 3] })
+    await busy.save({ '2030-11-08': cells('09:00', '10:00') })
     expect((await tables.forUser(A).listBusy()).map(r => `${r.start}-${r.end}`)).toEqual(['09:00-10:00'])
-    await busy.save({ '2030-11-08': [2, 3, 4, 5] })
+    await busy.save({ '2030-11-08': cells('09:00', '11:00') })
     expect((await tables.forUser(A).listBusy()).map(r => `${r.start}-${r.end}`)).toEqual(['09:00-11:00'])
     await busy.save({})
     expect(await tables.forUser(A).listBusy()).toEqual([])

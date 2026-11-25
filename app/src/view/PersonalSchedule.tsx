@@ -67,7 +67,7 @@ export function PlanButton({ event, plans }: { event: CampusEvent; plans: Person
   const planned = plans.schedule.ids.includes(event.id)
   return <button type="button" className="plan-button" disabled={planned || plans.schedule.blocked}
     aria-label={planned ? `Already planned ${event.title}` : `Plan to attend ${event.title}`}
-    onClick={() => plans.add(event.id)}>{planned ? '✓ In your plans' : 'Plan to attend'}</button>
+    onClick={() => plans.add(event.id)}>{planned ? '✓ In My Schedule' : 'Plan to attend'}</button>
 }
 
 export function ScheduleFeedback({ plans, showWarning = true }: { plans: PersonalSchedule; showWarning?: boolean }) {

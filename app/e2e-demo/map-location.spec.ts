@@ -60,7 +60,6 @@ test('off campus: the map widens to show both, says how far, and an edge tag poi
   await expect(edge).toBeVisible()
   await page.screenshot({ path: info.outputPath('off-campus-edge.png') })
   await edge.click()
-  await page.waitForTimeout(900)
   await expect(page.locator('.me-dot')).toBeVisible()
 })
 

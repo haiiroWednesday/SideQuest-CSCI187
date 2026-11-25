@@ -3,7 +3,9 @@ import { useState, type FormEvent } from 'react'
 import { MAX_IDEA_NOTE, MAX_IDEA_TITLE, type Intention, type IntentionStatus } from '../controller/someday'
 import { displayDate, displayTime } from '../controller/findEvents'
 import { type CampusEvent } from '../controller/postEvent'
-import { SideQuestHeader, type SideQuestRoutes } from './DiscoverView'
+import { EventStub, SideQuestHeader, type SideQuestRoutes } from './DiscoverView'
+import { Bookmark } from './Marks'
+import { presentBrowseDetail } from '../controller/screenModels'
 import './someday.css'
 
 export type SomedayViewProps = {
@@ -129,15 +131,14 @@ export function SomedayView({
                         <p role="status">The previously linked event is unavailable. Your idea is still saved.</p>
                       )}
                       {event && (
-                        <div className="sq-someday-linked">
-                          <strong>{event.title}</strong>
-                          <span>{displayDate(event.date)}, {displayTime(event.start)}–{displayTime(event.end)} · {event.location}</span>
-                          {isPlanned ? (
-                            <span className="sq-someday-planned">Already in My Schedule</span>
-                          ) : (
-                            <button type="button" onClick={() => onPlan(event.id)}>Plan this event</button>
-                          )}
-                        </div>
+                        <ul className="sq-stubs sq-stubs-one sq-someday-match"><li>
+                          <EventStub compact dated stub={presentBrowseDetail(event, plannedIds)}>
+                            {isPlanned ? <>
+                              <span className="sq-planned-mark"><Bookmark label="In My Schedule" /></span>
+                              <span className="sq-someday-planned">In My Schedule</span>
+                            </> : <button type="button" className="sq-plan-button sq-someday-plan" onClick={() => onPlan(event.id)}>Plan this event</button>}
+                          </EventStub>
+                        </li></ul>
                       )}
                       <div className="sq-someday-actions">
                         {idea.status === 'deferred'

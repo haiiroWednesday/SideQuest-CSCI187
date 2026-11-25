@@ -22,7 +22,9 @@ for (const width of [390, 1280]) {
 
     // A friend's open invite: say "I'm in".
     const boba = page.getByTestId('open-invite').filter({ hasText: 'Boba run' })
-    await expect(boba).toContainText('Maya, to Swig 7th floor')
+    // the invite is a ticket now (Nov 24): who asked is the host, the groups it went to sit below
+    await expect(boba.locator('.sq-by b')).toHaveText('Maya')
+    await expect(boba.locator('.sq-oi-by')).toHaveText('To Swig 7th floor')
     await boba.getByRole('button', { name: /I'm in/ }).click()
     await expect(boba.getByRole('button', { name: "I'm out" })).toBeVisible()
     await expect(boba).toContainText('Jun + 1 in')
@@ -50,7 +52,7 @@ for (const width of [390, 1280]) {
     await shot('compose')
     await sheet.getByRole('button', { name: 'Send' }).click()
     await expect(sheet).toHaveCount(0)
-    const mine = page.getByTestId('open-invite').filter({ hasText: 'You, to Swig 7th floor' })
+    const mine = page.getByTestId('open-invite').filter({ has: page.locator('.sq-by b', { hasText: /^You$/ }) }).filter({ hasText: 'To Swig 7th floor' })
     await expect(mine).toContainText('Nobody in yet')
 
     // Sample friends who are free for all of it join a moment apart.
@@ -94,11 +96,15 @@ for (const width of [390, 1280]) {
     const sheet = page.getByRole('dialog', { name: "I'm free, who's in?" })
     await expect(sheet).toBeVisible()
     await shot('compose')
+    // With several groups none is ticked for you (ux 23): pick one, then Enter sends.
+    for (const box of await sheet.locator('.sq-oi-groups input').all()) await expect(box).not.toBeChecked()
+    await sheet.locator('.sq-oi-groups label', { hasText: 'Swig 7th floor' }).click()
+    await sheet.getByRole('button', { name: 'Send' }).focus()
     await page.keyboard.press('Enter')
     await expect(sheet).toHaveCount(0)
 
     await groupsTab.click()
-    await expect(page.getByTestId('open-invite').filter({ hasText: 'You, to' })).toHaveCount(1)
+    await expect(page.getByTestId('open-invite').filter({ has: page.locator('.sq-by b', { hasText: /^You$/ }) })).toHaveCount(1)
     // Opening Groups reads the inbox.
     await expect(page.locator('.sq-tab-groups .sq-badge-inbox')).toHaveCount(0)
     await shot('groups')

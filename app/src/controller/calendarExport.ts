@@ -6,6 +6,16 @@ import type { CampusEvent } from '../model/eventCatalog'
 export const CAMPUS_TIME_ZONE = 'America/Los_Angeles'
 export type CalendarEvent = Pick<CampusEvent, 'id' | 'title' | 'description' | 'location' | 'date' | 'start' | 'end'>
 
+// Building an Intl formatter is slow and this runs twice per Discover card, so make one and reuse it.
+let campusClock: Intl.DateTimeFormat | null = null
+function campusFormatter(): Intl.DateTimeFormat {
+  campusClock ??= new Intl.DateTimeFormat('en-US', {
+    timeZone: CAMPUS_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  })
+  return campusClock
+}
+
 /** Resolve a local California clock time only if it maps to one unambiguous UTC instant. */
 function calendarInstant(date: string, time: string): Date | null {
   if (!isValidDate(date) || toMinutes(time) === null) return null
@@ -13,10 +23,7 @@ function calendarInstant(date: string, time: string): Date | null {
   if (!match) return null
   const [hours, minutes] = time.split(':').map(Number)
   const wallClockAsUTC = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), hours, minutes)
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: CAMPUS_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-  })
+  const formatter = campusFormatter()
   // For modern SCU dates, Los Angeles uses UTC-7 or UTC-8.
   const matches = [7, 8].map(offset => new Date(wallClockAsUTC + offset * 60 * 60 * 1000))
     .filter(candidate => {

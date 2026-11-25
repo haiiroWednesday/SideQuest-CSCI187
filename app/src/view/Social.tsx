@@ -1,23 +1,25 @@
 // VIEW (design review): open invites, find a time for a group, and the small inbox count.
-// Rules live in controller/socialPlans, storage and sample friends in controller/socialStore.
+// Rules live in controller/socialPlans; the state (groups, invites, storage) in controller/groupsPreview,
+// handed in by the design-review provider (DesignReview.tsx, loaded only in that build).
 // This file draws them and passes taps back. Nothing here reads or sends a location.
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import {
-  audienceOf, bestPlanGroup, callOff, canMakePlan, commonDays, commonTime, inviteErrors, joinBlock, join, leaveInvite,
-  makeInvite, markPlanned, reachableGroups, visibleInvites, PLACE_MAX, TITLE_MAX,
+  audienceOf, canMakePlan, commonDays, inviteErrors, joinBlock, reachableGroups, PLACE_MAX, TITLE_MAX,
   type CommonTime, type InviteDraft, type OpenInvite, type SocialGroup, type Slot,
 } from '../controller/socialPlans'
-import { demoShares, initialSocial, readSocial, sampleJoiners, unreadCount, writeSocial, type SocialState } from '../controller/socialStore'
 import { clock, span } from '../controller/freeMarks'
-import { DEMO_YOU, demoFriendData, personColor } from './FriendsPreview'
+import { personColor } from '../controller/groupPeople'
+import { EventStub } from './DiscoverView'
+import { presentBrowseDetail } from '../controller/screenModels'
 import { TimePick } from './Pickers'
 import './social.css'
 
-type Ev = { id: string; title: string; location: string; date: string; start: string; end: string }
+export type SocialEvent = { id: string; title: string; location: string; date: string; start: string; end: string }
+type Ev = SocialEvent
 export type GroupFit = { groupId: string; name: string; windows: Slot[] }
-type Compose = { date: string; start: string; end: string; groupIds?: string[] }
+export type Compose = { date: string; start: string; end: string; groupIds?: string[] }
 
-type SocialApi = {
+export type SocialApi = {
   you: string
   groups: SocialGroup[]
   invites: OpenInvite[]
@@ -36,7 +38,7 @@ type SocialApi = {
   groupFit: GroupFit | null
   setGroupFit: (fit: GroupFit | null) => void
 }
-const SocialContext = createContext<SocialApi | null>(null)
+export const SocialContext = createContext<SocialApi | null>(null)
 export const useSocial = () => useContext(SocialContext)
 /** New open invites and answers since you last opened Groups. 0 outside the design review. */
 export const useInboxCount = () => useContext(SocialContext)?.unread ?? 0
@@ -50,85 +52,8 @@ function dayLabel(date: string, today: string): string {
 }
 const todayOf = (now: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(now)
 
-export function SocialProvider({ events, enabled, now, myFree, groupFit, onGroupFit, children }: {
-  events: readonly Ev[]
-  enabled: boolean
-  now: () => Date
-  /** Your free stretches this week, from the day bar. Free/busy only. */
-  myFree: readonly Slot[]
-  groupFit: GroupFit | null
-  onGroupFit: (fit: GroupFit | null) => void
-  children: ReactNode
-}) {
-  // Groups come from the Groups preview, read again whenever the page changes.
-  const [tick, setTick] = useState(0)
-  useEffect(() => {
-    const bump = () => setTick(t => t + 1)
-    addEventListener('hashchange', bump); addEventListener('focus', bump)
-    return () => { removeEventListener('hashchange', bump); removeEventListener('focus', bump) }
-  }, [])
-  const groups: SocialGroup[] = useMemo(() => enabled ? demoFriendData(events).groups : [],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [events, enabled, tick])
-  const [state, setState] = useState<SocialState>(() => readSocial() ?? initialSocial(enabled ? demoFriendData(events).groups : [], now()))
-  useEffect(() => { if (enabled) writeSocial(state) }, [state, enabled])
-  const [composing, setComposing] = useState<Compose | null>(null)
-  const timers = useRef<number[]>([])
-  useEffect(() => () => timers.current.forEach(t => clearTimeout(t)), [])
-
-  const notice = (text: string, inviteId?: string) => ({ id: 'n' + Date.now() + Math.random().toString(36).slice(2, 6), text, at: Date.now(), inviteId })
-  const updateInvite = useCallback((id: string, fn: (i: OpenInvite) => OpenInvite) =>
-    setState(s => ({ ...s, invites: s.invites.map(i => i.id === id ? fn(i) : i) })), [])
-
-  const send = useCallback((draft: InviteDraft) => {
-    const invite = makeInvite(draft, DEMO_YOU, 'i' + Date.now())
-    setState(s => ({ ...s, invites: [invite, ...s.invites] }))
-    // Sample friends who are free for all of it say "I'm in", a moment apart. Real answers arrive over the live channel.
-    sampleJoiners(invite, groups, now()).forEach((p, k) => {
-      timers.current.push(window.setTimeout(() => setState(s => ({
-        ...s,
-        invites: s.invites.map(i => i.id === invite.id ? join(i, p, groups, now()) : i),
-        notices: [...s.notices, notice(`${p} is in for ${invite.title}`, invite.id)],
-      })), 1600 + k * 1400))
-    })
-  }, [groups, now])
-
-  const api = useMemo<SocialApi | null>(() => enabled ? {
-    you: DEMO_YOU, groups, now,
-    invites: visibleInvites(state.invites, DEMO_YOU, groups, now()),
-    unread: unreadCount(state),
-    markRead: () => setState(s => unreadCount(s) ? { ...s, readAt: Date.now() } : s),
-    compose: c => setComposing(c),
-    join: id => updateInvite(id, i => join(i, DEMO_YOU, groups, now())),
-    leave: id => updateInvite(id, i => leaveInvite(i, DEMO_YOU)),
-    callOff: id => updateInvite(id, i => callOff(i, DEMO_YOU)),
-    planned: id => {
-      const inv = state.invites.find(i => i.id === id)
-      if (!inv || !canMakePlan(inv, DEMO_YOU, now())) return null
-      const g = bestPlanGroup(inv, groups)
-      if (g) updateInvite(id, i => markPlanned(i, g))
-      return g
-    },
-    sharing: gid => state.sharing.includes(gid),
-    setSharing: (gid, on) => setState(s => ({ ...s, sharing: on ? [...new Set([...s.sharing, gid])] : s.sharing.filter(x => x !== gid) })),
-    common: gid => {
-      const g = groups.find(x => x.id === gid)
-      if (!g) return { windows: [], shared: [], notShared: [], locked: true }
-      return commonTime(g, demoShares(groups, DEMO_YOU, myFree, state.sharing, now()), DEMO_YOU, now())
-    },
-    groupFit, setGroupFit: onGroupFit,
-  } : null, [enabled, groups, now, state, updateInvite, myFree, groupFit, onGroupFit])
-
-  return (
-    <SocialContext.Provider value={api}>
-      {children}
-      {api && composing && <ComposeSheet api={api} events={events} start={composing} onSend={d => { send(d); setComposing(null) }} onClose={() => setComposing(null)} />}
-    </SocialContext.Provider>
-  )
-}
-
 /** "I'm free, who's in?": two taps from a free stretch (open, Send). Everything else is optional. */
-function ComposeSheet({ api, events, start, onSend, onClose }: {
+export function ComposeSheet({ api, events, start, onSend, onClose }: {
   api: SocialApi; events: readonly Ev[]; start: Compose; onSend: (d: InviteDraft) => void; onClose: () => void
 }) {
   const mine = reachableGroups(api.groups, api.you)
@@ -137,7 +62,8 @@ function ComposeSheet({ api, events, start, onSend, onClose }: {
   const [eventId, setEventId] = useState<string | undefined>()
   const [from, setFrom] = useState(start.start)
   const [until, setUntil] = useState(start.end)
-  const [groupIds, setGroupIds] = useState<string[]>(start.groupIds ?? mine.map(g => g.id))
+  // Only the group you started from, or your one group. Never every group at once (ux 23).
+  const [groupIds, setGroupIds] = useState<string[]>(start.groupIds ?? (mine.length === 1 ? [mine[0].id] : []))
   const [errors, setErrors] = useState<Record<string, string>>({})
   const dialog = useRef<HTMLDivElement>(null)
   const sendRef = useRef<HTMLButtonElement>(null)
@@ -228,7 +154,7 @@ export function OpenInvites({ onMakePlan }: { onMakePlan: (invite: OpenInvite, g
         <button type="button" className="sq-plan-button sq-oi-start" onClick={startFromGroups}>I'm free, who's in?</button>
       </div>
       {api.invites.length === 0 ? <p className="sq-oi-none">No open invites right now.</p> : (
-        <ul className="sq-oi-list">
+        <ul className="sq-stubs sq-stubs-one sq-oi-list">
           {api.invites.map(inv => {
             const mineInv = inv.by === api.you
             const block = joinBlock(inv, api.you, api.groups, api.now())
@@ -236,27 +162,24 @@ export function OpenInvites({ onMakePlan }: { onMakePlan: (invite: OpenInvite, g
             const names = api.groups.filter(g => inv.groupIds.includes(g.id)).map(g => g.name).join(', ')
             return (
               <li key={inv.id} className={`sq-oi-card${inv.status === 'planned' ? ' sq-oi-planned' : ''}`} data-testid="open-invite">
-                <span className="sq-oi-time"><b>{span(toMin(inv.start), toMin(inv.end))}</b><small>{dayLabel(inv.date, today)}</small></span>
-                <span className="sq-oi-body">
-                  <strong>{inv.title}</strong>
-                  {inv.place && <span>{inv.place}</span>}
-                  <small>{mineInv ? `You, to ${names}` : `${inv.by}, to ${names}`}</small>
+                <EventStub face={Boolean(inv.place)} dated stub={presentBrowseDetail({ id: inv.id, title: inv.title, location: inv.place ?? '', date: inv.date, start: inv.start, end: inv.end, hostName: mineInv ? 'You' : inv.by }, [], api.now())}>
+                  <span className="sq-oi-by">To {names}</span>
                   <span className="sq-oi-in" role="group" aria-label={inv.joins.length ? `In: ${inv.joins.join(', ')}` : 'Nobody in yet'}>
                     {inv.joins.length ? <>
                       <span className="sq-oi-faces" aria-hidden="true">{inv.joins.slice(0, 4).map(n => <i key={n} style={{ background: personColor(n) }}>{n[0]}</i>)}</span>
                       <b aria-hidden="true">{inv.joins.length === 1 ? `${inv.joins[0]} is in` : `${inv.joins[0]} + ${inv.joins.length - 1} in`}</b>
                     </> : <em aria-hidden="true">Nobody in yet</em>}
                   </span>
-                </span>
-                <span className="sq-oi-acts">
-                  {inv.status === 'planned' ? <b className="sq-fr-status sq-fr-status-confirmed">A plan now</b>
-                    : mineInv ? <>
-                      {canMakePlan(inv, api.you, api.now()) && <button type="button" className="sq-plan-button" onClick={() => { const g = api.planned(inv.id); if (g) onMakePlan(inv, g) }}>Make it a plan</button>}
-                      <button type="button" className="sq-dab-link" onClick={() => api.callOff(inv.id)}>Call it off</button>
-                    </> : inIt
-                      ? <button type="button" className="sq-dab-link" onClick={() => api.leave(inv.id)}>I'm out</button>
-                      : <button type="button" className="sq-plan-button" disabled={Boolean(block)} onClick={() => api.join(inv.id)}>I'm in<span className="sq-visually-hidden"> for {inv.title}</span></button>}
-                </span>
+                  <span className="sq-oi-acts">
+                    {inv.status === 'planned' ? <b className="sq-fr-status sq-fr-status-confirmed">A plan now</b>
+                      : mineInv ? <>
+                        {canMakePlan(inv, api.you, api.now()) && <button type="button" className="sq-plan-button" onClick={() => { const g = api.planned(inv.id); if (g) onMakePlan(inv, g) }}>Make it a plan</button>}
+                        <button type="button" className="sq-dab-link" onClick={() => api.callOff(inv.id)}>Call it off</button>
+                      </> : inIt
+                        ? <button type="button" className="sq-dab-link" onClick={() => api.leave(inv.id)}>I'm out</button>
+                        : <button type="button" className="sq-plan-button" disabled={Boolean(block)} onClick={() => api.join(inv.id)}>I'm in<span className="sq-visually-hidden"> for {inv.title}</span></button>}
+                  </span>
+                </EventStub>
               </li>
             )
           })}

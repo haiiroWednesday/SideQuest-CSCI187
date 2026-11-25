@@ -70,12 +70,15 @@ for (const c of CASES) for (const width of [390, 1280]) {
     const shot = shooter(page, info)
     await seed(page, c.events, width)
     await expect(page.getByRole('heading', { name: 'My Schedule', level: 1 })).toBeVisible()
-    if (c.conflicts) await expect(page.getByText(`${c.conflicts} clash`).first()).toBeVisible()
+    // The badge counts clashes (each case here has one), not the plans inside it.
+    if (c.conflicts) await expect(page.getByText('1 clash', { exact: true }).first()).toBeVisible()
     else await expect(page.getByText(/\d+ clash/)).toHaveCount(0)
     await expect(page.getByRole('group', { name: 'Schedule view' }).getByRole('button')).toHaveText(['Trail', 'Tickets'])
     for (const mode of ['Trail', 'Tickets']) {
-      await page.getByRole('button', { name: mode, exact: true }).first().click()
-      await page.waitForTimeout(500)
+      const toggle = page.getByRole('group', { name: 'Schedule view' }).getByRole('button', { name: mode, exact: true })
+      await toggle.click()
+      await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+      if (mode === 'Trail') await expect(page.locator('.sqm-trail').first()).toBeVisible()
       // Every plan is drawn once in the day view.
       for (const e of c.events) await expect(page.locator(`.sqm-plan[aria-label^="${e[3]},"]`).first()).toBeAttached()
       if (mode === 'Trail') {
@@ -102,25 +105,12 @@ test('mobile schedule colour key is reachable by keyboard', async ({ page }) => 
   await expect(key).toBeFocused()
 })
 
-// The date stamp on Discover, for every weekday and month-name length.
-const STAMP_DAYS = ['2026-11-23', '2026-11-24', '2026-12-02', '2027-01-07', '2027-02-05', '2027-05-01', '2027-09-12', '2027-03-31']
-for (const d of STAMP_DAYS) {
-  test(`date stamp reads right on ${d}`, async ({ page }, info) => {
-    await page.setViewportSize({ width: 390, height: 844 })
-    await page.clock.install({ time: new Date(`${d}T18:40:00Z`) })
-    await page.goto('/demo.html#discover')
-    const stamp = page.locator('.sq-stamp').first()
-    await expect(stamp).toBeVisible()
-    const dt = new Date(`${d}T12:00:00Z`)
-    const dow = dt.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' }).toUpperCase()
-    const mon = dt.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase()
-    const text = (await stamp.textContent()) ?? ''
-    expect(text).toContain(dow)
-    expect(text).toContain(mon)
-    expect(text).toContain(String(dt.getUTCDate()))
-    // The ring text stays inside the stamp.
-    const box = await stamp.boundingBox(), svg = await stamp.locator('svg').boundingBox()
-    expect(svg!.width).toBeLessThanOrEqual(box!.width + 2)
-    await stamp.screenshot({ path: info.outputPath(`stamp-${d}.png`) })
-  })
-}
+// The big date stamp left Discover by owner decision (Nov 25). Its tests, one per weekday and month-name
+// length, are kept in /home/claude/backup/discover-cuts/schedule-cases.spec.ts in case it comes back.
+test('Discover has no date stamp beside its heading', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.clock.install({ time: NOW })
+  await page.goto('/demo.html#discover')
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await expect(page.locator('.sq-gaps-head .sq-stamp')).toHaveCount(0)
+})

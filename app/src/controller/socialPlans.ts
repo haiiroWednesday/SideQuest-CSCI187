@@ -11,8 +11,10 @@
 //   with an optional place (review v5.1's open Activity proposal).
 // No location is read, stored or sent. An invite's place is what the sender typed.
 import { campusNow } from '../model/eventCatalog'
+import { GROUP_SIZE_LIMIT } from '../model/groupPlans'
 
-export const GROUP_LIMIT = 12
+/** The one group size (model/groupPlans): you plus everyone who joined stay within it. */
+export const GROUP_LIMIT = GROUP_SIZE_LIMIT
 export const TITLE_MAX = 80
 export const PLACE_MAX = 80
 export const SHARE_DAYS = 7

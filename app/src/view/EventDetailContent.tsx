@@ -9,6 +9,7 @@ import { useQuiet } from './quietContext'
 import { DateStamp } from './DateStamp'
 import type React from 'react'
 import { Bookmark, NowMark } from './Marks'
+import { shownHost } from './shownHost'
 import { GoingFaces, ShareGoing } from './FriendsGoing'
 
 export type SelectedDetailState =
@@ -22,19 +23,22 @@ type DetailProps = {
   verified: SelectedDetailState | null
   onRetryDetail?: () => void
   onPlan?: (eventId: string) => void
+  /** Take a planned event out of My Schedule from its open card. */
+  onRemove?: (eventId: string) => void
   planningBlocked: boolean
   onClose: () => void
   /** More for this card from Discover, drawn inside it (the host's food control, where the event came from). */
   extras?: React.ReactNode
 }
 
-function VerifiedEventDetails({ event, onPlan, planningBlocked }: {
+function VerifiedEventDetails({ event, onPlan, onRemove, planningBlocked }: {
   event: StubModel
   onPlan?: (eventId: string) => void
+  onRemove?: (eventId: string) => void
   planningBlocked: boolean
 }) {
   const quiet = useQuiet()
-  if (quiet) return <QuietDetails event={event} onPlan={onPlan} planningBlocked={planningBlocked} />
+  if (quiet) return <QuietDetails event={event} onPlan={onPlan} onRemove={onRemove} planningBlocked={planningBlocked} />
   return (
     <>
       <div className="sq-sticker-top">
@@ -84,6 +88,7 @@ function VerifiedEventDetails({ event, onPlan, planningBlocked }: {
           {event.planned ? 'In My Schedule' : '+ Plan to attend'}
         </button>
       )}
+      {event.planned && onRemove && <RemovePlan event={event} onRemove={onRemove} disabled={planningBlocked} />}
     </>
   )
 }
@@ -109,7 +114,12 @@ export function QuietTop({ event, live }: { event: StubModel; live: React.ReactN
 }
 
 /** The short card: the stamp carries the date, icons replace labels, and one big tick says "planned". */
-function QuietDetails({ event, onPlan, planningBlocked }: { event: StubModel; onPlan?: (eventId: string) => void; planningBlocked: boolean }) {
+/** A planned event can leave My Schedule from its own card; the toast that follows offers Undo. */
+function RemovePlan({ event, onRemove, disabled }: { event: StubModel; onRemove: (eventId: string) => void; disabled: boolean }) {
+  return <button type="button" className="sq-text-button sq-remove sq-card-remove" disabled={disabled} onClick={() => onRemove(event.id)}>Remove<span className="sq-visually-hidden"> {event.title} from My Schedule</span></button>
+}
+
+function QuietDetails({ event, onPlan, onRemove, planningBlocked }: { event: StubModel; onPlan?: (eventId: string) => void; onRemove?: (eventId: string) => void; planningBlocked: boolean }) {
   const now = event.live?.kind === 'now'
   return (
     <>
@@ -117,13 +127,13 @@ function QuietDetails({ event, onPlan, planningBlocked }: { event: StubModel; on
       <div className="sq-sticker-body">
         <h2 id="sq-detail-title" className={titleSizeClass(event.title)}>{event.title}</h2>
         <ul className="sq-quiet-facts">
-          {event.host && <li><svg viewBox="0 0 24 24" aria-label="Host" role="img"><circle cx="12" cy="8" r="4" /><path d="M4 21c1-5 4-7 8-7s7 2 8 7" /></svg>{event.host}</li>}
+          {shownHost(event) && <li><svg viewBox="0 0 24 24" aria-label="Host" role="img"><circle cx="12" cy="8" r="4" /><path d="M4 21c1-5 4-7 8-7s7 2 8 7" /></svg>{event.host}</li>}
           <li><svg viewBox="0 0 24 24" aria-label="Where" role="img"><path d="M12 22s7-7 7-12a7 7 0 1 0-14 0c0 5 7 12 7 12z" /><circle cx="12" cy="10" r="2.5" /></svg>
             {event.location.trim() ? <a href={`#map/${encodeURIComponent(event.location.trim())}`}>{event.location}</a> : 'Place not given'}</li>
         </ul>
         {(event.organizer || event.contact || (ACCESS_POLICY_ON && event.accessibility)) && <ul className="sq-quiet-facts sq-quiet-access">
           {(event.organizer || event.contact) && <li><svg viewBox="0 0 24 24" aria-label="Contact" role="img"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3.5 6.5 8.5 6 8.5-6" /></svg>
-            <span>{event.organizer}{event.organizer && event.contact && <span className="sq-access-sep">{' · '}</span>}{event.contact}</span></li>}
+            <span>{event.organizer}{event.organizer && event.contact && <span className="sq-access-sep">{' · '}</span>}{event.contact && <span className="sq-access-contact">{event.contact.split('@').map((part, i) => i ? <span key={i}>@<wbr />{part}</span> : part)}</span>}</span></li>}
           {ACCESS_POLICY_ON && event.accessibility && <li><svg viewBox="0 0 24 24" aria-label="Accessibility" role="img"><circle cx="12" cy="4.5" r="2" /><path d="M5 8.5c2.3.7 4.6 1 7 1s4.7-.3 7-1M12 9.5v5m0 0-3 6.5m3-6.5 3 6.5" /></svg><span>{event.accessibility}</span></li>}
         </ul>}
         <GoingFaces eventId={event.id} big />
@@ -132,13 +142,13 @@ function QuietDetails({ event, onPlan, planningBlocked }: { event: StubModel; on
       </div>
       {onPlan && <ShareGoing eventId={event.id} planned={event.planned} />}
       {onPlan && (event.planned
-        ? <div className="sq-quiet-planned"><Bookmark label="In My Schedule" big /><span aria-hidden="true">Planned</span></div>
+        ? <div className="sq-quiet-planned"><Bookmark label="In My Schedule" big /><span aria-hidden="true">Planned</span>{onRemove && <RemovePlan event={event} onRemove={onRemove} disabled={planningBlocked} />}</div>
         : <button className="sq-plan-button" type="button" disabled={planningBlocked} onClick={() => onPlan(event.id)}>Plan it</button>)}
     </>
   )
 }
 
-export function EventDetailContent({ selected, verified, onRetryDetail, onPlan, planningBlocked, onClose, extras }: DetailProps) {
+export function EventDetailContent({ selected, verified, onRetryDetail, onPlan, onRemove, planningBlocked, onClose, extras }: DetailProps) {
   const quiet = useQuiet()
   if (!selected) {
     return (
@@ -172,7 +182,7 @@ export function EventDetailContent({ selected, verified, onRetryDetail, onPlan, 
           )}
         </div>
       ) : (
-        <VerifiedEventDetails event={selected} onPlan={onPlan} planningBlocked={planningBlocked} />
+        <VerifiedEventDetails event={selected} onPlan={onPlan} onRemove={onRemove} planningBlocked={planningBlocked} />
       )}
       {extras && <div className="sq-detail-extras">{extras}</div>}
     </div>

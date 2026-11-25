@@ -1,7 +1,7 @@
 // CONTROLLER: expose free-window matching to both M2 Discover and M1 fixtures.
 // Historical M1 posting/storage helpers remain for compatibility.
 import {
-  todayLocalISO, validateEventDraft, validateSearchWindow, matchingEvents,
+  hhmmOf, todayLocalISO, validateEventDraft, validateSearchWindow, matchingEvents,
   removeEventFromList, restoreEventInList, isPastEventDate,
   readStoredEvents, readStoredEventsChecked, saveStoredEvents, type CampusEvent, type EventDraft,
   type StoredEventsState, type RemovedEvent,
@@ -31,8 +31,7 @@ export function initialEventWindow(now: Date = new Date()): Pick<EventDraft, 'da
     const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
     return { date: todayLocalISO(tomorrow), start: '14:30', end: '15:30' }
   }
-  const hhmm = (minutes: number) =>
-    String(Math.floor(minutes / 60)).padStart(2, '0') + ':' + String(minutes % 60).padStart(2, '0')
+  const hhmm = hhmmOf
   return { date: todayLocalISO(now), start: hhmm(start), end: hhmm(start + EVENT_DEFAULT_DURATION_MINUTES) }
 }
 

@@ -4,9 +4,10 @@ import {
   createEventCatalog, EventCatalogError, firstFieldError, postingDraftErrors,
   type CampusEvent, type CatalogFieldErrors, type EventCatalogPort, type EventDraft,
 } from '../model/eventCatalog'
-import { createBrowserEventTable, type CatalogStorage } from '../model/browserEventTable'
+import { browserCatalogUnreadable, createBrowserEventTable, recoverBrowserCatalog, type CatalogStorage } from '../model/browserEventTable'
 import { readCatalogWithDeadline, CatalogReadTimeoutError } from './catalogReads'
 import { createHttpEventCatalog } from '../model/httpEventCatalog'
+import { deviceStorage } from '../model/deviceStorage'
 
 export type { CampusEvent, CatalogFieldErrors, EventCatalogPort, EventDraft } from '../model/eventCatalog'
 
@@ -29,10 +30,17 @@ export function connectEventCatalog(env: Readonly<Record<string, unknown>>, stor
 // never prevent a configured shared catalog from starting.
 export function browserStorage(): CatalogStorage {
   return {
-    getItem: key => window.localStorage.getItem(key),
-    setItem: (key, value) => window.localStorage.setItem(key, value),
+    // Blocked storage falls back to memory for the visit (model/deviceStorage).
+    getItem: key => deviceStorage().getItem(key),
+    setItem: (key, value) => deviceStorage().setItem(key, value),
   }
 }
+
+/** The browser-only catalog holds data that cannot be read: Discover offers recovery, as My Schedule does. */
+export function localCatalogDamaged(): boolean { return browserCatalogUnreadable(browserCatalogStorage) }
+/** Keeps the events that still read, drops the damaged rest. Call only after the student agrees. */
+export function recoverLocalCatalog(): boolean { return recoverBrowserCatalog(browserCatalogStorage) }
+export const CATALOG_RECOVERY_CONFIRMATION = 'Replace unreadable saved events with the ones that can still be read? Unreadable entries will be discarded.'
 
 export function connectBrowserEventCatalog(env: Readonly<Record<string, unknown>> = {}): ConnectedCatalog {
   return connectEventCatalog(env, browserStorage())

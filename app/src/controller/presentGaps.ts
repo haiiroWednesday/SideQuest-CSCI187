@@ -1,6 +1,6 @@
 // CONTROLLER: today's free gaps, read from the student's own plans (and later their calendar).
 // The view draws the ruler from the percentages here; it never does time math itself.
-import type { LegacyCampusEvent } from '../model/events'
+import { clockText, hhmmOf, toMinutes, type LegacyCampusEvent } from '../model/events'
 import { campusNow } from '../model/eventCatalog'
 
 export type GapPart = 'now' | 'afternoon' | 'tonight'
@@ -28,9 +28,9 @@ const DAY_START = 8 * 60
 const DAY_END = 23 * 60
 const MIN_GAP = 45
 
-const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
-const toHHMM = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
-const short = (m: number) => { const h = Math.floor(m / 60), mm = m % 60; return `${h % 12 || 12}${mm ? ':' + String(mm).padStart(2, '0') : ''}` }
+const toMin = (t: string) => toMinutes(t) ?? NaN
+const toHHMM = hhmmOf
+const short = (m: number) => clockText(m, false)
 const pct = (m: number) => Math.round(((m - DAY_START) / (DAY_END - DAY_START)) * 1000) / 10
 
 export function presentGaps(input: { events: readonly LegacyCampusEvent[]; plannedIds: readonly string[]; now?: Date }): GapsModel {
@@ -84,6 +84,6 @@ export function pickedBand(model: GapsModel, window: { date: string; start: stri
   if (!window.date || !window.start || !window.end || window.date !== model.date) return null
   const a = Math.max(toMin(window.start), DAY_START), b = Math.min(toMin(window.end), DAY_END)
   if (b <= a) return null
-  const fmt = (m: number) => { const h = Math.floor(m / 60) % 12 || 12; const mm = m % 60; return mm ? `${h}:${String(mm).padStart(2, '0')}` : `${h}` }
+  const fmt = (m: number) => clockText(m, false)
   return { left: pct(a), width: pct(b) - pct(a), label: `${fmt(a)}–${fmt(b)}` }
 }

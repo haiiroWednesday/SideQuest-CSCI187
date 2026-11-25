@@ -45,9 +45,11 @@ test('My day shows an unplanned event on its day as a preview, and Plan it adds 
   await expect(preview).toBeInViewport()
   await expect(preview).toHaveAttribute('aria-label', /not planned yet/)
   await shot('preview')
-  const before = Number(await page.locator('.sq-stats dd').first().innerText())
+  // My Schedule no longer shows a "planned" count (Nov 25), so the saved plans are counted instead.
+  const planned = () => page.evaluate(() => (JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1') ?? '[]') as string[]).length)
+  const before = await planned()
   await page.locator('.sqm-open-preview').getByRole('button', { name: 'Plan it' }).click()
-  await expect(page.locator('.sq-stats dd').first()).toHaveText(String(before + 1))
+  await expect.poll(planned).toBe(before + 1)
   await expect(page.locator('.sqm-plan.sqm-preview')).toHaveCount(0)
 })
 

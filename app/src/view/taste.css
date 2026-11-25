@@ -1,0 +1,161 @@
+/* TASTE PASS. Loaded last.
+   One rule behind every change here: paper stays quiet and ink does the talking, so each screen has
+   one loud thing (the event), and every material keeps one job:
+   ticket = an event, brush = a button, washi = a filter, gold = free time and today. */
+
+/* ---------- Free time on the day bar: a flat highlighter swipe, no glow, no capsule ---------- */
+.sq-mbar-free {
+  top: 11px; bottom: 11px; border-radius: 2px 5px 3px 6px / 6px 3px 5px 2px;
+  background: #f6cd62; box-shadow: none; transform: skewX(-6deg); mix-blend-mode: multiply;
+}
+.sq-key-free { border-radius: 2px; background: #f6cd62; box-shadow: none; transform: skewX(-10deg); }
+/* The pen line under the bar crossed every block and read as a mistake. */
+.sq-mbar-paper::after { content: none; }
+
+/* ---------- Free and busy rows under the bar: plain rows, no tape, one link style ---------- */
+.sq-slip::after { content: none; }
+.sq-slip-free, .sq-slip-mine { padding-left: 12px; }
+.sq-slip .sq-slip-act, .sq-slip .sq-oi-slot, .sq-slip button:not(.sq-slip-x) {
+  text-decoration-style: solid; text-decoration-thickness: 1px; text-underline-offset: 4px;
+}
+
+/* ---------- Our pick: the same anatomy as a ticket (time on a stub, the event beside it) ---------- */
+.sq-onepicks { margin: 22px 0 10px; }
+.sq-onepick { padding: 0; }
+.sq-onepick::before {
+  -webkit-mask: none; mask: none; filter: none; background: #fffaf2;
+  border: 1.5px solid rgba(110, 74, 60, .5); border-radius: 3px;
+  outline: 1px solid rgba(110, 74, 60, .22); outline-offset: -6px;
+}
+.sq-onepick-when { margin: 0; padding: 14px 20px 0; font: 400 22px/1.2 var(--font-display); -webkit-text-stroke: .7px currentColor; color: var(--sq-ink, #302421); }
+.sq-onepick-when b { -webkit-text-stroke: 0; font: 800 12px var(--font-sans); letter-spacing: .14em; color: #8a5a12; margin-right: 8px; vertical-align: 2px; }
+.sq-onepick-main { display: grid; grid-template-columns: max-content 1fr; gap: 0; padding: 12px 20px 16px; align-items: start; }
+.sq-onepick-stub {
+  padding: 4px 14px 4px 0; margin-right: 16px; border-right: 1.5px dotted rgba(110, 74, 60, .5);
+  color: var(--sq-red-deep, #751728); align-self: stretch; display: grid; align-content: start; gap: 2px;
+}
+.sq-onepick-stub b { font: 400 21px/1.15 var(--font-display); -webkit-text-stroke: .7px currentColor; white-space: nowrap; }
+.sq-onepick-stub small { font: 500 15px/1.2 var(--font-sans); color: var(--sq-ink, #302421); white-space: nowrap; }
+.sq-onepick-body { display: grid; gap: 3px; min-width: 0; }
+.sq-onepick-label { display: inline-flex; align-items: center; gap: 6px; color: #8a5a12; }
+.sq-onepick-label::before { content: "✦" / ""; color: #e8aa24; font-size: 14px; letter-spacing: 0; }
+.sq-onepick-facts { font: 650 15px/1.35 var(--font-sans); }
+.sq-onepick-why { font: 500 15px/1.4 var(--font-sans); }
+.sq-onepick-more { font-size: 14px; }
+.sq-onepick-more { margin: 0; padding: 0 20px 14px; }
+.sq-onepick-plan { margin: 0 20px; padding: 14px 0 16px; border-top: 1.5px dotted rgba(110, 74, 60, .5); }
+.sq-onepick-est { font-size: 12px; opacity: .8; }
+
+/* ---------- My Schedule: plans speak first, prompts whisper ---------- */
+/* "3 hr free" invites; it should not outshout the plans around it. */
+.sqm-fold a { font: 600 14px/1.2 var(--font-sans) !important; color: #8a5a12 !important; text-decoration: none; }
+.sqm-fold a:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* The colour key wraps onto a second line instead of being cut at the screen edge. */
+.sqm-key { flex-wrap: wrap !important; overflow: visible; white-space: normal; row-gap: 6px !important; }
+/* A clash is a margin note in red ink, not a strip of tape (tape is for filters). */
+.sq-warn { padding: 6px 0 6px 14px !important; transform: none; border-left: 2px solid var(--sq-red, #a32035) !important; }
+.sq-warn::before { content: none; }
+/* The nav badge appears only for clashes, so it is red ink on cream, the app's one warning colour. */
+.sq-badge.sq-badge-clash { color: var(--sq-red, #a32035) !important; }
+.sq-badge.sq-badge-clash::before { background: #fffaf2 !important; box-shadow: 0 0 0 1.5px var(--sq-red, #a32035); }
+/* The Groups inbox badge was white on gold (2:1). Ink on gold reads. */
+.sq-badge.sq-badge-inbox { color: var(--sq-ink, #302421) !important; }
+
+/* ---------- Text actions: an arrow promises another page, so in-place actions carry none ---------- */
+button.sq-dab-link::after, button.sq-text-button::after, .sq-remove::after { content: none; }
+
+/* ---------- Groups ---------- */
+.sq-fr-groups > p, .sq-fr-preview-note { font: 500 14px/1.4 var(--font-sans) !important; color: var(--sq-muted, #7a6a62) !important; margin: 0 0 12px; }
+
+/* ---------- Forms: one field style (Post's underline), one button (the brush) ---------- */
+.sq-someday-form input, .sq-someday-form textarea, .sq-someday-page select, .sq-fr-new input, .sq-oi-field input {
+  border: 0 !important; border-bottom: 1.5px solid rgba(110, 74, 60, .55) !important; border-radius: 0 !important;
+  background: transparent !important; box-shadow: none !important; padding-left: 2px !important;
+}
+.sq-someday-form textarea { border: 1.5px dashed rgba(110, 74, 60, .45) !important; padding: 10px 12px !important; }
+.sq-someday-form :is(input, textarea):focus-visible, .sq-fr-new input:focus-visible, .sq-oi-field input:focus-visible {
+  outline: 3px solid var(--sq-focus, #751728); outline-offset: 2px;
+}
+/* Placeholders are hints, so they are lighter sans, never the serif a typed value could use. */
+.event-form ::placeholder, .sq-someday-form ::placeholder, .sq-fr-new ::placeholder, .sq-oi-field ::placeholder {
+  font: 500 16px/1.4 var(--font-sans) !important; color: #8f8177 !important; opacity: 1;
+}
+.sq-someday-page .sq-someday-add {
+  border-radius: 0 !important; padding: 12px 26px !important; min-height: 48px; font: 700 16px var(--font-sans) !important;
+  -webkit-mask: url('./assets/mat-brush.svg') 0 0 / 100% 100% no-repeat; mask: url('./assets/mat-brush.svg') 0 0 / 100% 100% no-repeat;
+}
+.sq-someday-page .sq-someday-add:disabled { background: #cdbfb4 !important; color: #fffaf2 !important; }
+
+/* ---------- Phone: nothing hides under the bottom bar or its star ---------- */
+@media (max-width: 760px) {
+  .sq-main { padding-bottom: calc(118px + env(safe-area-inset-bottom)) !important; }
+  html { scroll-padding-bottom: calc(118px + env(safe-area-inset-bottom)); }
+}
+
+/* ---------- Clash sheet and Tickets mode: square paper, no capsules ---------- */
+.sq-clash-bar { border-radius: 2px !important; }
+/* One short brush per ticket. The sheet's heading already says what a clash is. */
+.sq-clash-plan .sq-plan-button, .sq-clash-sheet .sq-stub .sq-plan-button { width: auto !important; padding: 10px 22px !important; font-size: 16px !important; min-height: 46px; }
+/* Trail / Tickets is a pair of tabs like Discover's List / Map: the chosen one gets the brush, no pill outline. */
+.sqm-toggle { border: 0 !important; border-radius: 0 !important; background: none !important; padding: 0 !important; gap: 4px; }
+.sqm-toggle button { border-radius: 0 !important; }
+
+/* ---------- Open card: "My day" and "Walk there" go somewhere, so they are text links, not tape ---------- */
+.sq-handoffs { gap: 6px 22px; flex-wrap: wrap; }
+.sq-handoffs::before { content: none; }
+.sq-handoff { padding: 0 !important; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; text-decoration-color: rgba(110, 74, 60, .45); }
+.sq-handoff + .sq-handoff::before { content: none; }
+
+/* ---------- Laptop: a ticket keeps a ticket's width, however wide the page ---------- */
+@media (min-width: 761px) {
+  .sq-oi-list > li, .sq-oi-card { max-width: 620px; }
+}
+
+/* ---------- Sign in: the same paper, field and brush as the rest of the app ---------- */
+.sq-login-form {
+  border-radius: 3px; border: 1.5px solid rgba(110, 74, 60, .5); background: #fffaf2; box-shadow: none;
+  outline: 1px solid rgba(110, 74, 60, .22); outline-offset: -7px; max-width: 520px; gap: 16px; padding: clamp(24px, 5vw, 40px);
+}
+.sq-login-form h2 { font-size: 28px; -webkit-text-stroke: .6px currentColor; }
+.sq-login-form label { font: 800 12px/1.3 var(--font-sans); letter-spacing: .14em; text-transform: uppercase; color: var(--sq-red, #a32035); }
+.sq-login-form input {
+  border: 0; border-bottom: 1.5px solid rgba(110, 74, 60, .55); border-radius: 0; background: transparent; padding: 10px 2px; font-size: 18px;
+}
+.sq-login-form input:disabled { background: transparent; color: var(--sq-muted, #7a6a62); border-bottom-style: dashed; }
+.sq-login-form input::placeholder { color: #8f8177; opacity: 1; }
+.sq-login-form input#sq-login-code { font: 400 30px/1.2 var(--font-display); letter-spacing: .22em; }
+.sq-login-form > button[type="submit"] {
+  border: 0; border-radius: 0; min-height: 50px; padding: 12px 30px; font: 700 17px var(--font-sans); position: relative; isolation: isolate; background: none;
+}
+/* The brush sits on a layer behind the label, so the focus ring is not clipped by the brush shape. */
+.sq-login-form > button[type="submit"]::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; background: var(--sq-red-deep, #751728);
+  -webkit-mask: url('./assets/mat-brush.svg') 0 0 / 100% 100% no-repeat; mask: url('./assets/mat-brush.svg') 0 0 / 100% 100% no-repeat;
+}
+.sq-login-form > button[type="submit"]:focus-visible { outline: 3px solid var(--sq-focus, #751728); outline-offset: 4px; }
+.sq-login-error { border-left: 2px solid var(--sq-red, #a32035); background: none; padding: 4px 0 4px 12px; color: var(--sq-red-deep, #751728); }
+.sq-login-sent { color: var(--sq-ink, #302421); }
+
+/* ---------- Keyboard focus that the brush and ticket shapes cannot clip ----------
+   Their masks cut off an outline drawn outside the shape, so the ring is drawn just inside it. */
+.sq-plan-button:focus-visible, .primary-button:focus-visible, .sq-someday-add:focus-visible {
+  outline: 3px solid #fffaf2 !important; outline-offset: -7px !important;
+}
+button.sq-stub:focus-visible, .sq-stub > button:focus-visible, .sq-stub[tabindex]:focus-visible, .sq-ans:focus-visible, .sq-onepick-main:focus-visible {
+  outline: 3px solid var(--sq-focus, #751728) !important; outline-offset: -7px !important;
+}
+
+/* ---------- Tickets mode: each plan is a small ticket (category on the stub edge, cream paper), not a pastel block ---------- */
+.sqm-plan:not(.sqm-preview) {
+  border-radius: 3px !important; border-color: rgba(110, 74, 60, .45) !important;
+  background-image: linear-gradient(90deg, transparent 0 9px, #fffaf2 9px) !important;
+}
+.sqm-hatch { border-radius: 3px; }
+
+/* The small Add beside From and Until uses the button size the rest of the app uses. */
+.sq-busy-add-small { font-size: 16px !important; }
+.sq-busy-form.sq-busy-row { gap: 8px; }
+.sq-busy-form.sq-busy-row > * { margin-left: 0 !important; margin-right: 0 !important; }
+/* Busy / Free is tapped with a thumb: a full-size target. */
+/* Phone layouts are scaled down a little, so 50px here lands at a 44px target on screen. */
+.sq-marks .sq-markmode button { min-height: 50px; min-width: 54px; }

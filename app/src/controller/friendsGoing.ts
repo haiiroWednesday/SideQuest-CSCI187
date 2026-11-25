@@ -68,6 +68,11 @@ export function readGoingShares(storage: Pick<Storage, 'getItem'> | null = store
   } catch { return [] }
 }
 
+/** Saves the whole list of events you chose to show your groups. */
+export function writeGoingShares(ids: readonly string[], storage: Pick<Storage, 'setItem'> | null = store()): void {
+  try { storage?.setItem(GOING_SHARE_KEY, JSON.stringify([...new Set(ids)])) } catch { /* kept for this visit */ }
+}
+
 /** Turns your choice for one event on or off and returns the new list. Off is the default. */
 export function setGoingShare(eventId: string, on: boolean, storage: Pick<Storage, 'getItem' | 'setItem'> | null = store()): string[] {
   const list = readGoingShares(storage)

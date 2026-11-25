@@ -21,8 +21,8 @@
 .sq-stubs .sq-stub-faced { grid-template-columns: 126px minmax(0, 1fr) auto; }
 .sq-stub-face { position: relative; display: block; align-self: stretch; border-left: 1.4px solid #9b8b7e; overflow: hidden; background: #2f4f8f; }
 .sq-greet { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.sq-greet-it { font-family: var(--font-display); font-style: italic; fill: #fff; }
-.sq-greet-word { font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif; font-weight: 900; letter-spacing: -.5px; stroke: #fff; paint-order: stroke; }
+.sq-greet-it { font-family: var(--font-display); font-style: italic; fill: #f6e7c8; }
+.sq-greet-word { font-family: var(--font-display); font-weight: 400; fill: #fdf6e7; stroke: #fdf6e7; stroke-width: .5px; paint-order: stroke; }
 @media (max-width: 760px) { .sq-stubs .sq-stub-faced { grid-template-columns: 86px minmax(0, 1fr) auto; } .sq-stub-faced .sq-stub-time b { font-size: 27px; } .sq-stub-faced .sq-stub-time small { font-size: 13px; } }
 
 /* Plan to go: a brush swatch. */

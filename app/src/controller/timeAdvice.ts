@@ -5,15 +5,15 @@
 //   planStretch two or more fitting events chained with walks between them, never overlapping
 // Walks come from the campus map's path graph and are always labelled an estimate.
 import { walkBetween, WALK_ESTIMATE_LABEL } from '../model/walkEstimate'
+import { clockText, toMinutes } from '../model/events'
 
 export type TimedPlace = { id: string; title: string; location: string; date: string; start: string; end: string }
 export type Window = { date: string; start: string; end: string }
 
-const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
+const toMin = (t: string) => toMinutes(t) ?? NaN
+/** The model's one 12-hour clock ("5pm", "4:52pm"), for minutes that may run past midnight. */
 export function clock(minutes: number): string {
-  const m = ((minutes % 1440) + 1440) % 1440
-  const h = Math.floor(m / 60), mm = m % 60
-  return `${h % 12 || 12}:${String(mm).padStart(2, '0')}${h < 12 ? 'am' : 'pm'}`
+  return clockText(((minutes % 1440) + 1440) % 1440)
 }
 
 /** Show "Leave by" only when you'd have this many minutes or fewer to spare after the event. */
@@ -93,8 +93,9 @@ export function onePick(fitting: readonly TimedPlace[], window: Window, plans: r
   const startsFirst = toMin(best.event.start) === soonest
   let reason: string
   if (best.walk !== null && from) {
-    const walk = best.walk === 0 ? `in the same building as ${from.title}` : `${best.walk} min walk from ${from.title}`
-    reason = startsFirst && inside.length > 1 ? `Starts first and is the closest, ${walk}` : `Closest to you, ${walk}`
+    // Measured from the plan before this free time, and said so: "closest to you" would sound like location tracking.
+    const walk = best.walk === 0 ? `Same building as ${from.title}` : `${best.walk} min walk from ${from.title}`
+    reason = startsFirst && inside.length > 1 ? `Starts first. ${walk}` : walk
   } else {
     reason = inside.length > 1 ? 'Starts first in this free time' : 'The one event that fits this free time'
   }

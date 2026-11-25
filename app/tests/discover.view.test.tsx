@@ -99,7 +99,8 @@ describe('Discover View: draws the Controller screen', () => {
   it('uses real navigation links only when routes exist: Discover, My Schedule and Post', () => {
     render(draw(events, { plannedIds: ['poetry-2'] }, { routes: { discover: '/discover', schedule: '/schedule', post: '/post' } }))
     const nav = screen.getByRole('navigation', { name: 'SideQuest primary' })
-    expect(within(nav).getAllByRole('link').map(link => link.textContent)).toEqual(['Discover', 'My Schedule1', 'Post an event'])
+    // The tab no longer counts plans (owner decision, Nov 25); it badges clashes only.
+    expect(within(nav).getAllByRole('link').map(link => link.textContent)).toEqual(['Discover', 'My Schedule', 'Post an event'])
     expect(within(nav).getByRole('link', { name: 'Discover' }).getAttribute('aria-current')).toBe('page')
     expect(within(nav).getByRole('link', { name: /My Schedule/ }).getAttribute('href')).toBe('/schedule')
     expect(within(nav).getByRole('link', { name: /Post an event/ }).getAttribute('href')).toBe('/post')
@@ -177,7 +178,7 @@ describe('Discover View: draws the Controller screen', () => {
     expect((within(row).getByLabelText('Free on') as HTMLInputElement).value).toBe('2030-11-07')
     expect(within(row).getByRole('status').textContent).toBe('1 fit')
     const ceramics = screen.getByRole('button', { name: 'View details for Ceramics Workshop' })
-    expect(within(ceramics).getByText('Fits your window')).toBeTruthy()
+    expect(within(ceramics).getByText('Fits your free time')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'View details for Poetry Reading' })).toBeNull()
 
     fireEvent.change(within(row).getByLabelText('until'), { target: { value: '16:00' } })

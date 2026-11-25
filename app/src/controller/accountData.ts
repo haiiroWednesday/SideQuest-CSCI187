@@ -4,11 +4,12 @@
 // app is the /api/me server adapter. A change shows once the server has saved it, or is undone
 // with a message when it was refused.
 import { createSharedScheduleController, type SharedScheduleResult } from './sharedSchedule'
-import { CELL, CELLS, DAY_START, type FreeMarks } from './freeMarks'
+import { CELL, CELLS, DAY_START, undoChange, type FreeMarks } from './freeMarks'
 import type { SomedayResult } from './someday'
 import type { EventCatalogPort } from '../model/eventCatalog'
 import { PLANNED_IDS_KEY, type PlanStorage } from '../model/schedule'
 import { addIntention, linkIntention, setIntentionStatus, type Intention, type IntentionStatus } from '../model/someday'
+import { hhmmOf, toMinutes } from '../model/events'
 import { PersonalStoreError, type BusyDraft, type BusyRange, type PersonalStorePort } from '../model/personalData'
 
 const problem = (error: unknown, fallback: string) => error instanceof PersonalStoreError ? error.message : fallback
@@ -80,15 +81,33 @@ export function createAccountSomedayController(store: PersonalStorePort) {
   const refused = (error: string): SomedayResult => ({ items: [...items], blocked: false, error })
   const isPending = (id: string) => id.startsWith('pending-')
 
+  // The last version of each idea the server confirmed, and the newest edit asked for on it.
+  // A refused edit puts back only its own idea, and only when no newer edit to it is on the way;
+  // every other idea, and every later edit, stays as it is.
+  const confirmed = new Map<string, Intention>()
+  const newest = new Map<string, number>()
+  let edits = 0
   function update(id: string, check: (list: readonly Intention[]) => { items: Intention[]; error: string | null }, send: () => Promise<Intention>): AccountSomedayStep {
     if (isPending(id)) return { now: refused('Still saving this idea. Try again in a moment.'), saved: null }
     const next = check(items)
     if (next.error) return { now: refused(next.error), saved: null }
-    const previous = items
+    const edit = ++edits
+    newest.set(id, edit)
+    const shown = items.find(item => item.id === id)
+    if (shown && !confirmed.has(id)) confirmed.set(id, shown)
     items = next.items
     const saved = send()
-      .then(row => { items = items.map(item => item.id === row.id ? row : item); return ok() })
-      .catch(error => { items = previous; return refused(problem(error, 'Your change was not saved. Try again.')) })
+      .then(row => {
+        confirmed.set(row.id, row)
+        // The server's row is the truth once the newest edit to it is saved.
+        if (newest.get(id) === edit) items = items.map(item => item.id === row.id ? row : item)
+        return ok()
+      })
+      .catch(error => {
+        const back = confirmed.get(id)
+        if (newest.get(id) === edit && back) items = items.map(item => item.id === id ? back : item)
+        return refused(problem(error, 'Your change was not saved. Try again.'))
+      })
     return { now: ok(), saved }
   }
 
@@ -100,6 +119,7 @@ export function createAccountSomedayController(store: PersonalStorePort) {
         const fresh = await store.listIdeas()
         const keep = items.filter(item => isPending(item.id) || saved.has(item.id))
         items = [...keep, ...fresh.filter(row => !keep.some(item => item.id === row.id))]
+        for (const row of fresh) confirmed.set(row.id, row)
         return ok()
       }
       catch (error) { return refused(problem(error, 'Your Someday ideas could not be loaded. Try again.')) }
@@ -110,7 +130,7 @@ export function createAccountSomedayController(store: PersonalStorePort) {
       if (next.error) return { now: refused(next.error), saved: null }
       items = next.items
       const saved = store.addIdea({ title: title.trim(), note: note.trim(), source: 'typed' })
-        .then(row => { items = items.map(item => item.id === temp ? row : item); savedDuringLoad?.add(row.id); return ok() })
+        .then(row => { items = items.map(item => item.id === temp ? row : item); confirmed.set(row.id, row); savedDuringLoad?.add(row.id); return ok() })
         .catch(error => { items = items.filter(item => item.id !== temp); return refused(problem(error, 'This idea was not saved. Try again.')) })
       return { now: ok(), saved }
     },
@@ -123,8 +143,8 @@ export function createAccountSomedayController(store: PersonalStorePort) {
 
 // ---------- Busy time
 
-const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
-const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
+const hhmm = hhmmOf
+const toMin = (t: string) => toMinutes(t) ?? NaN
 const cellsOf = (row: { start: string; end: string }) => {
   const a = toMin(row.start), b = toMin(row.end), out: number[] = []
   for (let i = 0; i < CELLS; i++) { const s = DAY_START + i * CELL; if (s < b && s + CELL > a) out.push(i) }
@@ -177,18 +197,34 @@ export function planBusySync(rows: readonly BusyRange[], marks: FreeMarks): { re
   }
 }
 
+export type BusySaveResult = {
+  /** What the bar should show now: the newest change asked for, minus any change the server refused. */
+  marks: FreeMarks
+  error: string | null
+  /** True when a newer change was asked for after this one; only the newest result settles the bar. */
+  stale: boolean
+}
+
 export function createAccountBusyController(store: PersonalStorePort) {
   let rows: BusyRange[] = []
   let queue: Promise<unknown> = Promise.resolve()
+  // The bar's newest marks. Every queued save syncs the server to this, not to the marks it was
+  // called with, so a slow older save can never put back a stretch a newer drag took away.
+  let wanted: FreeMarks = {}
+  let sequence = 0
   return {
     async load(): Promise<{ marks: FreeMarks; error: string | null }> {
-      try { rows = await store.listBusy(); return { marks: rangesToMarks(rows), error: null } }
+      try { rows = await store.listBusy(); wanted = rangesToMarks(rows); return { marks: wanted, error: null } }
       catch (error) { return { marks: rangesToMarks(rows), error: problem(error, 'Your busy time could not be loaded.') } }
     },
-    /** Saves run one after another, each against the rows the last one left. */
-    save(marks: FreeMarks): Promise<{ marks: FreeMarks; error: string | null }> {
-      const run = queue.then(async () => {
-        const plan = planBusySync(rows, marks)
+    /** Saves run one after another. A refused save takes back only its own change. */
+    save(marks: FreeMarks): Promise<BusySaveResult> {
+      const id = ++sequence
+      const before = wanted
+      wanted = marks
+      const run = queue.then(async (): Promise<BusySaveResult> => {
+        const target = wanted
+        const plan = planBusySync(rows, target)
         try {
           for (const row of plan.remove) {
             try { await store.removeBusy(row.id) }
@@ -196,9 +232,11 @@ export function createAccountBusyController(store: PersonalStorePort) {
             rows = rows.filter(item => item.id !== row.id)
           }
           for (const draft of plan.add) rows = [...rows, await store.addBusy(draft)]
-          return { marks, error: null }
+          return { marks: wanted, error: null, stale: id !== sequence }
         } catch (error) {
-          return { marks: rangesToMarks(rows), error: problem(error, 'Your busy time was not saved. Try again.') }
+          // Only this change is taken back. The next save syncs the server to the bar again.
+          wanted = undoChange(wanted, before, marks)
+          return { marks: wanted, error: problem(error, 'Your busy time was not saved. Try again.'), stale: id !== sequence }
         }
       })
       queue = run

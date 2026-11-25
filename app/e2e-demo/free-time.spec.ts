@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { open, pickTime, shooter, slips } from './helpers'
 
 // Scenarios for free time on Discover. Demo day: Tuesday 24 Nov, 10:40am.
-// People add when they're BUSY (type a from–until, or "Busy then" on a gap). SideQuest works out the
+// People add when they're BUSY (type a from–until, or "Mark busy" on a gap). SideQuest works out the
 // free gaps from that plus My Schedule, and Discover shows what fits. Busy blocks can also be drawn,
 // moved and stretched right on the bar (back on Nov 24 evening, as objects you pick up). The bar stays
 // aria-hidden because the typed form and the slips do the same jobs by keyboard.
@@ -21,7 +21,8 @@ for (const width of [390, 1280]) {
     // Before she says anything, the gaps are what My Schedule leaves, and nothing is filtered.
     expect((await free(page)).length).toBeGreaterThan(0)
     await expect(page.locator('.sq-fit-note')).toHaveCount(0)
-    await expect(page.getByRole('button', { name: 'Show everything' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Show all events' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Clear busy time' })).toHaveCount(0)
     // The bar is for pointers; keyboards use the form and slips, so it hides from screen readers.
     await expect(page.locator('.sq-mbar')).toHaveAttribute('aria-hidden', 'true')
     await expect(page.locator('.sq-mbar button')).toHaveCount(0)
@@ -33,17 +34,26 @@ for (const width of [390, 1280]) {
     await shot('typed-busy')
 
     const note = page.locator('.sq-fit-note')
-    await expect(note).toHaveText(/^(Nothing fits your gaps|1 event fits your gaps|\d+ events fit your gaps)$/)
+    await expect(note).toHaveText(/^(Nothing fits your free time|1 event fits your free time|\d+ events fit your free time)$/)
     const n = Number(((await note.innerText()).match(/^\d+/) ?? ['0'])[0])
     await expect(page.locator('.sq-stub')).toHaveCount(n)
     await shot('fit-note', true)
 
     await page.getByRole('button', { name: 'Free again 7–9pm' }).click()
     expect(await busy(page)).toEqual(['12–1pm'])
-    await page.getByRole('button', { name: 'Show everything' }).click()
-    await expect(page.locator('.sq-slip-mine')).toHaveCount(0)
+    // "Show all events" only stops the filter: her busy time stays.
+    await page.getByRole('button', { name: 'Show all events' }).click()
     await expect(page.locator('.sq-fit-note')).toHaveCount(0)
+    expect(await busy(page)).toEqual(['12–1pm'])
+    // "Clear busy time" wipes it, says so, and Undo puts it back.
+    await page.getByRole('button', { name: 'Clear busy time' }).click()
+    await expect(page.locator('.sq-slip-mine')).toHaveCount(0)
+    const cleared = page.locator('.sq-toast', { hasText: 'Busy time cleared.' })
+    // The shared helper hides toasts from screenshots, so the toast is checked by its presence.
+    await expect(cleared).toBeAttached()
     await shot('cleared')
+    await cleared.locator('.sq-toast-undo').dispatchEvent('click')
+    expect(await busy(page)).toEqual(['12–1pm'])
   })
 }
 
@@ -54,40 +64,28 @@ test('the blue on the bar is My Schedule, and its key takes you there to change 
   await expect(page.getByRole('heading', { name: 'My Schedule', level: 1 })).toBeVisible()
 })
 
-test('When to look is one choice: This week, Now, This afternoon, Tonight', async ({ page }, info) => {
+// Owner decision, Nov 25: the luggage time tags (This week / Now / This afternoon / Tonight) and the
+// big date stamp left Discover. The day leaves are the only day control.
+test('the day leaves are the only day control: no time tags, no date stamp', async ({ page }, info) => {
   const shot = shooter(page, info)
   await open(page, 'discover')
-  const when = page.getByRole('group', { name: 'When to look' })
-  await expect(when.getByRole('button')).toHaveText(['This week', 'Now', 'This afternoon', 'Tonight'])
-  for (const b of await when.getByRole('button').all()) await expect(b).toBeEnabled()
-  await expect(when.getByRole('button', { name: 'This week' })).toHaveAttribute('aria-pressed', 'true')
-  // Time choices are luggage tags (her pick): the chosen tag is the gold one, and its words stay dark enough to read.
-  for (const b of await when.getByRole('button').all()) await expect(b).toHaveClass(/sq-tag/)
-  expect(await when.locator('[aria-pressed="true"]').evaluate(e => getComputedStyle(e).backgroundImage)).toContain('mat-tag-on')
-  expect(await when.locator('[aria-pressed="false"]').first().evaluate(e => getComputedStyle(e).backgroundImage)).toContain('mat-tag-off')
-  expect(await when.locator('[aria-pressed="true"]').evaluate(e => getComputedStyle(e).color)).toBe('rgb(48, 36, 33)')
-  await when.getByRole('button', { name: 'Tonight' }).click()
-  await expect(when.locator('[aria-pressed="true"]')).toHaveText('Tonight')
-  // Cards from the week view fade out first, so wait for the list to settle before reading times.
-  // textContent, not innerText: cards below the screen skip rendering (content-visibility) and read as empty.
-  await expect.poll(async () => (await page.locator('.sq-stub .sq-stub-time b').allTextContents()).every(t => Number(t.split(':')[0]) >= 5 && /pm$/.test(t))).toBe(true)
-  await shot('tonight')
-  await when.getByRole('button', { name: 'This afternoon' }).click()
-  await expect(when.locator('[aria-pressed="true"]')).toHaveText('This afternoon')
-  await when.getByRole('button', { name: 'This week' }).click()
-  await expect(page.locator('.sq-fit-note')).toHaveCount(0)
+  await expect(page.getByRole('group', { name: 'When to look' })).toHaveCount(0)
+  await expect(page.locator('.sq-when, .sq-when-note')).toHaveCount(0)
+  await expect(page.locator('.sq-gaps-head .sq-stamp')).toHaveCount(0)
+  await expect(page.getByRole('group', { name: 'Day' }).getByRole('button')).toHaveCount(7)
+  await shot('no-tags-no-stamp')
 })
 
-test('Now while you are busy looks ahead and says when you are free', async ({ page }, info) => {
-  const shot = shooter(page, info)
-  await open(page, 'discover')
-  // It's 10:40. Say she's in a meeting until noon.
-  await typeBusy(page, '10:30', '12:00')
-  await page.getByRole('group', { name: 'When to look' }).getByRole('button', { name: 'Now' }).click()
-  await expect(page.locator('.sq-when-note')).toHaveText(/^Busy now\. Free at \d{1,2}(:\d{2})?(am|pm)$/)
-  await expect(page.locator('.sq-fit-note')).toBeVisible()
-  await shot('now-busy')
+test('the typed time is one row: From, Until and a small Add, on a phone too', async ({ page }) => {
+  await open(page, 'discover', 390)
+  const row = page.locator('.sq-busy-row')
+  await expect(row.locator('.sq-busy-add')).toBeVisible()
+  const tops = await row.locator('.sq-pick-btn, .sq-busy-add').evaluateAll(els => els.map(e => { const r = e.getBoundingClientRect(); return [r.top, r.bottom, r.right] }))
+  expect(tops).toHaveLength(3)
+  // All three sit on one line and none runs off the screen.
+  for (const [top, bottom, right] of tops) { expect(top).toBeLessThan(tops[0][1]); expect(bottom).toBeGreaterThan(tops[0][0]); expect(right).toBeLessThanOrEqual(390) }
 })
+
 test('typing an end before the start says so and changes nothing', async ({ page }, info) => {
   const shot = shooter(page, info)
   await open(page, 'discover')
@@ -97,11 +95,13 @@ test('typing an end before the start says so and changes nothing', async ({ page
   await shot('typed-wrong')
 })
 
-test('"Busy then" turns a whole gap busy in one tap', async ({ page }, info) => {
+test('"Mark busy" turns a whole gap busy in one tap', async ({ page }, info) => {
   const shot = shooter(page, info)
   await open(page, 'discover')
+  // Wait for My Schedule's plans to be on the bar, so the gaps read are the settled ones.
+  await expect(page.locator('.sq-mbar-busy').first()).toBeAttached()
   const first = (await free(page))[0]
-  await page.getByRole('button', { name: new RegExp(`^Busy then, Today ${first}$`) }).click()
+  await page.getByRole('button', { name: new RegExp(`^Mark busy, Today ${first}$`) }).click()
   expect(await free(page)).not.toContain(first)
   expect(await busy(page)).toContain(first)
   await shot('busy-then')
@@ -145,12 +145,12 @@ test('the time picker: two taps, Escape or a tap outside closes it, focus comes 
   await shot('one-time')
 })
 
-// Drag helpers: the bar runs 8am to 11pm in 30 half hours.
-const cellX = async (page: import('@playwright/test').Page, hhmm: string, at: 'mid' | 'start' | 'end' = 'mid') => {
+// Drag helpers: the bar runs 8am to 11pm in 180 five-minute steps. cellX is the middle of the step that starts at hhmm.
+const STEPS = 180
+const cellX = async (page: import('@playwright/test').Page, hhmm: string) => {
   const box = (await page.locator('.sq-mbar').boundingBox())!
-  const [h, m] = hhmm.split(':').map(Number), i = (h * 60 + m - 480) / 30
-  const f = at === 'start' ? i + .15 : at === 'end' ? i + .85 : i + .5
-  return { x: box.x + (f / 30) * box.width, y: box.y + box.height / 2 }
+  const [h, m] = hhmm.split(':').map(Number), i = (h * 60 + m - 480) / 5
+  return { x: box.x + ((i + .5) / STEPS) * box.width, y: box.y + box.height / 2 }
 }
 const dragBar = async (page: import('@playwright/test').Page, from: { x: number; y: number }, to: { x: number; y: number }) => {
   await page.mouse.move(from.x, from.y); await page.mouse.down()
@@ -162,13 +162,13 @@ test('busy time is drawn, moved and stretched right on the bar, and My Schedule 
   const shot = shooter(page, info)
   await open(page, 'discover', 1280)
   await page.locator('.sq-mbar').scrollIntoViewIfNeeded()
-  // Today is free 6 to 9pm, with a My Schedule plan from 9pm. Draw 6:30 to 7:30.
-  await dragBar(page, await cellX(page, '18:30'), await cellX(page, '19:00'))
+  // Today is free 6 to 9pm, with a My Schedule plan from 9pm. Draw 6:30 to 7:30 (the last step starts at 7:25).
+  await dragBar(page, await cellX(page, '18:30'), await cellX(page, '19:25'))
   expect(await busy(page)).toEqual(['6:30–7:30pm'])
   await shot('drawn')
   // Pick it up by the middle and move it an hour later; the label follows while dragging.
-  const grab = await cellX(page, '19:00', 'start')
-  const later = await cellX(page, '20:00', 'start')
+  const grab = await cellX(page, '19:00')
+  const later = await cellX(page, '20:00')
   await page.mouse.move(grab.x, grab.y); await page.mouse.down()
   for (let k = 1; k <= 6; k++) await page.mouse.move(grab.x + ((later.x - grab.x) * k) / 6, grab.y)
   await expect(page.locator('.sq-mbar-drag-time')).toHaveText('7:30–8:30pm')
@@ -176,11 +176,11 @@ test('busy time is drawn, moved and stretched right on the bar, and My Schedule 
   await page.mouse.up()
   expect(await busy(page)).toEqual(['7:30–8:30pm'])
   // Pushed past 9pm it stops at the blue plan instead of sliding under it.
-  await dragBar(page, await cellX(page, '20:00', 'start'), await cellX(page, '22:00'))
+  await dragBar(page, await cellX(page, '20:00'), await cellX(page, '22:00'))
   expect(await busy(page)).toEqual(['8–9pm'])
   // Stretch its left end back to 6pm.
   const box = (await page.locator('.sq-mbar-mine').boundingBox())!
-  await dragBar(page, { x: box.x + 3, y: box.y + box.height / 2 }, await cellX(page, '18:00', 'start'))
+  await dragBar(page, { x: box.x + 3, y: box.y + box.height / 2 }, await cellX(page, '18:00'))
   expect(await busy(page)).toEqual(['6–9pm'])
   // A single tap on open time marks one hour.
   const noon = await cellX(page, '12:00')
@@ -198,4 +198,35 @@ test('a tap on a blue My Schedule block says where to change it, and it does not
   await expect(page.locator('.sq-mbar-blue-note')).toContainText('From My Schedule')
   await shot('blue-note')
   expect(await page.locator('.sq-mbar-busy').first().getAttribute('style')).toBe(before)
+})
+
+test('Free mode: mark 6:25 to 7:50pm free on the bar, to five minutes, and only what fits is listed', async ({ page }, info) => {
+  const shot = shooter(page, info)
+  await open(page, 'discover', 1280)
+  await page.locator('.sq-mbar').scrollIntoViewIfNeeded()
+  const mode = page.getByRole('group', { name: 'What you mark on the bar' })
+  await expect(mode.getByRole('button', { name: 'Busy', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await mode.getByRole('button', { name: 'Free', exact: true }).click()
+  await dragBar(page, await cellX(page, '18:25'), await cellX(page, '19:45'))
+  expect(await free(page)).toEqual(['6:25–7:50pm'])
+  const note = page.locator('.sq-fit-note')
+  await expect(note).toHaveText(/^(Nothing fits\..+\.|Nothing fits your free time|1 event fits your free time|\d+ events fit your free time)$/)
+  const n = Number(((await note.innerText()).match(/^\d+/) ?? ['0'])[0])
+  await expect(page.locator('.sq-stub')).toHaveCount(n)
+  await shot('free-mode', true)
+  // Back in Busy mode nothing was marked busy, so nothing is filtered; Free mode still has its stretch.
+  await mode.getByRole('button', { name: 'Busy', exact: true }).click()
+  await expect(note).toHaveCount(0)
+  await mode.getByRole('button', { name: 'Free', exact: true }).click()
+  expect(await free(page)).toEqual(['6:25–7:50pm'])
+})
+
+test('Free mode names the nearest miss when nothing fits', async ({ page }) => {
+  await open(page, 'discover', 1280)
+  await page.locator('.sq-mbar').scrollIntoViewIfNeeded()
+  await page.getByRole('group', { name: 'What you mark on the bar' }).getByRole('button', { name: 'Free', exact: true }).click()
+  // 6:10 to 6:55pm: Nourish Nights (6 to 7pm) starts 10 minutes early and ends 5 minutes late.
+  await dragBar(page, await cellX(page, '18:10'), await cellX(page, '18:50'))
+  expect(await free(page)).toEqual(['6:10–6:55pm'])
+  await expect(page.locator('.sq-fit-note')).toHaveText('Nothing fits. Nourish Nights runs 15 min longer than your free time.')
 })

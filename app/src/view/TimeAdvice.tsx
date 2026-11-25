@@ -45,6 +45,9 @@ export function FoodNowBoard({ notices, onOpen }: { notices: readonly FoodNotice
   )
 }
 
+/** "7:45pm to 8:45pm" as the start and the end, so the stub can stack them like a ticket's. */
+const pickTimes = (time: string): string[] => time.split(' to ')
+
 /** One pick per free stretch, and when two or more chain, a plan for the whole stretch. */
 export function StretchAdviceList({ items, onOpen, onPlanAll, blocked }: {
   items: readonly StretchAdvice[]
@@ -59,11 +62,15 @@ export function StretchAdviceList({ items, onOpen, onPlanAll, blocked }: {
       {items.map(item => (
         <article key={item.id} className="sq-onepick" aria-label={`Free ${item.label}`}>
           <p className="sq-onepick-when"><b>Free</b> {item.label}</p>
+          {/* Laid out like the ticket everywhere else: the time on a stub, the event beside it. */}
           <button type="button" className="sq-onepick-main" onClick={() => onOpen(item.pick.id)}>
-            <span className="sq-onepick-label">Our pick</span>
-            <strong>{item.pick.title}</strong>
-            <span className="sq-onepick-facts">{item.pick.time}, {item.pick.location}</span>
-            <span className="sq-onepick-why">{item.pick.reason}</span>
+            <span className="sq-onepick-stub">{pickTimes(item.pick.time).map((part, i) => i ? <small key={i}>to {part}</small> : <b key={i}>{part}</b>)}</span>
+            <span className="sq-onepick-body">
+              <span className="sq-onepick-label">Our pick</span>
+              <strong>{item.pick.title}</strong>
+              <span className="sq-onepick-facts">{item.pick.location}</span>
+              <span className="sq-onepick-why">{item.pick.reason}</span>
+            </span>
           </button>
           {item.count > 1 && <p className="sq-onepick-more">{item.count - 1} more {item.count === 2 ? 'fits' : 'fit'} this time, below.</p>}
           {item.plan && (

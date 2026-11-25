@@ -10,6 +10,7 @@ import { PLANNED_IDS_KEY } from './model/schedule'
 import { todayLocalISO } from './model/events'
 import { DISCOVER_LAYOUT_KEY } from './controller/viewPreferences'
 import { POSTED_IDS_KEY } from './controller/myPosts'
+import { browserCatalogStorage } from './controller/postEvent'
 import './style.css'
 import './view/look/fonts'
 import { LookPanel, applyLook } from './view/look/LookPanel'
@@ -131,7 +132,8 @@ const now = () => { const d = new Date(); d.setHours(10, 40, 0, 0); return d }
 const root = document.getElementById('root')
 if (!root) throw new Error('Root element missing')
 // The demo clock is fixed at 10:40 today, for the catalog and the screens alike.
-const catalog = { catalog: createEventCatalog(createBrowserEventTable(localStorage), now), shared: false }
+// Lazy storage: a browser that blocks localStorage gets a visit-only memory store, never a blank page.
+const catalog = { catalog: createEventCatalog(createBrowserEventTable(browserCatalogStorage), now), shared: false }
 // Another host already said there are bagels left at Study Jam, six minutes before the demo clock.
 const foodPostedAt = now().getTime() - 6 * 60_000
 const initialFoodNotices = [{ eventId: uid(1), postedAt: foodPostedAt, expiresAt: foodPostedAt + 30 * 60_000 }]
@@ -148,4 +150,7 @@ function LookWhenAsked() {
   }, [])
   return on ? <LookPanel /> : null
 }
-createRoot(root).render(<StrictMode><App catalog={catalog} now={now} designReview initialFoodNotices={initialFoodNotices} /><LookWhenAsked /></StrictMode>)
+// Groups, open invites and friends going (sample groups included) load here only, never in main.tsx.
+void import('./view/DesignReview').then(({ kit }) => {
+  createRoot(root).render(<StrictMode><App catalog={catalog} now={now} designReview designKit={kit} initialFoodNotices={initialFoodNotices} /><LookWhenAsked /></StrictMode>)
+})

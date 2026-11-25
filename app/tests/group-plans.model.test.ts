@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  applyGroupCommand, createGroupPlan, readGroupPlan, summarizeResponses,
+  GROUP_SIZE_LIMIT, applyGroupCommand, createGroupPlan, readGroupPlan, summarizeResponses,
   type GroupPlan, type PlanCommand,
 } from '../src/model/groupPlans'
 
@@ -33,12 +33,12 @@ describe('permissioned group proposal domain', () => {
     let plan = invitePair()
     expect(summarizeResponses(plan).unknown).toBe(2)
     plan = commit(plan, 'amy', { type: 'respond', response: 'works' })
-    plan = commit(plan, 'bo', { type: 'respond', response: 'if', privateCondition: 'Only after 5pm' })
+    plan = commit(plan, 'bo', { type: 'respond', response: 'if', ifCondition: 'Only after 5pm' })
     expect(summarizeResponses(plan)).toEqual({ works: 1, if: 1, cant: 0, unknown: 0 })
-    expect(plan.participants[1].privateCondition).toBe('Only after 5pm')
+    expect(plan.participants[1].ifCondition).toBe('Only after 5pm')
     plan = commit(plan, 'bo', { type: 'respond', response: 'cant' })
     expect(summarizeResponses(plan).cant).toBe(1)
-    expect(plan.participants[1].privateCondition).toBeNull()
+    expect(plan.participants[1].ifCondition).toBeNull()
   })
 
   it('rejects impersonation and unauthorized edits even with a known plan ID', () => {
@@ -66,14 +66,16 @@ describe('permissioned group proposal domain', () => {
     expect(plan.participants[0].response).toBeNull() // input remains immutable
   })
 
-  it('redacts private conditions from organizer and other participants', () => {
+  it('shares an If note with the organizer and other members, never with outsiders (owner decision, Nov 24)', () => {
     let plan = invitePair()
-    plan = commit(plan, 'bo', { type: 'respond', response: 'if', privateCondition: 'Private family obligation' })
+    plan = commit(plan, 'bo', { type: 'respond', response: 'if', ifCondition: 'Private family obligation' })
     expect(readGroupPlan(plan, 'mallory')).toBeNull()
-    expect(readGroupPlan(plan, 'organizer')?.participants[1]).toEqual({ userId: 'bo', response: 'if' })
-    expect(readGroupPlan(plan, 'amy')?.participants[1]).toEqual({ userId: 'bo', response: 'if' })
+    expect(readGroupPlan(plan, 'organizer')?.participants[1]).toEqual({ userId: 'bo', response: 'if', ifCondition: 'Private family obligation' })
+    expect(readGroupPlan(plan, 'amy')?.participants[1]).toEqual({ userId: 'bo', response: 'if', ifCondition: 'Private family obligation' })
+    // Someone who has not answered If carries no note at all.
+    expect(readGroupPlan(plan, 'bo')?.participants[0]).toEqual({ userId: 'amy', response: null })
     expect(readGroupPlan(plan, 'bo')?.participants[1])
-      .toEqual({ userId: 'bo', response: 'if', privateCondition: 'Private family obligation' })
+      .toEqual({ userId: 'bo', response: 'if', ifCondition: 'Private family obligation' })
   })
 
   it('rejects stale writes to avoid losing concurrent responses', () => {
@@ -93,7 +95,7 @@ describe('permissioned group proposal domain', () => {
     expect(applyGroupCommand(plan, 'organizer', plan.revision, { type: 'confirm' }))
       .toMatchObject({ ok: false, reason: 'conflict' })
     plan = commit(plan, 'amy', { type: 'respond', response: 'works' })
-    plan = commit(plan, 'bo', { type: 'respond', response: 'if', privateCondition: 'Need transit' })
+    plan = commit(plan, 'bo', { type: 'respond', response: 'if', ifCondition: 'Need transit' })
     expect(applyGroupCommand(plan, 'organizer', plan.revision, { type: 'confirm' }))
       .toMatchObject({ ok: false, reason: 'conflict' })
     plan = commit(plan, 'bo', { type: 'respond', response: 'works' })
@@ -116,18 +118,20 @@ describe('permissioned group proposal domain', () => {
     let plan = invitePair()
     expect(applyGroupCommand(plan, 'bo', plan.revision, { type: 'respond', response: 'if' }))
       .toMatchObject({ ok: false, reason: 'invalid' })
-    expect(applyGroupCommand(plan, 'bo', plan.revision, { type: 'respond', response: 'if', privateCondition: 'x'.repeat(281) }))
+    expect(applyGroupCommand(plan, 'bo', plan.revision, { type: 'respond', response: 'if', ifCondition: 'x'.repeat(281) }))
       .toMatchObject({ ok: false, reason: 'invalid' })
-    expect(applyGroupCommand(plan, 'bo', plan.revision, { type: 'respond', response: 'cant', privateCondition: 'hidden' }))
+    expect(applyGroupCommand(plan, 'bo', plan.revision, { type: 'respond', response: 'cant', ifCondition: 'hidden' }))
       .toMatchObject({ ok: false, reason: 'invalid' })
     expect(applyGroupCommand(plan, 'organizer', plan.revision, { type: 'invite', userId: 'bo' }))
       .toMatchObject({ ok: false, reason: 'conflict' })
     expect(applyGroupCommand(plan, 'organizer', plan.revision, { type: 'invite', userId: 'organizer' }))
       .toMatchObject({ ok: false, reason: 'invalid' })
-    for (let index = 2; index < 12; index++) {
+    // 12 people at most, the organizer included (review v5.1, page 3): 11 invitees.
+    for (let index = 2; index < 11; index++) {
       plan = commit(plan, 'organizer', { type: 'invite', userId: String(index) })
     }
-    expect(plan.participants).toHaveLength(12)
+    expect(plan.participants).toHaveLength(11)
+    expect(plan.participants.length + 1).toBe(GROUP_SIZE_LIMIT)
     expect(applyGroupCommand(plan, 'organizer', plan.revision, { type: 'invite', userId: 'last' }))
       .toMatchObject({ ok: false, reason: 'conflict' })
   })

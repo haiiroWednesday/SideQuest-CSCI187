@@ -3,6 +3,7 @@ import {
   SOMEDAY_KEY, addIntention, linkIntention, readSomeday, saveSomeday, setIntentionStatus,
   type Intention, type IntentionStatus, type SomedayChange, type SomedayStorage,
 } from '../model/someday'
+import { deviceStorage } from '../model/deviceStorage'
 
 export type SomedayResult = { items: Intention[]; blocked: boolean; error: string | null }
 export type { Intention, IntentionStatus } from '../model/someday'
@@ -11,8 +12,8 @@ export { SOMEDAY_KEY, MAX_IDEA_TITLE, MAX_IDEA_NOTE } from '../model/someday'
 function browserStorage(): SomedayStorage {
   // Resolve storage lazily so browser permission errors are caught by the Model.
   return {
-    getItem(key) { return window.localStorage.getItem(key) },
-    setItem(key, value) { window.localStorage.setItem(key, value) },
+    getItem(key) { return deviceStorage().getItem(key) },
+    setItem(key, value) { deviceStorage().setItem(key, value) },
   }
 }
 

@@ -4,6 +4,7 @@
 // contradict each other the day is "unclear" and SideQuest says so instead of picking one.
 import data from '../../public/map/hours.json' with { type: 'json' }
 import { campusNow } from './eventCatalog'
+import { clockText } from './events'
 
 export type Interval = readonly [string, string] // "HH:mm", "24:00" is midnight, end < start runs past midnight
 export type DayKey = 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'
@@ -59,8 +60,7 @@ export function clockLabel(total: number): string {
   const m = ((total % 1440) + 1440) % 1440
   if (m === 0) return 'midnight'
   if (m === 720) return 'noon'
-  const h = Math.floor(m / 60), mm = m % 60
-  return `${h % 12 || 12}${mm ? ':' + String(mm).padStart(2, '0') : ''}${h < 12 ? 'am' : 'pm'}`
+  return clockText(m)
 }
 const DAY_NAMES: Record<DayKey, string> = { sun: 'Sun', mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat' }
 

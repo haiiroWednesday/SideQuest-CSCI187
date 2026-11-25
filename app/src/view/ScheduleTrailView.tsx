@@ -10,6 +10,7 @@ import { QuietTop } from './EventDetailContent'
 import { EventPicture } from './EventPicture'
 import { PostcardPrompt } from './PostcardPrompt'
 import { DayBubble, EventStub, SideQuestHeader, useMinuteTick, type SideQuestRoutes } from './DiscoverView'
+import { shownHost } from './shownHost'
 import { titleSizeClass } from './titleSize'
 import { OFFICIAL_SCU_CAMPUS_MAP, googleMapsVenueSearchUrl } from '../controller/campusMapLinks'
 import { DeviceWalkingDirections } from './DeviceWalkingDirections'
@@ -73,9 +74,11 @@ export type ScheduleTrailViewProps = {
   focusId?: string | null
   /** Plan an event shown as a preview. */
   onPlan?: (eventId: string) => void
+  /** "Keep this, remove conflicts": several plans out in one change. */
+  onRemoveMany?: (eventIds: readonly string[]) => void
 }
 
-export function ScheduleTrailView({ screen, accountStorage = false, onRemove, onRecover, onRetry, routes, message = null, error = null, now, forcedMode, focusId = null, onPlan }: ScheduleTrailViewProps) {
+export function ScheduleTrailView({ screen, accountStorage = false, onRemove, onRecover, onRetry, routes, message = null, error = null, now, forcedMode, focusId = null, onPlan, onRemoveMany }: ScheduleTrailViewProps) {
   const quiet = useQuiet()
   const next = screen.nextUp
   const [chosen, setModeState] = useState<ScheduleMode>(() => readScheduleMode())
@@ -117,9 +120,9 @@ export function ScheduleTrailView({ screen, accountStorage = false, onRemove, on
             <nav className="sq-look-links" aria-label="Also in My Schedule"><a className="sq-look-link sq-look-link-someday" href="#someday">Someday ideas</a>{routes?.groups && <a className="sq-look-link sq-look-link-groups" href={routes.groups}>Groups</a>}</nav>
             <p className="sq-device">{accountStorage ? 'Saved to your account' : 'Saved on this device'}</p>
           </div>
-          {screen.status === 'ready' && (
+          {screen.status === 'ready' && ((screen.overlapCount > 0 && !quiet) || screen.missingCount > 0) && (
             <dl className="sq-stats">
-              <div><dt>planned</dt><dd>{screen.plannedCount}</dd></div>
+              {/* The big "planned N" count was taken off by owner decision (Nov 25). */}
               {/* In the short design each day's clash button carries this; a second, differently counted number confused. */}
               {screen.overlapCount > 0 && !quiet && <div className="sq-stat-warn"><dt>overlap</dt><dd>{screen.overlapCount}</dd></div>}
               {screen.missingCount > 0 && <div><dt>no longer listed</dt><dd>{screen.missingCount}</dd></div>}
@@ -162,7 +165,7 @@ export function ScheduleTrailView({ screen, accountStorage = false, onRemove, on
                   </>}
                   <h2 id="sq-next-title" className={titleSizeClass(next.stub.title)}>{next.stub.title}</h2>
                   {quiet ? <ul className="sq-quiet-facts">
-                    {next.stub.host && <li><svg viewBox="0 0 24 24" aria-label="Host" role="img"><circle cx="12" cy="8" r="4" /><path d="M4 21c1-5 4-7 8-7s7 2 8 7" /></svg>{next.stub.host}</li>}
+                    {shownHost(next.stub) && <li><svg viewBox="0 0 24 24" aria-label="Host" role="img"><circle cx="12" cy="8" r="4" /><path d="M4 21c1-5 4-7 8-7s7 2 8 7" /></svg>{next.stub.host}</li>}
                     <li><svg viewBox="0 0 24 24" aria-label="Where" role="img"><path d="M12 22s7-7 7-12a7 7 0 1 0-14 0c0 5 7 12 7 12z" /><circle cx="12" cy="10" r="2.5" /></svg><a href={`#map/${encodeURIComponent(next.stub.location.trim())}`}>{next.stub.location}</a></li>
                   </ul> : <dl className="sq-facts">
                     {next.stub.host && <><dt>Host</dt><dd>{next.stub.host}</dd></>}
@@ -200,13 +203,19 @@ export function ScheduleTrailView({ screen, accountStorage = false, onRemove, on
                           <h3>{quiet ? <span className="sq-quiet-day">{shortDay(day.tag, day.long)}</span> : <><span>{day.tag}</span>{day.long}</>}<span className="sq-visually-hidden">, show as tickets</span></h3>
                         </button>
                         {onRemove && day.clashes.length > 0 && (() => {
-                          const n = day.clashes.reduce((k, c) => k + c.plans.length, 0)
-                          return <button type="button" className="sqm-clash-open" aria-haspopup="dialog" aria-label={`${quiet || !day.overlapNote ? `${n} clash` : day.overlapNote}, ${day.clashes.map(c => c.summary).join('; ')}`} onClick={() => setClashKey(day.date)}>{quiet || !day.overlapNote ? `${n} clash` : day.overlapNote}</button>
+                          // Counts clashes, the way the sheet lists them, not the plans in them.
+                          const badge = quiet || !day.overlapNote ? day.clashText : day.overlapNote
+                          return <button type="button" className="sqm-clash-open" aria-haspopup="dialog" aria-label={`${badge}, ${day.clashes.map(c => c.summary).join('. ')}`} onClick={() => setClashKey(day.date)}>{badge}</button>
                         })()}
-                        {!onRemove && day.overlapNote && <b className="sqm-overlap-note">{quiet ? day.overlapNote.replace(/ plans have conflicts/, ' clash') : day.overlapNote}</b>}
+                        {!onRemove && day.overlapNote && <b className="sqm-overlap-note">{quiet ? day.clashText : day.overlapNote}</b>}
                       </div>
+                      {day.ownTime && day.ownTime.marked.length > 0 && (
+                        // The busy (or free) time marked on Discover, so both pages show the same day.
+                        <p className="sqm-owntime">{day.ownTime.marked.map(m => <a key={m.from} href={`#discover/${day.date}`}>{m.label}</a>)}</p>
+                      )}
                       {day.timeline ? (
                         <ScheduleDayModes events={day.events} timeline={day.timeline} mode={mode} now={now} isToday={day.isToday}
+                          date={day.date} freeBetween={day.ownTime?.freeBetween}
                           selectedId={openId} onOpen={id => setOpenId(current => current === id ? null : id)} onOpenTickets={() => openDay(day.date)}
                           compact={mode === 'trail' && screen.days.length > 1} />
                       ) : (
@@ -275,7 +284,7 @@ export function ScheduleTrailView({ screen, accountStorage = false, onRemove, on
         <span>SideQuest</span>
         <span>Santa Clara · California</span>
       </footer>
-      {dayClashes.length > 0 && onRemove && <ClashSheet clashes={dayClashes} onClose={() => setClashKey(null)} onRemove={onRemove} />}
+      {dayClashes.length > 0 && onRemove && <ClashSheet clashes={dayClashes} onClose={() => setClashKey(null)} onRemove={onRemove} onRemoveMany={onRemoveMany} />}
     </div>
   )
 }

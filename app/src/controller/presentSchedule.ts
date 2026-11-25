@@ -1,5 +1,5 @@
 // CONTROLLER: prepare a device-local Schedule screen from resolved plan entries.
-import { eventPhase, minutesUntilStart, overlapSpan } from '../model/eventTiming'
+import { eventPhase, minutesUntilStart, overlapMinutes, overlapSpan } from '../model/eventTiming'
 import { layoutDayTimeline, type DayTimeline } from './scheduleTimeline'
 import { presentClashes, type ClashModel } from './presentClash'
 import { byTime, describeDay, groupDays, spanText, toStub, type ScreenEvent, type StubModel, type DayModel } from './screenModels'
@@ -17,6 +17,16 @@ export type ScheduleInput = {
   unresolvedIds?: readonly string[]
   /** An event shown on its day before it is planned ("My day" on an event card). Never counted as a plan. */
   previewId?: string | null
+  /** The student's own time on a day, from the same marks Discover filters with. Null until they have said anything. */
+  ownTime?: ((date: string) => OwnTime | null) | null
+}
+
+/** What a day of My Schedule shows of the student's own busy or free time. */
+export type OwnTime = {
+  /** "Busy 1–2:30pm" or "Free 1:10–1:55pm", still ahead and outside plans. */
+  marked: { from: number; to: number; label: string }[]
+  /** Free minutes between two times, by the rule Discover uses. */
+  freeBetween: (from: number, to: number) => number
 }
 
 export type PlanStubModel = StubModel & {
@@ -37,9 +47,14 @@ export type ScheduleScreen = {
   status: 'empty' | 'ready' | 'blocked' | 'loading'
   plannedCount: number
   overlapCount: number
+  /** Clashes across every upcoming day, counted the way each day's badge and the clash sheet count them. */
+  clashCount: number
   missingCount: number
   nextUp: NextUpModel | null
-  days: (DayModel & { events: PlanStubModel[]; overlapNote: string | null; timeline: DayTimeline | null; clashes: ClashModel[] })[]
+  days: (DayModel & { events: PlanStubModel[]; overlapNote: string | null; timeline: DayTimeline | null; clashes: ClashModel[]
+    /** "1 clash", "2 clashes": counts clashes, the way the clash sheet lists them. */
+    clashText: string | null
+    ownTime: OwnTime | null })[]
   done: PlanStubModel[]
   capacityMessage: string | null
   unresolved: { id: string }[]
@@ -73,9 +88,12 @@ export function presentSchedule(input: ScheduleInput, now: Date = new Date()): S
   const sorted = [...input.entries].sort((a, b) => byTime(a.event, b.event))
   const stubs: PlanStubModel[] = sorted.map(({ event, conflict }) => {
     const span = conflict ? overlapSpan(event, conflict) : null
+    // Every plan this one overlaps, and the minutes it overlaps any of them: the clash sheet's number.
+    const others = sorted.map(entry => entry.event).filter(other => overlapSpan(event, other))
+    const extra = others.length > 1 ? ` and ${others.length - 1} more` : ''
     return {
       ...toStub(event, now, ids, null),
-      overlap: conflict && span ? { title: conflict.title, text: `Overlaps ${conflict.title} by ${spanText(span.to - span.from)}` } : null,
+      overlap: conflict && span ? { title: conflict.title, text: `Overlaps ${conflict.title}${extra} by ${spanText(overlapMinutes(event, others))}` } : null,
       done: eventPhase(event, now) === 'ended',
       ...(event.id === input.previewId ? { preview: true } : {}),
     }
@@ -91,7 +109,9 @@ export function presentSchedule(input: ScheduleInput, now: Date = new Date()): S
       return event ? [event] : []
     })
     const timeline = layoutDayTimeline(dayEvents)
-    return { ...day, overlapNote, timeline, clashes: presentClashes(dayEvents, now) }
+    const clashes = presentClashes(dayEvents, now)
+    const clashText = clashes.length ? `${clashes.length} ${clashes.length === 1 ? 'clash' : 'clashes'}` : null
+    return { ...day, overlapNote, timeline, clashes, clashText, ownTime: input.ownTime?.(day.date) ?? null }
   })
 
   const first = upcoming.find(stub => !stub.preview)
@@ -102,6 +122,7 @@ export function presentSchedule(input: ScheduleInput, now: Date = new Date()): S
     status: input.blocked ? 'blocked' : input.loading ? 'loading' : input.ids.length === 0 && !input.previewId ? 'empty' : 'ready',
     plannedCount: input.ids.length,
     overlapCount: upcoming.filter(stub => stub.overlap).length,
+    clashCount: days.reduce((total, day) => total + day.clashes.length, 0),
     missingCount: input.missingIds.length,
     nextUp,
     days,

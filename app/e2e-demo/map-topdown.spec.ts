@@ -44,7 +44,10 @@ test('the map has no headline, and on a phone the list opens from a Places butto
 test('in the app, the map reaches the tab bar on a phone (no empty band)', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.clock.install({ time: new Date('2026-11-24T18:40:00Z') })
-  await page.goto('/demo.html#map'); await page.waitForTimeout(1500)
-  const f = (await page.locator('iframe.sq-map-frame').boundingBox())!, nav = (await page.locator('.sq-nav').boundingBox())!
-  expect(Math.abs(f.y + f.height - nav.y)).toBeLessThan(4)
+  await page.goto('/demo.html#map')
+  // Wait for the layout to settle instead of a fixed 1.5 s.
+  await expect.poll(async () => {
+    const f = await page.locator('iframe.sq-map-frame').boundingBox(), nav = await page.locator('.sq-nav').boundingBox()
+    return f && nav ? Math.abs(f.y + f.height - nav.y) : Infinity
+  }).toBeLessThan(4)
 })

@@ -50,15 +50,21 @@ for (const width of [390, 1280]) {
     const count = Number((await planAll.innerText()).match(/\d+/)![0])
     const ids = await pick.locator('.sq-onepick-stop').allInnerTexts()
     expect(ids.length).toBe(count)
-    const before = Number(await page.locator('.sq-badge').first().innerText())
+    // The header no longer counts plans (Nov 25), so the saved plans are counted instead.
+    const planned = () => page.evaluate(() => (JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1') ?? '[]') as string[]).length)
+    const before = await planned()
     await planAll.click()
-    await expect.poll(async () => Number(await page.locator('.sq-badge').first().innerText())).toBe(before + count)
+    await expect.poll(planned).toBe(before + count)
+    // one toast that counts the plans, never the last title alone (toasts are hidden in tests, so count it)
+    if (count > 1) await expect(page.getByText(`${count} plans added.`)).toHaveCount(1)
     await noSidewaysScroll(page)
   })
 
   test(`leave-by notes on fitting cards, with a plain warning when you'd be late (${width}px)`, async ({ page }) => {
     await open(page, 'discover', width)
-    await page.getByRole('button', { name: /^Tonight/ }).first().click()
+    // The time tags are gone (Nov 25): marking the first gap busy narrows Discover to what fits the rest.
+    await expect(page.locator('.sq-mbar-busy').first()).toBeAttached()
+    await page.getByRole('button', { name: /^Mark busy, Today/ }).first().click()
     const card = page.locator('li', { has: page.locator('.sq-stub strong', { hasText: 'Nourish Nights' }) }).first()
     const note = card.locator('.sq-leave')
     await expect(note).toHaveClass(/sq-leave-warn/)

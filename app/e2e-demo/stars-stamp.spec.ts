@@ -3,7 +3,7 @@ import { open, shooter } from './helpers'
 
 // Her stars are back on the group answers, and the date stamp glows so it reads on dark pictures.
 for (const width of [390, 1280]) {
-  test(`answers wear her stars: Works is gold, If is dotted and keeps a private note, Cannot is struck through (${width}px)`, async ({ page }, info) => {
+  test(`answers wear her stars: Works is gold, If is dotted and keeps a note for the group, Cannot is struck through (${width}px)`, async ({ page }, info) => {
     const shot = shooter(page, info)
     await open(page, 'groups', width)
     const mine = page.getByRole('group', { name: /^Your answer for/ }).first()
@@ -19,23 +19,22 @@ for (const width of [390, 1280]) {
 
     expect(await mine.locator('.sq-star-if path').evaluate(e => getComputedStyle(e).strokeDasharray)).not.toBe('none')
     await mine.getByRole('button', { name: 'If…' }).click()
-    const note = page.getByLabel('Your condition, only you see it').first()
+    const note = page.getByLabel('Your condition, your group sees it').first()
     await expect(note).toBeVisible()
     await note.fill('if lab ends by 4')
     await expect(note).toHaveValue('if lab ends by 4')
     await shot('if-note')
 
-    await mine.getByRole('button', { name: 'Cannot' }).click()
-    await expect(page.getByLabel('Your condition, only you see it')).toHaveCount(0)
+    await mine.getByRole('button', { name: "Can't" }).click()
+    await expect(page.getByLabel('Your condition, your group sees it')).toHaveCount(0)
     await expect(mine.locator('.sq-star-cant .sq-star-strike')).toBeVisible()
     await shot('cannot')
   })
 }
 
-test('group preview never shows another member’s note or assumes consent', async ({ page }) => {
+test('group preview never assumes consent, and a note goes with its If', async ({ page }) => {
   await open(page, 'groups')
-  await expect(page.getByText('if I can leave lab early', { exact: true })).toHaveCount(0)
-  await expect(page.getByText('Design preview: groups and responses stay in this browser. No invitations are sent.')).toBeVisible()
+  await expect(page.getByText('Preview only. Nothing is sent.')).toBeVisible()
   await page.getByRole('button', { name: 'New group' }).click()
   await page.getByLabel('Group name').fill('Privacy review')
   await page.getByLabel("Who's in it").fill('Ana')
@@ -43,15 +42,16 @@ test('group preview never shows another member’s note or assumes consent', asy
   await page.getByLabel('Find something to propose').fill('stargazing')
   await page.getByRole('button', { name: /^Propose Stargazing at Ricard$/ }).click()
   const mine = page.getByRole('group', { name: /^Your answer for/ }).first()
-  await expect(mine.locator('[aria-pressed="true"]')).toHaveCount(0)
+  // You proposed it, so your own answer starts at Works. Nobody else is answered for.
+  await expect(mine.locator('[aria-pressed="true"]')).toHaveText('Works')
   const conditional = mine.getByRole('button', { name: 'If…' })
   await conditional.click()
   await expect(conditional).toHaveAttribute('aria-pressed', 'true')
   await conditional.click()
   await expect(conditional).toHaveAttribute('aria-pressed', 'true')
-  const note = page.getByLabel('Your condition, only you see it')
+  const note = page.getByLabel('Your condition, your group sees it')
   await note.fill('Private reminder')
-  await mine.getByRole('button', { name: 'Cannot' }).click()
+  await mine.getByRole('button', { name: "Can't" }).click()
   await conditional.click()
   await expect(note).toHaveValue('')
 })

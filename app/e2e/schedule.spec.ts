@@ -126,8 +126,14 @@ test('phone details are hidden while closed, trap keyboard focus, and return foc
   await expect(officialMap).toBeVisible()
   await expect(venueSearch).toBeVisible()
   await expect(calendar).toBeVisible()
+  // A planned event's card ends with its Remove button, so that is the last stop before the trap wraps.
+  const remove = dialog.getByRole('button', { name: 'Remove Choir rehearsal from My Schedule' })
+  await page.keyboard.press('Shift+Tab')
+  await expect(remove).toBeFocused()
   await page.keyboard.press('Shift+Tab')
   await expect(calendar).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(remove).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(close).toBeFocused()
   await page.keyboard.press('Tab')
@@ -143,6 +149,8 @@ test('phone details are hidden while closed, trap keyboard focus, and return foc
   await expect(dialog.getByRole('button', { name: 'Use my location' })).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(calendar).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(remove).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(close).toBeFocused()
   await page.screenshot({ path: test.info().outputPath('discover-phone-sheet.png'), fullPage: true })
@@ -169,8 +177,9 @@ test('blocked storage does not crash startup', async ({ page }) => {
   await page.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('blocked', 'SecurityError') } }))
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'More to do. Right here.' })).toBeVisible()
-  await expect(page.getByText('Events could not be loaded.')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Recover valid plans' })).toBeVisible()
+  // Storage that throws falls back to memory for this visit: the page works and says plans won't be kept.
+  await expect(page.getByText("This browser won't save your plans.")).toBeVisible()
+  await expect(page.getByText('Events could not be loaded.')).toHaveCount(0)
 })
 
 test('another tab refreshes the same device Schedule automatically', async ({ page, context }) => {

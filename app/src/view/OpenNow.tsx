@@ -1,21 +1,13 @@
 // VIEW: one quiet "what's open" line under a free stretch on Discover, e.g.
 // "The Cellar is open until 11:59pm, 4 min walk". The controller picks the place and
 // words it; this view only shows it and opens the walking route on our own map.
-import { createContext, useContext, useMemo, type ReactNode } from 'react'
-import { openIdeaFor, type IdeaEvent, type OpenIdea, type Stretch } from '../controller/openNow'
+// The provider lives in DesignReview.tsx, loaded only in the design-review build.
+import { createContext, useContext } from 'react'
+import type { OpenIdea, Stretch } from '../controller/openNow'
 import './open-now.css'
 
-type Ctx = { ideaFor: (stretch: Stretch) => OpenIdea | null } | null
-const OpenNowContext = createContext<Ctx>(null)
-
-export function OpenNowProvider({ events, plannedIds, now, enabled, children }: {
-  events: readonly IdeaEvent[]; plannedIds: readonly string[]; now: () => Date; enabled: boolean; children: ReactNode
-}) {
-  const value = useMemo<Ctx>(() => enabled
-    ? { ideaFor: stretch => openIdeaFor(stretch, { events, plannedIds, now: now() }) }
-    : null, [enabled, events, plannedIds, now])
-  return <OpenNowContext.Provider value={value}>{children}</OpenNowContext.Provider>
-}
+export type OpenNowApi = { ideaFor: (stretch: Stretch) => OpenIdea | null }
+export const OpenNowContext = createContext<OpenNowApi | null>(null)
 
 export function OpenNowLine({ slot }: { slot: Stretch }) {
   const ctx = useContext(OpenNowContext)

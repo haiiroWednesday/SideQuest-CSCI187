@@ -26,7 +26,7 @@ export function assessEventFit(event: FitTimeRecord, available: FitWindow): FitA
   const start = toMinutes(event.start)
   const end = event.end ? toMinutes(event.end) : null
   if (start === null || end === null || end <= start) {
-    return { kind: 'unknown', reason: 'The event end time is unknown or invalid; full fit cannot be confirmed.', overlapMinutes: null }
+    return { kind: 'unknown', reason: 'The end time is missing, so we can\'t tell if it fits your free time.', overlapMinutes: null }
   }
   if (start >= freeStart && end <= freeEnd) {
     return { kind: 'fits', reason: 'The entire scheduled event fits your free time.', overlapMinutes: end - start }

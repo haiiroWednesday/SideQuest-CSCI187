@@ -1,6 +1,5 @@
 // VIEW: the day ruler on Discover. Gaps, busy blocks and positions come from the Controller.
 import type { GapPart, GapsModel } from '../controller/presentGaps'
-import { DateStamp } from './DateStamp'
 import type React from 'react'
 import './gaps.css'
 
@@ -21,10 +20,9 @@ export function GapPicker({ model, parts, picking, onToggle, onPick, fitText, on
   return (
     <section className="sq-gaps" aria-labelledby="sq-discover-title">
       <div className="sq-gaps-head">
-        <span className="sq-stamp"><DateStamp dow={model.stamp.dow} day={model.stamp.day} month={model.stamp.month} year={model.stamp.year} /></span>
         <div>
-          <h1 id="sq-discover-title">What fits your gaps?</h1>
-          <p>{model.gaps.length === 0 ? 'No free gaps left today' : `${model.gaps.length} ${model.gaps.length === 1 ? 'gap' : 'gaps'} today, from My Schedule`}</p>
+          <h1 id="sq-discover-title">What fits your free time?</h1>
+          <p>{model.gaps.length === 0 ? 'No free time left today' : 'Your free time today, from My Schedule'}</p>
         </div>
       </div>
       <div className="sq-tags" role="group" aria-label="Parts of the day">
@@ -46,7 +44,7 @@ export function GapPicker({ model, parts, picking, onToggle, onPick, fitText, on
         {model.ticks.map(t => <span key={t.label} className="sq-tick" style={{ left: t.left + '%' }}>{t.label}</span>)}
       </div>
       <p className="sq-gaps-note">
-        {fitText ?? (picking ? 'Set a day and a start and end time. The list below updates as you go.' : 'Busy times come from My Schedule. Pick parts of the day to see what fits.')}
+        {fitText ?? (picking ? 'Set a day and a start and end time. The list below updates as you go.' : 'Busy time comes from My Schedule. Pick parts of the day to see what fits.')}
         {fitText && !picking && <button type="button" className="sq-dab-link" onClick={onShowAll}>show everything</button>}
       </p>
     </section>

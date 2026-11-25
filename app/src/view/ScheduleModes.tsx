@@ -95,7 +95,7 @@ function useWidth<T extends HTMLElement>() {
   return [ref, w] as const
 }
 
-export function ScheduleDayModes({ events, timeline, mode, now, isToday, onOpen, onOpenTickets, selectedId, compact = false }: {
+export function ScheduleDayModes({ events, timeline, mode, now, isToday, onOpen, onOpenTickets, selectedId, compact = false, date, freeBetween }: {
   events: PlanStubModel[]
   timeline: DayTimeline
   mode: ScheduleMode
@@ -105,6 +105,10 @@ export function ScheduleDayModes({ events, timeline, mode, now, isToday, onOpen,
   onOpenTickets: () => void
   selectedId: string | null
   compact?: boolean
+  /** The day, so "2 hr free" opens Discover on it. */
+  date?: string
+  /** Free minutes between two times, from the busy time marked on Discover. Without it a gap counts as all free. */
+  freeBetween?: (from: number, to: number) => number
 }) {
   const reviewLayout = useQuiet()
   const [ref, measured] = useWidth<HTMLDivElement>()
@@ -123,7 +127,9 @@ export function ScheduleDayModes({ events, timeline, mode, now, isToday, onOpen,
     const gap = groups[i].start - groups[i - 1].end
     const from = Math.ceil(groups[i - 1].end / 60) * 60, to = Math.floor(groups[i].start / 60) * 60
     // Any gap of two hours or more folds, the same rule on every day (Nov 24).
-    if (gap >= 120 && to - from >= 60) folds.push({ from, to, free: gap, pad: 0 })
+    // The note says only time that is really free: busy time marked on Discover is taken out.
+    const free = freeBetween ? freeBetween(groups[i - 1].end, groups[i].start) : gap
+    if (gap >= 120 && to - from >= 60) folds.push({ from, to, free, pad: 0 })
   }
   const first = timeline.firstMinute, last = timeline.lastMinute
   const Y = (m: number) => {
@@ -270,7 +276,7 @@ export function ScheduleDayModes({ events, timeline, mode, now, isToday, onOpen,
             <path d={breakMark(Y(f.to) - Y(f.from) - 8)} /><path className="sqm-break-dots" d={breakDots(Y(f.to) - Y(f.from) - 8)} />
           </svg>
           <div className="sqm-fold" style={{ top: Y(f.from) + (Y(f.to) - Y(f.from)) / 2 - 12, left: (K ? 64 : TX) + 26 }}>
-            <a href="#discover">{hrs(f.free)} free →</a>
+            {f.free >= 60 && <a href={date ? `#discover/${date}` : '#discover'}>{hrs(f.free)} free →</a>}
           </div>
         </div>
       ))}

@@ -1,10 +1,10 @@
 /* Design review: the Look panel and the looks it switches. */
-.sq-look { position: fixed; z-index: 60; right: 14px; top: 92px; font: 500 14px 'Instrument Sans Variable', Arial, sans-serif; color: #302421; }
+.sq-look { position: fixed; z-index: 60; right: 14px; top: 92px; font: 500 14px 'Urbanist Variable', Arial, sans-serif; color: #302421; }
 .sq-look summary { cursor: pointer; list-style: none; padding: 8px 14px; background: #302421; color: #fffaf2; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 12px; }
 .sq-look summary::-webkit-details-marker { display: none; }
 .sq-look-body { margin-top: 6px; display: grid; gap: 10px; width: 290px; padding: 14px; background: #fffaf2; box-shadow: 0 10px 28px -10px rgba(48, 36, 33, .5); }
 .sq-look label { display: grid; gap: 4px; font-weight: 700; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; }
-.sq-look select { font: 500 14px 'Instrument Sans Variable', Arial, sans-serif; padding: 6px; border: 1.5px solid #c9b8ab; background: #fff; text-transform: none; letter-spacing: 0; }
+.sq-look select { font: 500 14px 'Urbanist Variable', Arial, sans-serif; padding: 6px; border: 1.5px solid #c9b8ab; background: #fff; text-transform: none; letter-spacing: 0; }
 @media (max-width: 760px) { .sq-look { top: 10px; right: 8px; } .sq-look-body { width: min(290px, 86vw); } }
 
 /* Titles in the sans: bolder, tighter */

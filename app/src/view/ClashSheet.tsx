@@ -3,15 +3,16 @@
 import { useEffect, useRef } from 'react'
 import type { ClashModel } from '../controller/presentClash'
 import { categoryStyle } from './categoryColors'
-import { Greetings } from './Greetings'
-import { NowMark } from './Marks'
+import { EventStub } from './DiscoverView'
 import './clash.css'
 
-export function ClashSheet({ clashes, onClose, onRemove }: {
+export function ClashSheet({ clashes, onClose, onRemove, onRemoveMany }: {
   /** Every clash on one day. */
   clashes: ClashModel[]
   onClose: () => void
   onRemove: (id: string) => void
+  /** "Keep this, remove conflicts" as one change, so one toast names every plan removed and one Undo brings them back. */
+  onRemoveMany?: (ids: readonly string[]) => void
 }) {
   const ref = useRef<HTMLDialogElement>(null)
   useEffect(() => {
@@ -19,7 +20,7 @@ export function ClashSheet({ clashes, onClose, onRemove }: {
     if (d && !d.open) { d.showModal?.(); d.querySelector<HTMLButtonElement>('.sq-clash-close')?.focus() }
   }, [])
   const keepPlan = (ids: readonly string[]) => {
-    ids.forEach(onRemove)
+    if (onRemoveMany) onRemoveMany(ids); else ids.forEach(onRemove)
     if (clashes.length === 1) onClose()
   }
   const removeOne = (clash: ClashModel, id: string) => { onRemove(id); if (clashes.length === 1 && clash.plans.length <= 2) onClose() }
@@ -50,22 +51,16 @@ export function ClashSheet({ clashes, onClose, onRemove }: {
             <div className="sq-clash-ticks" aria-hidden="true">{clash.ticks.map(t => <span key={t.left} style={{ left: t.left + '%' }}>{t.label}</span>)}</div>
           </figure>
 
-          <ul className="sq-clash-plans">
+          <ul className="sq-stubs sq-clash-plans">
             {clash.plans.map(p => (
-              <li key={p.id} className="sq-clash-plan" style={categoryStyle(p.category)}>
-                <span className="sq-clash-face" aria-hidden="true"><Greetings location={p.location} small /></span>
-                <h3>{p.title}</h3>
-                {p.live && <NowMark />}
-                <p className="sq-clash-time">{p.time}</p>
-                <dl>
-                  {p.location && <><dt>Where</dt><dd>{p.location}</dd></>}
-                  {p.host && <><dt>Host</dt><dd>{p.host}</dd></>}
-                  <dt>Overlap</dt><dd className="sq-clash-over">{p.overlapText}</dd>
-                </dl>
-                <div className="sq-clash-acts">
-                  <button type="button" className="sq-plan-button" onClick={() => keepPlan(p.conflictingIds)}>Keep this, remove conflicts<span className="sq-visually-hidden">: {p.title}</span></button>
-                  <button type="button" className="sq-text-button sq-clash-drop" onClick={() => removeOne(clash, p.id)}>Remove<span className="sq-visually-hidden"> {p.title}</span></button>
-                </div>
+              <li key={p.id} className="sq-clash-plan">
+                <EventStub compact stub={p.stub}>
+                  <span className="sq-clash-over">{p.overlapText}</span>
+                  <span className="sq-clash-acts">
+                    <button type="button" className="sq-plan-button" onClick={() => keepPlan(p.conflictingIds)}>Keep this one<span className="sq-visually-hidden">: {p.title}, and remove the plans it clashes with</span></button>
+                    <button type="button" className="sq-text-button sq-clash-drop" onClick={() => removeOne(clash, p.id)}>Remove<span className="sq-visually-hidden"> {p.title}</span></button>
+                  </span>
+                </EventStub>
               </li>
             ))}
           </ul>

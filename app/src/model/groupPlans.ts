@@ -1,6 +1,7 @@
 // MODEL: deterministic collaboration rules. This module cannot authenticate anyone.
 // A trusted server must derive actorId from a verified session, persist revisions
-// atomically, and enforce read permissions before exposing plans or private notes.
+// atomically, and enforce read permissions before exposing plans or If notes.
+// If notes are SHARED with the plan's members (owner decision, Nov 24; PR #89 names them ifCondition).
 
 export type ResponseKind = 'works' | 'if' | 'cant'
 export type PlanStatus = 'proposed' | 'confirmed' | 'cancelled'
@@ -8,7 +9,7 @@ export type PlanStatus = 'proposed' | 'confirmed' | 'cancelled'
 export type Participant = {
   userId: string
   response: ResponseKind | null
-  privateCondition: string | null
+  ifCondition: string | null
 }
 
 export type GroupPlan = {
@@ -23,7 +24,7 @@ export type GroupPlan = {
 export type PlanCommand =
   | { type: 'invite'; userId: string }
   | { type: 'remove'; userId: string }
-  | { type: 'respond'; response: ResponseKind; privateCondition?: string | null }
+  | { type: 'respond'; response: ResponseKind; ifCondition?: string | null }
   | { type: 'confirm' }
   | { type: 'cancel' }
 
@@ -41,13 +42,16 @@ export type PlanViewer = {
   participants: {
     userId: string
     response: ResponseKind | null
-    /** Personal condition visible only to its author. */
-    privateCondition?: string | null
+    /** The If note. Every member sees it; only an If answer carries one. */
+    ifCondition?: string | null
   }[]
 }
 
-export const MAX_GROUP_INVITEES = 12
-export const MAX_PRIVATE_CONDITION = 280
+/** People in a group or plan, you and pending invites included (review v5.1, page 3). The one limit. */
+export const GROUP_SIZE_LIMIT = 12
+/** Everyone beside the organizer. */
+export const MAX_GROUP_INVITEES = GROUP_SIZE_LIMIT - 1
+export const MAX_IF_CONDITION = 280
 
 const validId = (id: string): boolean => typeof id === 'string' && id.trim().length > 0 && id.length <= 128
 const reject = (reason: RuleFailure, message: string): RuleResult => ({ ok: false, reason, message })
@@ -82,7 +86,9 @@ export function readGroupPlan(plan: GroupPlan, actorId: string): PlanViewer | nu
     participants: plan.participants.map(participant => ({
       userId: participant.userId,
       response: participant.response,
-      ...(participant.userId === actorId ? { privateCondition: participant.privateCondition } : {}),
+      // Shared with members: your own entry always, anyone else's when they answered If.
+      ...(participant.userId === actorId || participant.response === 'if'
+        ? { ifCondition: participant.response === 'if' ? participant.ifCondition : null } : {}),
     })),
   }
 }
@@ -113,23 +119,23 @@ export function applyGroupCommand(
     if (!participant) return reject('forbidden', 'Only an invited participant may respond.')
     const response = command.response
     if (response !== 'works' && response !== 'if' && response !== 'cant') {
-      return reject('invalid', 'Choose Works, If, or Cannot.')
+      return reject('invalid', "Choose Works, If… or Can't.")
     }
-    const condition = command.privateCondition ?? null
+    const condition = command.ifCondition ?? null
     if (condition !== null && typeof condition !== 'string') {
-      return reject('invalid', 'A private condition must be text.')
+      return reject('invalid', 'An If note must be text.')
     }
     if (response === 'if' && (!condition || !condition.trim())) {
-      return reject('invalid', 'A conditional response needs a private condition.')
+      return reject('invalid', 'An If answer needs a note.')
     }
-    if (condition && condition.length > MAX_PRIVATE_CONDITION) {
-      return reject('invalid', 'Private conditions must be 280 characters or fewer.')
+    if (condition && condition.length > MAX_IF_CONDITION) {
+      return reject('invalid', 'If notes must be 280 characters or fewer.')
     }
     if (response !== 'if' && condition) {
-      return reject('invalid', 'Private conditions are only supported for If responses.')
+      return reject('invalid', 'Only an If answer carries a note.')
     }
     const updated: Participant[] = plan.participants.map(item => item.userId === actorId
-      ? { ...item, response, privateCondition: response === 'if' ? condition!.trim() : null }
+      ? { ...item, response, ifCondition: response === 'if' ? condition!.trim() : null }
       : item)
     return advance(plan, updated)
   }
@@ -148,7 +154,7 @@ export function applyGroupCommand(
     if (plan.participants.length >= MAX_GROUP_INVITEES) {
       return reject('conflict', 'The plan has reached its participant limit.')
     }
-    return advance(plan, [...plan.participants, { userId: command.userId, response: null, privateCondition: null }])
+    return advance(plan, [...plan.participants, { userId: command.userId, response: null, ifCondition: null }])
   }
   if (command.type === 'remove') {
     if (!validId(command.userId) || !plan.participants.some(item => item.userId === command.userId)) {

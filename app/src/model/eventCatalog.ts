@@ -83,7 +83,7 @@ export const CATALOG_LIMITS = {
 } as const
 
 // The posting-policy fields. Optional in storage (older events have none), required
-// for every new post. Mirrored by supabase/migrations/20261125010000_event_access_contact.sql.
+// for every new post. Mirrored by supabase/proposals/20261125010000_event_access_contact_REVIEW_ONLY.sql (review only).
 export const ACCESS_LIMITS = {
   organizer: 60,
   contact: 120,

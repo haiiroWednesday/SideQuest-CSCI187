@@ -38,6 +38,8 @@ export type StubModel = {
   sourceText?: string
   date: string
   dateText: string
+  /** The day said on a ticket that sits off the day list (Groups, Someday, the map): "Today", "Tomorrow", "Thu 26". */
+  dayLabel?: string
   dow: string
   dayNumber: number
   month: string
@@ -95,6 +97,8 @@ export type DiscoverScreen = {
   count: number
   headingText: string
   nearMisses: NearMissModel[]
+  /** One line under the day bar once free stretches filter the list: how many fit, or the nearest miss. */
+  fitLine?: string | null
   categories: CategoryFiltersModel
   /** Host-set tag chips; optional so older screen fixtures stay valid. */
   tagFilters?: TagFiltersModel
@@ -155,6 +159,14 @@ function liveNote(event: ScreenEvent, now: Date): StubModel['live'] {
   return null
 }
 
+const capitalize = (word: string) => word.charAt(0) + word.slice(1).toLowerCase()
+/** Today, Tomorrow, or a short weekday and date ("Thu 26", "Tue 1 Dec" in another month). */
+export function dayLabelOf(day: DayModel): string {
+  if (day.tag === 'TODAY') return 'Today'
+  if (day.tag === 'TOMORROW') return 'Tomorrow'
+  return `${capitalize(day.dow)} ${day.dayNumber}${day.monthTag ? ` ${capitalize(day.monthTag)}` : ''}`
+}
+
 export function toStub(event: ScreenEvent, now: Date, planned: ReadonlySet<string>, fitting: ReadonlySet<string> | null): StubModel {
   const day = describeDay(event.date, now)
   const host = event.hostName?.trim() || null
@@ -175,6 +187,7 @@ export function toStub(event: ScreenEvent, now: Date, planned: ReadonlySet<strin
     sourceText: EVENT_SOURCE_TEXT[isEventSource(event.source) ? event.source : 'host'],
     date: event.date,
     dateText: displayDate(event.date),
+    dayLabel: dayLabelOf(day),
     dow: day.dow,
     dayNumber: day.dayNumber,
     month: MONTHS[partsOf(event.date).month - 1] ?? '',

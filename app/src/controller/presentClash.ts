@@ -2,7 +2,9 @@
 // Plans that overlap (directly or through a chain) form one clash. The sheet draws them on one
 // shared time ruler, so the overlap is visible at a glance, and lists what each plan asks of you.
 import { campusNow } from '../model/eventCatalog'
-import type { ScreenEvent } from './screenModels'
+import { clockSpan, clockText, toMinutes } from '../model/events'
+import { overlapMinutes } from '../model/eventTiming'
+import { presentBrowseDetail, spanText, type ScreenEvent, type StubModel } from './screenModels'
 import { categoryOfPlan } from './eventCategory'
 
 export type ClashPlan = {
@@ -19,6 +21,8 @@ export type ClashPlan = {
   width: number
   live: boolean
   category: string
+  /** The plan as the same ticket Discover and My Schedule draw (Nov 24). */
+  stub: StubModel
 }
 export type ClashModel = {
   /** Stable key: the date plus the earliest start. */
@@ -34,10 +38,9 @@ export type ClashModel = {
   ticks: { left: number; label: string }[]
 }
 
-const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + (m || 0) }
-const clock = (m: number, suffix = true) => { const h = Math.floor(m / 60), mm = m % 60; return `${h % 12 || 12}${mm ? ':' + String(mm).padStart(2, '0') : ''}${suffix ? (h < 12 ? 'am' : 'pm') : ''}` }
-const span = (a: number, b: number) => `${clock(a, (a < 720) !== (b < 720))}–${clock(b)}`
-const dur = (m: number) => m < 60 ? `${m} min` : m % 60 ? `${Math.floor(m / 60)} hr ${m % 60} min` : `${m / 60} hr`
+const toMin = (t: string) => toMinutes(t) ?? NaN
+const clock = clockText
+const span = clockSpan
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 type Timed = { e: ScreenEvent; a: number; b: number }
@@ -77,15 +80,16 @@ export function presentClashes(events: readonly ScreenEvent[], now: Date = new D
     const plans = g.map(t => {
       const conflictingIds = g.filter(other => other !== t && t.a < other.b && other.a < t.b)
         .map(other => other.e.id)
-      const over = merged.reduce((minutes, { a, b }) =>
-        minutes + Math.max(0, Math.min(b, t.b) - Math.max(a, t.a)), 0)
+      // The same rule as the plan's card on My Schedule, so both say the same length.
+      const over = overlapMinutes(t.e, g.map(other => other.e))
       const nowMin = toMin(today.time)
       return {
         id: t.e.id, title: t.e.title, host: t.e.hostName ?? '', location: t.e.location ?? '',
-        time: span(t.a, t.b), overlapText: `${dur(over)} overlap`, conflictingIds,
+        time: span(t.a, t.b), overlapText: `${spanText(over)} overlap`, conflictingIds,
         left: pct(t.a), width: pct(t.b) - pct(t.a),
         live: date === today.date && nowMin >= t.a && nowMin < t.b,
         category: categoryOfPlan({ title: t.e.title, host: t.e.hostName ?? '' }),
+        stub: presentBrowseDetail(t.e, [], now),
       }
     })
     const [y, m, d] = date.split('-').map(Number)

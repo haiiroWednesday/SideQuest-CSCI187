@@ -83,9 +83,14 @@ test('opening a card does not scroll the page or shift the cards above it', asyn
 test('an opened card puts the end time and the length on their own lines, clear of the ×', async ({ page }) => {
   await open(page, 'discover', 390)
   const card = page.getByRole('button', { name: 'View details for Stargazing at Ricard' })
-  await card.scrollIntoViewIfNeeded(); await card.click(); await page.waitForTimeout(1000)
+  await card.scrollIntoViewIfNeeded(); await card.click()
   const until = page.locator('.sq-quiet-until').first(), len = page.locator('.sq-quiet-length').first()
   await expect(until).toHaveText('to 8:30pm'); await expect(len).toHaveText('1 hr 30 min')
+  // The card grows open: measure once both lines hold still, instead of after a fixed 1 s.
+  let last = ''
+  await expect.poll(async () => {
+    const now = JSON.stringify([await until.boundingBox(), await len.boundingBox()]); const still = now === last; last = now; return still
+  }, { intervals: [200] }).toBe(true)
   const [a, b] = [await until.boundingBox(), await len.boundingBox()]
   expect(b!.y).toBeGreaterThan(a!.y + a!.height - 2)
   expect(b!.height).toBeLessThan(26)

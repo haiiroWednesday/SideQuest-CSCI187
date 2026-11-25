@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createSomedayController, type IntentionStatus, type SomedayResult } from '../controller/someday'
 import { createAccountSomedayController, type AccountSomedayStep } from '../controller/accountData'
 import type { PersonalStorePort } from '../controller/personalClient'
@@ -11,8 +11,11 @@ export function useSomeday(store?: PersonalStorePort | null) {
   const [shownFor, setShownFor] = useState(account)
   // Signing in or out swaps where ideas live; start from that place's first state.
   if (shownFor !== account) { setShownFor(account); setState(account ? account.initial() : local.read()) }
+  // Where ideas live right now. An answer for an account that has since signed out writes nothing.
+  const live = useRef(account)
+  live.current = account
   const refresh = useCallback(() => {
-    if (account) void account.load().then(setState)
+    if (account) void account.load().then(next => { if (live.current === account) setState(next) })
     else setState(local.read())
   }, [account, local])
   useEffect(() => {
@@ -26,7 +29,8 @@ export function useSomeday(store?: PersonalStorePort | null) {
   // Account changes show at once and settle when the server answers (or roll back with a message).
   const step = (next: AccountSomedayStep) => {
     setState(next.now)
-    void next.saved?.then(setState)
+    const from = account
+    void next.saved?.then(settled => { if (live.current === from) setState(settled) })
     return next.now.error === null
   }
   const add = (title: string, note: string): boolean => {

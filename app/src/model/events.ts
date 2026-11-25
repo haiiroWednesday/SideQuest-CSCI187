@@ -39,6 +39,22 @@ export function toMinutes(time: string): number | null {
   return Number(match[1]) * 60 + Number(match[2])
 }
 
+// The one 12-hour clock for every screen. Times are minutes after midnight.
+/** 870 → "14:30", the shape events and forms store. */
+export function hhmmOf(minutes: number): string {
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+}
+/** 870 → "2:30pm", 840 → "2pm". Without the suffix: "2:30", "2". */
+export function clockText(minutes: number, withSuffix = true): string {
+  const h = Math.floor(minutes / 60) % 24, m = minutes % 60
+  return `${h % 12 || 12}${m ? ':' + String(m).padStart(2, '0') : ''}${withSuffix ? (h < 12 ? 'am' : 'pm') : ''}`
+}
+/** "2–3:30pm" when both ends share am or pm, "11am–1pm" when they don't. */
+export function clockSpan(from: number, to: number): string {
+  const same = (from < 720) === (to < 720)
+  return `${clockText(from, !same)}–${clockText(to)}`
+}
+
 // Check the date format and the real calendar day. JavaScript may roll
 // impossible dates into the next month, so compare the parsed parts back.
 export function isValidDate(date: string): boolean {

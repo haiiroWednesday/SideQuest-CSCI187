@@ -1,6 +1,6 @@
 /* Lab chrome only; the views inside the frames bring their own styles. */
 .lab { --paper: #fbf6ed; --ink: #302421; --red: #a32035; --deep: #751728; --gold: #e8aa24; --rule: #d8c9b7; --muted: #655d58;
-  min-height: 100vh; background: #efe6d8; color: var(--ink); font: 16px/1.45 'Instrument Sans Variable', Arial, sans-serif; padding: 18px 22px 30px; box-sizing: border-box; }
+  min-height: 100vh; background: #efe6d8; color: var(--ink); font: 16px/1.45 'Urbanist Variable', Arial, sans-serif; padding: 18px 22px 30px; box-sizing: border-box; }
 .lab * { box-sizing: border-box; }
 .lab button { font: inherit; cursor: pointer; }
 .lab-top { display: grid; gap: 12px; margin-bottom: 16px; }
@@ -20,11 +20,11 @@
 .lab-grid { display: grid; grid-template-columns: 300px 400px minmax(0, 1fr); gap: 16px; align-items: start; }
 .lab-panel, .lab-views { background: var(--paper); border-radius: 20px; padding: 14px 16px 16px; border: 1.5px solid var(--rule); }
 .lab h2 { margin: 0 0 10px; font: 400 25px 'Instrument Serif', Georgia, serif; display: flex; gap: 10px; align-items: center; }
-.lab h2 i { font: 800 13px 'Instrument Sans Variable', sans-serif; font-style: normal; width: 26px; height: 26px; border-radius: 50%; background: var(--gold); display: grid; place-items: center; }
+.lab h2 i { font: 800 13px 'Urbanist Variable', sans-serif; font-style: normal; width: 26px; height: 26px; border-radius: 50%; background: var(--gold); display: grid; place-items: center; }
 .lab h3 { margin: 14px 0 6px; font: 800 11.5px sans-serif; letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted); }
 .lab table { width: 100%; border-collapse: collapse; font: 500 13px/1.3 ui-monospace, Menlo, monospace; }
 .lab td { white-space: nowrap; padding: 5px 4px; border-bottom: 1px solid var(--rule); vertical-align: top; }
-.lab td:last-child { white-space: normal; font-family: 'Instrument Sans Variable', sans-serif; font-size: 13.5px; }
+.lab td:last-child { white-space: normal; font-family: 'Urbanist Variable', sans-serif; font-size: 13.5px; }
 .lab tr.gone td { color: #a99d93; text-decoration: line-through; }
 .lab-ids { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
 .lab-ids code { background: #f1e3d8; color: var(--red); border-radius: 8px; padding: 2px 8px; font-size: 12.5px; }

@@ -127,24 +127,28 @@ describe('production wiring and request order', () => {
     const link = await screen.findByRole('link', { name: 'See My Schedule' })
     expect(link.getAttribute('href')).toBe('#schedule')
     expect(location.hash).toBe('#discover')
-    expect(screen.getByRole('status').textContent).toContain('Added “Ceramics” to your plans.')
+    expect(screen.getByRole('status').textContent).toContain('Added “Ceramics” to My Schedule.')
   })
-  it('loads shared events when the localStorage getter throws, and disables planning safely', async () => {
+  it('loads shared events when the localStorage getter throws, and plans in memory for the visit', async () => {
     vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => { throw Error('blocked') })
     // Catalog selection itself must not touch localStorage, even with Supabase configured.
     expect(connectBrowserEventCatalog({ shared: true }).shared).toBe(true)
     render(<App catalog={{ catalog: port(), shared: true }} now={now} />)
     expect(await screen.findByRole('button', { name: 'View details for Ceramics' })).toBeTruthy()
-    await waitFor(() => expect((screen.getByRole('button', { name: '+ Plan to attend' }) as HTMLButtonElement).disabled).toBe(true))
-    expect(screen.getByRole('button', { name: 'Recover valid plans' })).toBeTruthy()
+    // Owner decision (Nov 25): a blocked browser keeps plans in memory and says so in one line.
+    await waitFor(() => expect((screen.getByRole('button', { name: '+ Plan to attend' }) as HTMLButtonElement).disabled).toBe(false))
+    expect(screen.getByText("This browser won't save your plans.")).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Recover valid plans' })).toBeNull()
   })
   it('updates the production Schedule on a storage event without reloading the page', async () => {
     render(<App catalog={{ catalog: port(), shared: true }} now={now} />)
     await screen.findByRole('button', { name: 'View details for Ceramics' })
     localStorage.setItem(PLANNED_IDS_KEY, JSON.stringify([ID]))
     act(() => { window.dispatchEvent(new StorageEvent('storage', { key: PLANNED_IDS_KEY, storageArea: localStorage })) })
-    await waitFor(() => expect(screen.getByRole('button', { name: 'In My Schedule' })).toBeTruthy())
-  })
+    // The whole App re-renders on the storage event; waitFor's 1 s default and the 5 s test limit
+    // were both too tight on a loaded CI machine.
+    await waitFor(() => expect(screen.getByRole('button', { name: 'In My Schedule' })).toBeTruthy(), { timeout: 5_000 })
+  }, 15_000)
   it('an older Discover request cannot overwrite a successful post refresh', async () => {
     const first = deferred<CampusEvent[]>()
     const catalog = port()

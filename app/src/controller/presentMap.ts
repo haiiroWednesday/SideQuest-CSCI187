@@ -2,9 +2,18 @@
 // only when its text names a place on the map; that matching happens in the map.
 import { todayLocalISO, toMinutes } from '../model/events'
 import type { CampusEvent } from './postEvent'
+import { presentBrowseDetail, type StubModel } from './screenModels'
 
 /** short: the marker label ("10am" today, "Tue 10am" later). at: sorts events in time order. posted: this browser posted it. */
-export type MapEventRow = { id: string; title: string; location: string; when: string; planned: boolean; posted: boolean; short: string; at: string }
+export type MapEventRow = { id: string; title: string; location: string; when: string; planned: boolean; posted: boolean; short: string; at: string; ticket?: MapTicket }
+
+/** What the map's event list needs to draw the same ticket as Discover: time stub, day, host. */
+export type MapTicket = { time: string; ampm: string; endText: string; durationText: string; host: string | null; day: string }
+
+const ticketOf = (stub: Pick<StubModel, 'start' | 'endText' | 'durationText' | 'host' | 'dow' | 'month' | 'dayNumber' | 'dayLabel'>): MapTicket => ({
+  time: stub.start.time, ampm: stub.start.ampm, endText: stub.endText, durationText: stub.durationText,
+  host: stub.host, day: stub.dayLabel ?? `${stub.dow.charAt(0)}${stub.dow.slice(1).toLowerCase()} ${stub.dayNumber}`,
+})
 
 const clock = (m: number) => {
   const h = Math.floor(m / 60) % 24, mm = m % 60
@@ -36,10 +45,11 @@ export function presentMapEvents(events: readonly CampusEvent[], plannedIds: rea
       id: e.id, title: e.title, location: e.location, when: whenText(e, now),
       planned: plannedIds.includes(e.id), posted: postedIds.includes(e.id),
       short: shortWhen(e, now), at: `${e.date}T${e.start || '99:99'}`,
+      ticket: ticketOf(presentBrowseDetail(e, plannedIds, now)),
     }))
 }
 
-type FitDay = { date: string; isToday: boolean; events: readonly { id: string; title: string; location: string; dow: string; dayNumber: number; start: { time: string; ampm: string }; endText: string; planned: boolean; fit: 'fits' | 'outside' | null }[] }
+type FitDay = { date: string; isToday: boolean; events: readonly { id: string; title: string; location: string; dow: string; dayNumber: number; start: { time: string; ampm: string }; endText: string; planned: boolean; fit: 'fits' | 'outside' | null; host?: string | null; durationText?: string; month?: string }[] }
 
 /**
  * Discover's map mode: the events Discover lists that fit your free time (every listed event while
@@ -56,6 +66,7 @@ export function presentFitMap(days: readonly FitDay[]): MapEventRow[] {
       planned: e.planned, posted: false,
       short: day.isToday ? start : `${title(e.dow)} ${start}`,
       at: `${day.date}T${String(i).padStart(3, '0')}`,
+      ...(e.durationText !== undefined ? { ticket: ticketOf({ start: e.start, endText: e.endText, durationText: e.durationText, host: e.host ?? null, dow: e.dow, month: e.month ?? '', dayNumber: e.dayNumber, dayLabel: day.isToday ? 'Today' : `${title(e.dow)} ${e.dayNumber}` }) } : {}),
     }
   }))
 }

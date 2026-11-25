@@ -23,7 +23,7 @@ test('while a route is shown, its dots contrast with the muted paths', async ({ 
 
   await page.evaluate(() => (window as unknown as M).__map.walkTo('Ricard Observatory'))
   await expect.poll(() => page.evaluate(() => Boolean((window as unknown as M).__map.WALK.pts))).toBe(true)
-  await page.waitForTimeout(800)
+  await expect.poll(() => page.evaluate(() => (window as unknown as M).__map.MUTE.on)).toBe(true)
   const during = await page.evaluate(() => { const m = (window as unknown as M).__map; return { mute: m.MUTE, route: m.ROUTE_INK } })
   expect(during.mute.on).toBe(true)
   // The paths are lighter than usual, and the route stands well apart from them.

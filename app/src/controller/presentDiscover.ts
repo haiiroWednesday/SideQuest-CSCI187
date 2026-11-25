@@ -5,7 +5,8 @@ import { EVENT_CATEGORIES, suggestedEventCategory, type EventCategorySelection }
 import { findEvents } from './findEvents'
 import { EVENT_TAGS, hasAllTags, type EventTag } from '../model/eventTags'
 import { campusNow } from '../model/eventCatalog'
-import { byTime, groupDays, toStub, type ScreenEvent, type FreeWindow, type FreeWindowModel, type DiscoverScreen, type NearMissModel } from './screenModels'
+import { toMinutes } from '../model/events'
+import { byTime, groupDays, spanText, toStub, type ScreenEvent, type FreeWindow, type FreeWindowModel, type DiscoverScreen, type NearMissModel } from './screenModels'
 
 // ---------- Discover
 
@@ -101,7 +102,8 @@ export function presentDiscover(input: {
   if (!freeActive && input.freeWindows) {
     fitting = new Set(input.freeWindows.flatMap(w => { const r = findEvents(upcoming, w.date, w.start, w.end); return r.error ? [] : r.matches.map(e => e.id) }))
   }
-  const base = { plannedCount, freeWindow, nearMisses, categories, tagFilters, planningBlocked: Boolean(input.planningBlocked) }
+  const fitLine = !freeActive && input.freeWindows && fitting ? fitLineFor(upcoming, fitting.size, input.freeWindows) : null
+  const base = { plannedCount, freeWindow, nearMisses, fitLine, categories, tagFilters, planningBlocked: Boolean(input.planningBlocked) }
   if (input.loading) return { ...base, status: 'loading', errorMessage: null, days: [], count: 0, headingText: 'Coming up' }
   if (input.error) return { ...base, status: 'error', errorMessage: input.error, days: [], count: 0, headingText: 'Coming up' }
   if (allUpcoming.length === 0) return { ...base, status: 'empty', errorMessage: null, days: [], count: 0, headingText: 'Coming up' }
@@ -116,6 +118,30 @@ export function presentDiscover(input: {
     count: stubs.length,
     headingText: `Coming up, ${stubs.length} ${stubs.length === 1 ? 'event' : 'events'}`,
   }
+}
+
+/** "3 events fit your free time", or, when nothing fits, the nearest miss in one plain line:
+ *  "Nothing fits. Climbing Club Intro runs 35 min over." Only events that overlap a free
+ *  stretch can be near; the one with the fewest minutes outside it is named. */
+export function fitLineFor(events: readonly ScreenEvent[], count: number, windows: readonly { date: string; start: string; end: string }[]): string {
+  if (count === 1) return '1 event fits your free time'
+  if (count > 1) return `${count} events fit your free time`
+  let best: { title: string; early: number; over: number; start: number } | null = null
+  for (const event of events) {
+    const a = toMinutes(event.start), b = event.end ? toMinutes(event.end) : null
+    if (a === null || b === null || b <= a) continue
+    for (const w of windows) {
+      const from = toMinutes(w.start), to = toMinutes(w.end)
+      if (w.date !== event.date || from === null || to === null || Math.min(b, to) <= Math.max(a, from)) continue
+      const early = Math.max(0, from - a), over = Math.max(0, b - to)
+      const miss = early + over
+      if (!best || miss < best.early + best.over || (miss === best.early + best.over && a < best.start)) best = { title: event.title, early, over, start: a }
+    }
+  }
+  if (!best) return 'Nothing fits your free time'
+  const how = best.early && best.over ? `runs ${spanText(best.early + best.over)} longer than your free time`
+    : best.over ? `runs ${spanText(best.over)} over` : `starts ${spanText(best.early)} before you're free`
+  return `Nothing fits. ${best.title} ${how}.`
 }
 
 /** A complete window that ends before the campus clock (an earlier day, or earlier today). */

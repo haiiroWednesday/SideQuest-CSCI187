@@ -7,6 +7,8 @@
 .sq-fr-groups li button[aria-current="true"]::before { background: var(--sq-gold, #e8aa24); }
 .sq-fr-groups b { font: 400 21px var(--font-display); }
 .sq-fr-groups span { font: 600 12px var(--font-sans); color: var(--sq-muted); }
+/* On the gold chosen tile the small line is ink, not grey or gold, so it reads (Nov 24). */
+.sq-fr-groups li button[aria-current="true"] :is(span, .sq-fr-invited-tag) { color: var(--sq-ink, #302421); }
 .sq-fr-new { display: grid; gap: 10px; padding: 14px; background: #fffaf2; border: 1.5px dashed #cdbfae; }
 .sq-fr-new label { display: grid; gap: 4px; font: 700 12px var(--font-sans); color: var(--sq-muted); }
 .sq-fr-new input, .sq-fr-propose select { font: 500 15px var(--font-sans); padding: 8px 10px; border: 1.5px solid #cdbfae; border-radius: 4px; background: #fff; color: var(--sq-ink); }
@@ -100,13 +102,7 @@
 .sq-fr-find-box svg { width: 18px; height: 18px; fill: none; stroke: #8a5a12; stroke-width: 1.6; stroke-linecap: round; flex: none; }
 .sq-fr-find-box input { flex: 1; border: 0; background: transparent; font: 500 16px var(--font-sans); color: var(--sq-ink); min-height: 44px; outline: none; }
 .sq-fr-hits { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.sq-fr-hits li { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 8px 8px 12px; background: #fffaf2; box-shadow: 0 1px 3px -1px rgba(60, 40, 30, .25); }
-.sq-fr-hit-when { display: grid; font: 600 12px var(--font-sans); color: var(--sq-muted); }
-.sq-fr-hit-when b { font: 400 19px/1 var(--font-display); color: var(--sq-ink); }
-.sq-fr-hit-what { display: grid; min-width: 0; }
-.sq-fr-hit-what strong { font: 400 18px/1.15 var(--font-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sq-fr-hit-what small { font: 500 13px var(--font-sans); color: var(--sq-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sq-fr .sq-fr-hit-go { min-width: 0 !important; width: auto; min-height: 48px !important; padding: 0 16px !important; font-size: 14px; }
+.sq-fr .sq-fr-hit-go { min-width: 0 !important; width: fit-content !important; display: inline-flex; min-height: 48px !important; padding: 0 18px !important; font-size: 14px; justify-self: start; margin-top: 10px; }
 .sq-fr-none { margin: 0; color: var(--sq-muted); font: 500 14px var(--font-sans); }
 
 /* Review v5.1 rules made visible (Nov 24): invitations wait, the organizer confirms, leaving warns. */
@@ -134,8 +130,11 @@
 
 /* Polish (Nov 24): even spacing in the new-group form, breathing room for ticket times. */
 .sq-fr-new > * { margin: 0 !important; }
-.sq-fr-time { padding: 10px 8px; }
-@media (max-width: 560px) { .sq-fr-time b { font-size: 25px; } }
 
 /* Who's free runs across the whole Groups page, above the group list and the chosen group. */
 .sq-fr-open { grid-column: 1 / -1; min-width: 0; }
+
+/* Shared If notes (Nov 24): a member's condition sits on its own line under their answer. */
+.sq-fr-reps li:has(.sq-fr-their-note) { flex-wrap: wrap; }
+.sq-fr-reps .sq-fr-their-note { flex-basis: 100%; padding-left: 33px; font: 500 15px/1.35 var(--font-sans); font-style: normal; color: var(--sq-ink); }
+.sq-fr-reps .sq-fr-their-note::before { content: "“"; } .sq-fr-reps .sq-fr-their-note::after { content: "”"; }

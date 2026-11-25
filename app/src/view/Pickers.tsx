@@ -42,7 +42,7 @@ export function TimePick({ id, label, value, onChange, step = 30, firstHour = 7,
   label: string
   value: string
   onChange: (v: string) => void
-  step?: 15 | 30
+  step?: 5 | 15 | 30
   firstHour?: number
   lastHour?: number
   placeholder?: string
@@ -55,7 +55,7 @@ export function TimePick({ id, label, value, onChange, step = 30, firstHour = 7,
   useDismiss(open, () => setOpen(false), box, btn)
   const { up, dx } = useRoom(open, btn)
   const [h, m] = value ? value.split(':').map(Number) : [NaN, 0]
-  const minutes = step === 15 ? [0, 15, 30, 45] : [0, 30]
+  const minutes = Array.from({ length: 60 / step }, (_, i) => i * step)
   const hours = Array.from({ length: lastHour - firstHour + 1 }, (_, i) => firstHour + i)
   const parts: [string, number[]][] = [['Morning', hours.filter(x => x < 12)], ['Afternoon', hours.filter(x => x >= 12 && x < 17)], ['Evening', hours.filter(x => x >= 17)]]
   const setHour = (hour: number) => onChange(`${pad(hour)}:${pad(Number.isNaN(h) ? 0 : m)}`)

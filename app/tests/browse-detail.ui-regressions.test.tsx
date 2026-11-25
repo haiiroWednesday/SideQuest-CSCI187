@@ -49,7 +49,8 @@ describe('Discover selected details: safe actions and usability', () => {
     const pending = deferred<CampusEvent | null>()
     const getById = vi.fn(() => pending.promise)
     render(<App catalog={{ catalog: catalog(getById), shared: true }} now={now} />)
-    const user = userEvent.setup()
+    // delay: null: no timer per key; the whole App renders here and CI load passed the 5 s limit.
+    const user = userEvent.setup({ delay: null })
     await user.click(await screen.findByRole('button', { name: 'View details for Art Workshop' }))
     const panel = screen.getByRole('complementary')
     expect(within(panel).getByText('Checking the latest event details…')).toBeTruthy()
@@ -62,7 +63,7 @@ describe('Discover selected details: safe actions and usability', () => {
     await user.click(save)
     await waitFor(() => expect(JSON.parse(window.localStorage.getItem(PLANNED_IDS_KEY) ?? '[]')).toEqual([FIRST]))
     expect(within(panel).getByRole('button', { name: 'In My Schedule' })).toBeTruthy()
-  })
+  }, 15_000)
 
   it('does not save a plan for a missing record or a mismatched successful response', async () => {
     const user = userEvent.setup()

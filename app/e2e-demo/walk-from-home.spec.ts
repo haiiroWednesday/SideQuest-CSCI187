@@ -44,9 +44,7 @@ for (const width of [390, 1280]) {
 
     await page.getByRole('button', { name: 'Walk it for me' }).click()
     await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible()
-    await page.waitForTimeout(2500)
-    const mid = await page.evaluate(() => (window as unknown as MapWin).__map.WALK.m)
-    expect(mid).toBeLessThan(start.m - 15)
+    await expect.poll(() => page.evaluate(() => (window as unknown as MapWin).__map.WALK.m), { timeout: 10_000 }).toBeLessThan(start.m - 15)
     await expect(note.locator('[data-w="m"]')).not.toHaveText(`${Math.round(start.m / 10) * 10} m`)
     await page.screenshot({ path: info.outputPath(`walking-${width}.png`) })
 
@@ -110,8 +108,7 @@ test('with reduced motion the walk jumps 15 m at a time', async ({ page }) => {
   await page.waitForFunction(() => !!(window as unknown as { __map?: object }).__map)
   await page.evaluate(() => { const m = (window as unknown as { __map: { PL: { label: string; xy: number[] }[]; setPretend: (x: number, y: number) => void; walkTo: (l: string) => void } }).__map, p = m.PL.find(x => x.label === 'Benson')!; m.setPretend(p.xy[0], p.xy[1]); m.walkTo('Ricard Observatory') })
   await page.getByRole('button', { name: 'Walk it for me' }).click()
-  await page.waitForTimeout(1600)
+  await expect.poll(() => page.evaluate(() => (window as unknown as MapWin).__map.SIM.d), { timeout: 10_000 }).toBeGreaterThan(0)
   const d = await page.evaluate(() => (window as unknown as MapWin).__map.SIM.d)
-  expect(d).toBeGreaterThan(0)
   expect(d % 15).toBe(0)
 })

@@ -1,6 +1,6 @@
 // CONTROLLER (design review): where open invites, your free-time sharing choices and in-app notices
 // are kept in this browser, plus the sample friends' answers. The real versions run through the server
-// (supabase/proposals/20261125020000_open_invites_REVIEW_ONLY.sql, server/socialApi.ts), behind a flag.
+// (supabase/proposals/20261125030000_open_invites_REVIEW_ONLY.sql, server/socialApi.ts), behind a flag.
 // Views never touch storage: they get this state through the Social provider.
 import { campusNow } from '../model/eventCatalog'
 import { SHARE_DAYS, audienceOf, type FreeShare, type OpenInvite, type SocialGroup, type Slot } from './socialPlans'

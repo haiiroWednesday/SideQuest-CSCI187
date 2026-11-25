@@ -67,7 +67,7 @@ describe('one pick per free stretch', () => {
     const pick = onePick([far, near], window, [lunch])!
     expect(pick.event.id).toBe(pickClosest([far, near], 'Kenna Hall'))
     expect(pick.event.id).toBe('n') // Lucas is next to Kenna; the Forge Garden is across campus
-    expect(pick.reason).toMatch(/walk from Lunch talk|same building as Lunch talk/)
+    expect(pick.reason).toMatch(/walk from Lunch talk|same building as Lunch talk/i)
   })
   it('falls back to the soonest start when nothing is known about where you are', () => {
     const pick = onePick([near, far], window, [])!

@@ -6,16 +6,23 @@ import { open } from './helpers'
 async function mapFrame(page: Page) {
   const frame = page.frameLocator('.sq-disc-map-frame')
   await expect(frame.locator('canvas').first()).toBeVisible()
-  const handle = page.frames().find(f => f.url().includes('mode=discover'))!
-  await expect.poll(() => handle.evaluate('__map.EV.ready')).toBe(true)
-  return handle
+  // Look the frame up on every poll: the iframe can still be navigating when the canvas shows,
+  // and window.__map is set by a script that runs after first paint.
+  const discoverFrame = () => page.frames().find(f => f.url().includes('mode=discover'))
+  await expect.poll(async () => {
+    const f = discoverFrame()
+    return f ? f.evaluate('Boolean(window.__map && window.__map.EV && window.__map.EV.ready)').catch(() => false) : false
+  }, { timeout: 15_000 }).toBe(true)
+  return discoverFrame()!
 }
 
 for (const width of [390, 1280]) {
   test(`Discover map shows only the events that fit, and a marker opens its card (${width}px)`, async ({ page }) => {
     await open(page, 'discover', width)
+    await expect(page.locator('.sq-mbar-busy').first()).toBeAttached()
     const everything = await page.locator('[data-flip-id]').count()
-    await page.getByRole('button', { name: 'Tonight', exact: true }).click()
+    // The time tags are gone (Nov 25): marking a gap busy is what narrows Discover to what fits.
+    await page.getByRole('button', { name: /^Mark busy, Today/ }).first().click()
     await expect.poll(() => page.locator('[data-flip-id]').count()).toBeLessThan(everything)
     const listed = await page.locator('[data-flip-id]').evaluateAll(els => els.map(e => e.getAttribute('data-flip-id')))
     expect(listed.length).toBeGreaterThan(0)
@@ -28,11 +35,15 @@ for (const width of [390, 1280]) {
 
     // Find a marker for a single event and tap it.
     await expect.poll(() => frame.evaluate('(__map.MK.plan || []).some(m => !m.dot && m.v.l.length === 1)')).toBe(true)
-    await page.waitForTimeout(1500) // let markers finish growing
-    const target = await frame.evaluate(`(() => {
+    const readTarget = () => frame.evaluate(`(() => {
       const m = __map.MK.plan.find(x => !x.dot && x.v.l.length === 1), r = m.rs[0]
       return { x: r.x + r.w / 2, y: r.y + r.h / 2, id: m.v.l[0].id, title: m.v.l[0].title }
-    })()`) as { x: number; y: number; id: string; title: string }
+    })()`) as Promise<{ x: number; y: number; id: string; title: string }>
+    // Markers grow in: wait until the marker's box holds still between two reads, not a fixed 1.5 s.
+    let last = ''
+    await expect.poll(async () => { const now = JSON.stringify(await readTarget()); const still = now === last; last = now; return still },
+      { intervals: [250] }).toBe(true)
+    const target = await readTarget()
     await page.frameLocator('.sq-disc-map-frame').locator('canvas').first().click({ position: { x: target.x, y: target.y } })
     await expect(page.locator('.sq-board')).toBeVisible()
     await expect(page.locator('#sq-detail-title')).toHaveText(target.title)
@@ -64,6 +75,8 @@ test('friends going: names only from your own groups, never from a group that on
 
 test('friends going: strangers are a count only, and only from 5 going', async ({ page }) => {
   await open(page, 'discover', 1280)
+  // The page draws after its sample groups load, so wait for the first faces before reading them all.
+  await expect(page.locator('[data-testid=friends-going]').first()).toBeAttached()
   const labels = await page.locator('[data-testid=friends-going]').evaluateAll(els => els.map(e => e.getAttribute('aria-label') ?? ''))
   expect(labels.length).toBeGreaterThan(0)
   for (const l of labels) {
@@ -74,11 +87,11 @@ test('friends going: strangers are a count only, and only from 5 going', async (
   }
 })
 
-test("Show my friends I'm going is off by default, per event, and stores no place", async ({ page }) => {
+test("Let my groups see I'm going is off by default, per event, and stores no place", async ({ page }) => {
   await open(page, 'discover', 1280)
   const firstCard = page.locator('[data-flip-id] .sq-stub').first()
   await firstCard.click()
-  const share = page.getByRole('checkbox', { name: /Show my friends I'm going/ })
+  const share = page.getByRole('checkbox', { name: /Let my groups see I'm going/ })
   await expect(share).not.toBeChecked()
   await share.check()
   await expect(share).toBeChecked()
@@ -92,5 +105,5 @@ test("Show my friends I'm going is off by default, per event, and stores no plac
   await page.keyboard.press('Escape')
   await expect(page.locator('.sq-share-going')).toHaveCount(0)
   await page.locator('[data-flip-id] .sq-stub').nth(1).click()
-  await expect(page.getByRole('checkbox', { name: /Show my friends I'm going/ })).not.toBeChecked()
+  await expect(page.getByRole('checkbox', { name: /Let my groups see I'm going/ })).not.toBeChecked()
 })

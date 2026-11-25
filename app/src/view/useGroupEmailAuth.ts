@@ -4,35 +4,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { VerifiedGroupSession } from '../App'
 import type { SignInLink } from '../controller/signInLink'
+import { authRequest, readAuthStatus } from '../controller/emailAuthClient'
 
 const PUBLIC_LOGIN = import.meta.env.SIDEQUEST_PUBLIC_GROUP_LOGIN === 'true'
 
 type Credentials = { userId: string; accessToken: string; expiresAt: number }
-
-async function authRequest(path: string, payload: unknown): Promise<Record<string, unknown>> {
-  let response: Response
-  try {
-    response = await fetch(path, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      cache: 'no-store',
-      credentials: 'omit',
-    })
-  } catch { throw Error('The sign-in service could not be reached.') }
-
-  let data: unknown
-  try { data = await response.json() as unknown }
-  catch { throw Error('The sign-in response is unavailable.') }
-  if (!data || typeof data !== 'object' || Array.isArray(data)) {
-    throw Error('The sign-in response is unavailable.')
-  }
-  const record = data as Record<string, unknown>
-  if (!response.ok) {
-    throw Error(typeof record.error === 'string' ? record.error : 'The sign-in request failed.')
-  }
-  return record
-}
 
 /** `link`: a sign-in link this page was opened from, already wiped from the address by main.tsx. */
 export function useGroupEmailAuth(link: SignInLink | null = null) {
@@ -48,8 +24,7 @@ export function useGroupEmailAuth(link: SignInLink | null = null) {
   useEffect(() => {
     if (!PUBLIC_LOGIN) return
     let active = true
-    void fetch('/api/auth/status', { credentials: 'omit', cache: 'no-store' })
-      .then(async response => response.ok ? await response.json() as { enabled?: boolean; groups?: boolean; accounts?: boolean } : null)
+    void readAuthStatus()
       .then(data => {
         if (!active) return
         const on = data?.enabled === true

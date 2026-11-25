@@ -1,7 +1,7 @@
 // CONTROLLER: "what's open" ideas for a free stretch and open/closed lines for places.
 // It reads the hours model and the labelled walk estimate; it never changes what fits:
 // strict full fit stays the only rule for events. A place idea is a quiet extra line.
-import type { LegacyCampusEvent } from '../model/events'
+import { toMinutes, type LegacyCampusEvent } from '../model/events'
 import { clockLabel, openFor, PLACE_HOURS, statusAt, type PlaceHours } from '../model/placeHours'
 import { walkBetween } from '../model/walkEstimate'
 import { campusNow } from '../model/eventCatalog'
@@ -11,7 +11,7 @@ export type IdeaEvent = LegacyCampusEvent
 export type Stretch = { date: string; start: string; end: string }
 export type OpenIdea = { placeId: string; name: string; mapLabel: string; text: string; walkMinutes: number | null; closes: number }
 
-const mins = (hhmm: string) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m }
+const mins = (hhmm: string) => toMinutes(hhmm) ?? NaN
 /** A place has to stay open this long (or to the end of a shorter stretch) to be worth suggesting. */
 export const MIN_USEFUL_MINUTES = 30
 

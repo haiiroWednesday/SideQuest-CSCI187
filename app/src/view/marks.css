@@ -7,7 +7,9 @@
 
 /* The week as beads on a gold thread (D10, her pick Nov 24).
    Today is the gold bead with a star, the chosen day is the maroon bead,
-   later days are plain cream beads. Busy days carry a tiny hatch swatch. */
+   later days are plain cream beads. Busy days carry a tiny hatch swatch.
+   Set aside for Discover's top picker on Nov 24 (it now uses the leaf tabs below, D0 + D11);
+   kept for the group free-time days (.sq-ft-days) and as the timeline's look. */
 .sq-days { position: relative; display: flex; justify-content: space-between; gap: 2px; margin: 16px 0 4px; max-width: 760px; }
 .sq-days::before { content: ""; position: absolute; left: 6px; right: 6px; top: 38px; height: 2px; border-radius: 2px; background: var(--sq-gold, #e8aa24); }
 .sq-dayleaf { position: relative; flex: 0 1 52px; min-width: 44px; min-height: 62px; display: grid; justify-items: center; align-content: start; gap: 3px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--sq-ink); }
@@ -34,6 +36,46 @@
   .sq-dayleaf-num { width: 50px; height: 50px; font-size: 25px; }
   .sq-days::before { top: 41px; }
 }
+
+/* Discover's day picker (Cyn, Nov 24: D0 + D11). Paper calendar leaves with a tear-off top,
+   standing like notebook tabs on one line. Today is the maroon leaf. The chosen leaf is pulled
+   forward and joins the line, with the red underline from the paper leaves. Flat: no shading. */
+.sq-marks-left .sq-days { gap: 4px; justify-content: stretch; align-items: end; padding: 6px 2px 0; border-bottom: 1.6px solid rgba(48, 36, 33, .38); }
+.sq-marks-left .sq-days::before { content: none; }
+.sq-marks-left .sq-dayleaf { flex: 1 1 0; min-width: 0; min-height: 58px; padding: 11px 2px 8px; gap: 1px; align-content: start;
+  background: #fffaf2; box-shadow: inset 1px 0 0 rgba(48, 36, 33, .24), inset -1px 0 0 rgba(48, 36, 33, .24), inset 0 -1px 0 rgba(48, 36, 33, .24);
+  margin-bottom: -1.6px; transition: transform .15s ease;
+  -webkit-mask: radial-gradient(circle at 5px 0, #0000 2.4px, #000 2.8px) -1px 0 / 10px 100% repeat-x;
+  mask: radial-gradient(circle at 5px 0, #0000 2.4px, #000 2.8px) -1px 0 / 10px 100% repeat-x; }
+/* the tear-off stub along the top of each leaf */
+.sq-marks-left .sq-dayleaf::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 5px; background: #e9dccb; }
+.sq-marks-left .sq-dayleaf-dow { font: 700 10.5px/14px var(--font-sans); letter-spacing: .1em; color: #7a6a62; }
+.sq-marks-left .sq-dayleaf-num { width: auto; height: auto; border-radius: 0; padding: 0 2px; background: none; box-shadow: none; font: 400 27px/1 var(--font-display); color: var(--sq-ink); }
+.sq-marks-left .sq-dayleaf-num::after { content: none; }
+/* today: the maroon leaf */
+.sq-marks-left .sq-dayleaf[data-today] { background: var(--sq-red-deep, #751728); box-shadow: none; }
+.sq-marks-left .sq-dayleaf[data-today]::before { background: #5c1020; }
+.sq-marks-left .sq-dayleaf[data-today] .sq-dayleaf-dow,
+.sq-marks-left .sq-dayleaf[data-today] .sq-dayleaf-num { color: #fff6e2; background: none; box-shadow: none; }
+/* chosen: pulled forward and joined to the line, red underline under the number */
+.sq-marks-left .sq-dayleaf[aria-pressed="true"] { transform: translateY(-5px); padding-bottom: 14px; margin-bottom: -6.6px;
+  box-shadow: inset 1px 0 0 rgba(48, 36, 33, .4), inset -1px 0 0 rgba(48, 36, 33, .4); }
+.sq-marks-left .sq-dayleaf[aria-pressed="true"]:not([data-today]) .sq-dayleaf-num,
+.sq-marks-left .sq-dayleaf[aria-pressed="true"]:not([data-today]) .sq-dayleaf-dow { color: var(--sq-red-deep, #751728); background: none; box-shadow: none; }
+.sq-marks-left .sq-dayleaf[aria-pressed="true"]::after { content: ""; position: absolute; left: 18%; right: 18%; bottom: 6px; height: 5px; background: var(--sq-red, #a32035);
+  -webkit-mask: url('./assets/mat-brush-short.svg') 0 0 / 100% 100% no-repeat; mask: url('./assets/mat-brush-short.svg') 0 0 / 100% 100% no-repeat; }
+.sq-marks-left .sq-dayleaf[data-today][aria-pressed="true"]::after { background: #fff6e2; }
+.sq-marks-left .sq-dayleaf:not([aria-pressed="true"]):hover { box-shadow: inset 0 0 0 1.6px var(--sq-red-deep, #751728); }
+.sq-marks-left .sq-dayleaf[data-today]:not([aria-pressed="true"]):hover { box-shadow: inset 0 0 0 2px #fff6e2; }
+.sq-marks-left .sq-dayleaf-dab { right: 4px; bottom: 5px; }
+.sq-marks-left .sq-dayleaf[aria-pressed="true"] .sq-dayleaf-dab { bottom: 11px; }
+@media (min-width: 900px) {
+  .sq-marks-left .sq-dayleaf { min-height: 64px; flex-basis: 0; }
+  .sq-marks-left .sq-dayleaf-num { width: auto; height: auto; font-size: 30px; }
+}
+@media (max-width: 359px) { .sq-marks-left .sq-days { gap: 2px; padding-left: 0; padding-right: 0; }
+  .sq-marks-left .sq-dayleaf-dow { font-size: 9px; letter-spacing: .01em; } }
+@media (prefers-reduced-motion: reduce) { .sq-marks-left .sq-dayleaf { transition: none; } }
 
 /* The day bar: a strip of paper you paint on */
 .sq-mbar-wrap { position: relative; max-width: 760px; margin: 10px 0 0; }
@@ -170,3 +212,20 @@
   background: var(--sq-red-deep, #751728); clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); }
 :root[data-quiet] .sq-trail .sq-bubble b { font: 400 26px/1 var(--font-display) !important; }
 :root[data-quiet] .sq-trail .sq-bubble-missing { background: var(--sq-paper) !important; box-shadow: inset 0 0 0 1.6px var(--sq-rule-strong, #b9a99a), 0 0 0 6px var(--sq-paper) !important; }
+
+/* Busy/Free switch on the day bar (Nov 25): a plain text toggle, the chosen side inked and underlined. No pills. */
+.sq-markmode { display: flex; gap: 2px; margin: 0 0 6px; font: 600 15px var(--font-sans); }
+.sq-markmode button { min-height: 44px; padding: 0 10px; border: 0; background: none; color: var(--sq-muted); cursor: pointer; }
+.sq-markmode button[aria-pressed="true"] { color: #6e4a3c; text-decoration: underline; text-decoration-thickness: 2.5px; text-underline-offset: 7px; }
+.sq-markmode button:focus-visible { outline: 3px solid var(--sq-focus, #751728); outline-offset: 2px; }
+/* In Free mode the blocks you draw are free time: gold with ink ends you can pick up. */
+.sq-mbar-mine.sq-mbar-mine-free { background: linear-gradient(180deg, #ffe3a0, #f2bd4a); }
+
+/* The typed time is one compact row on every screen (Nov 25): From, Until and a small Add brush.
+   Layout only; the coordinator owns the look of .sq-busy-row and .sq-busy-add-small. */
+.sq-busy-form.sq-busy-row { flex-wrap: nowrap; gap: 6px; }
+.sq-busy-row .sq-pick { flex: 1 1 0; min-width: 0; }
+.sq-busy-row .sq-pick-btn { min-width: 0; width: 100%; padding: 0 8px; gap: 6px; }
+.sq-busy-form .sq-busy-add.sq-busy-add-small { min-width: 56px; padding-left: 14px; padding-right: 14px; font-size: 15px; }
+.sq-busy-error { margin-top: 6px; }
+@media (max-width: 760px) { .sq-busy-row .sq-busy-form-name { display: none; } }

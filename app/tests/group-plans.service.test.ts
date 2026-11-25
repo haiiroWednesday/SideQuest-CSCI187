@@ -43,7 +43,7 @@ describe('server group-plan orchestration and permission boundary', () => {
       .toMatchObject({ ok: false, reason: 'conflict' })
   })
 
-  it('applies participant changes, redacts conditions, and denies unauthorized reads', async () => {
+  it('applies participant changes, shares If notes with members, and denies unauthorized reads', async () => {
     const f = fixture()
     await f.service.create('plan-1', 'event-1', f.organizer)
     expect(await f.service.get('plan-1', f.outsider)).toMatchObject({ ok: false, reason: 'not_found' })
@@ -51,14 +51,15 @@ describe('server group-plan orchestration and permission boundary', () => {
     expect(added).toMatchObject({ ok: true, value: { revision: 1 } })
     expect(await f.service.get('plan-1', f.amy)).toMatchObject({ ok: true })
     const answered = await f.service.act('plan-1', f.amy, 1, {
-      type: 'respond', response: 'if', privateCondition: 'Can only attend after 4',
+      type: 'respond', response: 'if', ifCondition: 'Can only attend after 4',
     })
     expect(answered).toMatchObject({ ok: true, value: { revision: 2 } })
     if (!answered.ok) throw Error(answered.message)
-    expect(answered.value.participants[0].privateCondition).toBe('Can only attend after 4')
+    expect(answered.value.participants[0].ifCondition).toBe('Can only attend after 4')
     const organizerView = await f.service.get('plan-1', f.organizer)
     if (!organizerView.ok) throw Error(organizerView.message)
-    expect(organizerView.value.participants[0]).toEqual({ userId: 'amy', response: 'if' })
+    // If notes are shared with the plan's members (owner decision, Nov 24).
+    expect(organizerView.value.participants[0]).toEqual({ userId: 'amy', response: 'if', ifCondition: 'Can only attend after 4' })
     expect(await f.service.act('plan-1', f.outsider, 0, { type: 'confirm' }))
       .toMatchObject({ ok: false, reason: 'not_found' })
   })
