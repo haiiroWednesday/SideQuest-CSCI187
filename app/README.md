@@ -31,7 +31,7 @@ Set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and optionally `PORT` in the **N
 
 Set `SIDEQUEST_SCU_FEED_ENABLED=true` in the Node hosting environment or `app/.env.local` for Vite. Use a configured shared catalog. The server fetches public SCU LiveWhale listings on startup and every five minutes, and the existing WebSocket asks open browsers to reload the catalog after a change.
 
-The feed supplies eligible single-day listings with both times and a venue. Records link to the official listing and use its occurrence ID so an edit to the same listing keeps the saved plan reference. Entries with missing times, cancellations, ambiguous IDs and online-only events are skipped. A failed refresh keeps the previous snapshot for up to fifteen minutes after its last successful fetch. SideQuest posts use the existing Supabase catalog.
+The feed supplies eligible single-day listings with both times and a venue. Event details link to the official listing, and edits to the same listing keep the saved plan reference. Entries with missing times, cancellations, ambiguous IDs and online-only events are skipped. A failed or incomplete refresh keeps the previous snapshot for up to fifteen minutes after its last successful fetch. Open event sheets stay visible while the catalog updates. SideQuest posts use the existing Supabase catalog.
 
 ## Check
 

@@ -63,10 +63,10 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   const details = useBrowseDetail(connection.catalog)
   // Re-read current event details as well as Discover when the catalog changes.
   useCatalogLiveUpdates(connection.shared && realtimeEnabled, async () => {
-    if (details.state?.status === 'ready') details.retry()
+    details.refreshInBackground()
     await Promise.all([
-      events.refresh(),
-      page === 'schedule' && !plans.loading ? plans.refresh() : undefined,
+      events.refreshInBackground(),
+      page === 'schedule' && !plans.loading ? plans.refreshInBackground() : undefined,
     ])
   })
   useEffect(() => {

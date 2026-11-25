@@ -17,8 +17,11 @@ function row(id = 510149) {
   }
 }
 
-function page(data: unknown[], number = 1, total = 1) {
-  return Response.json({ meta: { type: 'events', page: number, total_pages: total }, data })
+function page(data: unknown[], number = 1, { total = data.length, perPage = 100 } = {}) {
+  return Response.json({
+    meta: { type: 'events', page: number, total_pages: Math.ceil(total / perPage), total_results: total, per_page: perPage },
+    data,
+  })
 }
 
 function setup() {
@@ -39,14 +42,16 @@ afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 describe('official SCU calendar', () => {
   it('reads all pages, filters incomplete and conflicting entries, and keeps student posts on the existing catalog', async () => {
     const { catalog, fetcher, posted, refresh, publish } = setup()
+    const pagination = { total: 12, perPage: 10 }
     fetcher.mockResolvedValueOnce(page([
       row(), { ...row(2), date2_iso: null }, { ...row(3), is_all_day: 1 },
       { ...row(4), is_canceled: 1 }, { ...row(5), is_online: 1 },
       { ...row(6), url: 'https://unrelated.test/event/6' }, { ...row(9), url: row(90).url },
       row(7), { ...row(8), date2_iso: '2026-12-03T20:50:00Z' },
-    ], 1, 2)).mockResolvedValueOnce(page([
+      { ...row(10), date_iso: '2027-02-29T20:00:00Z', date2_iso: '2027-02-29T20:50:00Z' },
+    ], 1, pagination)).mockResolvedValueOnce(page([
       row(), { ...row(7), date_iso: '2026-12-01T20:00:00Z', date2_iso: '2026-12-01T20:50:00Z' },
-    ], 2, 2))
+    ], 2, pagination))
     await refresh()
     const [post, event] = await catalog.listUpcoming()
     expect(await catalog.listUpcoming()).toHaveLength(2)
@@ -84,7 +89,7 @@ describe('official SCU calendar', () => {
   it('retains a recent snapshot when a page fails and expires it without treating an outage as a missing event', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {})
     const { catalog, fetcher, refresh, advance } = setup()
-    fetcher.mockResolvedValueOnce(page([row()])).mockResolvedValueOnce(page([], 1, 2))
+    fetcher.mockResolvedValueOnce(page([row()])).mockResolvedValueOnce(page([row()], 1, { total: 2, perPage: 1 }))
       .mockResolvedValueOnce(new Response('unavailable', { status: 503 }))
       .mockResolvedValueOnce(page([]))
     await Promise.all([refresh(), refresh()])
@@ -97,6 +102,22 @@ describe('official SCU calendar', () => {
     await expect(catalog.getById(id)).rejects.toMatchObject({ kind: 'unavailable' })
     await refresh()
     expect(await catalog.getById(id)).toBeNull()
+  })
+
+  it.each([
+    ['a short page', () => page([], 2, { total: 4, perPage: 2 })],
+    ['a changed total across pages', () => page([row(13)], 2, { total: 3, perPage: 2 })],
+  ])('keeps the last complete snapshot after receiving %s', async (_reason, secondPage) => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { catalog, fetcher, publish, refresh } = setup()
+    fetcher.mockResolvedValueOnce(page([row()]))
+      .mockResolvedValueOnce(page([row(11), row(12)], 1, { total: 4, perPage: 2 }))
+      .mockResolvedValueOnce(secondPage())
+    await refresh()
+    const previous = await catalog.listUpcoming()
+    await refresh()
+    expect(await catalog.listUpcoming()).toEqual(previous)
+    expect(publish).toHaveBeenCalledTimes(1)
   })
 
   it('leaves unconfigured catalogs and the local posting mode alone', () => {

@@ -4,6 +4,7 @@ import type { LegacyCampusEvent } from '../model/events'
 import type { EventCategorySelection } from '../model/eventCategories'
 import { campusNow } from '../model/eventCatalog'
 import { calendarDay, eventDuration, eventPhase, minutesUntilStart } from '../model/eventTiming'
+import { isScuCalendarId, parseScuCalendarSource, scuCalendarId, SCU_CALENDAR_SOURCE_LABEL } from '../model/scuCalendarId'
 import { displayDate, displayTime } from './findEvents'
 import { googleCalendarDraftUrl } from './calendarExport'
 
@@ -24,6 +25,7 @@ export type StubModel = {
   host: string | null
   location: string
   description: string | null
+  sourceUrl?: string
   date: string
   dateText: string
   dow: string
@@ -143,13 +145,17 @@ function liveNote(event: ScreenEvent, now: Date): StubModel['live'] {
 export function toStub(event: ScreenEvent, now: Date, planned: ReadonlySet<string>, fitting: ReadonlySet<string> | null): StubModel {
   const day = describeDay(event.date, now)
   const host = event.hostName?.trim() || null
-  const description = event.description?.trim() || null
+  const description = event.description?.trim() ?? ''
+  const sourceIndex = isScuCalendarId(event.id) ? description.lastIndexOf(SCU_CALENDAR_SOURCE_LABEL) : -1
+  const source = sourceIndex < 0 ? null : parseScuCalendarSource(description.slice(sourceIndex + SCU_CALENDAR_SOURCE_LABEL.length))
+  const sourceUrl = source && scuCalendarId(source.occurrenceId) === event.id ? source.href : null
   return {
     id: event.id,
     title: event.title,
     host,
     location: event.location,
-    description,
+    description: (sourceUrl ? description.slice(0, sourceIndex).trim() : description) || null,
+    ...(sourceUrl ? { sourceUrl } : {}),
     date: event.date,
     dateText: displayDate(event.date),
     dow: day.dow,

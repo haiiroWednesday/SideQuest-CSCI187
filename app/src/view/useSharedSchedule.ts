@@ -10,9 +10,9 @@ export function useSharedSchedule(catalog: EventCatalogPort) {
   // Increment for every completed action so repeated identical feedback gets
   // a new toast identity without modifying persisted plans or catalog data.
   const revision = useRef(0)
-  const run = useCallback(async (action: () => Promise<SharedScheduleResult>) => {
+  const run = useCallback(async (action: () => Promise<SharedScheduleResult>, background = false) => {
     const current = ++generation.current
-    setResult(previous => ({ ...previous, loading: true }))
+    if (!background) setResult(previous => ({ ...previous, loading: true }))
     const next = await action()
     if (generation.current === current) {
       revision.current += 1
@@ -20,6 +20,7 @@ export function useSharedSchedule(catalog: EventCatalogPort) {
     }
   }, [])
   const refresh = useCallback(() => run(() => controller.read()), [controller, run])
+  const refreshInBackground = useCallback(() => run(() => controller.read(), true), [controller, run])
   useEffect(() => {
     void refresh()
     const onStorage = (event: StorageEvent) => { if (controller.handlesStorageChange(event)) void refresh() }
@@ -27,7 +28,7 @@ export function useSharedSchedule(catalog: EventCatalogPort) {
     return () => { generation.current++; window.removeEventListener('storage', onStorage) }
   }, [controller, refresh])
   return {
-    ...result, revision: revision.current, refresh,
+    ...result, revision: revision.current, refresh, refreshInBackground,
     add: (id: string) => run(() => controller.add(id)),
     remove: (id: string) => run(() => controller.remove(id)),
     recover: () => {

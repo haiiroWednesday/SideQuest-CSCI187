@@ -3,17 +3,17 @@ import {
   campusNow, compareEvents, EventCatalogError, isUpcoming, validateCatalogDraft,
   type CampusEvent, type EventCatalogPort,
 } from '../src/model/eventCatalog'
-import { isScuCalendarId, scuCalendarId } from '../src/model/scuCalendarId'
+import { isValidDate } from '../src/model/events'
+import { isScuCalendarId, parseScuCalendarSource, scuCalendarId, SCU_CALENDAR_SOURCE_LABEL } from '../src/model/scuCalendarId'
 
 export const SCU_CALENDAR_FEED = 'https://events.scu.edu/live/json/v2/events/end_date/%2B45%20days/response_fields/location,group_title,status'
-const SCU_ORIGIN = 'https://events.scu.edu'
 const REFRESH_MS = 5 * 60_000
 const MAX_SNAPSHOT_AGE_MS = 15 * 60_000
 const MAX_PAGES = 12
-const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00(?:Z|[+-]\d{2}:\d{2})$/
+const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:00(?:Z|[+-]\d{2}:\d{2})$/
 
 type Fields = Record<string, unknown>
-type FeedPage = { pages: number; rows: unknown[] }
+type FeedPage = { pages: number; total: number; perPage: number; rows: unknown[] }
 
 function fields(value: unknown): Fields {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Fields : {}
@@ -33,31 +33,26 @@ function plainText(value: unknown): string {
   }).replace(/\s+/g, ' ').trim()
 }
 
-function officialOccurrence(row: Fields): { id: string; source: URL } | null {
-  const sourceId = row.id
-  if (typeof sourceId !== 'number' || !Number.isSafeInteger(sourceId) || sourceId <= 0 || sourceId > 0xffffffffffff) return null
+function officialOccurrence(row: Fields): { id: string; source: string } | null {
   if (typeof row.url !== 'string') return null
-  let source: URL
-  try { source = new URL(row.url) } catch { return null }
+  const source = parseScuCalendarSource(row.url)
   // LiveWhale sometimes lists a mirrored row with a different ID from the linked listing.
-  const linkedId = /\/(?:event|events)\/(\d+)(?:[-/]|$)/.exec(source.pathname)?.[1]
-  if (source.origin !== SCU_ORIGIN || source.username || source.password || linkedId !== String(sourceId)) return null
-  source.search = ''
-  source.hash = ''
-  return { id: scuCalendarId(sourceId), source }
+  if (!source || source.occurrenceId !== row.id) return null
+  return { id: scuCalendarId(source.occurrenceId), source: source.href }
 }
 
-function eventFrom(row: Fields, id: string, source: URL): CampusEvent | null {
+function eventFrom(row: Fields, id: string, source: string): CampusEvent | null {
   if (row.status !== 1 || row.is_all_day || row.is_canceled || row.is_online) return null
   if (typeof row.date_iso !== 'string' || typeof row.date2_iso !== 'string' ||
-      !TIMESTAMP.test(row.date_iso) || !TIMESTAMP.test(row.date2_iso)) return null
+      !TIMESTAMP.test(row.date_iso) || !TIMESTAMP.test(row.date2_iso) ||
+      !isValidDate(row.date_iso.slice(0, 10)) || !isValidDate(row.date2_iso.slice(0, 10))) return null
   const startsAt = new Date(row.date_iso), endsAt = new Date(row.date2_iso)
   if (!Number.isFinite(+startsAt) || !Number.isFinite(+endsAt) || endsAt <= startsAt) return null
   const start = campusNow(startsAt), end = campusNow(endsAt)
   if (start.date !== end.date) return null
   const result = validateCatalogDraft({
     title: plainText(row.title), hostName: plainText(row.group_title), location: plainText(row.location),
-    description: `See the official SCU listing for event details and any registration requirements.\nSource: ${source.href}`,
+    description: `See the official SCU listing for event details and any registration requirements.${SCU_CALENDAR_SOURCE_LABEL}${source}`,
     date: start.date, start: start.time, end: end.time,
   })
   return result.draft ? { id, ...result.draft } : null
@@ -71,17 +66,23 @@ async function fetchSnapshot(fetcher: typeof fetch): Promise<Map<string, CampusE
     })
     if (!response.ok) throw new Error(`SCU calendar returned HTTP ${response.status}`)
     const body = fields(await response.json()), meta = fields(body.meta)
-    const pages = meta.total_pages
+    const { total_pages: pages, total_results: total, per_page: perPage } = meta
     if (meta.type !== 'events' || !Array.isArray(body.data) || meta.page !== page ||
-        typeof pages !== 'number' || !Number.isInteger(pages) || pages < 0 || pages > MAX_PAGES) {
+        typeof pages !== 'number' || !Number.isInteger(pages) || pages < 0 || pages > MAX_PAGES ||
+        typeof total !== 'number' || !Number.isSafeInteger(total) || total < 0 ||
+        typeof perPage !== 'number' || !Number.isSafeInteger(perPage) || perPage < 1 ||
+        pages !== Math.ceil(total / perPage) || page > Math.max(pages, 1) ||
+        body.data.length !== Math.min(perPage, total - (page - 1) * perPage)) {
       throw new Error('Unexpected SCU calendar response')
     }
-    return { pages, rows: body.data }
+    return { pages, total, perPage, rows: body.data }
   }
 
   const first = await read(1)
   const rest = await Promise.all(Array.from({ length: Math.max(0, first.pages - 1) }, (_, index) => read(index + 2)))
-  if (rest.some(page => page.pages !== first.pages)) throw new Error('SCU calendar changed during pagination')
+  if (rest.some(page => page.pages !== first.pages || page.total !== first.total || page.perPage !== first.perPage)) {
+    throw new Error('SCU calendar changed during pagination')
+  }
   const events = new Map<string, CampusEvent>()
   const ambiguous = new Set<string>()
   for (const value of [first, ...rest].flatMap(page => page.rows)) {
