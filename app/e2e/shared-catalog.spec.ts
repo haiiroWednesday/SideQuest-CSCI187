@@ -66,6 +66,8 @@ test('a shared catalog read failure offers retry and never silently switches to 
       const page = await context.newPage()
       // Only the calendar date is relevant here. Keep native timers for real network I/O.
       await page.clock.setFixedTime(PAGE_NOW)
+      // Exercise manual retry without a socket open triggering its own read.
+      await page.addInitScript(() => { Object.defineProperty(window, 'WebSocket', { value: undefined }) })
       await backend.failReads(true)
       return page
     })
