@@ -106,7 +106,7 @@ npx vite build --ssr scripts/campus-intake/publishReviewed.ts --outDir /tmp/side
 node /tmp/sidequest-intake/publishReviewed.js --validate /path/to/review.json
 ```
 
-The review JSON contains provider, occurrenceId (verified stable external identity), sourceUrl, checkedAt (ISO timestamp), identityVerified, reuseApproved, eligibilityVerified, duplicateReviewed, and draft with title, hostName, description, location, date, start and end. A reviewer must verify these assertions; synthetic fixture approval flags are not real approvals. Use only a fresh, factual event description with a source link, not copied promotional text. Reviewers must not use a date-based provisional key as a stable ID.
+The review JSON contains provider, occurrenceId (verified stable external identity), sourceUrl, checkedAt (ISO timestamp), identityVerified, reuseApproved, eligibilityVerified, duplicateReviewed, and draft with title, hostName, description, location, date, start and end. A reviewer must verify these assertions; synthetic fixture approval flags are not real approvals. Use a fresh, factual event description. The command appends the verified source URL when it is absent and validates the final description against the catalog limit. Reviewers must not use a date-based provisional key as a stable ID.
 
 Only after Daven/team approves and applies the SQL to a controlled staging database, configure PGHOST, PGDATABASE, PGUSER and a secure PostgreSQL credential mechanism outside Git and use the explicit `--publish-reviewed` mode with `SIDEQUEST_INTAKE_WRITE_APPROVED=yes`. No production database credentials were read or configured here. The workflow's write test uses synthetic records and a disposable database only.
 
