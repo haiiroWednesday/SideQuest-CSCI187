@@ -14,7 +14,7 @@ import { useSomeday } from './view/useSomeday'
 import { SomedayView } from './view/SomedayView'
 import { GroupPlanningView } from './view/GroupPlanningView'
 import { GroupEmailLoginView } from './view/GroupEmailLoginView'
-import { createAuthenticatedGroupClient, type GroupAccessTokenProvider } from './controller/groupClient'
+import { createAuthenticatedGroupClient, groupPlanEventOptions, type GroupAccessTokenProvider } from './controller/groupClient'
 import { presentBrowseDetail, type FreeWindow } from './controller/presentScreens'
 
 const baseRoutes = { discover: '#discover', schedule: '#schedule', someday: '#someday', post: '#post' }
@@ -58,11 +58,20 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   const [freeWindow, setFreeWindow] = useState<FreeWindow>({ date: '', start: '', end: '' })
   const [category, setCategory] = useState<EventCategorySelection>('all')
   const events = useEventCatalog(connection.catalog)
-  // Notifications only trigger an authoritative catalog refresh; no pushed event is trusted.
-  useCatalogLiveUpdates(connection.shared && realtimeEnabled, events.refresh)
   const plans = useSharedSchedule(connection.catalog)
   const someday = useSomeday()
   const details = useBrowseDetail(connection.catalog)
+  // Re-read current event details as well as Discover when the catalog changes.
+  useCatalogLiveUpdates(connection.shared && realtimeEnabled, async () => {
+    if (details.state?.status === 'ready') details.retry()
+    await Promise.all([
+      events.refresh(),
+      page === 'schedule' && !plans.loading ? plans.refresh() : undefined,
+    ])
+  })
+  useEffect(() => {
+    if (page === 'schedule') void plans.refresh()
+  }, [page, plans.refresh])
   const discover = useDiscoverScreen({
     events: events.events, loading: events.loading, error: events.error,
     plannedIds: plans.schedule.ids, freeWindow, category,
@@ -131,7 +140,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
           onSuccess={() => { window.location.hash = '#groups' }} />
       ) : page === 'groups' && groupSession && groupClient ? (
         <GroupPlanningView actorId={groupSession.actorId} client={groupClient}
-          events={events.events} routes={routes} />
+          events={groupPlanEventOptions(events.events)} routes={routes} />
       ) : page === 'post' ? (
         <div className="sq-discover-page sq-post-page">
           <SideQuestHeader routes={routes} active="post" plannedCount={plans.schedule.ids.length} />

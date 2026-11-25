@@ -2,6 +2,8 @@
 // session provider. No token input, browser storage or guessed account IDs here.
 // The app's eventual sign-in module must supply the provider and verified actor.
 import { MAX_GROUP_INVITEES, type ResponseKind, type PlanStatus } from '../model/groupPlans'
+import { isScuCalendarId } from '../model/scuCalendarId'
+import type { CampusEvent } from '../model/eventCatalog'
 
 export { MAX_GROUP_INVITEES, MAX_PRIVATE_CONDITION } from '../model/groupPlans'
 export type GroupResponse = ResponseKind
@@ -32,6 +34,11 @@ export interface GroupClientPort {
   act(id: string, command: GroupAction): Promise<GroupDetail>
 }
 export type GroupAccessTokenProvider = () => Promise<string | null>
+
+// Group plans reference a posted event row through a database foreign key.
+export function groupPlanEventOptions(events: CampusEvent[]): CampusEvent[] {
+  return events.filter(event => !isScuCalendarId(event.id))
+}
 
 export class GroupClientError extends Error {
   constructor(readonly status: number, message: string) { super(message) }

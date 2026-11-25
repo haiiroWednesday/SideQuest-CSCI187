@@ -12,12 +12,13 @@ import { createEmailAuthApi } from './emailAuthApi'
 import { createSupabaseEmailOtpGatewayFromEnv } from './supabaseEmailAuth'
 import { createSupabaseGroupGatewayFromEnv } from './supabaseGroupAccess'
 import { createSupabaseEventCatalogFromEnv } from '../src/model/supabaseEventTable'
+import { withScuCalendar } from './scuCalendar'
 
-const catalog = createSupabaseEventCatalogFromEnv(process.env)
 let realtime: ReturnType<typeof attachCatalogRealtime> | null = null
 const notifications: CatalogPublisherPort = {
   publish(eventId) { realtime?.publish(eventId) },
 }
+const { catalog, stop } = withScuCalendar(createSupabaseEventCatalogFromEnv(process.env), process.env.SIDEQUEST_SCU_FEED_ENABLED, notifications)
 const api = createCatalogApi(catalog, Date.now, notifications)
 const ai = createAiDiscoverApi(catalog, { apiKey: process.env.OPENAI_API_KEY, model: process.env.SIDEQUEST_AI_MODEL })
 const groupApi = createGroupApi(createSupabaseGroupGatewayFromEnv(process.env))
@@ -42,4 +43,5 @@ const server = createServer({ requestTimeout: 15_000, headersTimeout: 10_000 }, 
   } catch { res.writeHead(404); res.end('Not found') }
 })
 realtime = attachCatalogRealtime(server)
+if (stop) server.once('close', stop)
 server.listen(port, '0.0.0.0', () => console.log(`SideQuest listening on port ${port}`))
