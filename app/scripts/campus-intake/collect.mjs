@@ -14,9 +14,9 @@ function checkedFeedUrl(value, source) {
   const url = new URL(value, configured)
   if (configured.protocol !== 'https:' || configured.hostname !== 'events.scu.edu' ||
       configured.port || configured.username || configured.password ||
-      configured.pathname !== '/live/json/v2/events/' ||
+      !['/live/json/events/', '/live/json/v2/events/'].includes(configured.pathname) ||
       url.origin !== configured.origin || url.username || url.password || url.hash ||
-      !url.pathname.startsWith(configured.pathname)) {
+      !(url.pathname === configured.pathname.slice(0, -1) || url.pathname.startsWith(configured.pathname))) {
     throw new Error('Unsafe or unexpected calendar feed URL')
   }
   return url
@@ -104,7 +104,7 @@ export async function collectLiveWhale(source, {
     rows.push(...page.records)
     if (rows.length > MAX_RECORDS) throw new Error('Record limit exceeded; no complete snapshot')
     next = page.next ? checkedFeedUrl(page.next, source) : null
-    if (next && (next.pathname !== first.pathname || next.searchParams.size !== 1 ||
+    if (next && (next.pathname.replace(/\/$/, '') !== first.pathname.replace(/\/$/, '') || next.searchParams.size !== 1 ||
         next.searchParams.get('page') !== String(seen.size + 1))) {
       throw new Error('Unexpected pagination query; no complete snapshot')
     }
