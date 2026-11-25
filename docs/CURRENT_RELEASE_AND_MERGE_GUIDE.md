@@ -2,15 +2,22 @@
 
 **Evidence recorded November 24, 2026.** Recheck exact SHAs before changing code or deploying. This is an operational index, not a team scope decision, instructor approval or credit claim.
 
-## Baseline and next changes
+## Baseline and current candidates
 
-- Master at `d374382` contains consolidated [#82](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/82) and safe clean-code extraction [#83](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/83). PR #83 passed 643 unit/integration tests (one live provider check skipped) and 53 browser tests at its PR head `16b929c`. Do not confuse PR-head CI with a separately verified post-merge run.
-- Public catalog, strict full-fit, device-local Schedule, Someday, category suggestions, AI and WebSocket foundations, calendar draft, external walking-directions handoff and ports/adapters are integrated. No public deployment or actual AI-provider result has been recorded. Group flags remain OFF.
-- [#84](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/84) at `803f19f`: four workflows passed, including actual OTP/session/expiry tests on disposable Supabase. No approved team database deployment. Daven still needs to review invitation consent, lifecycle, expiry and permissions.
-- [#85](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/85) at `cd9cfae`: two workflows passed; source audit and bounded diagnostic only. No successful SCU feed result.
-- [#86](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/86) at `58fb025`: three workflows passed; recurring collection, review snapshots and synchronization planning. Live feed access, Qlusion integration, persistent canonical mapping, cancellation lifecycle, and catalog writes are outstanding. No production data changed.
+Master at `d374382` contains [#82](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/82) and [#83](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/83). It has strict full-fit search, device-local Schedule and Someday, category suggestions, AI and WebSocket foundations, a Google Calendar draft, a walking-directions handoff, and gated Group/Auth code. Live acceptance is tracked in the [release gate](FINAL_RELEASE_DEPLOYMENT_GATE.md).
 
-## Merge order and historical drafts
+| PR | What it contributes | Remaining review |
+| --- | --- | --- |
+| [#84](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/84) | Account-ID invitations, explicit acceptance, expiry and protected group access | Daven reviews SQL and gateway; confirm the gated candidate on disposable Supabase, then use an approved environment for hosted acceptance. |
+| [#89](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/89) | One-tap attendance, optional private If notes, and current-session sign-out | Follow #84. Verify owner-only notes, stale revisions and revocation after combining the heads. |
+| [#92](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/92) | Optional official SCU feed in Discover with source links and catalog refresh | Verify against the hosted app before enabling it. Feed events do not have a database row for Group plans. |
+| [#91](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/91) | Routing and catalog test coverage, including retry with an isolated shared backend | Verify browser CI and review the independent routing oracle. Synthetic graph tests do not verify campus paths. |
+| [#85](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/85) and [#86](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/86) | Source audit, review snapshots, and a review-only first-publication path | Use the audit as evidence. Resolve duplicate visibility between the live feed and future reviewed publication before enabling both. Qlusion access and update/cancellation policy remain open. |
+| [#88](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/88) | Design preview plus proposed accounts, Google services and route previews | Review as a separate track. Account and provider changes need independent approval and testing before activation. |
+
+Recheck current workflow runs, peer reviews and mergeability on GitHub. Run the combined release candidate on the intended merge order, then record the final SHA as part of release acceptance.
+
+## Historical drafts
 
 The master comparison confirms zero unique commits on #46, #51, #53 and #55; these are ancestor branches and do not need a second merge. #47, #48, #50, #52, #54 and #56 diverge from master: their functionality was integrated through later work, but unique historical commits still need file-level comparison before closure. Do not infer that every file was preserved from a feature name alone.
 
@@ -26,6 +33,8 @@ The M2 playbook, REQUIREMENTS and SPECIFICATIONS describe the original approved 
 
 Review owner boundaries, tests and [release gate](FINAL_RELEASE_DEPLOYMENT_GATE.md). No changes to live secrets, SQL migrations, deployment or team assignments are authorized here. The [extra-credit plan](FINAL_EXTRA_CREDIT_EXECUTION_PLAN_2026-11-20.md) lists all nine categories and the instructor's eligibility rules. Real demo evidence and instructor acceptance remain outstanding.
 
-## November 24 architecture review follow-up
+## Architecture and comparison material
 
-See [the page-by-page visual review](ARCHITECTURE_VISUAL_REVIEW_2026-11-24.md), now based on all 16 rendered pages of v5.1, dated November 24. Pages 11 and 12 have stale labels; follow the explicit November 24 decisions on pages 1, 3 and 6. Keep Activity and multiple options deferred, make If notes optional, and retain the required event end. #88 is a separate design review using local sample data, not live group or media delivery. At 2421dcf its course and React workflows passed; the design browser workflow had 114 passing scenarios and one mobile accessibility failure (scrollable region keyboard focus). Follow-up fixes on #88 need exact-head CI. #89, stacked on #84, passed all four workflows at c8dfb87 including disposable Supabase. #86 passed all three at 116684c. #87 passed both workflows at a7ef993 before this documentation update. No hosted acceptance is established. The older SHA/evidence list above remains a dated snapshot.
+The [visual review](ARCHITECTURE_VISUAL_REVIEW_2026-11-24.md) describes v5.1. Follow the November 24 decisions on printed pages 1, 3 and 6 when older labels disagree. Keep Activity and multiple options deferred, keep If notes optional and author-only, and require a verified event end.
+
+The comparison cards describe product ideas. Before a demo, check their SideQuest status against the release: manual single-window full fit differs from the preview's multiple gaps, Calendar drafts differ from account-connected free/busy, and Google Maps handoff differs from an audited in-app walking route. The group preview does not establish hosted account access, open invitations, shared availability, or real attendance updates. Review-only source snapshots do not establish moderated publication, and a working feed does not establish newsletter import.
