@@ -6,9 +6,10 @@ const plan = {
   eventId: '55555555-5555-4555-8555-555555555555',
   organizerId: '11111111-1111-4111-8111-111111111111',
   status: 'proposed', revision: 2,
+  invitations: [],
   participants: [
     { userId: '22222222-2222-4222-8222-222222222222',
-      response: 'if', ifCondition: 'Private class conflict' },
+      response: 'if', ifCondition: 'After my class ends' },
   ],
 }
 
@@ -27,7 +28,7 @@ describe('group HTTP client requires a real session provider', () => {
     const result = await client.act(plan.id, {
       action: 'respond', expectedRevision: 2, response: 'if', condition: 'After 4',
     })
-    expect(result.participants[0].ifCondition).toBe('Private class conflict')
+    expect(result?.participants[0].ifCondition).toBe('After my class ends')
     expect(tokenProvider).toHaveBeenCalledOnce()
     expect(fetcher).toHaveBeenCalledWith('/api/groups/' + plan.id + '/actions', {
       method: 'POST',
