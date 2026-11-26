@@ -1,7 +1,7 @@
 // CONTROLLER: prepare upcoming-event groups and free-window feedback for Discover.
 import { eventPhase } from '../model/eventTiming'
 import { assessEventFit } from '../model/fitAssessment'
-import { EVENT_CATEGORIES, suggestedEventCategory, type EventCategorySelection } from '../model/eventCategories'
+import { EVENT_CATEGORIES, suggestedEventCategory, type EventCategory, type EventCategorySelection } from '../model/eventCategories'
 import { findEvents } from './findEvents'
 import { EVENT_TAGS, hasAllTags, type EventTag } from '../model/eventTags'
 import { campusNow } from '../model/eventCatalog'
@@ -16,6 +16,8 @@ export function presentDiscover(input: {
   loading?: boolean
   error?: string | null
   category?: EventCategorySelection
+  /** Several categories at once (Nov 25). Empty or missing means all. Wins over `category`. */
+  categories?: readonly EventCategory[]
   /** Host-set tags the student picked (free food, guest speaker, ...). An event shows when it has all of them. */
   tags?: readonly EventTag[]
   plannedIds?: readonly string[]
@@ -33,13 +35,16 @@ export function presentDiscover(input: {
 
   // An open tab outlives events: drop anything that has ended since the catalog was read.
   const allUpcoming = input.events.filter(event => eventPhase(event, now) !== 'ended').sort(byTime)
-  const selectedCategory = input.category ?? 'all'
+  const chosen: EventCategory[] = input.categories ? [...input.categories]
+    : input.category && input.category !== 'all' ? [input.category] : []
+  const selectedCategory: EventCategorySelection = chosen.length === 1 ? chosen[0] : 'all'
   const categorized = allUpcoming.map(event => ({ event, category: suggestedEventCategory({
     title: event.title,
     hostName: event.hostName ?? '',
   }) }))
   const categories = {
     selected: selectedCategory,
+    chosen,
     options: [
       { id: 'all' as const, label: 'All activities', symbol: '✧', count: allUpcoming.length },
       ...EVENT_CATEGORIES.map(item => ({
@@ -51,7 +56,7 @@ export function presentDiscover(input: {
     ],
   }
   const chosenTags = input.tags ?? []
-  const inCategory = categorized.filter(entry => selectedCategory === 'all' || entry.category === selectedCategory)
+  const inCategory = categorized.filter(entry => chosen.length === 0 || chosen.includes(entry.category))
     .map(entry => entry.event)
   const upcoming = inCategory.filter(event => hasAllTags(event, chosenTags))
   // Counts show how many events in the chosen category carry each tag, so a chip never promises more than it shows.
@@ -156,3 +161,13 @@ function windowHasPassed(values: FreeWindow, now: Date): boolean {
   const campus = campusNow(now)
   return values.date < campus.date || (values.date === campus.date && values.end <= campus.time)
 }
+
+/** Category filters choose several at once (Cyn, Nov 25: underline means pick one, a brush highlight means
+ *  pick several). A category toggles in or out; "All activities" clears the choice; clearing the last one
+ *  is the same as all. */
+export function toggleCategory(chosen: readonly EventCategory[], tapped: EventCategorySelection): EventCategory[] {
+  if (tapped === 'all') return []
+  return chosen.includes(tapped) ? chosen.filter(c => c !== tapped) : [...chosen, tapped]
+}
+
+export type { EventCategory }

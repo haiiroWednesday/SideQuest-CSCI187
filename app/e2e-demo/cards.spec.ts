@@ -80,7 +80,7 @@ test('opening a card does not scroll the page or shift the cards above it', asyn
   expect(Math.abs((await above.boundingBox())!.y - a0), 'cards above moved').toBeLessThan(2)
 })
 
-test('an opened card puts the end time and the length on their own lines, clear of the ×', async ({ page }) => {
+test('an opened card puts the end time and the length on their own lines, under a full-width picture', async ({ page }) => {
   await open(page, 'discover', 390)
   const card = page.getByRole('button', { name: 'View details for Stargazing at Ricard' })
   await card.scrollIntoViewIfNeeded(); await card.click()
@@ -94,9 +94,15 @@ test('an opened card puts the end time and the length on their own lines, clear 
   const [a, b] = [await until.boundingBox(), await len.boundingBox()]
   expect(b!.y).toBeGreaterThan(a!.y + a!.height - 2)
   expect(b!.height).toBeLessThan(26)
-  const x = await page.locator('.sq-sticker-card .sq-sheet-close').first().boundingBox()
-  const pic = await page.locator('.sq-quiet-pic').first().boundingBox()
-  expect(pic!.x + pic!.width).toBeLessThanOrEqual(x!.x + 2)
+  // Nov 25: the picture is a plate across the whole top (Cyn: "it should be bigger"), so the × sits on it.
+  // It keeps a paper disc to stay readable there, and the times below stay clear of it.
+  const close = page.locator('.sq-sticker-card .sq-sheet-close').first()
+  const x = (await close.boundingBox())!
+  const pic = (await page.locator('.sq-quiet-pic').first().boundingBox())!
+  const top = (await page.locator('.sq-sticker-card .sq-quiet-top').first().boundingBox())!
+  expect(pic.width).toBeGreaterThan(top.width - 2)
+  expect(await close.evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgb(255, 250, 242)')
+  expect(a!.y).toBeGreaterThan(x.y + x.height)
 })
 
 // Nov 24: no links out of SideQuest from the card. My day opens My Schedule on that day; Walk there opens our map.

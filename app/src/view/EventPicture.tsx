@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Greetings, stampFormatFor } from './Greetings'
 
-export function EventPicture({ title, location }: { title: string; location: string }) {
+/** `plate`: the opened card's top. The picture is drawn in its full wide shape across the card instead of
+ *  as a stamp (Cyn, Nov 25: "it should be bigger"). */
+export function EventPicture({ title, location, plate = false }: { title: string; location: string; plate?: boolean }) {
   const [full, setFull] = useState(false)
   const format = stampFormatFor(title)
   useEffect(() => {
@@ -16,9 +18,9 @@ export function EventPicture({ title, location }: { title: string; location: str
   }, [full])
   return (
     <>
-      <button type="button" className={`sq-pic sq-pic-${format}`} onClick={() => setFull(true)}>
+      <button type="button" className={`sq-pic sq-pic-${plate ? 'plate' : format}`} onClick={() => setFull(true)}>
         {/* The name comes from the stamp's own words plus a hidden hint, so what you see matches what is read out. */}
-        <span className="sq-pic-paper"><Greetings location={location} format={format} /></span>
+        <span className="sq-pic-paper"><Greetings location={location} format={plate ? undefined : format} /></span>
         <span className="sq-visually-hidden">, show full screen</span>
       </button>
       {/* Rendered at the top of the page: a card's tilt and flip transforms would otherwise box it in. */}

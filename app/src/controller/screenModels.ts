@@ -3,7 +3,7 @@
 import { EVENT_SOURCE_TEXT, TAG_SOURCE_TEXT, isEventSource, isEventTag, isTagSource, tagLabel } from '../model/eventTags'
 import { clockText, toMinutes, type LegacyCampusEvent } from '../model/events'
 import { attendOf } from '../model/attend'
-import type { EventCategorySelection } from '../model/eventCategories'
+import type { EventCategory, EventCategorySelection } from '../model/eventCategories'
 import { campusNow } from '../model/eventCatalog'
 import { calendarDay, eventDuration, eventPhase, minutesUntilStart } from '../model/eventTiming'
 import { isScuCalendarId, parseScuCalendarSource, scuCalendarId, SCU_CALENDAR_SOURCE_LABEL } from '../model/scuCalendarId'
@@ -98,7 +98,10 @@ export type NearMissModel = {
 }
 
 export type CategoryFiltersModel = {
+  /** The single choice, or 'all' when none or several are chosen. Kept for older callers. */
   selected: EventCategorySelection
+  /** Every chosen category. Empty means all. */
+  chosen: readonly EventCategory[]
   options: { id: EventCategorySelection; label: string; symbol: string; count: number }[]
 }
 

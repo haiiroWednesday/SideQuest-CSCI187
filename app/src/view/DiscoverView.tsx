@@ -491,11 +491,11 @@ export function DiscoverView({
             ) : screen.status === 'empty' || (screen.status === 'ready' && screen.count === 0) ? (
               <div className="sq-message sq-message-empty">
                 <h3>{free?.active ? 'No events fit this window.'
-                  : screen.categories.selected !== 'all' ? 'No events in this category.'
+                  : screen.categories.chosen.length > 0 ? (screen.categories.chosen.length > 1 ? 'No events in these categories.' : 'No events in this category.')
                   : 'No events to show yet.'}</h3>
                 {free?.active && onFreeWindowChange && <button type="button" className="sq-text-button"
                   onClick={() => onFreeWindowChange({ date: '', start: '', end: '' })}>Show all events</button>}
-                {screen.categories.selected !== 'all' && onCategoryChange && (
+                {screen.categories.chosen.length > 0 && onCategoryChange && (
                   <button type="button" className="sq-text-button" onClick={() => onCategoryChange('all')}>
                     Show all categories
                   </button>

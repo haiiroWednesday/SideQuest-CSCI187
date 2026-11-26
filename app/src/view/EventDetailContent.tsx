@@ -109,7 +109,7 @@ export function QuietTop({ event, live }: { event: StubModel; live: React.ReactN
         <span className="sq-quiet-length">{event.durationText}</span>
       </div>
       <div className="sq-quiet-pic">
-        <EventPicture title={event.title} location={event.location} />
+        <EventPicture title={event.title} location={event.location} plate />
         <span className="sq-quiet-stamp" aria-hidden="true"><DateStamp dow={event.dow} day={event.dayNumber} month={event.month} year={year} halo /></span>
       </div>
     </div>

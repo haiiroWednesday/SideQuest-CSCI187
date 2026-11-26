@@ -19,7 +19,7 @@ test('category filters combine with full-fit search and preserve recovery on a p
   })
   await page.reload()
 
-  const categories = page.getByRole('group', { name: 'Filter events by suggested category' })
+  const categories = page.getByRole('group', { name: /^Filter events by suggested category/ })
   await categories.getByRole('button', { name: /Arts & performance/ }).click()
   await expect(categories.getByRole('button', { name: /Arts & performance/ })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.locator('.sq-results').getByRole('button', { name: 'View details for Jazz performance' })).toBeVisible()
@@ -33,7 +33,11 @@ test('category filters combine with full-fit search and preserve recovery on a p
   await expect(page.locator('.sq-near-fit').getByText('Film screening')).toBeVisible()
   await expect(page.locator('.sq-near-fit').getByText('Basketball match')).toHaveCount(0)
 
+  // Note for the team (Nov 25): categories now choose several at once (Cyn's decision), so tapping
+  // Wellness adds it. Taking Arts off leaves only Wellness, which nothing fits.
   await categories.getByRole('button', { name: /Wellness/ }).click()
+  await categories.getByRole('button', { name: /Arts & performance/ }).click()
+  await expect(categories.getByRole('button', { name: /Wellness/ })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByText('No events fit this window.')).toBeVisible()
   await page.getByRole('button', { name: 'Show all categories' }).click()
   await expect(search.getByText('2 fit')).toBeVisible()

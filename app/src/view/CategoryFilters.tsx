@@ -16,13 +16,16 @@ export function CategoryFilters({ categories, onChange }: {
         <h2 id="sq-category-heading">What sounds good?</h2>
         <p>Suggested groups based on event titles and organizers. Events without a clear match appear in Other.</p>
       </div>
-      <div className="sq-category-choices" role="group" aria-label="Filter events by suggested category">
-        {categories.options.map(item => (
+      <div className="sq-category-choices" role="group" aria-label="Filter events by suggested category, choose one or more">
+        {categories.options.map(item => {
+          // several can be on at once; "All activities" is on when none is chosen
+          const on = item.id === 'all' ? categories.chosen.length === 0 : categories.chosen.includes(item.id)
+          return (
           <button
             key={item.id}
             type="button"
-            className={'sq-category-option' + (categories.selected === item.id ? ' sq-category-option-selected' : '')}
-            aria-pressed={categories.selected === item.id}
+            className={'sq-category-option' + (on ? ' sq-category-option-selected' : '')}
+            aria-pressed={on}
             onClick={() => onChange(item.id)}
             style={categoryStyle(item.id)}
           >
@@ -33,7 +36,8 @@ export function CategoryFilters({ categories, onChange }: {
             <span className="sq-category-name">{item.label}</span>
             <span className="sq-category-number" aria-label={item.count + ' upcoming events'}>{item.count}</span>
           </button>
-        ))}
+          )
+        })}
       </div>
     </section>
   )

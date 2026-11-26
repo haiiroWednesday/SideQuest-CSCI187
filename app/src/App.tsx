@@ -4,7 +4,7 @@ import { isEventTag, type EventTag } from './controller/tags'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MapView } from './view/MapView'
 import { MAP_FITS_ROUTE } from './controller/presentMap'
-import type { EventCategorySelection } from './controller/presentScreens'
+import { toggleCategory, type EventCategory } from './controller/presentDiscover'
 import { CATALOG_RECOVERY_CONFIRMATION, connectBrowserEventCatalog, localCatalogDamaged, recoverLocalCatalog, type ConnectedCatalog } from './controller/postEvent'
 import { DiscoverView, SideQuestHeader, useDiscoverScreen } from './view/DiscoverView'
 import { ScheduleTrailView, useScheduleScreen } from './view/ScheduleTrailView'
@@ -113,7 +113,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
     ? createAuthenticatedGroupClient(groupSession.getAccessToken) : null,
     [groupSession])
   const [freeWindow, setFreeWindow] = useState<FreeWindow>({ date: '', start: '', end: '' })
-  const [category, setCategory] = useState<EventCategorySelection>('all')
+  const [categories, setCategories] = useState<EventCategory[]>([])
   const busyMarks = useBusyMarks(personalStore)
   const marks: FreeMarks = busyMarks.marks
   const setMarks = busyMarks.setMarks
@@ -178,7 +178,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   const told = hasTold(markInput) && !showAll
   const discover = useDiscoverScreen({
     events: events.events, loading: events.loading, error: events.error,
-    plannedIds: plans.schedule.ids, freeWindow, category, tags: eventTags,
+    plannedIds: plans.schedule.ids, freeWindow, categories, tags: eventTags,
     // While Discover shows what fits a whole group, the group's common free time replaces your own.
     ...(designReview && groupFit ? { freeWindows: groupFit.windows } : look && told ? { freeWindows: freeWindows(markInput) } : {}),
     planningBlocked: plans.schedule.blocked || plans.loading,
@@ -303,7 +303,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
           onOpenEvent={id => {
             // The map can show events Discover is not listing just now (outside your free time, or another
             // category). Discover then lists everything, so the event that was tapped always opens.
-            if (!discover.days.some(day => day.events.some(stub => stub.id === id))) { setShowAll(true); setCategory('all'); setEventTags([]) }
+            if (!discover.days.some(day => day.events.some(stub => stub.id === id))) { setShowAll(true); setCategories([]); setEventTags([]) }
             openFromMap(id)
           }} />
       ) : page === 'schedule' ? (
@@ -352,7 +352,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
             detail={selectedDetail} onSelectEvent={details.open} onRetryDetail={details.retry}
             onRetry={() => { void events.refresh() }}
             onPlan={id => { void plans.add(id) }} onRemove={id => { void plans.remove(id) }} onFreeWindowChange={setFreeWindow}
-            onCategoryChange={setCategory} marker={look ? marker : undefined} openId={mapPick} key={mapPick ?? 'list'} layoutSwitcher={false}
+            onCategoryChange={id => setCategories(c => toggleCategory(c, id))} marker={look ? marker : undefined} openId={mapPick} key={mapPick ?? 'list'} layoutSwitcher={false}
             onTagsChange={tags => setEventTags(tags.filter(isEventTag))} foodNotices={foodModels}
             stretchAdvice={stretchAdvice} leaveNotes={leaveNotes}
             onPlanMany={ids => { void plans.addMany(ids) }}
