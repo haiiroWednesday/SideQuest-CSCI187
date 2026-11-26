@@ -4,6 +4,8 @@
 
 ## Source of truth
 
+- **[Current release and merge guide](docs/CURRENT_RELEASE_AND_MERGE_GUIDE.md)**: read first for final-project work, current master, verified PR results, pending decisions and safe merge order. The MVP scope below is the historical approved M2 baseline, not an exhaustive description of the final implementation. Preserve original coursework; check current source and as-built diagrams before changing architecture.
+
 - **[MVP playbook](docs/MVP_TEAM_PLAYBOOK.md)** — authoritative **M2 code contract**, architecture diagrams and tests, plus the separately identified [current P5 coursework ER](docs/MVP_TEAM_PLAYBOOK.md#p5-coursework-er-diagram--current-drawio-and-mermaid), classroom sketch and original Google Docs.
 - **[Team setup + coding agents](TEAM_SETUP_GUIDE.md)** — Git, VS Code, OpenCode/Cursor/Claude Code/Codex/Cline options, optional specialist agents, safe PR reviews.
 - **[Product research and roadmap](docs/DEEP_RESEARCH_PRODUCT_STRATEGY_2026.md)** — raw interviews, comparison research, validated extra-credit rubric, **future-only** features. Do not expand M2 automatically.

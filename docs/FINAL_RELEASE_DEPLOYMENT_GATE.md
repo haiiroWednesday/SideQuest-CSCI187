@@ -1,6 +1,6 @@
 # SideQuest: release candidate, deployment and evidence gate
 
-**Status:** Review-only, not a deployment or instructor credit claim. Candidate branch: `integration/extra-credit-release-evidence-20261123`, draft PR [#81](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/81), stacked on #78, #74 and earlier reviewed integration work. Check the current head SHA before using these instructions.
+**Status:** Review-only, not a deployment or instructor credit claim. The integration reached master via [#82](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/82) and [#83](https://github.com/haiiroWednesday/SideQuest-CSCI187/pull/83). See the [current release guide](CURRENT_RELEASE_AND_MERGE_GUIDE.md). The existing Blueprint still names the historical integration branch; select and verify the explicitly approved release commit before creating any service.
 
 ## Why a single Node service
 
@@ -12,13 +12,13 @@ Host documentation: [Render web services](https://render.com/docs/web-services),
 
 1. Obtain the team's agreement to staging and the database owner's confirmation of the **exact database project/environment**. Do not use actual student information in tests. Review anonymous public posting risk, posted-content moderation, rate limits, and shutdown/rollback.
 2. Select a **staging Supabase project** or explicitly authorized test catalog. The public POST endpoint currently accepts anonymous event creation, with server validation/rate limiting; exposing a production Supabase project without a reviewed abuse plan creates a real risk.
-3. Confirm the **current PR #81 head SHA** has passed both CI workflows, including full browser regression and bundle credential audit. Source and deployment must match; no automatic deploy on future changes.
+3. Confirm the **exact approved release SHA** has passed the relevant CI workflows, including full browser regression and bundle credential audit. Source and deployment must match; no automatic deploy on future changes.
 4. Use Render's encrypted environment configuration. The Blueprint's `sync: false` entries require protected setup. **Never paste credential values into GitHub, PRs, screenshots, CI logs or this document.**
 5. Leave these flags `false`: `SIDEQUEST_GROUPS_ENABLED`, `SIDEQUEST_AUTH_EMAIL_ENABLED`, `SIDEQUEST_AUTH_ALLOW_SIGNUP`, `SIDEQUEST_PUBLIC_GROUP_LOGIN`. Group SQL is review-only; no group rollout or migration is authorized here.
 
 ## Setup path (after permission and credentials)
 
-- Connect the GitHub repository and import [render.yaml](../render.yaml) as a new Blueprint for the **explicit candidate branch**. Confirm the service is a Render **web** service, region Oregon, root directory `app`, Node 24, `npm ci --include=dev && npm run build`, `npm start`, one instance and auto-deploy OFF.
+- Connect the GitHub repository and import [render.yaml](../render.yaml) as a new Blueprint for the **explicit candidate branch**. Do not assume the branch in the historical template is the intended release. Confirm the service is a Render **web** service, region Oregon, root directory `app`, Node 24, `npm ci --include=dev && npm run build`, `npm start`, one instance and auto-deploy OFF.
 - Supply `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` only through the host's protected environment. Confirm the database policies, event schema and current SQL migrations before testing.
 - Optionally configure `OPENAI_API_KEY` through the protected host environment, only after an approved provider account and cost cap. Without it, standard Discover should still work, and AI should be visibly unavailable. The `gpt-6-luna` model ID is part of the candidate, but a successful real API call has **not** been established by mock tests.
 - Activate only one explicitly reviewed staging deployment. Confirm its public HTTPS URL, exact source SHA and build logs. Do **not** point the Blueprint at `master` by convenience.
