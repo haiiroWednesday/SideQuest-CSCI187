@@ -126,17 +126,23 @@ function focusTitle(root: HTMLElement) {
 /** Slide the other cards from where they were to where they are now. */
 export function slideOthers(list: Element | null, before: Map<string, Box> | null, skip?: string | null) {
   if (!list || !before || reduced()) return
+  // Read all geometry before starting any animations. Interleaving layout
+  // reads and animation writes can force repeated style/layout updates.
+  const moves: { el: HTMLElement; dx: number; dy: number }[] = []
+  const H = innerHeight
   list.querySelectorAll<HTMLElement>('[data-flip-id]').forEach(li => {
     const id = li.dataset.flipId!
     if (id === skip || !canAnimate(li)) return
     const old = before.get(id); if (!old) return
     const now = boxOf(li), dx = old.x - now.x, dy = old.y - now.y
     if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return
-    // Cards that stay off screen need no animation; animating them all made opening lag on phones.
-    const H = innerHeight
+    // Cards that stay off screen need no animation.
     if ((old.y > H && now.y > H) || (old.y + old.h < 0 && now.y + now.h < 0)) return
-    li.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 640, easing: 'cubic-bezier(.45,.05,.2,1)' })
+    moves.push({ el: li, dx, dy })
   })
+  for (const { el, dx, dy } of moves) {
+    el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 640, easing: 'cubic-bezier(.45,.05,.2,1)' })
+  }
 }
 
 export function snapCards(list: Element | null): Map<string, Box> {
