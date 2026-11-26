@@ -16,3 +16,5 @@
 .sq-google-go:disabled { opacity: .55; cursor: default; }
 .sq-google-note { margin: 0 0 10px; padding: 8px 10px; background: #fbefd9; border-left: 4px solid #e8aa24; font-weight: 600; }
 .sq-google-off { margin: 0; color: #7a6a62; font-weight: 600; }
+.sq-google-consent { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; box-sizing: border-box; }
+.sq-google-consent:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
