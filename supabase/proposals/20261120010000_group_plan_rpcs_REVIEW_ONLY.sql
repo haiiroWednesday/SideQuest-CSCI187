@@ -268,7 +268,7 @@ begin
       end if;
       delete from public.group_invitations where plan_id = p_plan_id and expires_at <= now();
       if ((select count(*) from public.group_participants where plan_id = p_plan_id) +
-          (select count(*) from public.group_invitations where plan_id = p_plan_id)) >= 12 then
+          (select count(*) from public.group_invitations where plan_id = p_plan_id)) >= 11 then
         raise exception 'Participant limit reached' using errcode = '22023';
       end if;
       if exists (select 1 from public.group_participants
