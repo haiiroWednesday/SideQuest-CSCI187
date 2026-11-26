@@ -5,6 +5,7 @@ import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { loadBrowseDetail } from '../src/controller/browseDetail'
 import { useBrowseDetail } from '../src/view/useBrowseDetail'
+import { useCatalogEvents } from '../src/view/useCatalogEvents'
 import { CATALOG_READ_TIMEOUT_MS } from '../src/controller/catalogReads'
 import { type CampusEvent, type EventCatalogPort } from '../src/model/eventCatalog'
 
@@ -98,6 +99,30 @@ describe('useBrowseDetail: asynchronous selection lifecycle', () => {
     expect(result.current.state).toEqual({ id: FIRST, status: 'ready', event: sample })
   })
 
+  it('keeps verified details visible until the background lookup confirms an update', async () => {
+    const pending = deferred<CampusEvent | null>()
+    const getById = vi.fn().mockResolvedValueOnce(sample).mockReturnValueOnce(pending.promise)
+    const stableCatalog = port(getById)
+    const { result } = renderHook(() => useBrowseDetail(stableCatalog))
+    await act(async () => { result.current.open(FIRST) })
+    act(() => { result.current.refreshInBackground() })
+    expect(result.current.state).toMatchObject({ id: FIRST, status: 'ready', event: sample })
+    await act(async () => { pending.resolve({ ...sample, end: '16:00' }) })
+    expect(result.current.state).toMatchObject({ id: FIRST, status: 'ready', event: { end: '16:00' } })
+  })
+
+  it('automatically rechecks selected details after a temporary lookup failure', async () => {
+    const getById = vi.fn().mockResolvedValueOnce(sample)
+      .mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(sample)
+    const catalog = port(getById)
+    const { result } = renderHook(() => useBrowseDetail(catalog))
+    await act(async () => { result.current.open(FIRST) })
+    await act(async () => { result.current.refreshInBackground() })
+    expect(result.current.state).toMatchObject({ id: FIRST, status: 'error' })
+    await act(async () => { result.current.refreshInBackground() })
+    expect(result.current.state).toMatchObject({ id: FIRST, status: 'ready', event: sample })
+  })
+
   it('ignores a stale failed request after a different event is successfully selected', async () => {
     const first = deferred<CampusEvent | null>()
     const getById = (id: string) => id === FIRST ? first.promise : Promise.resolve({ ...sample, id: SECOND })
@@ -158,4 +183,17 @@ describe('useBrowseDetail: asynchronous selection lifecycle', () => {
     // hook's effect cleanup invalidates its pending generation.
     expect(result.current.state).toEqual({ id: FIRST, status: 'loading' })
   })
+})
+
+it('keeps Discover listings visible during a background catalog read', async () => {
+  const pending = deferred<CampusEvent[]>()
+  const stableCatalog = { ...port(async () => sample), listUpcoming: vi.fn()
+    .mockResolvedValueOnce([sample]).mockReturnValueOnce(pending.promise) }
+  const { result } = renderHook(() => useCatalogEvents(stableCatalog))
+  await waitFor(() => expect(result.current).toMatchObject({ loading: false, events: [sample] }))
+  let refresh: Promise<void> | undefined
+  act(() => { refresh = result.current.refreshInBackground() })
+  expect(result.current).toMatchObject({ loading: false, events: [sample] })
+  await act(async () => { pending.resolve([]); await refresh })
+  expect(result.current).toMatchObject({ loading: false, events: [] })
 })

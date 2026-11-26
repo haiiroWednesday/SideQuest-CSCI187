@@ -58,11 +58,20 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   const [freeWindow, setFreeWindow] = useState<FreeWindow>({ date: '', start: '', end: '' })
   const [category, setCategory] = useState<EventCategorySelection>('all')
   const events = useEventCatalog(connection.catalog)
-  // Notifications only trigger an authoritative catalog refresh; no pushed event is trusted.
-  useCatalogLiveUpdates(connection.shared && realtimeEnabled, events.refresh)
   const plans = useSharedSchedule(connection.catalog)
   const someday = useSomeday()
   const details = useBrowseDetail(connection.catalog)
+  // Re-read current event details as well as Discover when the catalog changes.
+  useCatalogLiveUpdates(connection.shared && realtimeEnabled, async () => {
+    details.refreshInBackground()
+    await Promise.all([
+      events.refreshInBackground(),
+      page === 'schedule' && !plans.loading ? plans.refreshInBackground() : undefined,
+    ])
+  })
+  useEffect(() => {
+    if (page === 'schedule') void plans.refresh()
+  }, [page, plans.refresh])
   const discover = useDiscoverScreen({
     events: events.events, loading: events.loading, error: events.error,
     plannedIds: plans.schedule.ids, freeWindow, category,

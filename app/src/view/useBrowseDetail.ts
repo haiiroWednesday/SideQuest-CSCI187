@@ -9,20 +9,24 @@ export function useBrowseDetail(catalog: EventCatalogPort) {
   const [state, setState] = useState<BrowseDetailState>(null)
   const generation = useRef(0)
 
-  const open = useCallback((id: string) => {
+  const load = useCallback((id: string, background: boolean) => {
     const request = ++generation.current
-    setState({ id, status: 'loading' })
+    if (!background) setState({ id, status: 'loading' })
     void loadBrowseDetail(catalog, id).then(result => {
       if (request === generation.current) setState({ id, ...result })
     })
   }, [catalog])
+  const open = useCallback((id: string) => load(id, false), [load])
 
   const retry = useCallback(() => {
     if (state) open(state.id)
   }, [open, state])
+  const refreshInBackground = useCallback(() => {
+    if (state && state.status !== 'loading') load(state.id, true)
+  }, [load, state])
 
   // Ignore any lookup that completes after a catalog replacement or unmount.
   useEffect(() => () => { generation.current++ }, [catalog])
 
-  return { state, open, retry }
+  return { state, open, retry, refreshInBackground }
 }

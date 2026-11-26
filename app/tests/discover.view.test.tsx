@@ -3,10 +3,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { DiscoverView, type DiscoverEvent, type DiscoverViewProps, useDiscoverScreen } from '../src/view/DiscoverView'
 import { presentDiscover } from '../src/controller/presentScreens'
+import { scuCalendarId, SCU_CALENDAR_SOURCE_LABEL } from '../src/model/scuCalendarId'
 
 afterEach(() => {
   cleanup()
   vi.useRealTimers()
+  vi.unstubAllGlobals()
 })
 
 // The view only draws what the Controller prepares, so every render goes through presentDiscover
@@ -56,6 +58,25 @@ describe('Discover View: draws the Controller screen', () => {
     const length = within(until).getByText('1 hr')
     expect(length.tagName).toBe('EM')
     expect(until.textContent).not.toContain('·')
+  })
+
+  it('links to the official calendar listing that matches the SCU event ID', () => {
+    const href = 'https://events.scu.edu/arts-and-sciences/event/510149-student-recital'
+    const description = `Registration details on the official listing.${SCU_CALENDAR_SOURCE_LABEL}${href}`
+    render(draw([{ ...events[0], id: scuCalendarId(510149), description }]))
+    expect(screen.getByRole('link', { name: 'Official SCU event listing' }).getAttribute('href')).toBe(href)
+    expect(screen.getByText('Registration details on the official listing.')).toBeTruthy()
+    expect(screen.queryByText(/Source: https:/)).toBeNull()
+  })
+
+  it.each([
+    [events[0].id, 'https://events.scu.edu/event/510149-recital'],
+    [scuCalendarId(510149), 'https://events.scu.edu/event/510150-other-event'],
+    [scuCalendarId(510149), 'https://events.scu.edu.example.com/event/510149-recital'],
+  ])('keeps an unverified source as plain text for event %s', (id, url) => {
+    render(draw([{ ...events[0], id, description: `Event information.${SCU_CALENDAR_SOURCE_LABEL}${url}` }]))
+    expect(screen.queryByRole('link', { name: 'Official SCU event listing' })).toBeNull()
+    expect(screen.getByText(/Source: https:/).textContent).toContain(url)
   })
 
   it('renders missing host/description honestly, and keeps plan controls hidden until integrated', () => {
@@ -211,5 +232,18 @@ describe('Discover View: draws the Controller screen', () => {
     fireEvent.click(within(sheet).getByRole('button', { name: 'Close details' }))
     expect(sheet.className).not.toContain('sq-open')
     expect(within(sheet).getByRole('heading', { name: 'Poetry Reading' })).toBeTruthy()
+  })
+
+  it('closes the phone sheet when its event disappears while other listings remain', () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }))
+    const { rerender } = render(draw(events))
+    fireEvent.click(screen.getByRole('button', { name: 'View details for Poetry Reading' }))
+    expect(screen.getByRole('dialog', { name: 'Poetry Reading' })).toBeTruthy()
+
+    rerender(draw([events[0]]))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('button', { name: 'View details for Ceramics Workshop' })).toBeTruthy()
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Coming up, 1 event' }))
   })
 })

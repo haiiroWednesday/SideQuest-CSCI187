@@ -10,6 +10,7 @@ import { createEmailAuthApi } from './server/emailAuthApi.ts'
 import { createSupabaseEmailOtpGatewayFromEnv } from './server/supabaseEmailAuth.ts'
 import { createSupabaseGroupGatewayFromEnv } from './server/supabaseGroupAccess.ts'
 import { createSupabaseEventCatalogFromEnv } from './src/model/supabaseEventTable.ts'
+import { withScuCalendar } from './server/scuCalendar.ts'
 
 // 🧪 Vite runs the React development app; Vitest reuses this config
 // to find unit and integration test files in the tests/ folder.
@@ -24,13 +25,15 @@ export default defineConfig(({ mode }) => ({
         ...loadEnv(mode, process.cwd(), 'SIDEQUEST_AUTH_'),
         ...loadEnv(mode, process.cwd(), 'OPENAI_'),
         ...loadEnv(mode, process.cwd(), 'SIDEQUEST_AI_'),
+        ...loadEnv(mode, process.cwd(), 'SIDEQUEST_SCU_'),
         ...process.env,
       }
-      const catalog = createSupabaseEventCatalogFromEnv(env)
       const realtime = server.httpServer ? attachCatalogRealtime(server.httpServer) : null
       const notifications: CatalogPublisherPort = {
         publish(eventId) { realtime?.publish(eventId) },
       }
+      const { catalog, stop } = withScuCalendar(createSupabaseEventCatalogFromEnv(env), env.SIDEQUEST_SCU_FEED_ENABLED, notifications)
+      if (stop) server.httpServer?.once('close', stop)
       const api = createCatalogApi(catalog, Date.now, notifications)
       const ai = createAiDiscoverApi(catalog, { apiKey: env.OPENAI_API_KEY, model: env.SIDEQUEST_AI_MODEL })
       const groupApi = createGroupApi(createSupabaseGroupGatewayFromEnv(env))
