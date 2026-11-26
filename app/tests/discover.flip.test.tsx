@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { DiscoverView, type DiscoverEvent } from '../src/view/DiscoverView'
+import { slideOthers, type Box } from '../src/view/FlipCard'
 import { presentDiscover } from '../src/controller/presentScreens'
 import { DISCOVER_LAYOUT_KEY, readDiscoverLayout, saveDiscoverLayout } from '../src/controller/viewPreferences'
 
@@ -58,5 +59,44 @@ describe('Discover flip cards', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Flip across' }))
     expect(readDiscoverLayout()).toBe('flip-row')
     expect(screen.queryByRole('complementary')).toBeNull()
+  })
+})
+
+
+describe('Flip animation geometry', () => {
+  it('reads all sibling positions before starting animations and skips stationary/offscreen cards', () => {
+    const list = document.createElement('ul')
+    const trace: string[] = []
+    const before = new Map<string, Box>()
+    const H = window.innerHeight
+    function card(id: string, oldY: number, newY: number) {
+      const el = document.createElement('li')
+      el.dataset.flipId = id
+      before.set(id, { x: 0, y: oldY, w: 200, h: 60 })
+      const measure = vi.fn(() => {
+        trace.push('read:' + id)
+        return { x: 0, y: newY, left: 0, top: newY, width: 200, height: 60, right: 200, bottom: newY + 60, toJSON: () => ({}) } as DOMRect
+      })
+      const animate = vi.fn(() => { trace.push('animate:' + id) })
+      Object.defineProperty(el, 'getBoundingClientRect', { value: measure })
+      Object.defineProperty(el, 'animate', { value: animate })
+      list.appendChild(el)
+      return animate
+    }
+    const first = card('first', 10, 70)
+    const second = card('second', 100, 170)
+    const stationary = card('stationary', 220, 220)
+    const offscreen = card('offscreen', H + 100, H + 200)
+    const opened = card('opened', 10, 100)
+    vi.stubGlobal('matchMedia', () => ({ matches: false }))
+    try {
+      slideOthers(list, before, 'opened')
+      expect(trace).toEqual(['read:first', 'read:second', 'read:stationary', 'read:offscreen', 'animate:first', 'animate:second'])
+      expect(first).toHaveBeenCalledWith([{ transform: 'translate(0px, -60px)' }, { transform: 'none' }], expect.objectContaining({ duration: 640 }))
+      expect(second).toHaveBeenCalledTimes(1)
+      expect(stationary).not.toHaveBeenCalled()
+      expect(offscreen).not.toHaveBeenCalled()
+      expect(opened).not.toHaveBeenCalled()
+    } finally { vi.unstubAllGlobals() }
   })
 })
