@@ -124,11 +124,20 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   // One toast for a change the page made itself (busy time cleared), with Undo.
   const [notice, setNotice] = useState<{ key: string; text: string; undo: () => void } | null>(null)
   const events = useEventCatalog(connection.catalog)
-  // Notifications only trigger an authoritative catalog refresh; no pushed event is trusted.
-  useCatalogLiveUpdates(connection.shared && realtimeEnabled, events.refresh)
   const plans = useSharedSchedule(connection.catalog, personalStore)
   const someday = useSomeday(personalStore)
   const details = useBrowseDetail(connection.catalog)
+  // Notifications trigger authoritative reads; never trust pushed event data.
+  useCatalogLiveUpdates(connection.shared && realtimeEnabled, async () => {
+    details.refreshInBackground()
+    await Promise.all([
+      events.refreshInBackground(),
+      page === 'schedule' && !plans.loading ? plans.refreshInBackground() : undefined,
+    ])
+  })
+  useEffect(() => {
+    if (page === 'schedule') void plans.refresh()
+  }, [page, plans.refresh])
   const markInput = { events: events.events, plannedIds: plans.schedule.ids, now: now?.() ?? new Date(), marks, open: busyMarks.open, mode: busyMarks.mode, when: markWhen }
   // The bar draws busy time in Busy mode and free time in Free mode; each keeps its own marks.
   const freeMode = busyMarks.mode === 'free'

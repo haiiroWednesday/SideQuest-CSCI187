@@ -301,6 +301,7 @@ export function DiscoverView({
   // Phones show the ticket as a sheet; it opens when a stub is picked.
   const [sheetOpen, setSheetOpen] = useState(Boolean(openId))
   const sheet = useRef<HTMLElement>(null)
+  const resultsHeading = useRef<HTMLHeadingElement>(null)
   const trigger = useRef<HTMLElement | null>(null)
   const phone = usePhoneViewport()
   const [layout, setLayout] = useState<DiscoverLayout>(() => readDiscoverLayout())
@@ -310,25 +311,35 @@ export function DiscoverView({
   const list = useRef<HTMLDivElement>(null)
   const before = useRef<Map<string, Box> | null>(null)
   const closeSheet = useCallback(() => setSheetOpen(false), [])
-  const modal = flip ? layout === 'lift' && sheetOpen : phone && sheetOpen
   const stubs = screen.days.flatMap(day => day.events)
+  const requested = stubs.find(stub => stub.id === requestedId)
+  const showSheet = sheetOpen && ((!phone && !flip) || requested !== undefined)
+  const modal = flip ? layout === 'lift' && showSheet : phone && showSheet
   // Keep the student's pick while it is still listed; otherwise fall back to the first event.
   // Flip cards have no resting selection: nothing is open until a card is tapped.
-  const listedSelection = stubs.find(stub => stub.id === requestedId) ?? (flip ? null : stubs[0] ?? null)
+  const listedSelection = requested ?? (flip ? null : stubs[0] ?? null)
   // The ID must match the current selection: a late result for a previous
   // ticket can never replace this ticket's details.
   const verified = listedSelection && detail?.id === listedSelection.id ? detail : null
   const selected = verified?.status === 'ready' ? verified.stub : listedSelection
   useEffect(() => {
-    if (screen.status !== 'ready' || screen.count === 0) setSheetOpen(false)
-  }, [screen.status, screen.count])
+    if (!sheetOpen) return
+    if (!showSheet) {
+      closeSheet()
+      setClosing(false)
+      setFlipFrom(null)
+      resultsHeading.current?.focus()
+    } else if (screen.status !== 'ready' || screen.count === 0) {
+      closeSheet()
+    }
+  }, [sheetOpen, showSheet, screen.status, screen.count, closeSheet])
   useMobileDetailFocus({
-    phone: phone && !flip, sheetOpen: sheetOpen && !flip, panelRef: sheet, returnFocusRef: trigger, onClose: closeSheet,
+    phone: phone && !flip, sheetOpen: showSheet && !flip, panelRef: sheet, returnFocusRef: trigger, onClose: closeSheet,
     selectedId: selected?.id, selectedPlanned: selected?.planned, planningBlocked: screen.planningBlocked,
   })
   const ready = screen.status === 'ready'
   const free = screen.freeWindow
-  const openFlipId = flip && sheetOpen && selected ? selected.id : null
+  const openFlipId = flip && showSheet && selected ? selected.id : null
   const openIdRef = useRef<string | null>(null)
   openIdRef.current = openFlipId ?? openIdRef.current
   // Cards around an opened or closed card slide to their new places.
@@ -461,7 +472,7 @@ export function DiscoverView({
 
         <div className={`sq-board${flip ? ' sq-flipmode' : ''}`}>
           <section inert={modal || undefined} className="sq-results" aria-labelledby="sq-events-heading">
-            <h2 id="sq-events-heading" className="sq-visually-hidden">{screen.headingText}</h2>
+            <h2 id="sq-events-heading" ref={resultsHeading} tabIndex={-1} className="sq-visually-hidden">{screen.headingText}</h2>
             {layoutSwitcher && (
               <div className="sq-layout-switch"><span>Open an event as</span>
                 <div role="group" aria-label="How events open">
@@ -524,7 +535,7 @@ export function DiscoverView({
               </div>
             )}
           </section>
-          {ready && !flip && <aside ref={sheet} className={`sq-sticker${sheetOpen ? ' sq-open' : ''}`} hidden={phone && !sheetOpen} role={modal ? 'dialog' : undefined} aria-modal={modal || undefined} aria-labelledby="sq-detail-title">
+          {ready && !flip && <aside ref={sheet} className={`sq-sticker${showSheet ? ' sq-open' : ''}`} hidden={phone && !showSheet} role={modal ? 'dialog' : undefined} aria-modal={modal || undefined} aria-labelledby="sq-detail-title">
             <EventDetailContent selected={selected} verified={verified} onRetryDetail={onRetryDetail} onPlan={onPlan} onRemove={onRemove} planningBlocked={screen.planningBlocked} onClose={closeSheet}
               extras={detailExtras(selected)} />
           </aside>}
@@ -543,7 +554,7 @@ export function DiscoverView({
             </ul>
           </section>
         )}
-        {!flip && <div className={`sq-scrim${sheetOpen && selected && ready ? ' sq-open' : ''}`} aria-hidden="true" onClick={closeSheet} />}
+        {!flip && <div className={`sq-scrim${showSheet && selected && ready ? ' sq-open' : ''}`} aria-hidden="true" onClick={closeSheet} />}
         {layout === 'lift' && openFlipId && selected && (
           <FlipCard key={openFlipId} mode="lift" from={flipFrom} phone={phone} closing={closing} onClosed={finishClose}
             front={<EventStub stub={selected}>{pills(selected)}</EventStub>}>

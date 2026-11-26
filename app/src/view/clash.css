@@ -55,6 +55,7 @@ dialog.sq-clash:modal { width: min(860px, calc(100vw - 24px)); max-width: none; 
 
 /* The overlap note on a card opens the same sheet. */
 .sq-warn-open { all: unset; display: block; cursor: pointer; }
+.sq-warn-open .sq-warn { display: block; }
 .sq-warn-open:focus-visible { outline: 3px solid var(--sq-focus, #751728); outline-offset: 2px; }
 .sq-warn::after { content: none !important; }
 .sq-warn-arrow { font-style: normal; margin-left: 6px; }

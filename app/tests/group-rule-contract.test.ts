@@ -18,14 +18,11 @@ describe('group domain / SQL proposal parity', () => {
     expect(MAX_GROUP_INVITEES + 1).toBe(GROUP_SIZE_LIMIT)
   })
 
-  // KNOWN GAP (SQL owner): the RPC proposal (and PR #89's, line 271) still stops at `>= 12` invitees,
-  // which lets 13 people in. SQL files are not changed in this pass. When the RPC says `>= 11`,
-  // this marked-failing check turns red: delete `.fails` then.
-  it.fails('uses the same participant capacity in the domain and SQL authorization function', () => {
+  it('uses the same participant capacity in the domain and SQL authorization function', () => {
     expect(rpc).toContain(`>= ${MAX_GROUP_INVITEES}`)
   })
 
-  it('enforces the domain private-note size in both storage and RPC boundaries', () => {
+  it('enforces the domain If-note size in both storage and RPC boundaries', () => {
     expect(storage).toContain(`between 1 and ${MAX_IF_CONDITION}`)
     expect(rpc).toContain(`char_length(v_condition) > ${MAX_IF_CONDITION}`)
   })

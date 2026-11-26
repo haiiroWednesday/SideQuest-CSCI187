@@ -8,6 +8,7 @@ const id = (i: number) => `cccccccc-0000-4000-8000-${String(i + 1).padStart(12, 
 type Ev = [start: string, end: string, title: string, host: string, location: string, tags?: string[]]
 
 async function seed(page: Page, events: Ev[], width: number) {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.setViewportSize({ width, height: width < 700 ? 844 : 900 })
   await page.clock.install({ time: NOW })
   const rows = events.map(([s, e, title, host, location, tags], i) => ({ id: id(i), title, host_name: host, description: `${title}.`, location, event_date: '2026-11-24', start_time: `${s}:00`, end_time: `${e}:00`, ...(tags ? { tags, tags_by: 'host' } : {}) }))
@@ -66,6 +67,8 @@ for (const width of [390, 1280]) {
     expect(await labels(climb)).toEqual(await labels(choir))
     expect(await labels(choir)).not.toContain('Overlap')
     await expect(sheet.getByText('overlap')).toHaveCount(0)
+    // Measure the same settled layout; webfonts and dialog motion can change geometry.
+    await page.evaluate(async () => { await document.fonts.ready })
     // Side by side on a laptop with each fact on one line across both tickets, stacked on a phone.
     const [a, b] = [(await choir.boundingBox())!, (await climb.boundingBox())!]
     if (width > 768) {
@@ -76,8 +79,11 @@ for (const width of [390, 1280]) {
       const [tc, th] = [await tops(climb), await tops(choir)]
       expect(tc.length).toBe(th.length)
       tc.forEach((t, k) => expect(Math.abs(t - th[k])).toBeLessThanOrEqual(1))
-      const ends = (plan: Locator) => plan.locator('.sq-stub').evaluate(e => Math.round(e.getBoundingClientRect().bottom))
-      expect(Math.abs(await ends(climb) - await ends(choir))).toBeLessThanOrEqual(1)
+      // and the tickets end on one line once the sheet has settled
+      await expect.poll(() => sheet.locator('.sq-clash-plan .sq-stub').evaluateAll(cards => {
+        const bottoms = cards.map(card => Math.round(card.getBoundingClientRect().bottom))
+        return Math.max(...bottoms) - Math.min(...bottoms)
+      })).toBeLessThanOrEqual(1)
     } else {
       expect(Math.abs(a.x - b.x)).toBeLessThan(2)
       expect(b.y).toBeGreaterThanOrEqual(a.y + a.height)

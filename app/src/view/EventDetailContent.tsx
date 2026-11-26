@@ -70,6 +70,7 @@ function VerifiedEventDetails({ event, onPlan, onRemove, planningBlocked }: {
         <p className="sq-sticker-desc">{event.description ?? 'No description was provided.'}</p>
         <div className="sq-venue-map-links">
           {event.location.trim() && <a className="sq-map-link" href={`#map/${encodeURIComponent(event.location.trim())}`}>Find it on the SideQuest map</a>}
+          {event.sourceUrl && <a href={event.sourceUrl} target="_blank" rel="noopener noreferrer">Official SCU event listing</a>}
           <a href={OFFICIAL_SCU_CAMPUS_MAP} target="_blank" rel="noopener noreferrer">Browse official SCU campus map</a>
           {googleMapsVenueSearchUrl(event.location) && (
             <a href={googleMapsVenueSearchUrl(event.location)!} target="_blank" rel="noopener noreferrer">

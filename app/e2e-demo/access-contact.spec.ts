@@ -1,9 +1,11 @@
 import { expect, test } from '@playwright/test'
 import { noSidewaysScroll, open, shooter } from './helpers'
 
-// SCU's ADA/504 rule on Post is switched off (Cyn, Nov 24: no value for students, not an extra-credit item).
-// These checks are kept for if it is switched back on in src/model/eventCatalog.ts.
-test.skip(true, 'ADA rule switched off (ACCESS_POLICY_ON = false)')
+// The production posting requirement remains paused. Run these in the dedicated
+// isolated policy-enabled fixture, never against a deployed or shared catalog.
+test.beforeAll(() => {
+  if (process.env.SIDEQUEST_ACCESS_POLICY_FIXTURE !== '1') throw new Error('Use the isolated access-policy fixture')
+})
 
 // SCU's posting policy (scu.edu/csi/organizations/resources/advertising): the primary student
 // organizer, their email or phone, the Access Policy Statement word for word, and a confirmed space.
@@ -73,9 +75,13 @@ for (const width of [390, 1280]) {
     const access = page.locator('.sq-quiet-access')
     await expect(access).toBeVisible()
     const first = access.locator('li').first(), last = access.locator('li').last()
-    await expect(first).toHaveText(/^[A-Z][a-z]+ [A-Z][a-z]+ · [a-z]+\.[a-z]+@example\.edu$/)
-    const [name, email] = (await first.innerText()).split(' · ')
-    await expect(last).toHaveText(`${START}${name} at ${email}.`)
+    // The narrow layout hides the decorative separator; innerText is therefore
+    // different from desktop. Assert the known fixture instead of deriving the
+    // expected statement from the UI under test.
+    await expect(first).toHaveText('Jun Park · jun.park@example.edu')
+    await expect(first.locator('.sq-access-contact')).toBeVisible()
+    await expect(first.locator('.sq-access-contact')).toHaveText('jun.park@example.edu')
+    await expect(last).toHaveText(`${START}Jun Park at jun.park@example.edu.`)
     const look = await access.evaluate(list => [...list.querySelectorAll(':scope > li')].map(li => {
       const s = getComputedStyle(li.querySelector('span') ?? li)
       return { weight: s.fontWeight, size: s.fontSize, italic: s.fontStyle }

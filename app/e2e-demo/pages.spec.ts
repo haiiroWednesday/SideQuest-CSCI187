@@ -36,6 +36,8 @@ test('Groups: Cyn starts "Film buffs" with Ana and Ben, proposes an event and an
   const shot = shooter(page, info)
   await open(page, 'groups')
   const groups = page.getByRole('navigation', { name: 'Your groups' })
+  // wait for the groups to load before counting them (the count raced the list under a busy machine)
+  await expect(groups.getByRole('listitem').nth(1)).toBeVisible()
   const before = await groups.getByRole('listitem').count()
   expect(before).toBeGreaterThan(1)
   await page.getByRole('button', { name: 'New group' }).click()
