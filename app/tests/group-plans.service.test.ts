@@ -50,15 +50,16 @@ describe('server group-plan orchestration and permission boundary', () => {
     let added = await f.service.act('plan-1', f.organizer, 0, { type: 'invite', userId: 'amy' })
     expect(added).toMatchObject({ ok: true, value: { revision: 1 } })
     expect(await f.service.get('plan-1', f.amy)).toMatchObject({ ok: true })
-    const answered = await f.service.act('plan-1', f.amy, 1, {
+    expect(await f.service.act('plan-1', f.amy, 1, { type: 'accept' })).toMatchObject({ ok: true })
+    const answered = await f.service.act('plan-1', f.amy, 2, {
       type: 'respond', response: 'if', ifCondition: 'Can only attend after 4',
     })
-    expect(answered).toMatchObject({ ok: true, value: { revision: 2 } })
-    if (!answered.ok) throw Error(answered.message)
+    expect(answered).toMatchObject({ ok: true, value: { revision: 3 } })
+    if (!answered.ok || !answered.value) throw Error('Response was not saved')
     expect(answered.value.participants[0].ifCondition).toBe('Can only attend after 4')
     const organizerView = await f.service.get('plan-1', f.organizer)
     if (!organizerView.ok) throw Error(organizerView.message)
-    // If notes are shared with the plan's members (owner decision, Nov 24).
+    // If notes are shared with accepted members and the organizer (team decision, Nov 24).
     expect(organizerView.value.participants[0]).toEqual({ userId: 'amy', response: 'if', ifCondition: 'Can only attend after 4' })
     expect(await f.service.act('plan-1', f.outsider, 0, { type: 'confirm' }))
       .toMatchObject({ ok: false, reason: 'not_found' })
@@ -69,11 +70,13 @@ describe('server group-plan orchestration and permission boundary', () => {
     await f.service.create('plan-1', 'event-1', f.organizer)
     await f.service.act('plan-1', f.organizer, 0, { type: 'invite', userId: 'amy' })
     await f.service.act('plan-1', f.organizer, 1, { type: 'invite', userId: 'bo' })
-    expect(await f.service.act('plan-1', f.amy, 2, { type: 'respond', response: 'works' }))
+    await f.service.act('plan-1', f.amy, 2, { type: 'accept' })
+    await f.service.act('plan-1', f.bo, 3, { type: 'accept' })
+    expect(await f.service.act('plan-1', f.amy, 4, { type: 'respond', response: 'works' }))
       .toMatchObject({ ok: true })
-    expect(await f.service.act('plan-1', f.bo, 2, { type: 'respond', response: 'cant' }))
+    expect(await f.service.act('plan-1', f.bo, 4, { type: 'respond', response: 'cant' }))
       .toMatchObject({ ok: false, reason: 'stale' })
-    expect(await f.service.act('plan-1', f.bo, 3, { type: 'respond', response: 'cant' }))
+    expect(await f.service.act('plan-1', f.bo, 5, { type: 'respond', response: 'cant' }))
       .toMatchObject({ ok: true })
     expect(f.records.get('plan-1')?.participants.map(x => x.response)).toEqual(['works', 'cant'])
   })
