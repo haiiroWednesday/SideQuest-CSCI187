@@ -327,6 +327,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
           ideas={someday.items} accountStorage={Boolean(personalStore)} blocked={someday.blocked} error={someday.error}
           events={events.events} plannedIds={plans.schedule.ids} routes={routes}
           onAdd={someday.add}
+          onAddLinked={(title, note, eventId) => someday.addLinked(title, note, eventId && events.events.some(e => e.id === eventId) ? eventId : null)}
           onLink={(id, eventId) => {
             if (eventId === null || events.events.some(event => event.id === eventId)) {
               someday.link(id, eventId)

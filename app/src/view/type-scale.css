@@ -23,7 +23,7 @@
 }
 
 /* Section heading, and the one line an empty page says. */
-:root[data-quiet] :is(#sq-fr-title, #sq-ideas-heading, #sq-oi-title, #sq-oi-h, #sq-clash-title, #sq-category-heading, #sq-near-heading, #sq-ai-heading, #sq-google-title, #sq-group-list-title, #sq-group-new-title, .sq-someday-page .sq-someday-form h2, .sq-foodnow h2, .sq-message h3, .sq-empty-card > b) {
+:root[data-quiet] :is(#sq-fr-title, #sq-ideas-heading, #sq-oi-title, #sq-oi-h, #sq-clash-title, #sq-category-heading, #sq-near-heading, #sq-ai-heading, #sq-google-title, #sq-group-list-title, #sq-group-new-title, .sq-someday-page .sq-someday-form h2, .sq-someday-page .sq-someday-talk h2, .sq-foodnow h2, .sq-message h3, .sq-empty-card > b) {
   font: 400 var(--ts-section)/1.12 var(--font-display);
   letter-spacing: 0;
   -webkit-text-stroke: .7px currentColor;

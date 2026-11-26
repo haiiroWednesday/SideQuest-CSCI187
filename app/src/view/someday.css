@@ -32,3 +32,14 @@
   .sq-someday-card-head { flex-direction: column; gap: 8px; }
   .sq-someday-card h3 { font-size: 26px; }
 }
+
+/* Tell Someday (Nov 26): say or type the idea; the card below fills in and lists real events. */
+.sq-someday-talk { margin: 0 0 18px; padding: 14px 16px 16px; background: #fffaf2; border: 1.5px solid rgba(48, 36, 33, .28); border-top: 6px solid #e9dccb; }
+.sq-someday-talk h2 { margin: 0 0 4px; font: 400 34px/1.15 var(--font-display); }
+.sq-someday-talk-label { display: block; margin: 6px 0 6px; font: 600 13px var(--font-sans); color: var(--sq-muted, #655d58); }
+.sq-someday-picks { margin: 12px 0 4px; padding: 0; border: 0; display: grid; }
+.sq-someday-picks legend { margin-bottom: 4px; font: 600 13px var(--font-sans); color: var(--sq-muted, #655d58); }
+:root:is([data-quiet], :not([data-quiet])) .sq-someday-form .sq-someday-picks label { margin: 0; font: 500 16px var(--font-sans); letter-spacing: normal; text-transform: none; color: var(--sq-ink); }
+.sq-someday-form .sq-someday-picks .sq-bringin-when b { font-weight: 700; }
+.sq-someday-form .sq-someday-picks small { font: 500 14px var(--font-sans); letter-spacing: normal; text-transform: none; color: var(--sq-muted, #655d58); }
+.sq-someday-form .sq-someday-picks input[type="radio"] { width: 22px; height: 22px; accent-color: var(--sq-red-deep, #751728); margin: 0; }
