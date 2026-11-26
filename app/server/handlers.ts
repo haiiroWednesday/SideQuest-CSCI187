@@ -17,6 +17,7 @@ import { createSignInPolicy } from './signInPolicy'
 import { createSocialApiFromEnv } from './socialApi'
 import { createSupabaseEmailOtpGatewayFromEnv } from './supabaseEmailAuth'
 import { createSupabaseGroupGatewayFromEnv } from './supabaseGroupAccess'
+import { withScuCalendar } from './scuCalendar'
 
 export type RequestHandler = (req: IncomingMessage, res: ServerResponse) => Promise<boolean>
 export type NamedHandler = { name: string; handle: RequestHandler }
@@ -27,6 +28,11 @@ export type ServerHandlerOptions = {
   publisher?: CatalogPublisherPort
   /** Tests pass their own catalog; the servers build the Supabase one from env. */
   catalog?: EventCatalogPort | null
+}
+
+/** Shared catalog composition and lifecycle for production and development. */
+export function createServerCatalog(env: Env, publisher: CatalogPublisherPort) {
+  return withScuCalendar(createCheckedSupabaseEventCatalogFromEnv(env), env.SIDEQUEST_SCU_FEED_ENABLED, publisher)
 }
 
 /** Every API handler, in the order both servers try them. Static files are not here. */

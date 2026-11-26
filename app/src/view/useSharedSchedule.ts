@@ -26,10 +26,10 @@ export function useSharedSchedule(catalog: EventCatalogPort, store?: PersonalSto
   const latest = useRef(result)
   latest.current = result
   const [change, setChange] = useState<PlanChange | null>(null)
-  const run = useCallback(async (action: () => Promise<SharedScheduleResult>, describe?: (before: SharedScheduleResult, after: SharedScheduleResult) => { result: SharedScheduleResult; change: Omit<PlanChange, 'revision'> | null }) => {
+  const run = useCallback(async (action: () => Promise<SharedScheduleResult>, describe?: (before: SharedScheduleResult, after: SharedScheduleResult) => { result: SharedScheduleResult; change: Omit<PlanChange, 'revision'> | null }, background = false) => {
     const current = ++generation.current
     const before = latest.current
-    setResult(previous => ({ ...previous, loading: true }))
+    if (!background) setResult(previous => ({ ...previous, loading: true }))
     let next = await action()
     let made: Omit<PlanChange, 'revision'> | null = null
     if (describe) ({ result: next, change: made } = describe(before, next))
@@ -54,6 +54,7 @@ export function useSharedSchedule(catalog: EventCatalogPort, store?: PersonalSto
     return { result: { ...after, message, warning: fresh.length > 1 ? null : after.warning }, change: { kind: 'added' as const, ids: fresh } }
   }
   const refresh = useCallback(() => run(() => controller.read()), [controller, run])
+  const refreshInBackground = useCallback(() => run(() => controller.read(), undefined, true), [controller, run])
   useEffect(() => {
     void refresh()
     const onStorage = (event: StorageEvent) => { if (controller.handlesStorageChange(event)) void refresh() }
@@ -61,7 +62,7 @@ export function useSharedSchedule(catalog: EventCatalogPort, store?: PersonalSto
     return () => { generation.current++; window.removeEventListener('storage', onStorage) }
   }, [controller, refresh])
   return {
-    ...result, revision: revision.current, refresh,
+    ...result, revision: revision.current, refresh, refreshInBackground,
     change,
     add: (id: string) => run(() => controller.add(id), addedTo([id])),
     /** "Plan all": one toast that counts what was added ("2 plans added."), never the last title alone. */

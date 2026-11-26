@@ -1,8 +1,8 @@
 // VIEW: optional authenticated group page. A verified sign-in provider supplies
 // actorId and the typed GroupClientPort. No token input or localStorage auth.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type {
-  GroupAction, GroupClientPort, GroupDetail, GroupSummary,
+import {
+  groupPlanEventOptions, type GroupAction, type GroupClientPort, type GroupDetail, type GroupSummary,
 } from '../controller/groupClient'
 import type { CampusEvent } from '../controller/postEvent'
 import { SideQuestHeader, type SideQuestRoutes } from './DiscoverView'
@@ -21,7 +21,8 @@ export type GroupPlanningViewProps = {
   routes: SideQuestRoutes
 }
 
-export function GroupPlanningView({ actorId, client, events, routes }: GroupPlanningViewProps) {
+export function GroupPlanningView({ actorId, client, events: catalogEvents, routes }: GroupPlanningViewProps) {
+  const events = useMemo(() => groupPlanEventOptions(catalogEvents), [catalogEvents])
   const [groups, setGroups] = useState<GroupSummary[]>([])
   const [selected, setSelected] = useState<GroupDetail | null>(null)
   const [activeId, setActiveId] = useState<string | null>(null)

@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { loadEnv } from 'vite'
 import type { CatalogPublisherPort } from './src/model/catalogChanged.ts'
 import { attachCatalogRealtime } from './server/catalogRealtime.ts'
-import { createServerHandlers, runHandlers } from './server/handlers.ts'
+import { createServerCatalog, createServerHandlers, runHandlers } from './server/handlers.ts'
 
 // 🧪 Vite runs the React development app; Vitest reuses this config
 // to find unit and integration test files in the tests/ folder.
@@ -23,7 +23,9 @@ export default defineConfig(({ mode }) => ({
         publish(eventId) { realtime?.publish(eventId) },
       }
       // The same handler list as server/index.ts, so dev and production answer the same routes.
-      const handlers = createServerHandlers(env, { publisher: notifications })
+      const { catalog, stop } = createServerCatalog(env, notifications)
+      if (stop) server.httpServer?.once('close', stop)
+      const handlers = createServerHandlers(env, { catalog, publisher: notifications })
       server.middlewares.use((req, res, next) => {
         void runHandlers(handlers, req, res).then(handled => { if (!handled) next() }).catch(next)
       })

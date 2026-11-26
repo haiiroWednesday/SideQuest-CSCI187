@@ -5,14 +5,15 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { CatalogPublisherPort } from '../src/model/catalogChanged'
 import { attachCatalogRealtime } from './catalogRealtime'
-import { createServerHandlers, runHandlers } from './handlers'
+import { createServerCatalog, createServerHandlers, runHandlers } from './handlers'
 import { loadStaticSite, refineCompression, serveStatic } from './staticFiles'
 
 let realtime: ReturnType<typeof attachCatalogRealtime> | null = null
 const notifications: CatalogPublisherPort = {
   publish(eventId) { realtime?.publish(eventId) },
 }
-const handlers = createServerHandlers(process.env, { publisher: notifications })
+const { catalog, stop } = createServerCatalog(process.env, notifications)
+const handlers = createServerHandlers(process.env, { catalog, publisher: notifications })
 const root = resolve(fileURLToPath(new URL('../dist/', import.meta.url)))
 // Read and compressed once here; requests never touch the disk.
 const site = loadStaticSite(root)
@@ -30,6 +31,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   serveStatic(site, req, res)
 }
 realtime = attachCatalogRealtime(server)
+if (stop) server.once('close', stop)
 server.listen(port, '0.0.0.0', () => {
   console.log(`SideQuest listening on port ${port}`)
   void refineCompression(site).catch(() => { /* the quick brotli copies stay in use */ })
