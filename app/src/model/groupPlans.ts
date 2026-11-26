@@ -51,7 +51,9 @@ export type PlanViewer = {
   }[]
 }
 
-export const MAX_GROUP_INVITEES = 12
+/** Total slots include the organizer and pending invitations. */
+export const GROUP_SIZE_LIMIT = 12
+export const MAX_GROUP_INVITEES = GROUP_SIZE_LIMIT - 1
 export const MAX_IF_CONDITION = 280
 export const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
