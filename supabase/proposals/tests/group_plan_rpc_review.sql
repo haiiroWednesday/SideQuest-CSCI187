@@ -243,12 +243,29 @@ begin
   perform set_config('request.jwt.claim.sub',organizer::text,true);
   perform public.sidequest_group_action(plan_id,3,'confirm');
   perform set_config('sidequest.test_delete_plan_id',plan_id::text,true);
+
+  -- A separate plan must still have an accepted member and a pending
+  -- invitation when its organizer is deleted. The public event survives.
+  v := public.sidequest_group_create(event_id);
+  plan_id := (v->>'id')::uuid;
+  perform public.sidequest_group_action(plan_id,0,'invite',bo);
+  perform set_config('request.jwt.claim.sub',bo::text,true);
+  perform public.sidequest_group_action(plan_id,1,'accept');
+  perform public.sidequest_group_action(plan_id,2,'respond',null,'if','Shared note');
+  perform set_config('request.jwt.claim.sub',organizer::text,true);
+  v := public.sidequest_group_action(plan_id,3,'invite',outsider);
+  if jsonb_array_length(v->'participants') <> 1
+     or jsonb_array_length(v->'invitations') <> 1 then
+    raise exception 'Organizer deletion fixture lacks a member or pending invitation';
+  end if;
+  perform set_config('sidequest.test_organizer_delete_plan_id',plan_id::text,true);
 end $check$;
 
 reset role;
 do $check$
 declare
   p uuid := current_setting('sidequest.test_delete_plan_id')::uuid;
+  owned_plan uuid := current_setting('sidequest.test_organizer_delete_plan_id')::uuid;
 begin
   delete from auth.users where id='22222222-2222-4222-8222-222222222222';
   if exists(select 1 from public.group_participants where plan_id=p) then
@@ -258,9 +275,20 @@ begin
      or (select revision from public.group_plans where id=p) <> 5 then
     raise exception 'Account deletion retained invalid confirmation or revision';
   end if;
+  if not exists(select 1 from public.group_participants where plan_id=owned_plan)
+     or not exists(select 1 from public.group_invitations where plan_id=owned_plan) then
+    raise exception 'Organizer deletion fixture lost its dependent rows';
+  end if;
   delete from auth.users where id='11111111-1111-4111-8111-111111111111';
-  if exists(select 1 from public.group_plans where id=p) then
-    raise exception 'Organizer deletion retained their plan';
+  if exists(select 1 from public.group_plans where id in (p,owned_plan))
+     or exists(select 1 from public.group_participants where plan_id=owned_plan)
+     or exists(select 1 from public.group_invitations where plan_id=owned_plan) then
+    raise exception 'Organizer deletion retained plan or dependent rows';
+  end if;
+  if not exists(select 1 from public.events where id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')
+     or not exists(select 1 from auth.users where id='33333333-3333-4333-8333-333333333333')
+     or not exists(select 1 from auth.users where id='44444444-4444-4444-8444-444444444444') then
+    raise exception 'Organizer deletion removed the public event or another account';
   end if;
   if exists (
     select 1 from pg_proc proc join pg_namespace ns on ns.oid=proc.pronamespace
