@@ -153,10 +153,10 @@ describe('permissioned group proposal domain', () => {
       .toMatchObject({ ok: false, reason: 'conflict' })
     expect(applyGroupCommand(plan, 'organizer', plan.revision, { type: 'invite', userId: 'organizer' }))
       .toMatchObject({ ok: false, reason: 'invalid' })
-    for (let index = 2; index < 12; index++) {
+    for (let index = 2; index < 11; index++) {
       plan = commit(plan, 'organizer', { type: 'invite', userId: String(index) })
     }
-    expect(plan.participants.length + plan.invitations.length).toBe(12)
+    expect(plan.participants.length + plan.invitations.length).toBe(11)
     expect(applyGroupCommand(plan, 'organizer', plan.revision, { type: 'invite', userId: 'last' }))
       .toMatchObject({ ok: false, reason: 'conflict' })
   })
