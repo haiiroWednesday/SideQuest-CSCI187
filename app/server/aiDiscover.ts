@@ -3,8 +3,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { clientIp } from './clientIp'
 import { readCatalogWithDeadline } from '../src/controller/catalogReads'
-import { findEvents } from '../src/controller/findEvents'
-import { isValidDate } from '../src/model/events'
+import { fitsFully, isValidDate, validateSearchWindow } from '../src/model/events'
 import { recognizeWeekendRange, type WeekendDateRange } from '../src/model/relativeDates'
 import type { CampusEvent, EventCatalogPort } from '../src/model/eventCatalog'
 import type { AiDiscoverResult } from '../src/model/aiDiscovery'
@@ -15,12 +14,15 @@ export const AI_QUERY_MAX = 240
 export const AI_MAX_CANDIDATES = 40
 export const AI_MAX_SUGGESTIONS = 8
 export const AI_REQUESTS_PER_MINUTE = 5
+// Default single-process ceiling on attempted paid calls, independent of IP.
+export const AI_PROVIDER_CALLS_PER_UTC_DAY = 100
 
 export type AiDiscoverConfig = {
   apiKey?: string
   model?: string
   fetcher?: typeof fetch
   clock?: () => Date
+  providerDailyLimit?: number
 }
 
 type ModelSelection = { event_ids: string[]; date: string | null; date_end?: string | null; start: string | null; end: string | null }
@@ -77,13 +79,14 @@ export function evaluateAiSelection(
   const end = selection.end
   // Never infer a positive fit from a partial or invalid proposed time window.
   const complete = Boolean(date && start && end)
-  const validWindow = complete && findEvents([], date!, start!, end!).error === null
+  const validWindow = complete && validateSearchWindow({ date: date!, start: start!, end: end! }) === null
   const applied: AiDiscoverResult['timeInterpretation']['applied'] =
     validWindow ? 'full_window' : dateEnd ? 'date_range' : date ? 'date_only' : 'none'
   const allowed = new Set(events.filter(event => {
     if (date && (event.date < date || event.date > (dateEnd ?? date))) return false
     if (!validWindow) return true
-    return findEvents([event], event.date, start!, end!).matches.length > 0
+    // AI's full_window contract promises full duration, even for drop-in events.
+    return fitsFully(event, event.date, start!, end!)
   }).map(event => event.id))
   const found = new Set<string>()
   const matches = selection.event_ids.flatMap(id => {
@@ -168,6 +171,18 @@ async function askModel(
 
 export function createAiDiscoverApi(catalog: EventCatalogPort | null, config: AiDiscoverConfig = {}) {
   const limits = new Map<string, { count: number; until: number }>()
+  const configuredLimit = config.providerDailyLimit
+  const dailyLimit = typeof configuredLimit === 'number' && Number.isSafeInteger(configuredLimit) && configuredLimit > 0
+    ? Math.min(configuredLimit, AI_PROVIDER_CALLS_PER_UTC_DAY) : AI_PROVIDER_CALLS_PER_UTC_DAY
+  let providerBudget = { day: '', used: 0 }
+
+  function reserveProviderCall(): boolean {
+    const day = (config.clock?.() ?? new Date()).toISOString().slice(0, 10)
+    if (providerBudget.day !== day) providerBudget = { day, used: 0 }
+    if (providerBudget.used >= dailyLimit) return false
+    providerBudget.used++ // Reserve synchronously before the first provider await; failures count too.
+    return true
+  }
   const reply = (res: ServerResponse, status: number, data: unknown) => {
     res.writeHead(status, {
       'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store',
@@ -251,6 +266,10 @@ export function createAiDiscoverApi(catalog: EventCatalogPort | null, config: Ai
         reply(res, 200, evaluateAiSelection([], {
           event_ids: [], date: null, date_end: null, start: null, end: null,
         }, false, weekendRange))
+        return true
+      }
+      if (!reserveProviderCall()) {
+        reply(res, 429, { error: 'AI discovery has reached its daily limit. Use the regular event filters.' })
         return true
       }
       const selected = await askModel(values.query.trim(), candidates, config, weekendRange)
