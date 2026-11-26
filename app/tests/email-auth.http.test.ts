@@ -40,6 +40,29 @@ function post(base: string, path: string, body: unknown, origin = base) {
 }
 
 describe('passwordless email-code HTTP contract', () => {
+  it('reports session revocation only after the provider confirms it', async () => {
+    const gateway = sample()
+    const revoke = vi.fn(async () => undefined)
+    gateway.signOut = revoke
+    const base = await start(gateway)
+    const auth = await post(base, '/api/auth/verify-code', { email: 'person@example.edu', code: '123456' })
+    const session = await auth.json()
+    const endSession = (payload: unknown, authenticated: boolean) => fetch(base + '/api/auth/sign-out', {
+      method: 'POST',
+      headers: { Origin: base, 'Content-Type': 'application/json', ...(authenticated ? { Authorization: 'Bearer ' + session.accessToken } : {}) },
+      body: JSON.stringify(payload),
+    })
+    expect((await endSession({}, false)).status).toBe(401)
+    expect((await endSession({ scope: 'global' }, true)).status).toBe(400)
+    expect(revoke).not.toHaveBeenCalled()
+    const ended = await endSession({}, true)
+    expect(ended.status).toBe(200)
+    expect(await ended.json()).toEqual({ revoked: true })
+    expect(revoke).toHaveBeenCalledWith(session.accessToken)
+    revoke.mockRejectedValueOnce(new Error('Provider unavailable'))
+    expect((await endSession({}, true)).status).toBe(503)
+  })
+
   it('advertises a disabled sign-in when no gateway is configured', async () => {
     const base = await start(null)
     expect(await (await fetch(base + '/api/auth/status')).json()).toEqual({ enabled: false })
