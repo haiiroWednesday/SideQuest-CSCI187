@@ -125,6 +125,22 @@ describe('Google HTTP routes', () => {
     expect((await s.post('/api/google/calendar/connect', {}, { origin: 'https://evil.example' })).status).toBe(403)
   })
 
+  it('requires a verified account for the strict Calendar status check', async () => {
+    const s = await start(true)
+    const url = s.base + '/api/google/status?session=required'
+    expect((await fetch_(url)).status).toBe(401)
+    expect((await fetch_(url, { headers: { Authorization: 'Bearer invalid-sidequest-session' } })).status).toBe(401)
+    const initial = await fetch_(url, { headers: { Authorization: 'Bearer ' + session } })
+    expect((await initial.json()).calendar.connected).toBe(false)
+    const connect = await s.post('/api/google/calendar/connect', {})
+    const state = new URL((await connect.json()).authorizeUrl).searchParams.get('state')
+    await fetch_(s.base + '/api/google/calendar/callback?state=' + state + '&code=good-code')
+    expect((await fetch_(url)).status).toBe(401)
+    const checked = await fetch_(url, { headers: { Authorization: 'Bearer ' + session } })
+    expect((await checked.json()).calendar.connected).toBe(true)
+    expect(checked.headers.get('cache-control')).toContain('no-store')
+  })
+
   it('validates plan changes before anything reaches Google', async () => {
     const s = await start(true)
     const bad = await s.post('/api/google/calendar/plans', { action: 'upsert', planId: 'p1', event: { title: 'x', date: '2026-11-26', start: '20:00', end: '19:00' } })
