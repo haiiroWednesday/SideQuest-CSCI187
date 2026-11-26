@@ -32,8 +32,8 @@ afterEach(async () => {
   }
 })
 
-async function listen(gateway: AuthenticatedGroupGateway | null) {
-  const api = createGroupApi(gateway)
+async function listen(gateway: AuthenticatedGroupGateway | null, clock: () => number = Date.now) {
+  const api = createGroupApi(gateway, clock)
   const server = createServer((req, res) => {
     void api(req, res).then(handled => {
       if (!handled) { res.statusCode = 404; res.end('Not found') }
@@ -234,11 +234,91 @@ describe('opt-in group HTTP gateway and verified identity contract', () => {
   })
 
   it('limits verified accounts independently of a shared proxy address', async () => {
-    const base = await listen(mockGateway())
+    const gateway = mockGateway()
+    const base = await listen(gateway, () => 0)
     for (let i = 0; i < 40; i++) expect((await send(base, '/api/groups', orgToken)).status).toBe(200)
     expect((await send(base, '/api/groups', orgToken)).status).toBe(429)
+    // An over-quota known account must not make another upstream Auth call.
+    expect(gateway.verify).toHaveBeenCalledTimes(40)
     expect((await send(base, '/api/groups', memberToken)).status).toBe(200)
   })
+
+  it('reserves Auth capacity for established sessions without caching authorization', async () => {
+    let now = 0
+    const gateway = mockGateway()
+    const base = await listen(gateway, () => now)
+    const status = async (token: string) => {
+      const result = await send(base, '/api/groups', token)
+      await result.text()
+      return result.status
+    }
+    expect(await status(orgToken)).toBe(200)
+    // 399 rotating invalid tokens plus the verified request exhaust the
+    // 400 general admissions, regardless of the apparent proxy address.
+    for (let start = 0; start < 399; start += 20) {
+      const batch = Array.from({ length: Math.min(20, 399 - start) },
+        (_, i) => status('invalid-token-'.repeat(2) + (start + i)))
+      expect(await Promise.all(batch)).toEqual(Array(batch.length).fill(401))
+    }
+    expect(await status(invalidToken)).toBe(429)
+    expect(await status(memberToken)).toBe(429)
+    expect(gateway.verify).toHaveBeenCalledTimes(400)
+    expect(await status(orgToken)).toBe(200)
+    expect(gateway.verify).toHaveBeenCalledTimes(401)
+    expect(gateway.list).toHaveBeenCalledTimes(2)
+
+    // A previously recognized bearer still requires fresh verification;
+    // an invalidated token must never reach a private RPC.
+    vi.mocked(gateway.verify).mockResolvedValueOnce(null)
+    expect(await status(orgToken)).toBe(401)
+    expect(await status(orgToken)).toBe(429)
+    expect(gateway.verify).toHaveBeenCalledTimes(402)
+    expect(gateway.list).toHaveBeenCalledTimes(2)
+
+    now = 60_000
+    expect(await status(memberToken)).toBe(200)
+    expect(gateway.verify).toHaveBeenCalledTimes(403)
+  }, 20_000)
+
+  it('bounds the reserved lane and expires admission hints', async () => {
+    let now = 0
+    const tokens = Array.from({ length: 6 }, (_, i) => 'recognized-token-'.repeat(2) + i)
+    const gateway = mockGateway()
+    vi.mocked(gateway.verify).mockImplementation(async token => {
+      const index = tokens.indexOf(token)
+      return index < 0 ? null : { userId: '11111111-1111-4111-8111-' + String(index).padStart(12, '0') }
+    })
+    const base = await listen(gateway, () => now)
+    const status = async (token: string) => {
+      const result = await send(base, '/api/groups', token)
+      await result.text()
+      return result.status
+    }
+    for (const token of tokens) expect(await status(token)).toBe(200)
+    for (let start = 0; start < 394; start += 20) {
+      const batch = Array.from({ length: Math.min(20, 394 - start) },
+        (_, i) => status('invalid-token-'.repeat(2) + (start + i)))
+      expect(await Promise.all(batch)).toEqual(Array(batch.length).fill(401))
+    }
+    // 200 additional verifications are available across established accounts.
+    // The 40-per-account limit still applies; distribute across six actors.
+    for (let i = 0; i < 200; i += 20) {
+      const batch = Array.from({ length: 20 }, (_, j) => status(tokens[(i + j) % tokens.length]))
+      expect(await Promise.all(batch)).toEqual(Array(20).fill(200))
+    }
+    expect(await status(tokens[0])).toBe(429)
+    expect(gateway.verify).toHaveBeenCalledTimes(600)
+
+    now = 5 * 60_000
+    // The reserve is not a permanent entitlement: the hints expire after
+    // five minutes, and a new general-budget flood cannot use them.
+    for (let start = 0; start < 400; start += 20) {
+      const batch = Array.from({ length: 20 }, (_, i) => status('invalid-token-'.repeat(2) + (start + i)))
+      expect(await Promise.all(batch)).toEqual(Array(20).fill(401))
+    }
+    expect(await status(tokens[0])).toBe(429)
+    expect(gateway.verify).toHaveBeenCalledTimes(1000)
+  }, 30_000)
 
   it('rejects missing origins, unsupported media and oversized bodies', async () => {
     const gateway = mockGateway(), base = await listen(gateway)
