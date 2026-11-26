@@ -8,6 +8,7 @@ const id = (i: number) => `cccccccc-0000-4000-8000-${String(i + 1).padStart(12, 
 type Ev = [start: string, end: string, title: string, host: string, location: string, tags?: string[]]
 
 async function seed(page: Page, events: Ev[], width: number) {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.setViewportSize({ width, height: width < 700 ? 844 : 900 })
   await page.clock.install({ time: NOW })
   const rows = events.map(([s, e, title, host, location, tags], i) => ({ id: id(i), title, host_name: host, description: `${title}.`, location, event_date: '2026-11-24', start_time: `${s}:00`, end_time: `${e}:00`, ...(tags ? { tags, tags_by: 'host' } : {}) }))
@@ -66,6 +67,8 @@ for (const width of [390, 1280]) {
     expect(await labels(climb)).toEqual(await labels(choir))
     expect(await labels(choir)).not.toContain('Overlap')
     await expect(sheet.getByText('overlap')).toHaveCount(0)
+    // Measure the same settled layout; webfonts and dialog motion can change geometry.
+    await page.evaluate(async () => { await document.fonts.ready })
     // Side by side on a laptop with each fact on one line across both tickets, stacked on a phone.
     const [a, b] = [(await choir.boundingBox())!, (await climb.boundingBox())!]
     if (width > 768) {
@@ -73,8 +76,12 @@ for (const width of [390, 1280]) {
       expect(b.x).toBeGreaterThan(a.x + a.width)
       const tops = (plan: Locator) => plan.locator('.sq-clash-differ dd, .sq-clash-keep').evaluateAll(els => els.map(e => Math.round(e.getBoundingClientRect().top)))
       expect(await tops(climb)).toEqual(await tops(choir))
-      const ends = (plan: Locator) => plan.locator('.sq-stub').evaluate(e => Math.round(e.getBoundingClientRect().bottom))
-      expect(await ends(climb)).toBe(await ends(choir))
+      await expect.poll(async () => sheet.locator('.sq-clash-plan .sq-stub').evaluateAll(cards =>
+        cards.map(card => Math.round(card.getBoundingClientRect().bottom)),
+      )).toEqual(await choir.locator('.sq-stub').evaluate(card => {
+        const bottom = Math.round(card.getBoundingClientRect().bottom)
+        return [bottom, bottom]
+      }))
     } else {
       expect(Math.abs(a.x - b.x)).toBeLessThan(2)
       expect(b.y).toBeGreaterThanOrEqual(a.y + a.height)
