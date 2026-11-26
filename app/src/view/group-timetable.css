@@ -46,7 +46,11 @@
 .sq-gt-fits { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; margin: 0; padding: 4px 14px; scroll-margin-top: 84px;
   background: #fbefd9; border-left: 4px solid var(--sq-gold, #e8aa24); font: 650 15px/1.4 var(--font-sans); color: var(--sq-ink, #302421); }
 
-@media (max-width: 760px) { .sq-gt-fits .sq-ink-act { min-height: 50px; } }
+@media (max-width: 760px) {
+  .sq-gt-fits .sq-ink-act { min-height: 50px; }
+  /* Preserve the two-line label and type scale inside six narrow columns. */
+  .sq-gt-not { letter-spacing: -.04em; }
+}
 
 /* On a laptop the timetable sits beside the propose list: when on the left, what on the right. */
 @media (min-width: 1180px) {
