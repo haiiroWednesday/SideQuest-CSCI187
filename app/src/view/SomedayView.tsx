@@ -104,8 +104,8 @@ export function SomedayView({
         ) : (
           <>
             <section className="sq-someday-talk" aria-labelledby="sq-someday-talk-h">
-              <h2 id="sq-someday-talk-h">Tell Someday</h2>
-              <label htmlFor="sq-someday-said" className="sq-someday-talk-label">{mic ? 'Say or type the idea' : 'Type the idea'}</label>
+              <h2 id="sq-someday-talk-h">Say the idea</h2>
+              <label htmlFor="sq-someday-said" className="sq-someday-talk-label">{mic ? 'Say or type it' : 'Type it'}</label>
               <div className="sq-bringin-say">
                 <textarea id="sq-someday-said" rows={2} maxLength={400} value={said} placeholder="I've always wanted to try ceramics with a friend"
                   onChange={e => setSaid(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && said.trim().length > 2) { e.preventDefault(); void makeCard() } }} />

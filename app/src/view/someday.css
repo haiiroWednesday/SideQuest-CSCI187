@@ -33,7 +33,7 @@
   .sq-someday-card h3 { font-size: 26px; }
 }
 
-/* Tell Someday (Nov 26): say or type the idea; the card below fills in and lists real events. */
+/* Say the idea, Talk to Someday (Nov 26): say or type the idea; the card below fills in and lists real events. */
 .sq-someday-talk { margin: 0 0 18px; padding: 14px 16px 16px; background: #fffaf2; border: 1.5px solid rgba(48, 36, 33, .28); border-top: 6px solid #e9dccb; }
 .sq-someday-talk h2 { margin: 0 0 4px; font: 400 34px/1.15 var(--font-display); }
 .sq-someday-talk-label { display: block; margin: 6px 0 6px; font: 600 13px var(--font-sans); color: var(--sq-muted, #655d58); }

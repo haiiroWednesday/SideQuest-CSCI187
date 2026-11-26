@@ -102,6 +102,8 @@ function cacheFor(path: string): string {
   if (path.startsWith('/assets/')) return IMMUTABLE
   // The entry page and the map change on every deploy under the same names.
   if (path === '/index.html' || path.startsWith('/map/') || path.endsWith('.html')) return 'no-cache'
+  // The service worker and manifest must be re-checked on every visit, or an update never lands.
+  if (path === '/sw.js' || path === '/manifest.webmanifest') return 'no-cache'
   return SHORT
 }
 

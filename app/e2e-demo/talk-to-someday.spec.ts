@@ -8,7 +8,7 @@ for (const width of [390, 1280]) {
   test(`an idea in your own words becomes a card with real events (${width}px)`, async ({ page }, info) => {
     const shot = shooter(page, info)
     await open(page, 'someday', width)
-    await page.getByRole('textbox', { name: /idea$/ }).fill("I've always wanted to try ceramics with a friend, but I don't know when.")
+    await page.getByRole('textbox', { name: /^(Say or type it|Type it)$/ }).fill("I've always wanted to try ceramics with a friend, but I don't know when.")
     await page.getByRole('button', { name: 'Make a card' }).click()
     // The card's fields are filled in and still editable.
     await expect(page.getByLabel('Activity or place')).toHaveValue('Try ceramics')
@@ -36,7 +36,7 @@ for (const width of [390, 1280]) {
 
 test('an idea with no matching event still makes a card, and says so', async ({ page }) => {
   await open(page, 'someday', 390)
-  await page.getByRole('textbox', { name: /idea$/ }).fill('go skydiving')
+  await page.getByRole('textbox', { name: /^(Say or type it|Type it)$/ }).fill('go skydiving')
   await page.getByRole('button', { name: 'Make a card' }).click()
   await expect(page.getByLabel('Activity or place')).toHaveValue('Go skydiving')
   await expect(page.getByRole('group', { name: 'No event on campus matches yet' })).toBeVisible()
