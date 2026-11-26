@@ -2,7 +2,7 @@
 // Default checks that unapproved group Auth remains OFF on an HTTPS preview.
 // Explicit --approved-live requires three real staging identities and one
 // pre-existing approved test plan; all tokens are read from process.env only.
-// No bearer token, private condition, account ID, or full response is printed.
+// No bearer token, If note text, account ID, or full response is printed.
 //
 // node scripts/smoke-group-permissions.mjs https://your-staging.example
 // node scripts/smoke-group-permissions.mjs https://your-staging.example --approved-live
@@ -83,17 +83,15 @@ function assertPlan(plan, planId, organizerId, inviteeId, viewerId) {
   for (const member of plan.participants) {
     assert(member && typeof member.userId === 'string',
       'Invalid group participant projection.')
-    // The API may include a privateCondition only for the verified caller.
-    assert(member.userId === viewerId ||
-      !Object.prototype.hasOwnProperty.call(member, 'privateCondition'),
-    'Another participant private condition was exposed.')
+    // If notes are shared with accepted members (team decision, Nov 24), but only an
+    // If answer may carry note text.
+    if (member.response !== 'if' && Object.prototype.hasOwnProperty.call(member, 'ifCondition')) {
+      assert(member.ifCondition === null, 'A non-If answer carried If note text.')
+    }
   }
   if (viewerId === inviteeId) {
-    assert(Object.prototype.hasOwnProperty.call(participant, 'privateCondition'),
+    assert(Object.prototype.hasOwnProperty.call(participant, 'ifCondition'),
       'Invitee response lacks its caller-scoped condition projection.')
-  } else {
-    assert(!Object.prototype.hasOwnProperty.call(participant, 'privateCondition'),
-      'Organizer can read the invitee private-condition field.')
   }
 }
 
@@ -151,7 +149,7 @@ try {
       !listC.data.some(x => x?.id === planId),
       'Outsider list leaked the approved plan, or expected member plan is missing.')
     console.log('PASS: real staged Auth and group read boundary with three identities.')
-    console.log('PASS: organizer/invitee reads, outsider 404, member lists, and private-condition redaction.')
+    console.log('PASS: organizer/invitee reads, outsider 404, member lists, and If notes only on If answers.')
     console.log('READ-ONLY ONLY. Mutation permissions, session revocation, RLS and direct-table access require separate reviewed tests.')
   }
 } catch (problem) {
