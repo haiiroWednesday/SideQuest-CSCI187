@@ -25,6 +25,11 @@ export function useScheduleScreen(input: ScheduleInput, now?: Date): ScheduleScr
   return presentSchedule(input, now)
 }
 
+// A duration is one visual unit, even when the preceding event title wraps.
+function overlapWarningText(text: string): string {
+  return text.replace(/\b\d+ (?:hr(?: \d+ min)?|min)$/, duration => duration.replaceAll(' ', '\u00a0'))
+}
+
 // Compact Schedule cards need a readable path to the full, already-resolved
 // event text, even when the original record exceeds today's posting limits.
 function ScheduleEventDetails({ event }: { event: PlanStubModel }) {
@@ -174,8 +179,8 @@ export function ScheduleTrailView({ screen, accountStorage = false, onRemove, on
                   {next.stub.overlap && (() => {
                     const c = onRemove ? screen.days.flatMap(d => d.clashes).find(x => x.plans.some(p => p.id === next.stub.id)) : undefined
                     return c
-                      ? <button type="button" className="sq-warn-open" aria-haspopup="dialog" onClick={() => setClashKey(c.date)}><span className="sq-warn" style={{ display: "block" }}>{next.stub.overlap.text}<span className="sq-warn-arrow" aria-hidden="true">→</span></span></button>
-                      : <p className="sq-warn">{next.stub.overlap.text}</p>
+                      ? <button type="button" className="sq-warn-open" aria-haspopup="dialog" onClick={() => setClashKey(c.date)}><span className="sq-warn">{overlapWarningText(next.stub.overlap.text)}<span className="sq-warn-arrow" aria-hidden="true">→</span></span></button>
+                      : <p className="sq-warn">{overlapWarningText(next.stub.overlap.text)}</p>
                   })()}
                   {!quiet && <ScheduleEventDetails event={next.stub} />}
                   {remove(next.stub.id, next.stub.title)}
