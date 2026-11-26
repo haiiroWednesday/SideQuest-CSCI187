@@ -1,7 +1,7 @@
 // VIEW hook: an email-code session scoped to the current browser tab's memory.
 // Never persist access tokens in localStorage, cookies, URLs or IndexedDB.
 // An explicit public Boolean controls UI visibility, not server authorization.
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { VerifiedGroupSession } from '../App'
 import type { SignInLink } from '../controller/signInLink'
 import { authRequest, readAuthStatus } from '../controller/emailAuthClient'
@@ -18,6 +18,8 @@ export function useGroupEmailAuth(link: SignInLink | null = null) {
   const [checking, setChecking] = useState(PUBLIC_LOGIN)
   const [busy, setBusy] = useState(false)
   const [credentials, setCredentials] = useState<Credentials | null>(null)
+  const current = useRef<Credentials | null>(null)
+  const signingOut = useRef(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
@@ -41,6 +43,8 @@ export function useGroupEmailAuth(link: SignInLink | null = null) {
     if (!credentials) return
     const delay = Math.max(0, Math.min(credentials.expiresAt - Date.now() - 5000, 2147483647))
     const timer = window.setTimeout(() => {
+      if (current.current !== credentials) return
+      current.current = null
       setCredentials(null)
       setMessage('Your session expired. Request a new code to sign in again.')
     }, delay)
@@ -48,7 +52,7 @@ export function useGroupEmailAuth(link: SignInLink | null = null) {
   }, [credentials])
 
   const requestCode = useCallback(async (email: string): Promise<boolean> => {
-    if (!enabled || busy) return false
+    if (!enabled || busy || signingOut.current) return false
     setBusy(true)
     setError(null)
     setMessage(null)
@@ -63,7 +67,7 @@ export function useGroupEmailAuth(link: SignInLink | null = null) {
   }, [enabled, busy])
 
   const verifyCode = useCallback(async (email: string, code: string): Promise<boolean> => {
-    if (!enabled || busy) return false
+    if (!enabled || busy || signingOut.current) return false
     setBusy(true)
     setError(null)
     try {
@@ -73,7 +77,9 @@ export function useGroupEmailAuth(link: SignInLink | null = null) {
           typeof data.expiresAt !== 'number' || data.expiresAt <= Date.now() + 5000) {
         throw Error('The sign-in service returned an invalid session.')
       }
-      setCredentials({ userId: data.userId, accessToken: data.accessToken, expiresAt: data.expiresAt })
+      const next = { userId: data.userId, accessToken: data.accessToken, expiresAt: data.expiresAt }
+      current.current = next
+      setCredentials(next)
       setMessage(null)
       return true
     } catch (problem) {
@@ -96,7 +102,9 @@ export function useGroupEmailAuth(link: SignInLink | null = null) {
             typeof data.expiresAt !== 'number' || data.expiresAt <= Date.now() + 5000) {
           throw Error('This sign-in link has expired or was already used. Ask for a new one.')
         }
-        setCredentials({ userId: data.userId, accessToken: data.accessToken, expiresAt: data.expiresAt })
+        const next = { userId: data.userId, accessToken: data.accessToken, expiresAt: data.expiresAt }
+        current.current = next
+        setCredentials(next)
         setMessage(null)
         setError(null)
       })
@@ -108,17 +116,30 @@ export function useGroupEmailAuth(link: SignInLink | null = null) {
   }, [link, linkUsed, checking, enabled])
 
   const signOut = useCallback(() => {
-    // Tokens are intentionally never persisted or shared across tabs.
-    // This ends the current tab's session; other devices are unaffected.
+    const previous = current.current
+    if (!previous || signingOut.current) return
+    signingOut.current = true
+    current.current = null
     setCredentials(null)
-    setMessage('This tab is signed out.')
+    setBusy(true)
     setError(null)
-    if (window.location.hash === '#groups' || window.location.hash === '#login') window.location.hash = '#discover'
+    setMessage('Signing out…')
+    window.location.hash = '#login'
+    void authRequest('/api/auth/sign-out', {}, previous.accessToken)
+      .then(data => {
+        if (data.revoked !== true) throw Error('Revocation was not confirmed.')
+        setMessage('Signed out of this session.')
+      })
+      .catch(() => {
+        setMessage(null)
+        setError('Signed out on this tab, but server revocation could not be confirmed. The old session may remain valid until expiry.')
+      })
+      .finally(() => { signingOut.current = false; setBusy(false) })
   }, [])
 
   const session = useMemo<VerifiedGroupSession | null>(() => credentials
     ? { actorId: credentials.userId, getAccessToken: async () =>
-        Date.now() + 5000 < credentials.expiresAt ? credentials.accessToken : null }
+        current.current === credentials && Date.now() + 5000 < credentials.expiresAt ? credentials.accessToken : null }
     : null, [credentials])
 
   return { enabled, features, checking, busy, error, message, session, requestCode, verifyCode, signOut }
