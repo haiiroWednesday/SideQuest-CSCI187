@@ -4,6 +4,7 @@ import { defineConfig } from '@playwright/test'
 // Someday wall, postcards and Groups. These tests open that build, not the plain app.
 export default defineConfig({
   testDir: './e2e-demo',
+  testIgnore: process.env.SIDEQUEST_ACCESS_POLICY_FIXTURE === '1' ? [] : ['**/access-contact.spec.ts'],
   projects: [{ name: 'demo-chromium', use: { browserName: 'chromium' } }],
   retries: process.env.CI ? 1 : 0,
   // A test that only passes on the retry is flaky: CI fails instead of showing green.
