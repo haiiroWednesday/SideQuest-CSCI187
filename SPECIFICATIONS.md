@@ -93,6 +93,7 @@ Request bodies are limited to 16 KiB, browser cross-origin writes are rejected, 
 
 ## S7 — Explain strict event fit (new final-project draft)
 - `model/fitAssessment.ts` reports confirmed full fit, time overlap without confirmed attendance flexibility, non-overlap or unknown end time. An event cannot become a strict M2 match merely because its interval partly overlaps.
+- Drop-in events (Nov 25): when the host marks an event `attend: 'dropin'`, `model/attend.ts` lets it fit a free stretch it shares at least `MIN_DROP_IN_MINUTES` (20) with. Set-time events keep the full-fit rule above. The same rule drives the Discover list, the fit mark, near-miss reasons and Our pick. The column is a review-only proposal (`supabase/proposals/20261126000000_event_attend_REVIEW_ONLY.sql`); without it the adapter reads every event as set-time.
 - `controller/presentDiscover.ts` keeps the exact existing `findEvents` filtering/count and additionally prepares up to five same-date nonmatching events with reasons. `DiscoverView` displays them separately, with no eligible-plan claim.
 - Existing catalog records still require valid start and end times. Unknown-end evaluation is additive groundwork for source import and is not evidence that undated or incomplete official events have been ingested.
 

@@ -37,45 +37,45 @@
   .sq-days::before { top: 41px; }
 }
 
-/* Discover's day picker (Cyn, Nov 24: D0 + D11). Paper calendar leaves with a tear-off top,
+/* The day picker on Discover and on Groups (Nov 26: one picker; Groups' bead row was the old copy). (Cyn, Nov 24: D0 + D11). Paper calendar leaves with a tear-off top,
    standing like notebook tabs on one line. Today is the maroon leaf. The chosen leaf is pulled
    forward and joins the line, with the red underline from the paper leaves. Flat: no shading. */
-.sq-marks-left .sq-days { gap: 4px; justify-content: stretch; align-items: end; padding: 6px 2px 0; border-bottom: 1.6px solid rgba(48, 36, 33, .38); }
-.sq-marks-left .sq-days::before { content: none; }
-.sq-marks-left .sq-dayleaf { flex: 1 1 0; min-width: 0; min-height: 58px; padding: 11px 2px 8px; gap: 1px; align-content: start;
+:is(.sq-marks-left, .sq-ft) .sq-days { gap: 4px; justify-content: stretch; align-items: end; padding: 6px 2px 0; border-bottom: 1.6px solid rgba(48, 36, 33, .38); }
+:is(.sq-marks-left, .sq-ft) .sq-days::before { content: none; }
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf { flex: 1 1 0; min-width: 0; min-height: 58px; padding: 11px 2px 8px; gap: 1px; align-content: start;
   background: #fffaf2; box-shadow: inset 1px 0 0 rgba(48, 36, 33, .24), inset -1px 0 0 rgba(48, 36, 33, .24), inset 0 -1px 0 rgba(48, 36, 33, .24);
   margin-bottom: -1.6px; transition: transform .15s ease;
   -webkit-mask: radial-gradient(circle at 5px 0, #0000 2.4px, #000 2.8px) -1px 0 / 10px 100% repeat-x;
   mask: radial-gradient(circle at 5px 0, #0000 2.4px, #000 2.8px) -1px 0 / 10px 100% repeat-x; }
 /* the tear-off stub along the top of each leaf */
-.sq-marks-left .sq-dayleaf::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 5px; background: #e9dccb; }
-.sq-marks-left .sq-dayleaf-dow { font: 700 10.5px/14px var(--font-sans); letter-spacing: .1em; color: #7a6a62; }
-.sq-marks-left .sq-dayleaf-num { width: auto; height: auto; border-radius: 0; padding: 0 2px; background: none; box-shadow: none; font: 400 27px/1 var(--font-display); color: var(--sq-ink); }
-.sq-marks-left .sq-dayleaf-num::after { content: none; }
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 5px; background: #e9dccb; }
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf-dow { font: 700 10.5px/14px var(--font-sans); letter-spacing: .1em; color: #7a6a62; }
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf-num { width: auto; height: auto; border-radius: 0; padding: 0 2px; background: none; box-shadow: none; font: 400 27px/1 var(--font-display); color: var(--sq-ink); }
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf-num::after { content: none; }
 /* today: the maroon leaf */
-.sq-marks-left .sq-dayleaf[data-today] { background: var(--sq-red-deep, #751728); box-shadow: none; }
-.sq-marks-left .sq-dayleaf[data-today]::before { background: #5c1020; }
-.sq-marks-left .sq-dayleaf[data-today] .sq-dayleaf-dow,
-.sq-marks-left .sq-dayleaf[data-today] .sq-dayleaf-num { color: #fff6e2; background: none; box-shadow: none; }
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf[data-today] { background: var(--sq-red-deep, #751728); box-shadow: none; }
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf[data-today]::before { background: #5c1020; }
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf[data-today] .sq-dayleaf-dow,
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf[data-today] .sq-dayleaf-num { color: #fff6e2; background: none; box-shadow: none; }
 /* chosen: pulled forward and joined to the line, red underline under the number */
-.sq-marks-left .sq-dayleaf[aria-pressed="true"] { transform: translateY(-5px); padding-bottom: 14px; margin-bottom: -6.6px;
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf[aria-pressed="true"] { transform: translateY(-5px); padding-bottom: 14px; margin-bottom: -6.6px;
   box-shadow: inset 1px 0 0 rgba(48, 36, 33, .4), inset -1px 0 0 rgba(48, 36, 33, .4); }
-.sq-marks-left .sq-dayleaf[aria-pressed="true"]:not([data-today]) .sq-dayleaf-num,
-.sq-marks-left .sq-dayleaf[aria-pressed="true"]:not([data-today]) .sq-dayleaf-dow { color: var(--sq-red-deep, #751728); background: none; box-shadow: none; }
-.sq-marks-left .sq-dayleaf[aria-pressed="true"]::after { content: ""; position: absolute; left: 18%; right: 18%; bottom: 6px; height: 5px; background: var(--sq-red, #a32035);
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf[aria-pressed="true"]:not([data-today]) .sq-dayleaf-num,
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf[aria-pressed="true"]:not([data-today]) .sq-dayleaf-dow { color: var(--sq-red-deep, #751728); background: none; box-shadow: none; }
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf[aria-pressed="true"]::after { content: ""; position: absolute; left: 18%; right: 18%; bottom: 6px; height: 5px; background: var(--sq-red, #a32035);
   -webkit-mask: url('./assets/mat-brush-short.svg') 0 0 / 100% 100% no-repeat; mask: url('./assets/mat-brush-short.svg') 0 0 / 100% 100% no-repeat; }
-.sq-marks-left .sq-dayleaf[data-today][aria-pressed="true"]::after { background: #fff6e2; }
-.sq-marks-left .sq-dayleaf:not([aria-pressed="true"]):hover { box-shadow: inset 0 0 0 1.6px var(--sq-red-deep, #751728); }
-.sq-marks-left .sq-dayleaf[data-today]:not([aria-pressed="true"]):hover { box-shadow: inset 0 0 0 2px #fff6e2; }
-.sq-marks-left .sq-dayleaf-dab { right: 4px; bottom: 5px; }
-.sq-marks-left .sq-dayleaf[aria-pressed="true"] .sq-dayleaf-dab { bottom: 11px; }
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf[data-today][aria-pressed="true"]::after { background: #fff6e2; }
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf:not([aria-pressed="true"]):hover { box-shadow: inset 0 0 0 1.6px var(--sq-red-deep, #751728); }
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf[data-today]:not([aria-pressed="true"]):hover { box-shadow: inset 0 0 0 2px #fff6e2; }
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf-dab { right: 4px; bottom: 5px; }
+:is(.sq-marks-left, .sq-ft) .sq-dayleaf[aria-pressed="true"] .sq-dayleaf-dab { bottom: 11px; }
 @media (min-width: 900px) {
-  .sq-marks-left .sq-dayleaf { min-height: 64px; flex-basis: 0; }
-  .sq-marks-left .sq-dayleaf-num { width: auto; height: auto; font-size: 30px; }
+  :is(.sq-marks-left, .sq-ft) .sq-dayleaf { min-height: 64px; flex-basis: 0; }
+  :is(.sq-marks-left, .sq-ft) .sq-dayleaf-num { width: auto; height: auto; font-size: 30px; }
 }
-@media (max-width: 359px) { .sq-marks-left .sq-days { gap: 2px; padding-left: 0; padding-right: 0; }
-  .sq-marks-left .sq-dayleaf-dow { font-size: 9px; letter-spacing: .01em; } }
-@media (prefers-reduced-motion: reduce) { .sq-marks-left .sq-dayleaf { transition: none; } }
+@media (max-width: 359px) { :is(.sq-marks-left, .sq-ft) .sq-days { gap: 2px; padding-left: 0; padding-right: 0; }
+  :is(.sq-marks-left, .sq-ft) .sq-dayleaf-dow { font-size: 9px; letter-spacing: .01em; } }
+@media (prefers-reduced-motion: reduce) { :is(.sq-marks-left, .sq-ft) .sq-dayleaf { transition: none; } }
 
 /* The day bar: a strip of paper you paint on */
 .sq-mbar-wrap { position: relative; max-width: 760px; margin: 10px 0 0; }

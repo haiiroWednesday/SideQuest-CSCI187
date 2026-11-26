@@ -239,10 +239,7 @@ export function FindATime({ groupId, groupName, band = null, onBand, timetable }
             )
           })}
         </div>
-        <div className="sq-ft-bar" aria-hidden="true">
-          {dayWindows.map(w => <i key={w.start} style={{ left: pct(w.start) + '%', width: (pct(w.end) - pct(w.start)) + '%' }} />)}
-          <span style={{ left: '0%' }}>8am</span><span style={{ left: pct('12:00') + '%' }}>noon</span><span style={{ left: pct('18:00') + '%' }}>6pm</span>
-        </div>
+        {/* Nov 26 (Cyn, item 8): the thin free-time bar was removed; the timetable below says the same, larger. */}
         {timetable?.(c, chosen, dayLabel(chosen, today))}
         {dayWindows.length ? (
           <ul className="sq-ft-list" aria-label={`Everyone who shared is free, ${dayLabel(chosen, today)}`}>

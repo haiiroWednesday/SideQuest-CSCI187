@@ -46,7 +46,7 @@
 - All database API keys stay on the Node server. Browser code and requests must contain no database credentials, including publishable keys. No real keys may be committed to Git.
 
 ## Scope and storage decisions
-- **M2 includes:** anonymous event posting/browsing, one shared EventCatalog backend when configured, full-fit time matching, and a device-local ID-based Schedule.
+- **M2 includes:** anonymous event posting/browsing, one shared EventCatalog backend when configured, full-fit time matching (a host-marked drop-in event fits when it shares 20 minutes or more, added Nov 25), and a device-local ID-based Schedule.
 - **M2 excludes for now:** accounts and verified identities, partial attendance, travel-time feasibility, weather, cost/registration enforcement, saved availability, group scheduling, calendar import, public edit/delete and AI recommendations.
 - **Event times:** same-day Santa Clara campus wall time; overnight events are deferred.
 - **Shared storage:** the repository includes a Supabase adapter, SQL schema and browser fallback; the browser uses a same-origin Node API. A successful local build does not establish that the live Supabase instance is configured or independently verified.

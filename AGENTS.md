@@ -22,11 +22,11 @@
 ## Agreed MVP scope
 
 - Anyone may post/browse events; **no account, login, or USER table**.
-- Every public Event has `id,title,hostName,description,location,date,start,end`. `hostName` is unverified display text, **not** a user ID.
+- Every public Event has `id,title,hostName,description,location,date,start,end`, plus optional `attend` (`'set'` by default, or `'dropin'`; added Nov 25, see `model/attend.ts`). `hostName` is unverified display text, **not** a user ID.
 - Use M1-compatible `date` (YYYY-MM-DD) and `start,end` (HH:mm) on the **same day**, with `start < end`. No overnight events in this MVP.
 - One **shared public EventCatalog**; the Supabase adapter, event-posting form and integrated catalog/Search/Schedule code are merged (#18–#20). **Live Supabase configuration and cross-browser read/write are not verified.** Without environment configuration, the app uses an explicitly labeled browser-only fallback.
 - **Schedule** stores planned Event IDs **on the current device**. Removing a plan does not delete the public Event.
-- Free-time matching requires the **entire** event to fit, inclusive boundaries. No partial matching or travel feasibility.
+- Free-time matching requires the **entire** event to fit, inclusive boundaries, for an event that starts at a set time. A drop-in event (`attend: 'dropin'`, chosen by the host on Post) fits when it shares at least 20 minutes (`MIN_DROP_IN_MINUTES`) with the free stretch. No other partial matching. Walking times are shown as estimates and never decide a fit.
 - Out of scope: user profiles, cost, registration enforcement, saved availability, cross-device schedules, and extra tables for anonymous users.
 
 ## Boundaries and ownership
