@@ -1,5 +1,6 @@
 // HTTP CONTROLLER: an opt-in, bearer-authenticated gateway to caller-scoped
 // group RPCs. This controller never accepts a client-supplied acting user ID.
+import { createHash } from 'node:crypto'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { MAX_GROUP_INVITEES, MAX_IF_CONDITION, ifConditionLength, type ResponseKind } from '../src/model/groupPlans'
 
@@ -27,6 +28,8 @@ export class GroupGatewayError extends Error {
 const GROUP_MAX_BODY_BYTES = 8192
 const GROUP_REQUESTS_PER_MINUTE = 40
 const GROUP_AUTH_CHECKS_PER_MINUTE = 600
+const GROUP_AUTH_RESERVED_CHECKS = 200
+const GROUP_AUTH_HINT_LIFETIME_MS = 5 * 60_000
 const MAX_TRACKED_GROUP_ACTORS = 10000
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const VALID_ACTIONS = new Set(['invite', 'remove', 'respond', 'confirm', 'cancel', 'accept', 'decline', 'leave'])
@@ -190,9 +193,64 @@ export function createGroupApi(
   clock: () => number = Date.now,
 ) {
   const limits = new Map<string, { count: number; until: number }>()
-  // A fixed, process-wide budget protects Auth without trusting proxy headers.
-  // Normal request quotas are independent for verified accounts.
+  // A token digest is an admission hint, never a cached authorization decision.
+  // Auth and the caller-scoped RPC must still verify every admitted request.
+  const verifiedHints = new Map<string, { userId: string; until: number }>()
   let authBudget = { count: 0, until: 0 }
+
+  function consumeAccountQuota(userId: string, now: number): void {
+    for (const [key, item] of limits) if (item.until <= now) limits.delete(key)
+    if (limits.size >= MAX_TRACKED_GROUP_ACTORS && !limits.has(userId)) {
+      throw new RequestError(429, 'The group service is busy.')
+    }
+    const limit = limits.get(userId) ?? { count: 0, until: now + 60000 }
+    if (limit.count >= GROUP_REQUESTS_PER_MINUTE) throw new RequestError(429, 'Too many group requests.')
+    limit.count++
+    limits.set(userId, limit)
+  }
+
+  function rememberVerifiedToken(digest: string, userId: string, now: number): void {
+    if (verifiedHints.size >= MAX_TRACKED_GROUP_ACTORS) {
+      for (const [key, hint] of verifiedHints) {
+        if (hint.until <= now) verifiedHints.delete(key)
+      }
+    }
+    if (verifiedHints.size < MAX_TRACKED_GROUP_ACTORS || verifiedHints.has(digest)) {
+      verifiedHints.set(digest, { userId, until: now + GROUP_AUTH_HINT_LIFETIME_MS })
+    }
+  }
+
+  async function verifyAdmittedToken(
+    activeGateway: AuthenticatedGroupGateway, token: string, now: number,
+  ): Promise<VerifiedGroupActor> {
+    const digest = createHash('sha256').update(token).digest('hex')
+    const hint = verifiedHints.get(digest)
+    if (hint && hint.until <= now) verifiedHints.delete(digest)
+    const knownActor = verifiedHints.get(digest)?.userId
+
+    if (authBudget.until <= now) authBudget = { count: 0, until: now + 60000 }
+    const generalBudget = GROUP_AUTH_CHECKS_PER_MINUTE - GROUP_AUTH_RESERVED_CHECKS
+    // Reserve part of the existing total for recently verified tokens. Unseen
+    // tokens cannot consume that reserve, even when all traffic shares a proxy.
+    if (authBudget.count >= GROUP_AUTH_CHECKS_PER_MINUTE ||
+        (!knownActor && authBudget.count >= generalBudget)) {
+      throw new RequestError(429, 'The group service is busy.')
+    }
+    // Charge a known account before awaiting Auth, including concurrent calls.
+    // The hint only selects the quota; it cannot grant access.
+    if (knownActor) consumeAccountQuota(knownActor, now)
+    authBudget.count++
+
+    const actor = await activeGateway.verify(token)
+    if (!actor?.userId || !UUID.test(actor.userId) ||
+        (knownActor && knownActor !== actor.userId)) {
+      verifiedHints.delete(digest)
+      throw new RequestError(401, 'Your group session is not valid.')
+    }
+    if (!knownActor) consumeAccountQuota(actor.userId, clock())
+    rememberVerifiedToken(digest, actor.userId, clock())
+    return actor
+  }
 
   return async (req: IncomingMessage, res: ServerResponse): Promise<boolean> => {
     let pathname: string
@@ -232,25 +290,7 @@ export function createGroupApi(
       if (!token) throw new RequestError(401, 'Sign in before accessing group plans.')
 
       // Confirm the identity with Auth *before* calling any private RPC.
-      const now = clock()
-      if (authBudget.until <= now) authBudget = { count: 0, until: now + 60000 }
-      if (authBudget.count >= GROUP_AUTH_CHECKS_PER_MINUTE) {
-        throw new RequestError(429, 'The group service is busy.')
-      }
-      authBudget.count++
-      const actor = await gateway.verify(token)
-      if (!actor?.userId || !UUID.test(actor.userId)) {
-        throw new RequestError(401, 'Your group session is not valid.')
-      }
-
-      for (const [key, item] of limits) if (item.until <= now) limits.delete(key)
-      if (limits.size >= MAX_TRACKED_GROUP_ACTORS && !limits.has(actor.userId)) {
-        throw new RequestError(429, 'The group service is busy.')
-      }
-      const limit = limits.get(actor.userId) ?? { count: 0, until: now + 60000 }
-      if (limit.count >= GROUP_REQUESTS_PER_MINUTE) throw new RequestError(429, 'Too many group requests.')
-      limit.count++
-      limits.set(actor.userId, limit)
+      const actor = await verifyAdmittedToken(gateway, token, clock())
 
       if (isRoot && method === 'GET') {
         response(res, 200, projectList(await gateway.list(token)))
