@@ -19,8 +19,8 @@ const secretPlan = {
   id: planId, eventId, organizerId: orgId, status: 'proposed', revision: 2,
   invitations: [],
   participants: [
-    { userId: memberId, response: 'if', privateCondition: 'Private exam schedule' },
-    { userId: outsiderId, response: null, privateCondition: null },
+    { userId: memberId, response: 'if', ifCondition: 'If my exam ends by 3' },
+    { userId: outsiderId, response: null, ifCondition: null },
   ],
   sourceSecret: 'Never expose this',
 }
@@ -96,28 +96,62 @@ describe('opt-in group HTTP gateway and verified identity contract', () => {
     const success = await send(base, '/api/groups', orgToken, { eventId })
     expect(success.status).toBe(201)
     expect(gateway.create).toHaveBeenCalledWith(orgToken, eventId)
-    expect((await success.json()).participants[0]).not.toHaveProperty('privateCondition')
+    // Only an If answer carries a note; the unanswered member has none.
+    expect((await success.json()).participants[1]).not.toHaveProperty('ifCondition')
   })
 
-  it('never returns another participant\'s private notes or raw SQL columns', async () => {
+  it('shares If notes with members, never on other answers, and never returns raw SQL columns', async () => {
     const gateway = mockGateway()
     const base = await listen(gateway)
     const orgResult = await (await send(base, '/api/groups/' + planId, orgToken)).json()
-    expect(orgResult.participants[0]).toEqual({ userId: memberId, response: 'if' })
+    expect(orgResult.participants[0]).toEqual({ userId: memberId, response: 'if', ifCondition: 'If my exam ends by 3' })
     expect(orgResult).not.toHaveProperty('sourceSecret')
 
     const memberResult = await (await send(base, '/api/groups/' + planId, memberToken)).json()
-    expect(memberResult.participants[0].privateCondition).toBe('Private exam schedule')
-    expect(memberResult.participants[1]).not.toHaveProperty('privateCondition')
+    expect(memberResult.participants[0].ifCondition).toBe('If my exam ends by 3')
+    expect(memberResult.participants[1]).not.toHaveProperty('ifCondition')
+
+    // A faulty upstream that attaches text to a non-If answer is cleaned by the gateway.
+    const leaky = { ...secretPlan, participants: [{ userId: outsiderId, response: 'works', ifCondition: 'leaked text' }, secretPlan.participants[0]] }
+    const leakyBase = await listen({ ...gateway, read: vi.fn(async () => leaky) })
+    const cleaned = await (await send(leakyBase, '/api/groups/' + planId, memberToken)).json()
+    expect(JSON.stringify(cleaned)).not.toContain('leaked text')
 
     // Simulate a faulty upstream RPC returning another group's raw record.
     // The Node gateway must still refuse to expose its event or participant list.
-    const rogue = { ...secretPlan, participants: [{ userId: memberId, response: 'works', privateCondition: null }] }
+    const rogue = { ...secretPlan, participants: [{ userId: memberId, response: 'works', ifCondition: null }] }
     const otherGateway = { ...gateway, read: vi.fn(async () => rogue) }
     const otherBase = await listen(otherGateway)
     const denied = await send(otherBase, '/api/groups/' + planId, outsiderToken)
     expect(denied.status).toBe(404)
     expect((await denied.json()).error).toBe('Plan unavailable.')
+  })
+
+  it('rejects a different plan even when the caller belongs to both plans', async () => {
+    const wrongPlan = { ...secretPlan, id: '66666666-6666-4666-8666-666666666666' }
+    const gateway = { ...mockGateway(), read: vi.fn(async () => wrongPlan),
+      action: vi.fn(async () => wrongPlan) }
+    const base = await listen(gateway)
+    const read = await send(base, '/api/groups/' + planId, memberToken)
+    expect(read.status).toBe(503)
+    expect(await read.json()).toEqual({ error: 'The group response is unavailable.' })
+    const write = await send(base, '/api/groups/' + planId + '/actions', memberToken, {
+      expectedRevision: 2, action: 'respond', response: 'works',
+    })
+    expect(write.status).toBe(503)
+    expect(await write.json()).toEqual({ error: 'The group response is unavailable.' })
+  })
+
+  it('rejects a creation response for the wrong event or organizer', async () => {
+    for (const raw of [
+      { ...secretPlan, eventId: planId },
+      { ...secretPlan, organizerId: memberId, participants: [{ userId: orgId, response: null }] },
+    ]) {
+      const base = await listen({ ...mockGateway(), create: vi.fn(async () => raw) })
+      const response = await send(base, '/api/groups', orgToken, { eventId })
+      expect(response.status).toBe(503)
+      expect(await response.json()).toEqual({ error: 'The group response is unavailable.' })
+    }
   })
 
   it('withholds the entire roster from pending recipients even if the RPC returns it', async () => {
@@ -145,7 +179,7 @@ describe('opt-in group HTTP gateway and verified identity contract', () => {
     const bad = [
       { expectedRevision: 2, action: 'respond', response: 'works', userId: outsiderId },
       { expectedRevision: 2, action: 'invite', inviteeId: 'not-uuid' },
-      { expectedRevision: 2, action: 'respond', response: 'if', condition: '' },
+      { expectedRevision: 2, action: 'respond', response: 'if', condition: 42 },
       { expectedRevision: 2, action: 'confirm', inviteeId: memberId },
       { expectedRevision: -1, action: 'cancel' },
     ]
@@ -159,6 +193,19 @@ describe('opt-in group HTTP gateway and verified identity contract', () => {
     expect(gateway.action).toHaveBeenCalledWith(orgToken, planId, {
       expectedRevision: 2, action: 'invite', inviteeId: memberId,
     })
+  })
+
+  it('allows If without a condition and normalizes blank text to null', async () => {
+    const gateway = mockGateway(), base = await listen(gateway)
+    const path = '/api/groups/' + planId + '/actions'
+    for (const extra of [{}, { condition: null }, { condition: '  ' }]) {
+      expect((await send(base, path, memberToken, {
+        expectedRevision: 2, action: 'respond', response: 'if', ...extra,
+      })).status).toBe(200)
+      expect(gateway.action).toHaveBeenLastCalledWith(memberToken, planId, {
+        expectedRevision: 2, action: 'respond', response: 'if', condition: null,
+      })
+    }
   })
 
   it('does not accept cross-site writes, malformed JSON or unexpected paths', async () => {

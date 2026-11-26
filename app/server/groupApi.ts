@@ -1,7 +1,7 @@
 // HTTP CONTROLLER: an opt-in, bearer-authenticated gateway to caller-scoped
 // group RPCs. This controller never accepts a client-supplied acting user ID.
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { MAX_GROUP_INVITEES, MAX_PRIVATE_CONDITION, privateConditionLength, type ResponseKind } from '../src/model/groupPlans'
+import { MAX_GROUP_INVITEES, MAX_IF_CONDITION, ifConditionLength, type ResponseKind } from '../src/model/groupPlans'
 
 export type VerifiedGroupActor = { userId: string }
 export type GroupActionInput = {
@@ -70,11 +70,11 @@ function validatedAction(value: JsonObject): GroupActionInput {
     }
     input.response = value.response as GroupActionInput['response']
     if (input.response === 'if') {
-      if (typeof value.condition !== 'string' || value.condition.trim().length === 0 ||
-          privateConditionLength(value.condition) > MAX_PRIVATE_CONDITION) {
-        throw new RequestError(400, 'A conditional response needs up to 280 characters of text.')
+      if (value.condition !== undefined && value.condition !== null &&
+          (typeof value.condition !== 'string' || ifConditionLength(value.condition) > MAX_IF_CONDITION)) {
+        throw new RequestError(400, 'An optional If note must be text of up to 280 characters.')
       }
-      input.condition = value.condition.trim()
+      input.condition = typeof value.condition === 'string' ? value.condition.trim() || null : null
     } else if (value.condition !== undefined && value.condition !== null) {
       throw new RequestError(400, 'Only If responses may include a condition.')
     }
@@ -85,8 +85,10 @@ function validatedAction(value: JsonObject): GroupActionInput {
 }
 
 // Defense in depth: even if a future RPC mistakenly returns another user's
-// private condition, the Node gateway exposes it only to its authenticated owner.
-function projectPlan(raw: unknown, actorId: string): unknown {
+// If note, the Node gateway exposes it to the plan's accepted members only.
+type ExpectedPlan = { planId: string } | { eventId: string }
+
+function projectPlan(raw: unknown, actorId: string, expected: ExpectedPlan): unknown {
   const plan = object(raw)
   if (!plan || typeof plan.id !== 'string' || typeof plan.eventId !== 'string' ||
       typeof plan.organizerId !== 'string' || !Number.isSafeInteger(plan.revision) ||
@@ -94,6 +96,13 @@ function projectPlan(raw: unknown, actorId: string): unknown {
       !Array.isArray(plan.participants) || !Array.isArray(plan.invitations) ||
       plan.invitations.some((id: unknown) => typeof id !== 'string' || !UUID.test(id)) ||
       plan.participants.length + plan.invitations.length > MAX_GROUP_INVITEES) {
+    throw new GroupGatewayError(503, 'The group response is unavailable.')
+  }
+  // A caller may belong to several plans; membership alone cannot establish
+  // that the upstream returned the requested resource.
+  if (('planId' in expected && plan.id.toLowerCase() !== expected.planId.toLowerCase()) ||
+      ('eventId' in expected && (plan.eventId.toLowerCase() !== expected.eventId.toLowerCase() ||
+        plan.organizerId !== actorId))) {
     throw new GroupGatewayError(503, 'The group response is unavailable.')
   }
   const organizer = plan.organizerId === actorId
@@ -117,9 +126,10 @@ function projectPlan(raw: unknown, actorId: string): unknown {
       return {
         userId: participant.userId,
         response: participant.response,
-        ...(participant.userId === actorId
-          ? { privateCondition: typeof participant.privateCondition === 'string'
-              ? participant.privateCondition : null }
+        // If conditions are shared with accepted members; only an If answer carries one.
+        ...(participant.userId === actorId || participant.response === 'if'
+          ? { ifCondition: participant.response === 'if' && typeof participant.ifCondition === 'string'
+              ? participant.ifCondition : null }
           : {}),
       }
     }),
@@ -250,7 +260,7 @@ export function createGroupApi(
         if (typeof body.eventId !== 'string' || !UUID.test(body.eventId)) {
           throw new RequestError(400, 'Choose a valid campus event.')
         }
-        response(res, 201, projectPlan(await gateway.create(token, body.eventId), actor.userId))
+        response(res, 201, projectPlan(await gateway.create(token, body.eventId), actor.userId, { eventId: body.eventId }))
       } else if (isAction) {
         const body = await jsonBody(req)
         const command = validatedAction(body)
@@ -259,10 +269,10 @@ export function createGroupApi(
           if (updated !== null) throw new GroupGatewayError(503, 'The group response is unavailable.')
           response(res, 200, null)
         } else {
-          response(res, 200, projectPlan(updated, actor.userId))
+          response(res, 200, projectPlan(updated, actor.userId, { planId: match[1] }))
         }
       } else {
-        response(res, 200, projectPlan(await gateway.read(token, match[1]), actor.userId))
+        response(res, 200, projectPlan(await gateway.read(token, match[1]), actor.userId, { planId: match[1] }))
       }
     } catch (error) {
       const status = error instanceof RequestError || error instanceof GroupGatewayError

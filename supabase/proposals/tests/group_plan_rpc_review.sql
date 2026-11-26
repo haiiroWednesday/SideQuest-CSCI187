@@ -66,7 +66,7 @@ begin
     raise exception 'Acceptance must not imply attendance';
   end if;
   v := public.sidequest_group_action(plan_id,5,'respond',null,'if',repeat('😀',280));
-  if v->'participants'->0->>'privateCondition' <> repeat('😀',280) then
+  if v->'participants'->0->>'ifCondition' <> repeat('😀',280) then
     raise exception '280 code points should be valid';
   end if;
   begin
@@ -85,27 +85,38 @@ begin
   exception when insufficient_privilege then null;
   end;
   begin
-    perform public.sidequest_group_action(plan_id,6,'respond',null,'if',null);
-    raise exception 'Missing private condition was accepted';
+    perform public.sidequest_group_action(plan_id,6,'respond',null,'works','private text');
+    raise exception 'A note on a non-If answer was accepted';
   exception when invalid_parameter_value then null;
   end;
 
-  -- A second pending recipient cannot see the accepted member; after accepting,
-  -- the other member's response is visible but their private condition is not.
+  -- A second pending recipient sees no roster and no notes. After accepting, the other
+  -- member's If note is shared with them (team decision, Nov 24: notes are how the group talks).
   perform set_config('request.jwt.claim.sub',bo::text,true);
   v := public.sidequest_group_read(plan_id);
-  if v->'participants' <> '[]'::jsonb then raise exception 'Pending roster leak'; end if;
+  if v->'participants' <> '[]'::jsonb then raise exception 'Pending roster or note leak'; end if;
   v := public.sidequest_group_action(plan_id,6,'accept');
-  if exists (select 1 from jsonb_array_elements(v->'participants') member
-             where member->>'userId'=amy::text and member ? 'privateCondition') then
-    raise exception 'Other member can read private condition';
+  if not exists (select 1 from jsonb_array_elements(v->'participants') member
+             where member->>'userId'=amy::text and member->>'ifCondition'=repeat('😀',280)) then
+    raise exception 'Accepted member cannot read the group If note';
   end if;
-  v := public.sidequest_group_action(plan_id,7,'respond',null,'works');
+  v := public.sidequest_group_action(plan_id,7,'respond',null,'if');
+  if not exists (select 1 from jsonb_array_elements(v->'participants') member
+    where member->>'userId'=bo::text and member->>'response'='if'
+      and member->'ifCondition'='null'::jsonb) then
+    raise exception 'If without a note was not saved';
+  end if;
 
   perform set_config('request.jwt.claim.sub',organizer::text,true);
   v := public.sidequest_group_read(plan_id);
-  if exists (select 1 from jsonb_array_elements(v->'participants') member where member ? 'privateCondition') then
-    raise exception 'Organizer can read private condition';
+  if not exists (select 1 from jsonb_array_elements(v->'participants') member
+                 where member->>'userId'=amy::text and member->>'ifCondition'=repeat('😀',280)) then
+    raise exception 'Organizer cannot read the group If note';
+  end if;
+  -- Only an If answer carries a note.
+  if exists (select 1 from jsonb_array_elements(v->'participants') member
+             where member->>'response' is distinct from 'if' and member->>'ifCondition' is not null) then
+    raise exception 'A non-If answer carried a note';
   end if;
   begin
     perform public.sidequest_group_action(plan_id,8,'confirm');
@@ -144,6 +155,10 @@ begin
 
   perform set_config('request.jwt.claim.sub',amy::text,true);
   v := public.sidequest_group_action(plan_id,11,'respond',null,'works');
+  -- Changing away from If drops the note.
+  if exists (select 1 from jsonb_array_elements(v->'participants') member where member->>'userId'=amy::text and member->>'ifCondition' is not null) then
+    raise exception 'Note survived a change away from If';
+  end if;
   perform set_config('request.jwt.claim.sub',organizer::text,true);
   v := public.sidequest_group_action(plan_id,12,'confirm');
   if v->>'status' <> 'confirmed' then raise exception 'Expected confirmation'; end if;
@@ -152,18 +167,22 @@ begin
   perform set_config('request.jwt.claim.sub',organizer::text,true);
   v := public.sidequest_group_read(plan_id);
   if v->>'status' <> 'cancelled' or v->>'revision' <> '14' then raise exception 'Leave failed to invalidate confirmation'; end if;
+  -- Leaving removes the member's row, and with it any note.
+  if exists (select 1 from jsonb_array_elements(v->'participants') member where member->>'userId'=amy::text) then
+    raise exception 'Leaving kept the member and their note';
+  end if;
 
   -- Bound pending + accepted slots; use arbitrary UUIDs, without account lookup.
   cap_plan := (public.sidequest_group_create(event_id)->>'id')::uuid;
-  for i in 0..11 loop
+  for i in 0..10 loop
     perform public.sidequest_group_action(cap_plan,i,'invite',md5('capacity-' || i)::uuid);
   end loop;
   begin
-    perform public.sidequest_group_action(cap_plan,12,'invite',md5('capacity-over')::uuid);
-    raise exception '13th participant/invitation was accepted';
+    perform public.sidequest_group_action(cap_plan,11,'invite',md5('capacity-over')::uuid);
+    raise exception '12th invitee (13th person) was accepted';
   exception when invalid_parameter_value then null;
   end;
-  v := public.sidequest_group_action(cap_plan,12,'cancel');
+  v := public.sidequest_group_action(cap_plan,11,'cancel');
   if v->>'status' <> 'cancelled' or v->'invitations' <> '[]'::jsonb then raise exception 'Cancellation did not clear invitations'; end if;
 
   -- Exercise actual null-actor and anonymous-account denial paths.
@@ -204,7 +223,7 @@ begin
     exception when insufficient_privilege then null;
     end;
     begin
-      perform public.sidequest_group_action(cap_plan,13,'cancel');
+      perform public.sidequest_group_action(cap_plan,12,'cancel');
       raise exception 'Invalid expiry allowed mutation';
     exception when insufficient_privilege then null;
     end;

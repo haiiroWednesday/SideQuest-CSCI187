@@ -56,9 +56,9 @@ begin
     raise exception 'Absent participant response must remain unknown';
   end if;
 
-  -- Legitimate conditional response with a private note (still no client access).
+  -- Legitimate conditional response with an If note (still no direct client access).
   update public.group_participants set response='if',
-    private_condition='Need to finish class',responded_at=now()
+    if_condition='Need to finish class',responded_at=now()
     where group_participants.plan_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'::uuid and user_id=first_member;
 
   begin
@@ -69,30 +69,32 @@ begin
   end;
 
   begin
-    insert into public.group_participants(plan_id,user_id,response,private_condition,responded_at)
+    insert into public.group_participants(plan_id,user_id,response,if_condition,responded_at)
       values (plan_id, outsider, 'works', 'should remain private', now());
     raise exception 'Nonconditional private text was accepted';
   exception when check_violation then null;
   end;
 
   begin
-    insert into public.group_participants(plan_id,user_id,private_condition)
+    insert into public.group_participants(plan_id,user_id,if_condition)
       values (plan_id, outsider, 'should be rejected');
-    raise exception 'NULL response improperly accepted a private note';
+    raise exception 'NULL response improperly accepted an If note';
   exception when check_violation then null;
   end;
 
-  begin
-    insert into public.group_participants(plan_id,user_id,response,responded_at)
-      values (plan_id, outsider, 'if', now());
-    raise exception 'If response was accepted without a condition';
-  exception when check_violation then null;
-  end;
+  -- A conditional answer is valid even without an If note.
+  update public.group_participants set if_condition=null
+    where group_participants.plan_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'::uuid and user_id=first_member;
+  if not exists (select 1 from public.group_participants
+      where group_participants.plan_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'::uuid
+        and user_id=first_member and response='if' and if_condition is null) then
+    raise exception 'Optional If note was not preserved';
+  end if;
 
   begin
-    insert into public.group_participants(plan_id,user_id,response,private_condition,responded_at)
+    insert into public.group_participants(plan_id,user_id,response,if_condition,responded_at)
       values (plan_id, outsider, 'if', repeat('x',281), now());
-    raise exception 'Overlong private condition was accepted';
+    raise exception 'Overlong If note was accepted';
   exception when check_violation then null;
   end;
 

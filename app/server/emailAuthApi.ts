@@ -11,6 +11,7 @@ export type VerifiedEmailSession = {
   expiresAt: number // UNIX milliseconds, never an arbitrary client value
 }
 export interface EmailOtpGateway {
+  signOut(token: string): Promise<void>
   requestCode(email: string): Promise<void>
   verifyCode(email: string, code: string): Promise<VerifiedEmailSession | null>
 }
@@ -34,16 +35,19 @@ function json(res: ServerResponse, status: number, value: unknown): void {
   res.end(JSON.stringify(value))
 }
 async function body(req: IncomingMessage): Promise<Record<string, unknown>> {
-  if (!req.headers['content-type']?.toLowerCase().startsWith('application/json')) {
+  if (req.headers['content-type']?.split(';')[0].trim().toLowerCase() !== 'application/json') {
     throw new AuthHttpError(415, 'Send the request as JSON.')
   }
   const chunks: Buffer[] = []
   let size = 0
-  for await (const part of req) {
-    size += Buffer.byteLength(part)
-    if (size <= MAX_BYTES) chunks.push(Buffer.isBuffer(part) ? part : Buffer.from(part))
+  if (Number(req.headers['content-length']) > MAX_BYTES) {
+    throw new AuthHttpError(413, 'The request is too large.')
   }
-  if (size > MAX_BYTES) throw new AuthHttpError(413, 'The request is too large.')
+  for await (const part of req.iterator({ destroyOnReturn: false })) {
+    size += Buffer.byteLength(part)
+    if (size > MAX_BYTES) throw new AuthHttpError(413, 'The request is too large.')
+    chunks.push(Buffer.isBuffer(part) ? part : Buffer.from(part))
+  }
   let parsed: unknown
   try { parsed = JSON.parse(Buffer.concat(chunks).toString('utf8')) }
   catch { throw new AuthHttpError(400, 'Invalid request.') }
@@ -86,7 +90,7 @@ export function createEmailAuthApi(
     let path: string
     try { path = new URL(req.url ?? '/', 'http://sidequest.local').pathname }
     catch { return false }
-    if (!['/api/auth/status', '/api/auth/request-code', '/api/auth/verify-code'].includes(path)) {
+    if (!['/api/auth/status', '/api/auth/request-code', '/api/auth/verify-code', '/api/auth/sign-out'].includes(path)) {
       return false
     }
     if (path === '/api/auth/status') {
@@ -106,13 +110,26 @@ export function createEmailAuthApi(
       if (typeof origin !== 'string' || !req.headers.host) {
         throw new AuthHttpError(403, 'Use the SideQuest site to sign in.')
       }
-      let expectedHost = ''
-      try { expectedHost = new URL(origin).host }
-      catch { /* malformed origin is forbidden */ }
-      if (expectedHost !== req.headers.host) {
+      let allowedOrigin = false
+      try {
+        const parsed = new URL(origin)
+        allowedOrigin = ['http:', 'https:'].includes(parsed.protocol) &&
+          parsed.host === req.headers.host && parsed.origin === origin
+      } catch { /* malformed origin is forbidden */ }
+      if (!allowedOrigin) {
         throw new AuthHttpError(403, 'Use the SideQuest site to sign in.')
       }
       const request = await body(req)
+      if (path === '/api/auth/sign-out') {
+        const auth = req.headers.authorization
+        const token = typeof auth === 'string' && auth.length <= 8200
+          ? /^Bearer ([A-Za-z0-9._~-]{20,8192})$/.exec(auth)?.[1] : undefined
+        if (!token) throw new AuthHttpError(401, 'Sign in before ending a session.')
+        if (Object.keys(request).length !== 0) throw new AuthHttpError(400, 'Unexpected sign-out fields.')
+        await gateway.signOut(token)
+        json(res, 200, { revoked: true })
+        return true
+      }
       const email = emailFrom(request, path.endsWith('verify-code') ? ['email', 'code'] : ['email'])
       const ip = req.socket.remoteAddress ?? 'unknown'
       if (path === '/api/auth/request-code') {
@@ -142,8 +159,14 @@ export function createEmailAuthApi(
         })
       }
     } catch (error) {
-      if (error instanceof AuthHttpError) json(res, error.status, { error: error.message })
-      else json(res, 503, { error: 'The sign-in service is unavailable.' })
+      if (error instanceof AuthHttpError) {
+        if (error.status === 413) {
+          req.pause()
+          res.setHeader('Connection', 'close')
+          res.once('finish', () => req.destroy())
+        }
+        json(res, error.status, { error: error.message })
+      } else json(res, 503, { error: 'The sign-in service is unavailable.' })
     }
     return true
   }

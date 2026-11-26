@@ -70,8 +70,11 @@ begin
       jsonb_build_object(
         'userId', member.user_id,
         'response', member.response
-      ) || case when member.user_id = v_actor
-        then jsonb_build_object('privateCondition', member.private_condition)
+      ) || case when member.user_id = v_actor or member.response = 'if'
+        -- If conditions are shared with the plan's accepted members (team decision, Nov 24):
+        -- a condition is how the group talks. Pending invitees and outsiders never reach this
+        -- list (v_member below), and a non-If answer carries no condition (table constraint).
+        then jsonb_build_object('ifCondition', member.if_condition)
         else '{}'::jsonb
       end
       order by member.user_id
@@ -242,15 +245,15 @@ begin
     end if;
     v_condition := nullif(btrim(p_condition, U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF'), '');
     if p_response = 'if' then
-      if v_condition is null or char_length(v_condition) > 280 then
-        raise exception 'If response needs a condition of up to 280 characters' using errcode = '22023';
+      if v_condition is not null and char_length(v_condition) > 280 then
+        raise exception 'Optional If condition must be at most 280 characters' using errcode = '22023';
       end if;
     elsif p_condition is not null then
-      raise exception 'Only If may include a private condition' using errcode = '22023';
+      raise exception 'Only If may include a condition' using errcode = '22023';
     end if;
     update public.group_participants
       set response = p_response,
-          private_condition = case when p_response='if' then v_condition else null end,
+          if_condition = case when p_response='if' then v_condition else null end,
           responded_at = now()
       where plan_id = p_plan_id and user_id = v_actor;
 
@@ -265,7 +268,7 @@ begin
       end if;
       delete from public.group_invitations where plan_id = p_plan_id and expires_at <= now();
       if ((select count(*) from public.group_participants where plan_id = p_plan_id) +
-          (select count(*) from public.group_invitations where plan_id = p_plan_id)) >= 12 then
+          (select count(*) from public.group_invitations where plan_id = p_plan_id)) >= 11 then
         raise exception 'Participant limit reached' using errcode = '22023';
       end if;
       if exists (select 1 from public.group_participants

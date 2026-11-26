@@ -6,7 +6,9 @@ export default defineConfig({
   // Keep the full suite in Chromium; run the tagged high-value cross-browser
   // smoke path in Firefox and WebKit rather than tripling every fixture test.
   projects: [
-    { name: 'chromium', use: { browserName: 'chromium' } },
+    // Shared-catalog specs reset one process-wide PostgREST fixture. Keep
+    // the Chromium cases serial so another spec cannot reset an active test.
+    { name: 'chromium', workers: 1, use: { browserName: 'chromium' } },
     { name: 'firefox', grep: /@cross-browser/, use: { browserName: 'firefox' } },
     { name: 'webkit', grep: /@cross-browser/, use: { browserName: 'webkit' } },
   ],

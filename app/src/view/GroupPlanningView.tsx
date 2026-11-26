@@ -60,12 +60,15 @@ export function GroupPlanningView({ actorId, client, events, routes }: GroupPlan
     setLoading(true)
     setActiveId(id)
     setError(null)
-    setSelected(null)
+    if (selected?.id !== id) setSelected(null)
     try {
       const plan = await client.get(id)
       if (generation.current === current) setSelected(plan)
     } catch (problem) {
-      if (generation.current === current) setError(displayError(problem))
+      if (generation.current === current) {
+        setSelected(null)
+        setError(displayError(problem))
+      }
     } finally {
       if (generation.current === current) setLoading(false)
     }
@@ -95,7 +98,7 @@ export function GroupPlanningView({ actorId, client, events, routes }: GroupPlan
 
   const act = async (command: GroupAction) => {
     const plan = selected
-    if (!plan || busy || !activeId || plan.id !== activeId) return
+    if (!plan || busy || loading || !activeId || plan.id !== activeId) return
     const current = generation.current
     setBusy(true)
     setError(null)
@@ -171,7 +174,7 @@ export function GroupPlanningView({ actorId, client, events, routes }: GroupPlan
             {selected && <GroupPlanPanel
               key={selected.id} plan={selected} actorId={actorId}
               eventTitle={eventNames.get(selected.eventId) ?? 'Campus event'}
-              busy={busy} error={error}
+              busy={busy || loading} error={error}
               onAction={command => { void act(command) }}
               onRefresh={() => { void open(selected.id) }}
             />}

@@ -1,4 +1,4 @@
-import { createServer, type Server } from 'node:http'
+import { createServer, request, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createEmailAuthApi, type EmailOtpGateway } from '../server/emailAuthApi'
@@ -24,6 +24,7 @@ async function start(gateway: EmailOtpGateway | null) {
 }
 function sample(): EmailOtpGateway {
   return {
+    signOut: vi.fn(async () => undefined),
     requestCode: vi.fn(async () => undefined),
     verifyCode: vi.fn(async (_email, code) => code === '123456' ? {
       userId: actorId,
@@ -80,6 +81,59 @@ describe('passwordless email-code HTTP contract', () => {
       { email: 'person@example.edu' }, 'https://unrelated.example')
     expect(denied.status).toBe(403)
     expect(gateway.requestCode).not.toHaveBeenCalled()
+  })
+
+  it('rejects non-HTTP or noncanonical origins and invalid JSON media types', async () => {
+    const gateway = sample(), base = await start(gateway)
+    for (const origin of [base.replace('http:', 'ftp:'), base + '/path', base.replace('://', '://user@')]) {
+      expect((await post(base, '/api/auth/request-code', { email: 'person@example.edu' }, origin)).status).toBe(403)
+    }
+    const wrongType = await fetch(base + '/api/auth/request-code', {
+      method: 'POST', headers: { Origin: base, 'Content-Type': 'application/json-invalid' },
+      body: JSON.stringify({ email: 'person@example.edu' }),
+    })
+    expect(wrongType.status).toBe(415)
+    expect(gateway.requestCode).not.toHaveBeenCalled()
+  })
+
+  it('rejects oversized chunked OTP requests before the client finishes uploading', async () => {
+    const gateway = sample(), base = await start(gateway)
+    const status = await new Promise<number>((resolve, reject) => {
+      const req = request(base + '/api/auth/request-code', {
+        method: 'POST', headers: { Origin: base, 'Content-Type': 'application/json' },
+      }, res => {
+        res.resume()
+        res.once('end', () => { resolve(res.statusCode ?? 0); req.destroy() })
+      })
+      req.on('error', reject)
+      req.setTimeout(2000, () => req.destroy(new Error('Server waited for the rest of the oversized body')))
+      req.write('x'.repeat(2048))
+    })
+    expect(status).toBe(413)
+    expect(gateway.requestCode).not.toHaveBeenCalled()
+  })
+
+  it('revokes only the supplied session and reports provider failure honestly', async () => {
+    const gateway = sample(), base = await start(gateway)
+    const token = 'example-access-token-for-unit-testing-only'
+    const signOut = (body: unknown, authorization = 'Bearer ' + token, origin = base) =>
+      fetch(base + '/api/auth/sign-out', {
+        method: 'POST', headers: { Origin: origin, Authorization: authorization, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+    expect((await signOut({}, '')).status).toBe(401)
+    expect((await signOut({ scope: 'global' })).status).toBe(400)
+    expect((await signOut({}, 'Bearer ' + token, 'https://unrelated.example')).status).toBe(403)
+    expect(gateway.signOut).not.toHaveBeenCalled()
+    const success = await signOut({})
+    expect(success.status).toBe(200)
+    expect(await success.json()).toEqual({ revoked: true })
+    expect(success.headers.get('cache-control')).toBe('no-store, private')
+    expect(gateway.signOut).toHaveBeenCalledWith(token)
+    vi.mocked(gateway.signOut).mockRejectedValueOnce(new Error('Private provider failure'))
+    const failure = await signOut({})
+    expect(failure.status).toBe(503)
+    expect(await failure.json()).toEqual({ error: 'The sign-in service is unavailable.' })
   })
 
   it('caps repeated verification attempts and does not report invalid codes as sessions', async () => {

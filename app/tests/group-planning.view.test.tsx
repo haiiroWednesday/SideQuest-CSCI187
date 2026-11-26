@@ -84,6 +84,26 @@ describe('authenticated group page: proposal, participant and recoverable errors
   })
 
 
+  it('keeps an unsaved group note when refreshing the same authorized plan', async () => {
+    const plan: GroupDetail = {
+      ...basePlan, participants: [{ userId: amy, response: 'if', ifCondition: 'Original' }],
+    }
+    const client: GroupClientPort = {
+      list: vi.fn(async () => [plan]),
+      create: vi.fn(async () => plan),
+      get: vi.fn().mockResolvedValueOnce(plan).mockResolvedValueOnce({ ...plan, revision: 1 }),
+      act: vi.fn(async () => plan),
+    }
+    render(<GroupPlanningView actorId={amy} client={client} events={events} routes={routes} />)
+    fireEvent.click(await screen.findByRole('button', { name: /Music workshop/ }))
+    const note = await screen.findByRole<HTMLTextAreaElement>('textbox', { name: /Your note for the group/ })
+    fireEvent.change(note, { target: { value: 'Draft before refresh' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh responses' }))
+    await waitFor(() => expect(client.get).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save note' }).hasAttribute('disabled')).toBe(false))
+    expect(note.value).toBe('Draft before refresh')
+  })
+
   it('distinguishes a failed group-list request from a genuinely empty list and recovers on retry', async () => {
     const client: GroupClientPort = {
       list: vi.fn()

@@ -188,46 +188,66 @@ try {
   pass('Invitation consent and account-enumeration resistance on real PostgREST')
   const note = '🦋'.repeat(280)
   const conditional = await json(await act(b, 4, 'respond', { response: 'if', condition: note }), 200, '280 code points')
-  check(conditional.participants.find(m => m.userId === b.id)?.privateCondition === note, 'Private condition owner projection incorrect.')
+  check(conditional.participants.find(m => m.userId === b.id)?.ifCondition === note, 'If note owner projection incorrect.')
   const organizer = await json(await app(path, a.token), 200, 'Organizer read')
   const directOrganizer = await json(await directRead(a.token), 200, 'Organizer direct RPC')
   for (const view of [organizer, directOrganizer]) {
-    check(!Object.hasOwn(view.participants.find(m => m.userId === b.id), 'privateCondition'), 'Private condition leaked to organizer.')
+    check(view.participants.find(m => m.userId === b.id)?.ifCondition === note, 'If note not shared with the organizer.')
   }
   await expectStatus(await act(b, 5, 'respond', { response: 'if', condition: '🦋'.repeat(281) }), 400, '281 code points')
   await expectStatus(await act(b, 4, 'respond', { response: 'works' }), 409, 'Stale revision')
   await expectStatus(await act(a, 5, 'confirm'), 400, 'Conditional is not consent')
-  pass('Unicode boundary, private notes and stale revisions with real provider')
+  pass('Unicode boundary, shared If notes and stale revisions with real provider')
   await json(await act(a, 5, 'invite', { inviteeId: c.id }), 200, 'Invite third account')
   const declined = await json(await act(c, 6, 'decline'), 200, 'Decline')
   check(declined === null, 'Decline returned private plan details.')
   await denied(await directRead(c.token), 'Declined direct access')
-  await json(await act(b, 7, 'respond', { response: 'works' }), 200, 'Explicit Works')
-  const confirmed = await json(await act(a, 8, 'confirm'), 200, 'Confirm')
+  const noNote = await json(await act(b, 7, 'respond', { response: 'if' }), 200, 'If without note')
+  check(noNote.participants.find(m => m.userId === b.id)?.ifCondition === null,
+    'Optional note was not cleared.')
+  await expectStatus(await act(a, 8, 'confirm'), 400, 'If without note remains tentative')
+  await json(await act(b, 8, 'respond', { response: 'works' }), 200, 'Explicit Works')
+  const confirmed = await json(await act(a, 9, 'confirm'), 200, 'Confirm')
   check(confirmed.status === 'confirmed', 'Plan failed to confirm.')
   pass('Decline removes access and confirmation requires explicit Works')
   const capacity = await json(await app('/api/groups', a.token, { eventId: event.id }), 201, 'Create capacity fixture')
   const capAction = (revision, action, extra = {}) => app('/api/groups/' + capacity.id + '/actions', a.token,
     { expectedRevision: revision, action, ...extra })
-  for (let i = 0; i < 12; i++) {
-    await expectStatus(await capAction(i, 'invite', { inviteeId: randomUUID() }), 200, 'Valid invitation slot')
+  // The agreed capacity is twelve people including the organizer.
+  // Keep this independent of the implementation constants to catch regressions.
+  const expectedInviteeLimit = 11
+  for (let i = 0; i < expectedInviteeLimit; i++) {
+    const updated = await json(await capAction(i, 'invite', { inviteeId: randomUUID() }), 200, 'Valid invitation slot')
+    check(updated.invitations.length === i + 1 && updated.revision === i + 1, 'Invitation count or revision did not advance.')
   }
-  await expectStatus(await capAction(12, 'invite', { inviteeId: randomUUID() }), 400, '13th invitation')
-  await expectStatus(await capAction(12, 'cancel'), 200, 'Cancel capacity fixture')
-  pass('Twelve-slot limit and cancellation enforced by real SQL')
+  await expectStatus(await capAction(expectedInviteeLimit, 'invite', { inviteeId: randomUUID() }), 400, '12th invitee (13th person)')
+  const full = await json(await app('/api/groups/' + capacity.id, a.token), 200, 'Read full plan')
+  check(full.invitations.length === expectedInviteeLimit && full.revision === expectedInviteeLimit, 'Rejected invitation changed the plan.')
+  const cancelled = await json(await capAction(expectedInviteeLimit, 'cancel'), 200, 'Cancel capacity fixture')
+  check(cancelled.status === 'cancelled' && cancelled.invitations.length === 0, 'Cancellation did not clear invitations.')
+  pass('Twelve-person limit including organizer and cancellation enforced by real SQL')
   // Supabase logout revokes session/refresh credentials, but the old signed
   // access token can still be within its expiry. RPC session guard must deny.
-  const logout = await request(supabase + '/auth/v1/logout?scope=local', {
-    key: anon, token: b.token, method: 'POST',
-  })
-  check(logout.ok, 'Provider logout failed.')
+  const revoked = b.page.waitForResponse(r =>
+    new URL(r.url()).pathname === '/api/auth/sign-out' && r.request().method() === 'POST')
+  await b.page.getByRole('button', { name: 'End session' }).click()
+  const logout = await revoked
+  check(logout.status() === 200 && (await logout.json()).revoked === true,
+    'Application did not confirm provider logout.')
+  await b.page.getByRole('status').filter({ hasText: 'Signed out of this session.' }).waitFor()
+  await b.page.getByLabel('Email address').waitFor()
+  check(await b.page.getByRole('button', { name: 'End session' }).count() === 0,
+    'Logged-out tab still offers a private session.')
+  await expectStatus(await app(path, a.token), 200, 'Organizer remains signed in')
+  await expectStatus(await app('/api/groups', c.token), 200, 'Unrelated session unaffected')
   await denied(await directRead(b.token), 'Logged-out token direct RPC')
   await denied(await app(path, b.token), 'Logged-out token app gateway')
-  pass('Actual provider session revocation blocks a still-unexpired signed token')
+  await denied(await rpc('sidequest_group_list', b.token, {}), 'Logged-out token direct list')
+  pass('UI sign-out revokes the actual provider session and blocks its still-unexpired signed token')
   const deletion = await admin.auth.admin.deleteUser(b.id)
   check(!deletion.error, 'Disposable account deletion failed.')
   const after = await json(await app(path, a.token), 200, 'Plan after member deletion')
-  check(after.status === 'cancelled' && after.revision === 10 && after.participants.length === 0,
+  check(after.status === 'cancelled' && after.revision === 11 && after.participants.length === 0,
     'Deleted participant did not invalidate confirmed plan and advance revision.')
   await denied(await directRead(b.token), 'Deleted account direct RPC')
   pass('Real Auth account deletion, FK cascade and confirmation invalidation')
