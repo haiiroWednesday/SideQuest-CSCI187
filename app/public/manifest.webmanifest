@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "SideQuest",
+  "short_name": "SideQuest",
+  "description": "Campus discoveries that fit your schedule",
+  "start_url": "/#discover",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fff9ec",
+  "theme_color": "#751728",
+  "icons": [
+    {
+      "src": "/app-icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
