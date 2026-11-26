@@ -1,6 +1,6 @@
 # SideQuest — Current M2 MVP Technical Specifications
 
-**Updated November 4, 2026.** Implements [REQUIREMENTS.md](REQUIREMENTS.md). Historic walking-skeleton specifications are retained at [docs/M1_HISTORICAL_SPECIFICATIONS.md](docs/M1_HISTORICAL_SPECIFICATIONS.md).
+**November 4 M2 baseline, reconciled with master November 13, 2026.** Implements [REQUIREMENTS.md](REQUIREMENTS.md). Historic walking-skeleton specifications are retained at [docs/M1_HISTORICAL_SPECIFICATIONS.md](docs/M1_HISTORICAL_SPECIFICATIONS.md).
 
 ## Technology and runtime
 - React + TypeScript + Vite UI, Node.js **22.12+** (24 recommended).
@@ -76,6 +76,12 @@ Only full scheduled events match. Search rejects invalid dates and reversed/zero
 3. Boundary/negative cases: already-past posts, posted descriptions 500/501/1000 accepted and 1001 rejected, stored 2,000-character descriptions still readable and plannable, per-field posting limits N/N+1, symbol-only names rejected and Unicode names accepted, invalid times and dates, duplicate plans, 100/101 plan limit, overlapping and back-to-back events, unknown plan IDs, network timeouts and denied/corrupted storage.
 4. Architecture review: Views import only Controller APIs for domain operations; Models never import React or Views; database operations stay in Models.
 5. Verify code, current CRC/ER, README and tests against the [M2 Part 1 acceptance requirements](https://docs.google.com/document/d/1_LlAb9mtASfutgVjKdjjt7Esh7g0ab6J4FmCzREJDEU/edit), including actual shared-data behavior. See the [lecture 01–16 audit](docs/COURSE_LECTURES_01_TO_16_COMPLIANCE_AUDIT.md).
+
+## Proposed final campus place and route contract (NOT IMPLEMENTED)
+
+The intended initial map is for **SCU campus only**. The current `CampusEvent.location` remains a free-text string and should keep functioning for older posted events. A reviewed future extension could introduce canonical campus place IDs, name/alias resolution, room descriptions, verified entrances, place-source versions and an independently validated pedestrian graph with weighted edges. An on-campus graph algorithm (Dijkstra or A*) must account for path restrictions/closures and return explicit failure/unknown states; no straight-line walking estimates should be represented as verified.
+
+A separate travel-feasibility service, if approved, would consume a selected origin, candidate destination entrance, travel mode, evidence timestamp and any return/departure constraint. It must present a distinct verdict from the **currently implemented** event-only full-fit test. For off-campus or unsupported links, offer source-labeled external directions; Google Routes remains an optional externally billed adapter, not a dependency for the custom campus map. No existing M2 database migration or interface implements this proposal. See [current decisions](docs/CURRENT_STATUS_AND_DECISIONS_2026-11-13.md) and [final-team RACI map proposal](docs/FINAL_PROJECT_TEAM_ROLES_RACI_2026-11.md).
 
 ## Current implementation diagrams and Node API
 
