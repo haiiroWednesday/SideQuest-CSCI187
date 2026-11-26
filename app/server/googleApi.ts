@@ -91,6 +91,10 @@ export function createGoogleApi(calendar: GoogleCalendarService, routes: GoogleR
       let who: { userId: string } | null
       try { who = await sessionOf(req) }
       catch (error) { sendError(res, error, 'Google is unavailable right now.'); return true }
+      if (url.searchParams.get('session') === 'required' && !who) {
+        sendJson(res, 401, { error: 'Sign in to SideQuest first.', code: 'signed_out' })
+        return true
+      }
       sendJson(res, 200, {
         calendar: await calendar.status(who?.userId ?? null),
         routes: { enabled: routes.enabled },
