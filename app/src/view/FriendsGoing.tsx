@@ -34,6 +34,19 @@ export function GoingFaces({ eventId, big = false }: { eventId: string; big?: bo
   )
 }
 
+/** On an opened card, who is going is a fact like the host and the place: its own row in the facts list,
+ *  with a people icon in the same column (Cyn, Nov 25: "5 going ... looks unanchored and random"). */
+export function GoingFact({ eventId }: { eventId: string }) {
+  const api = useGoing()
+  if (!api?.going(eventId)) return null
+  return (
+    <li className="sq-going-fact">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" /><path d="M3 20c.8-4 3-6 6-6s5.2 2 6 6" /><circle cx="17" cy="9" r="2.6" /><path d="M16.5 14.2c2.6.2 4.1 2 4.6 5" /></svg>
+      <GoingFaces eventId={eventId} big />
+    </li>
+  )
+}
+
 /** "Let my groups see I'm going", off by default, per event. */
 export function ShareGoing({ eventId, planned }: { eventId: string; planned: boolean }) {
   const api = useGoing()

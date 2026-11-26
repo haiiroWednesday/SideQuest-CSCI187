@@ -10,7 +10,7 @@ import { DateStamp } from './DateStamp'
 import type React from 'react'
 import { Bookmark, NowMark } from './Marks'
 import { shownHost } from './shownHost'
-import { GoingFaces, ShareGoing } from './FriendsGoing'
+import { ShareGoing, GoingFact } from './FriendsGoing'
 import './attend.css'
 
 export type SelectedDetailState =
@@ -110,7 +110,8 @@ export function QuietTop({ event, live }: { event: StubModel; live: React.ReactN
       </div>
       <div className="sq-quiet-pic">
         <EventPicture title={event.title} location={event.location} plate />
-        <span className="sq-quiet-stamp" aria-hidden="true"><DateStamp dow={event.dow} day={event.dayNumber} month={event.month} year={year} halo /></span>
+        {/* Below the plate, on the plain sand, so it needs no cream glow (Cyn, Nov 25). */}
+        <span className="sq-quiet-stamp" aria-hidden="true"><DateStamp dow={event.dow} day={event.dayNumber} month={event.month} year={year} /></span>
       </div>
     </div>
   )
@@ -133,6 +134,7 @@ function QuietDetails({ event, onPlan, onRemove, planningBlocked }: { event: Stu
           {shownHost(event) && <li><svg viewBox="0 0 24 24" aria-label="Host" role="img"><circle cx="12" cy="8" r="4" /><path d="M4 21c1-5 4-7 8-7s7 2 8 7" /></svg>{event.host}</li>}
           <li><svg viewBox="0 0 24 24" aria-label="Where" role="img"><path d="M12 22s7-7 7-12a7 7 0 1 0-14 0c0 5 7 12 7 12z" /><circle cx="12" cy="10" r="2.5" /></svg>
             {event.location.trim() ? <a href={`#map/${encodeURIComponent(event.location.trim())}`}>{event.location}</a> : 'Place not given'}</li>
+          <GoingFact eventId={event.id} />
         </ul>
         {(event.organizer || event.contact || (ACCESS_POLICY_ON && event.accessibility)) && <ul className="sq-quiet-facts sq-quiet-access">
           {(event.organizer || event.contact) && <li><svg viewBox="0 0 24 24" aria-label="Contact" role="img"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3.5 6.5 8.5 6 8.5-6" /></svg>
@@ -140,7 +142,6 @@ function QuietDetails({ event, onPlan, onRemove, planningBlocked }: { event: Stu
           {ACCESS_POLICY_ON && event.accessibility && <li><svg viewBox="0 0 24 24" aria-label="Accessibility" role="img"><circle cx="12" cy="4.5" r="2" /><path d="M5 8.5c2.3.7 4.6 1 7 1s4.7-.3 7-1M12 9.5v5m0 0-3 6.5m3-6.5 3 6.5" /></svg><span>{event.accessibility}</span></li>}
         </ul>}
         {event.dropIn && <p className="sq-dropin-line">{event.dropIn.line}</p>}
-        <GoingFaces eventId={event.id} big />
         {event.description && !/Sample data for the design review/.test(event.description) && <p className="sq-sticker-desc">{event.description}</p>}
         <QuietHandoffs event={event} />
       </div>

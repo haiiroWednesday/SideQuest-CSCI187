@@ -217,7 +217,6 @@ button.sq-stub:focus-visible, .sq-stub > button:focus-visible, .sq-stub[tabindex
 
 /* Nov 25: "5 going" sat on the same line as My day / Walk there when an event had no description. It is a
    fact about the event, so it gets its own line under the place, and the ways onward start a new row. */
-.sq-sticker-body > .sq-going { display: flex; width: 100%; margin: 10px 0 0; }
 
 /* Nov 25, Cyn: "in fuller view, the photo/image should not be in a postcard anymore. It should be bigger."
    The opened card shows its picture as a plate across the whole top, edge to edge: the full wide drawing,
@@ -228,6 +227,10 @@ button.sq-stub:focus-visible, .sq-stub > button:focus-visible, .sq-stub[tabindex
 .sq-quiet-top .sq-pic-plate { width: 100%; transform: none; filter: none; }
 .sq-quiet-top .sq-pic-plate .sq-pic-paper { padding: 0; background: none; -webkit-mask: none; mask: none; box-shadow: none; }
 .sq-quiet-top .sq-pic-plate .sq-greet { width: 100% !important; height: auto; display: block; }
-.sq-quiet-top .sq-quiet-stamp { left: auto; right: 18px; bottom: -26px; }
+.sq-quiet-top .sq-quiet-stamp { left: auto; right: 22px; bottom: auto; top: calc(100% + 16px); transform: rotate(-10deg); }
 /* the close button now sits on the picture, so it gets a paper disc to stay readable */
 :root .sq-sticker-card:has(.sq-pic-plate) .sq-sheet-close { background: #fffaf2 !important; border-radius: 50% !important; box-shadow: 0 1px 3px rgba(48, 36, 33, .3) !important; color: var(--sq-ink, #302421); }
+
+/* "N going" is a fact row (FriendsGoing.GoingFact): icon column like host and place, same size. */
+.sq-quiet-facts .sq-going-fact .sq-going { margin: 0; font: 500 18px var(--font-sans); color: var(--sq-ink); }
+.sq-quiet-facts .sq-going-fact .sq-going small { font: inherit; color: inherit; }

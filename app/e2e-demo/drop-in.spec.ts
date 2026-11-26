@@ -107,7 +107,7 @@ for (const width of [390, 1280]) {
     // Nothing cut: the line wraps inside the card.
     expect(await line.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
     // The review build always plays the turn, so wait until nothing is moving before measuring.
-    await page.waitForFunction(() => document.getAnimations().every(a => a.playState !== 'running'))
+    await page.waitForFunction(() => document.getAnimations().every(a => a.playState !== 'running' || a.effect?.getTiming().iterations === Infinity))
     const card = await box(page.locator('.sq-sticker-card').filter({ has: line }).first()), l = await box(line)
     expect(l.x).toBeGreaterThanOrEqual(card.x); expect(l.x + l.width).toBeLessThanOrEqual(card.x + card.width)
     await shot('opened-drop-in')
