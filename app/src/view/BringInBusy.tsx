@@ -76,7 +76,7 @@ export function BringInBusy({ today, onAdd }: {
         {listening && <p className="sq-bringin-note" role="status">Listening. Tap the mic again when you're done.</p>}
         {micNote && <p className="sq-bringin-note" role="alert">{micNote}</p>}
         <div className="sq-bringin-row">
-          <button type="button" className="sq-bringin-go" disabled={!words.trim() || working} onClick={() => void read()}>{working ? 'Reading…' : 'Read it'}</button>
+          <button type="button" className="sq-plan-button sq-bringin-go" disabled={!words.trim() || working} onClick={() => void read()}>{working ? 'Reading…' : 'Read it'}</button>
           <span className="sq-bringin-or" aria-hidden="true">or</span>
           <button type="button" className="sq-bringin-file" onClick={() => file.current?.click()}>Open a calendar file (.ics)</button>
           <input ref={file} type="file" accept=".ics,text/calendar" hidden aria-hidden="true" tabIndex={-1}
@@ -106,7 +106,7 @@ export function BringInBusy({ today, onAdd }: {
         ) : !help.unclear.length && <p className="sq-bringin-note" role="status">No busy times found for the next 7 days.</p>}
         <div className="sq-bringin-row">
           {help.proposals.length > 0 && (
-            <button type="button" className="sq-bringin-go" disabled={!count} onClick={add}>{count ? `Add ${count} busy ${count === 1 ? 'time' : 'times'}` : 'Tick a time to add'}</button>
+            <button type="button" className="sq-plan-button sq-bringin-go" disabled={!count} onClick={add}>{count ? `Add ${count} busy ${count === 1 ? 'time' : 'times'}` : 'Tick a time to add'}</button>
           )}
           <button type="button" className="sq-bringin-file" onClick={() => setHelp(null)}>{help.via === 'file' ? 'Pick another way' : 'Change the words'}</button>
         </div>

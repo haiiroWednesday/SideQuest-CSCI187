@@ -277,3 +277,5 @@ button.sq-stub:focus-visible, .sq-stub > button:focus-visible, .sq-stub[tabindex
   color: var(--sq-red-deep, #751728) !important; font: 650 15px var(--font-sans) !important; text-decoration: none !important; border: 0 !important; background: none !important; border-radius: 0 !important; }
 :root :is(.sq-carded, .sq-schedule-page, .sq-sticker) .sq-remove::before { content: "×"; font-size: 18px; line-height: 1; }
 :root :is(.sq-carded, .sq-schedule-page, .sq-sticker) .sq-remove:hover { background: #f6e4e4 !important; }
+/* The Trail legend's overlap swatch matches the plain tint (audit, Nov 26). */
+.sqm-key .sqm-key-hatch { background: rgba(163, 32, 53, .22) !important; }

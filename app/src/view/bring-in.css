@@ -21,8 +21,8 @@
 @keyframes sq-mic { 50% { box-shadow: 0 0 0 6px rgba(117, 23, 40, .18); } }
 @media (prefers-reduced-motion: reduce) { .sq-bringin-mic.sq-on { animation: none; } }
 .sq-bringin-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 12px; }
-.sq-bringin-go { min-height: 50px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--sq-red-deep, #751728); color: #fff6e2; font: 650 15px var(--font-sans); cursor: pointer; }
-.sq-bringin-go:disabled { background: #cdbfb3; color: #4a3d37; cursor: default; }
+/* The main action uses the app's brush button (sq-plan-button), the same as Plan it and Post event. */
+.sq-bringin-go { min-height: 50px; width: auto; }
 .sq-bringin-or { font: 500 14px var(--font-sans); color: var(--sq-muted, #655d58); }
 .sq-bringin-file { min-height: 50px; padding: 0 4px; border: 0; background: none; color: var(--sq-red-deep, #751728); font: 650 15px var(--font-sans); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .sq-bringin-fine { margin: 10px 0 0; font: 500 14px/1.4 var(--font-sans); color: var(--sq-muted, #655d58); }

@@ -119,7 +119,7 @@ export function SomedayView({
               {listening && <p className="sq-bringin-note" role="status">Listening. Tap the mic again when you're done.</p>}
               {micNote && <p className="sq-bringin-note" role="alert">{micNote}</p>}
               <div className="sq-bringin-row">
-                <button type="button" className="sq-bringin-go" disabled={said.trim().length < 3 || drafting} onClick={() => void makeCard()}>{drafting ? 'Making it…' : 'Make a card'}</button>
+                <button type="button" className="sq-plan-button sq-bringin-go" disabled={said.trim().length < 3 || drafting} onClick={() => void makeCard()}>{drafting ? 'Making it…' : 'Make a card'}</button>
               </div>
               <p className="sq-bringin-fine">{ai ? 'Your words go to our server and an AI writes the card. ' : ''}Nothing is saved until you press Save the idea.</p>
             </section>
