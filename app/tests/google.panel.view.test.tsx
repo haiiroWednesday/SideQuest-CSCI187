@@ -45,7 +45,10 @@ describe('Google panel', () => {
     expect(await screen.findByText(/requested Google access is not confirmed/)).toBeTruthy()
     vi.mocked(c.status).mockResolvedValueOnce(on(true))
     fireEvent.click(screen.getByRole('button', { name: 'Check Google connection' }))
-    await waitFor(() => expect(c.status).toHaveBeenCalledTimes(3))
+    await waitFor(() => {
+      expect(c.status).toHaveBeenCalledTimes(3)
+      expect((screen.getByRole('button', { name: 'Check Google connection' }) as HTMLButtonElement).disabled).toBe(false)
+    })
     expect(screen.queryByRole('button', { name: 'Bring in this week' })).toBeNull()
     vi.mocked(c.status).mockResolvedValueOnce({ ...on(true), calendar: { enabled: true, connected: true, exportEnabled: true } })
     fireEvent.click(screen.getByRole('button', { name: 'Check Google connection' }))
