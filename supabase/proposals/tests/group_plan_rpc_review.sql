@@ -174,15 +174,15 @@ begin
 
   -- Bound pending + accepted slots; use arbitrary UUIDs, without account lookup.
   cap_plan := (public.sidequest_group_create(event_id)->>'id')::uuid;
-  for i in 0..11 loop
+  for i in 0..10 loop
     perform public.sidequest_group_action(cap_plan,i,'invite',md5('capacity-' || i)::uuid);
   end loop;
   begin
-    perform public.sidequest_group_action(cap_plan,12,'invite',md5('capacity-over')::uuid);
-    raise exception '13th participant/invitation was accepted';
+    perform public.sidequest_group_action(cap_plan,11,'invite',md5('capacity-over')::uuid);
+    raise exception '12th invitee (13th person) was accepted';
   exception when invalid_parameter_value then null;
   end;
-  v := public.sidequest_group_action(cap_plan,12,'cancel');
+  v := public.sidequest_group_action(cap_plan,11,'cancel');
   if v->>'status' <> 'cancelled' or v->'invitations' <> '[]'::jsonb then raise exception 'Cancellation did not clear invitations'; end if;
 
   -- Exercise actual null-actor and anonymous-account denial paths.
@@ -223,7 +223,7 @@ begin
     exception when insufficient_privilege then null;
     end;
     begin
-      perform public.sidequest_group_action(cap_plan,13,'cancel');
+      perform public.sidequest_group_action(cap_plan,12,'cancel');
       raise exception 'Invalid expiry allowed mutation';
     exception when insufficient_privilege then null;
     end;
