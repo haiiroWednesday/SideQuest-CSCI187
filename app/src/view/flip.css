@@ -63,3 +63,8 @@
 }
 .sq-flip[data-axis='X'] { perspective: 3200px; }
 .sq-flip-running-x { clip-path: inset(-2px -80px 0 -80px); }
+
+/* Mid-turn, perspective makes the near edge of a wide card bulge past the page for a few frames
+   (CI caught 41px at 1280). Clip the sides only while the card is turning, so the page never gains
+   a sideways scroll. Top and bottom stay free, and once the card lands nothing is clipped. */
+.sq-flip.sq-flip-running { overflow-x: clip; overflow-y: visible; }
