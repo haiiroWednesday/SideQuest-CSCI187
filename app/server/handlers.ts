@@ -7,6 +7,7 @@ import type { EventCatalogPort } from '../src/model/eventCatalog'
 import { createCheckedSupabaseEventCatalogFromEnv } from '../src/model/supabaseEventTable'
 import { createCatalogApi } from './api'
 import { createAiDiscoverApi } from './aiDiscover'
+import { createAiAssistApi } from './aiAssist'
 import { configureClientIp } from './clientIp'
 import { createEmailAuthApi, publicOriginFromEnv } from './emailAuthApi'
 import { googleApiOnce } from './googleApi'
@@ -47,6 +48,9 @@ export function createServerHandlers(env: Env, options: ServerHandlerOptions = {
   const socialApi = createSocialApiFromEnv(env)
   const groupApi = createGroupApi(createSupabaseGroupGatewayFromEnv(env))
   const ai = createAiDiscoverApi(catalog, { apiKey: env.OPENAI_API_KEY, model: env.SIDEQUEST_AI_MODEL })
+  // Busy time from a sentence and Talk to Someday. Shares the daily ceiling setting #96 adds for Discover.
+  const aiAssist = createAiAssistApi(catalog, { apiKey: env.OPENAI_API_KEY, model: env.SIDEQUEST_AI_MODEL,
+    dailyLimit: env.SIDEQUEST_AI_DAILY_LIMIT ? Number(env.SIDEQUEST_AI_DAILY_LIMIT) : undefined })
   const api = createCatalogApi(catalog, Date.now, options.publisher)
   // Built on the first /api/google/ request, once per environment.
   const google: RequestHandler = async (req, res) =>
@@ -58,6 +62,7 @@ export function createServerHandlers(env: Env, options: ServerHandlerOptions = {
     { name: 'social', handle: socialApi },
     { name: 'groups', handle: groupApi },
     { name: 'ai', handle: ai },
+    { name: 'ai-assist', handle: aiAssist },
     { name: 'catalog', handle: api },
   ]
 }

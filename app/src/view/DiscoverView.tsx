@@ -170,6 +170,8 @@ export type MarkerProps = {
   onReshape: (from: { first: number; last: number } | null, first: number, last: number) => void
   /** Typed new times for one busy time. */
   onEditBusy?: (run: MarkRun, start: string, end: string) => boolean
+  /** Busy time from a sentence, the mic or a calendar file. Returns how many stretches landed. */
+  onBringIn?: (blocks: { date: string; start: string; end: string }[]) => number
   /** "Show all events": stop filtering by free time, keep every mark. */
   onClear: (() => void) | null
   /** "Clear busy time": remove all busy marks (with Undo). */

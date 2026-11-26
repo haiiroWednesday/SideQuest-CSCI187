@@ -1,0 +1,38 @@
+/* "Bring in busy time": a slip of paper under the busy list. Flat, kraft-edged, no hard shadows.
+   Type stays on the scale: 24 serif heading, 16 input, 15 buttons, 14 notes. */
+:root .sq-bringin-open { display: inline-flex; align-items: center; gap: 8px; min-height: 50px; margin-top: 10px; padding: 6px 2px;
+  border: 0; background: none; color: var(--sq-red-deep, #751728); font: 650 15px var(--font-sans); cursor: pointer; }
+.sq-bringin-open svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.sq-bringin-open:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+.sq-bringin { margin-top: 14px; padding: 14px 16px 16px; background: #fffaf2; border: 1.5px solid rgba(48, 36, 33, .28); border-top: 6px solid #e9dccb; max-width: 560px; }
+.sq-bringin-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sq-bringin h2 { margin: 0; font: 400 24px/1.15 var(--font-display); -webkit-text-stroke: .7px currentColor; paint-order: stroke fill; color: var(--sq-ink); padding-bottom: .06em; }
+.sq-bringin-x { width: 50px; height: 50px; border: 0; background: none; font: 400 24px/1 var(--font-sans); color: var(--sq-muted, #655d58); cursor: pointer; }
+.sq-bringin-x:hover { color: var(--sq-red-deep, #751728); }
+.sq-bringin-label { display: block; margin: 8px 0 6px; font: 600 13px var(--font-sans); color: var(--sq-muted, #655d58); }
+.sq-bringin-say { display: flex; align-items: stretch; gap: 8px; }
+.sq-bringin-say textarea { flex: 1; min-width: 0; min-height: 56px; resize: vertical; padding: 8px 10px; border: 0; border-bottom: 1.6px solid #6e4a3c; background: #fbf4e8; font: 500 16px/1.35 var(--font-sans); color: var(--sq-ink); }
+.sq-bringin-say textarea::placeholder { color: #8a7a70; }
+.sq-bringin-mic { flex: none; width: 56px; border: 1.5px solid var(--sq-red-deep, #751728); border-radius: 50%; height: 56px; align-self: center; display: grid; place-items: center;
+  background: #fffaf2; color: var(--sq-red-deep, #751728); cursor: pointer; }
+.sq-bringin-mic svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.sq-bringin-mic.sq-on { background: var(--sq-red-deep, #751728); color: #fff6e2; animation: sq-mic 1.4s ease-in-out infinite; }
+@keyframes sq-mic { 50% { box-shadow: 0 0 0 6px rgba(117, 23, 40, .18); } }
+@media (prefers-reduced-motion: reduce) { .sq-bringin-mic.sq-on { animation: none; } }
+.sq-bringin-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 12px; }
+.sq-bringin-go { min-height: 50px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--sq-red-deep, #751728); color: #fff6e2; font: 650 15px var(--font-sans); cursor: pointer; }
+.sq-bringin-go:disabled { background: #cdbfb3; color: #4a3d37; cursor: default; }
+.sq-bringin-or { font: 500 14px var(--font-sans); color: var(--sq-muted, #655d58); }
+.sq-bringin-file { min-height: 50px; padding: 0 4px; border: 0; background: none; color: var(--sq-red-deep, #751728); font: 650 15px var(--font-sans); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.sq-bringin-fine { margin: 10px 0 0; font: 500 14px/1.4 var(--font-sans); color: var(--sq-muted, #655d58); }
+.sq-bringin-note { margin: 10px 0 0; font: 500 14px/1.4 var(--font-sans); color: #5c4a40; }
+.sq-bringin-ask { margin: 10px 0 0; padding: 0; list-style: none; }
+.sq-bringin-ask li { position: relative; padding: 6px 0 6px 26px; font: 600 16px/1.35 var(--font-sans); color: var(--sq-red-deep, #751728); }
+.sq-bringin-ask li::before { content: "?"; position: absolute; left: 0; top: 6px; width: 18px; height: 18px; border-radius: 50%; background: var(--sq-gold, #e8aa24); color: #3a2408; font: 700 12px/18px var(--font-sans); text-align: center; }
+.sq-bringin-list { margin: 10px 0 0; padding: 0; border: 0; display: grid; }
+.sq-bringin-item { display: grid; grid-template-columns: 28px 1fr; align-items: center; column-gap: 8px; min-height: 52px; padding: 4px 0; border-top: 1.5px dashed rgba(48, 36, 33, .2); cursor: pointer; }
+.sq-bringin-item input { width: 22px; height: 22px; accent-color: var(--sq-red-deep, #751728); margin: 0; }
+.sq-bringin-when { font: 500 16px var(--font-sans); color: var(--sq-ink); }
+.sq-bringin-when b { font-weight: 700; margin-right: 4px; }
+.sq-bringin-item small { grid-column: 2; font: 500 14px var(--font-sans); color: var(--sq-muted, #655d58); }

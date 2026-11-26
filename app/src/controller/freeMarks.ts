@@ -319,3 +319,15 @@ function withDay(marks: FreeMarks, date: string, cells: number[]): FreeMarks {
   if (sorted.length) next[date] = sorted; else delete next[date]
   return next
 }
+
+/** Busy time brought in from outside (a calendar file, Google, a sentence), after the student ticks
+ *  what to keep: every stretch is laid down in one change, so one Undo lifts them all.
+ *  Times outside the day bar are trimmed to it; My Schedule and past steps never change. */
+export function addBusyBlocks(input: MarkInput, blocks: readonly { date: string; start: string; end: string }[]): FreeMarks {
+  let marks = input.marks
+  for (const b of blocks) {
+    const next = addBusy({ ...input, marks, date: b.date }, b.start, b.end)
+    if (next) marks = next
+  }
+  return marks
+}

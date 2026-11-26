@@ -4,6 +4,7 @@
 // My Schedule's blue blocks looked editable. Now a busy block is an object you pick up,
 // and a tap on a blue block says where to change it. The typed form stays for keyboards.
 // The controller owns the half-hour math; this view reports cells.
+import { BringInBusy } from './BringInBusy'
 import { useEffect, useRef, useState } from 'react'
 import { CELL, DAY_START, TAP_CELLS, cellAtX, span, type MarkMode, type MarkModel, type MarkRun, type MarkWindow, type When } from '../controller/freeMarks'
 import { TimePick } from './Pickers'
@@ -13,7 +14,7 @@ import { MAP_FITS_ROUTE } from '../controller/presentMap'
 import './gaps.css'
 import './marks.css'
 
-export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnbusy, onReshape, onEditBusy, onClear, onClearBusy = null, onMode, social = false }: {
+export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnbusy, onReshape, onEditBusy, onBringIn, onClear, onClearBusy = null, onMode, social = false }: {
   model: MarkModel
   fitText: string | null
   onDate: (date: string) => void
@@ -26,6 +27,8 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnb
   onReshape: (from: { first: number; last: number } | null, first: number, last: number) => void
   /** New typed times for a busy time you already have. Returns false when they make no sense. */
   onEditBusy?: (run: MarkRun, start: string, end: string) => boolean
+  /** Busy time brought in from a sentence, the mic or a calendar file, after the student ticks it. */
+  onBringIn?: (blocks: { date: string; start: string; end: string }[]) => number
   /** "Show all events": stop filtering by free time. Changes no marks. */
   onClear: (() => void) | null
   /** "Clear busy time": removes every busy mark (the page offers Undo). */
@@ -109,6 +112,7 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnb
           {model.mine.map(r => <BusyTime key={r.first} run={r} onEdit={onEditBusy} onRemove={() => onUnbusy(r)} />)}
         </ul>
       )}
+      {!freeMode && onBringIn && model.days[0] && <BringInBusy today={model.days[0].date} onAdd={onBringIn} />}
       </div>
 
       </div>
