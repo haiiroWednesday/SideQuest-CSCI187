@@ -213,12 +213,19 @@ try {
   const capacity = await json(await app('/api/groups', a.token, { eventId: event.id }), 201, 'Create capacity fixture')
   const capAction = (revision, action, extra = {}) => app('/api/groups/' + capacity.id + '/actions', a.token,
     { expectedRevision: revision, action, ...extra })
-  for (let i = 0; i < 12; i++) {
-    await expectStatus(await capAction(i, 'invite', { inviteeId: randomUUID() }), 200, 'Valid invitation slot')
+  // The agreed capacity is twelve people including the organizer.
+  // Keep this independent of the implementation constants to catch regressions.
+  const expectedInviteeLimit = 11
+  for (let i = 0; i < expectedInviteeLimit; i++) {
+    const updated = await json(await capAction(i, 'invite', { inviteeId: randomUUID() }), 200, 'Valid invitation slot')
+    check(updated.invitations.length === i + 1 && updated.revision === i + 1, 'Invitation count or revision did not advance.')
   }
-  await expectStatus(await capAction(12, 'invite', { inviteeId: randomUUID() }), 400, '13th invitation')
-  await expectStatus(await capAction(12, 'cancel'), 200, 'Cancel capacity fixture')
-  pass('Twelve-slot limit and cancellation enforced by real SQL')
+  await expectStatus(await capAction(expectedInviteeLimit, 'invite', { inviteeId: randomUUID() }), 400, '12th invitee (13th person)')
+  const full = await json(await app('/api/groups/' + capacity.id, a.token), 200, 'Read full plan')
+  check(full.invitations.length === expectedInviteeLimit && full.revision === expectedInviteeLimit, 'Rejected invitation changed the plan.')
+  const cancelled = await json(await capAction(expectedInviteeLimit, 'cancel'), 200, 'Cancel capacity fixture')
+  check(cancelled.status === 'cancelled' && cancelled.invitations.length === 0, 'Cancellation did not clear invitations.')
+  pass('Twelve-person limit including organizer and cancellation enforced by real SQL')
   // Supabase logout revokes session/refresh credentials, but the old signed
   // access token can still be within its expiry. RPC session guard must deny.
   const revoked = b.page.waitForResponse(r =>
