@@ -179,7 +179,7 @@ export function ScheduleTrailView({ screen, accountStorage = false, onRemove, on
                   {next.stub.overlap && (() => {
                     const c = onRemove ? screen.days.flatMap(d => d.clashes).find(x => x.plans.some(p => p.id === next.stub.id)) : undefined
                     return c
-                      ? <button type="button" className="sq-warn-open" aria-haspopup="dialog" onClick={() => setClashKey(c.date)}><span className="sq-warn">{overlapWarningText(next.stub.overlap.text)}<span className="sq-warn-arrow" aria-hidden="true">→</span></span></button>
+                      ? <button type="button" className="sq-warn-open" aria-label={next.stub.overlap.text} aria-haspopup="dialog" onClick={() => setClashKey(c.date)}><span className="sq-warn">{overlapWarningText(next.stub.overlap.text)}<span className="sq-warn-arrow" aria-hidden="true">→</span></span></button>
                       : <p className="sq-warn">{overlapWarningText(next.stub.overlap.text)}</p>
                   })()}
                   {!quiet && <ScheduleEventDetails event={next.stub} />}
