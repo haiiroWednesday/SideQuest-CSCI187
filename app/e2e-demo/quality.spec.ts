@@ -11,8 +11,9 @@ const openCard = (title: string) => async (p: Page) => {
 }
 const SCREENS: Screen[] = [
   { name: 'discover', route: 'discover', maxWords: 90 },
-  { name: 'card happening now', route: 'discover', open: openCard('Ceramics Workshop'), maxWords: 40 },
-  { name: 'card later today', route: 'discover', open: openCard('Stargazing at Ricard'), maxWords: 40 },
+  // Nov 26 (H3): the share box and Plan it now stay on screen in a footer, 8 words that used to sit below the fold.
+  { name: 'card happening now', route: 'discover', open: openCard('Ceramics Workshop'), maxWords: 50 },
+  { name: 'card later today', route: 'discover', open: openCard('Stargazing at Ricard'), maxWords: 50 },
   { name: 'schedule', route: 'schedule', maxWords: 70 },
   { name: 'someday', route: 'someday', maxWords: 45 },
   { name: 'groups', route: 'groups', maxWords: 80 },
