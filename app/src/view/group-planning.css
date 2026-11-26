@@ -19,7 +19,9 @@
 .sq-group-form fieldset { min-width: 0; border: 0; padding: 0; margin: 0; display: grid; gap: 12px; }
 .sq-group-form legend, .sq-group-form label { font-weight: 750; }
 .sq-group-choices { display: flex; gap: 10px; flex-wrap: wrap; }
-.sq-group-choices label { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--sq-rule-strong); border-radius: 12px; cursor: pointer; }
+.sq-group-form .sq-group-choices button { background: var(--sq-paper); color: var(--sq-ink); border: 1.5px solid var(--sq-rule-strong); border-radius: 12px; }
+.sq-group-form .sq-group-choices button[aria-pressed="true"] { border-color: var(--sq-red-deep); box-shadow: inset 0 0 0 1px var(--sq-red-deep); }
+.sq-group-form .sq-group-choices button:focus-visible { outline: 2px solid var(--sq-ink); outline-offset: 3px; }
 .sq-group-form input[type="text"], .sq-group-form input:not([type]), .sq-group-form textarea { min-width: 0; width: 100%; padding: 11px; font: 500 16px/1.4 var(--font-sans); color: var(--sq-ink); border: 1.5px solid var(--sq-rule-strong); border-radius: 10px; background: #fff; }
 .sq-group-form textarea { resize: vertical; min-height: 95px; }
 .sq-group-form button, .sq-group-actions button { justify-self: start; border-radius: 999px; border: 1.5px solid var(--sq-red-deep); background: var(--sq-red-deep); color: var(--sq-on-red); padding: 10px 17px; min-height: 44px; font: 700 15px/1.3 var(--font-sans); cursor: pointer; }
