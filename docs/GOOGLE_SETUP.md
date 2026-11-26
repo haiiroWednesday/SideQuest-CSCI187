@@ -54,7 +54,7 @@ Calendar also needs the SideQuest sign-in to work, because it checks who is sign
 ## 6. Check it
 
 - [ ] `GET /api/google/status` shows the right `enabled` values.
-- [ ] Sign in to SideQuest → Connect Google → consent → you land on `/#google/connected`.
+- [ ] Sign in to SideQuest → Connect Google → Continue to Google (new tab) → consent → return to your original SideQuest tab and choose Check Google connection. The callback tab is only a handoff; the authenticated status response determines whether Calendar is connected.
 - [ ] Bring in this week: your busy times appear. Your calendar's event titles never do.
 - [ ] Disconnect: in your Google Account → Security → Third-party connections, SideQuest is gone.
 - [ ] `npm run build` ends with "Browser bundle contains no database, AI or Google credential configuration."
@@ -63,3 +63,16 @@ Calendar also needs the SideQuest sign-in to work, because it checks who is sign
 
 - Google tokens are kept in server memory, so a restart means reconnecting. The table that would keep them is in `supabase/proposals/20261125000000_google_connections_REVIEW_ONLY.sql` and needs Daven's review before anything is applied.
 - Google says walking routes are in beta and can miss sidewalks. Every Google route is labelled "Google route, not checked on foot". On campus we use our own path graph.
+
+## Session continuity acceptance
+
+The separate-tab consent flow preserves SideQuest's existing memory-only access token, provided the original tab stays open and the session has not expired. Do not persist SideQuest or Google credentials to implement this flow. The same mechanism is used when requesting write permission. No opener or cross-tab token transfer is needed.
+
+- [ ] In the original signed-in tab, record a non-sensitive visible account indicator. Open Google consent in a new tab; verify the original tab URL and UI remain unchanged.
+- [ ] Complete consent, return to the original tab, and check the connection. Import becomes available only after the server confirms the signed-in account is connected.
+- [ ] Decline consent, close the consent tab, or request write access but decline that scope. Check the original tab: do not report success unless the requested scope is actually enabled.
+- [ ] Sign out or allow the SideQuest session to expire during consent. A strict status request must fail and the panel must not expose Calendar actions. Reauthenticate using the normal SideQuest sign-in.
+- [ ] Verify the returned tab contains no credentials and does not create another authenticated app instance. Verify forged callback fragments do not establish a connection.
+- [ ] Repeat on real desktop and mobile browsers. Keep the original tab open; a browser that discards it or a user who reloads it must sign in again.
+
+The UI component and status-check fix are independent of Calendar's remaining main-app wiring. When mounting the panel, use the current verified account's token provider and key the panel by the account/session lifecycle so asynchronous results from a prior account cannot be reused. Busy-time refresh, plan synchronization, real provider credentials and approved staging remain separate acceptance gates. The status probe uses the existing short-lived server verification guard; Calendar mutations still use their authenticated endpoint checks.
