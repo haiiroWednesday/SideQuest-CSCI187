@@ -1,0 +1,122 @@
+{
+  "asOf": "2026-11-24",
+  "purpose": "Public source discovery for human-approved SCU event import; NO data published",
+  "notes": [
+    "Source discovery is not event validation or authorization to republish.",
+    "M2 requires a correct same-day start/end time. Missing end times and all-day listings must stay pending.",
+    "No automated import, HTML scraping, or Qlusion API assumed.",
+    "Calendar department subviews may duplicate the official LiveWhale campus calendar."
+  ],
+  "sources": [
+    {
+      "id": "scu-livewhale",
+      "name": "SCU campus calendar",
+      "url": "https://events.scu.edu/campus-calendar/all",
+      "kind": "official-calendar",
+      "access": "public",
+      "method": "livewhale-json-probe",
+      "status": "public-calendar-verified-api-unverified",
+      "note": "LiveWhale serves SCU's official calendar. API endpoint format documented by vendor; endpoint response has not been verified on this SCU instance."
+    },
+    {
+      "id": "qlusion",
+      "name": "Qlusion SCU community events",
+      "url": "https://www.qlusion.com/",
+      "kind": "student-organization-calendar",
+      "access": "public-site",
+      "method": "manual-review",
+      "status": "page-confirmed-feed-unverified",
+      "note": "Qlusion lists SCU community event categories. No trustworthy, permitted machine-readable export or API established; do not scrape account-only information."
+    },
+    {
+      "id": "scu-theatre",
+      "name": "SCU Theatre and Dance",
+      "url": "https://www.scu.edu/theatre/",
+      "kind": "department",
+      "access": "public",
+      "method": "manual-review",
+      "status": "confirmed-pages",
+      "note": "2026-27 production pages list dates and some performance times, but individual event end times may be missing. Split verified performances into individual occurrences, never guess duration."
+    },
+    {
+      "id": "scu-music",
+      "name": "SCU Music performance calendar",
+      "url": "https://www.scu.edu/cas/music/",
+      "kind": "department",
+      "access": "public",
+      "method": "manual-review",
+      "status": "confirmed-pages",
+      "note": "Department performance news and dates; compare with official events calendar to avoid duplicates."
+    },
+    {
+      "id": "broncos-sports",
+      "name": "Santa Clara Broncos athletics",
+      "url": "https://santaclarabroncos.com/coverage",
+      "kind": "athletics",
+      "access": "public",
+      "method": "manual-review",
+      "status": "confirmed-schedules",
+      "note": "Official sport schedules contain event starts; game endings are often unknown, and away games are not campus activities. Do not fabricate end times."
+    },
+    {
+      "id": "scu-csi",
+      "name": "SCU Center for Student Involvement",
+      "url": "https://www.scu.edu/csi/organizations/directory/",
+      "kind": "student-organizations",
+      "access": "public",
+      "method": "manual-review",
+      "status": "directory-not-event-feed",
+      "note": "Organization directory helps identify official organizers. Do not turn a club listing into a dated event."
+    },
+    {
+      "id": "scu-careers",
+      "name": "SCU Career Center",
+      "url": "https://events.scu.edu/career-center/",
+      "kind": "department-calendar",
+      "access": "public",
+      "method": "livewhale-duplicate-check",
+      "status": "calendar-confirmed",
+      "note": "Appears to be a filtered view of the same SCU LiveWhale calendar; deduplicate by source occurrence ID, date and start."
+    },
+    {
+      "id": "scu-global-engagement",
+      "name": "SCU Global Engagement calendar",
+      "url": "https://events.scu.edu/global-engagement/all",
+      "kind": "department-calendar",
+      "access": "public",
+      "method": "livewhale-duplicate-check",
+      "status": "calendar-confirmed",
+      "note": "Same calendar platform. Check student eligibility, recurring office hours and event venue before proposing."
+    },
+    {
+      "id": "scu-clubsports",
+      "name": "SCU Recreation club sports schedules",
+      "url": "https://www.scu.edu/recreation/clubsports/current/mens-lacrosse/schedule-and-results/",
+      "kind": "sport-club-schedule",
+      "access": "public",
+      "method": "manual-review",
+      "status": "confirmed-pages",
+      "note": "Club schedules may include competitions away from SCU and omit end times. Filter by eligibility and physical location."
+    },
+    {
+      "id": "scu-campus-ministry",
+      "name": "SCU Mission and Ministry",
+      "url": "https://www.scu.edu/mission-and-ministry/",
+      "kind": "department",
+      "access": "public",
+      "method": "manual-review",
+      "status": "department-page",
+      "note": "Cross-check date, venue and access against the campus calendar."
+    },
+    {
+      "id": "scu-handshake",
+      "name": "SCU Handshake career events",
+      "url": "https://scu.joinhandshake.com/",
+      "kind": "student-account-platform",
+      "access": "login-may-be-required",
+      "method": "no-automated-access",
+      "status": "requires-permission",
+      "note": "Do not bypass sign-in, fetch student-only event details or expose restricted attendee information."
+    }
+  ]
+}
