@@ -29,6 +29,8 @@ import type { GroupFit } from './view/Social'
 import type { DesignReviewKit } from './view/DesignReview'
 import { QuietContext } from './view/quietContext'
 import { trackInputModality } from './view/inputModality'
+import { OnwardContext } from './view/onwardContext'
+import { presentOnward } from './controller/presentOnward'
 import { addBusy, editBusy, dayTime, fillGap, freeMinutesBetween, freeWindows, hasTold, paintMarks, presentMarks, reshapeBusy, type FreeMarks, type When } from './controller/freeMarks'
 import { BUSY_CLEARED_TEXT, storageNotice } from './controller/planFeedback'
 import type { MarkerProps } from './view/DiscoverView'
@@ -194,6 +196,8 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   const [mapWalk, setMapWalk] = useState(walkFromHash)
   const [dayFocus, setDayFocus] = useState(dayFromHash)
   // "My day" on an event card: an event not in My Schedule yet is shown on its day as a preview.
+  // the lines under an opened event's My day and Walk there (controller/presentOnward)
+  const onwardFor = useCallback((id: string) => presentOnward(id, events.events, plans.schedule.ids), [events.events, plans.schedule.ids])
   const previewEvent = dayFocus && !plans.schedule.ids.includes(dayFocus) ? events.events.find(e => e.id === dayFocus) ?? null : null
   // My Schedule reads the same busy and free time as Discover, once the student has marked any.
   const ownTime = look && hasTold({ ...markInput, when: 'week' })
@@ -361,10 +365,12 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   return (
     <QuietContext.Provider value={look}>
       <ClashCountContext.Provider value={clashCount}>
+      <OnwardContext.Provider value={onwardFor}>
       {designReview && designKit
         ? <designKit.Providers events={events.events} plannedIds={plans.schedule.ids} now={nowFn} myFree={myFree} groupFit={groupFit} onGroupFit={setGroupFit}>{content}</designKit.Providers>
         : content}
       <ToastStack toasts={toasts} />
+      </OnwardContext.Provider>
       </ClashCountContext.Provider>
     </QuietContext.Provider>
   )

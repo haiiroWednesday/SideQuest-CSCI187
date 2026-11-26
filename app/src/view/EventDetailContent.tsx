@@ -11,6 +11,7 @@ import type React from 'react'
 import { Bookmark, NowMark } from './Marks'
 import { shownHost } from './shownHost'
 import { ShareGoing, GoingFact } from './FriendsGoing'
+import { useOnward } from './onwardContext'
 import './attend.css'
 
 export type SelectedDetailState =
@@ -195,18 +196,22 @@ export function EventDetailContent({ selected, verified, onRetryDetail, onPlan, 
 }
 
 /** Two ways onward that stay inside SideQuest (Nov 24: no links out to other sites from the card).
- *  My day opens My Schedule on this event's day, showing where it falls even before it is planned.
- *  Walk there opens our map and draws a walking route from where you are. */
+ *  Nov 25 (Cyn's C8): they share the facts' icon column as filled beads joined by a dotted thread, the
+ *  arrow follows the word, and a second line says something the card does not already show. */
 function QuietHandoffs({ event }: { event: StubModel }) {
   const place = event.location.trim()
+  const lines = useOnward(event.id)
   return (
-    <div className="sq-handoffs" role="group" aria-label="See it in SideQuest">
-      <a className="sq-handoff" href={`#day/${encodeURIComponent(event.id)}`} aria-label={`My day, ${event.dow} ${event.dayNumber}, see where it fits`}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></svg>My day
+    <div className="sq-handoffs sq-onward" role="group" aria-label="See it in SideQuest">
+      <a className="sq-handoff sq-onward-row sq-onward-day" href={`#day/${encodeURIComponent(event.id)}`}>
+        <span className="sq-onward-bead" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></svg></span>
+        {/* The link is named by what it shows, in order; the day is added for screen readers at the end. */}
+        <span className="sq-onward-words"><b>My day<i aria-hidden="true">→</i></b>{lines && <small>{lines.day}</small>}<span className="sq-visually-hidden">, {event.dow} {event.dayNumber}, see where it fits</span></span>
       </a>
       {place && (
-        <a className="sq-handoff" href={`#walk/${encodeURIComponent(place)}`} aria-label={`Walk there, a route to ${place} on the SideQuest map`}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4.5" r="2" /><path d="M10 21l2.5-6.5L15 17v4M8 12l2.5-4.5 4 1.5 2 3M12.5 14.5l1-6" /></svg>Walk there
+        <a className="sq-handoff sq-onward-row sq-onward-walk" href={`#walk/${encodeURIComponent(place)}`}>
+          <span className="sq-onward-bead" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="13" cy="4.5" r="2" /><path d="M10 21l2.5-6.5L15 17v4M8 12l2.5-4.5 4 1.5 2 3M12.5 14.5l1-6" /></svg></span>
+          <span className="sq-onward-words"><b>Walk there<i aria-hidden="true">→</i></b>{lines?.walk && <small>{lines.walk}</small>}<span className="sq-visually-hidden">, a route to {place} on the SideQuest map</span></span>
         </a>
       )}
     </div>
