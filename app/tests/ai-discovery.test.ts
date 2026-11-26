@@ -4,6 +4,7 @@ import { createAiDiscoverApi, evaluateAiSelection, AI_MAX_CANDIDATES } from '../
 import { aiSearchAvailable, requestAiDiscovery } from '../src/controller/aiDiscovery'
 import { isAiDiscoverResult } from '../src/model/aiDiscovery'
 import { recognizeWeekendRange } from '../src/model/relativeDates'
+import { fitsFreeTime } from '../src/model/events'
 import type { CampusEvent, EventCatalogPort } from '../src/model/eventCatalog'
 
 const now = new Date('2030-11-07T17:00:00Z')
@@ -43,11 +44,14 @@ async function server(opts: {
   apiKey?: string
   records?: CampusEvent[]
   provider?: typeof fetch
+  clock?: () => Date
+  providerDailyLimit?: number
 } = {}) {
   const spy = opts.provider ?? vi.fn(async () => modelResult(selection())) as typeof fetch
   const api = createAiDiscoverApi(catalog(opts.records), {
     apiKey: opts.apiKey,
-    clock: () => now,
+    clock: opts.clock ?? (() => now),
+    providerDailyLimit: opts.providerDailyLimit,
     fetcher: spy,
   })
   const http = createServer((req, res) => {
@@ -81,6 +85,18 @@ describe('AI discovery: bounded, deterministic interpretation', () => {
     expect(result.timeInterpretation).toEqual({
       date: '2030-11-08', start: '14:00', end: '16:00', applied: 'full_window',
     })
+  })
+
+  it('does not label a partially overlapping drop-in event as a full-window fit', () => {
+    const partial = { ...base, attend: 'dropin' as const, start: '13:40', end: '14:40' }
+    const contained = { ...base, id: B, attend: 'dropin' as const, start: '14:00', end: '14:10' }
+    // The ordinary Discover matcher intentionally permits partial attendance.
+    expect(fitsFreeTime(partial, base.date, '14:00', '15:00')).toBe(true)
+    const result = evaluateAiSelection([partial, contained], selection({
+      date: base.date, start: '14:00', end: '15:00',
+    }))
+    expect(result.timeInterpretation.applied).toBe('full_window')
+    expect(result.matches.map(event => event.id)).toEqual([B])
   })
 
   it('never declares a full fit from missing or reversed time boundaries', () => {
@@ -252,6 +268,31 @@ describe('AI discovery: server-only provider integration', () => {
     for (let i = 0; i < 5; i++) expect((await post({ query: 'music and events' })).status).toBe(200)
     expect((await post({ query: 'music and events' })).status).toBe(429)
     expect(spy).toHaveBeenCalledTimes(5)
+  })
+
+  it('reserves the shared daily provider budget before concurrent calls and counts failures', async () => {
+    let time = new Date('2030-11-07T17:00:00Z')
+    const provider = vi.fn(async () => new Response('unavailable', { status: 503 })) as typeof fetch
+    const { post, origin } = await server({
+      apiKey: 'test-key', provider, providerDailyLimit: 2, clock: () => time,
+    })
+    const replies = await Promise.all(Array.from({ length: 3 }, () => post({ query: 'art workshop' })))
+    expect(replies.map(reply => reply.status).sort()).toEqual([429, 503, 503])
+    expect(provider).toHaveBeenCalledTimes(2)
+    const refused = replies.find(reply => reply.status === 429)!
+    expect((await refused.json()).error).toContain('daily limit')
+    // The per-address minute reset cannot reopen the daily allowance.
+    time = new Date('2030-11-07T17:02:00Z')
+    expect((await post({ query: 'art workshop' })).status).toBe(429)
+    expect(provider).toHaveBeenCalledTimes(2)
+    // A zero-candidate search is still free, even after the paid allowance.
+    expect((await post({ query: 'music next weekend' })).status).toBe(200)
+    expect(provider).toHaveBeenCalledTimes(2)
+    expect(await (await fetch(origin + '/api/ai/status')).json()).toEqual({ available: true })
+    // A new UTC day resets the process-wide allowance.
+    time = new Date('2030-11-08T00:00:00Z')
+    expect((await post({ query: 'art workshop' })).status).toBe(503)
+    expect(provider).toHaveBeenCalledTimes(3)
   })
 
   it('limits outbound catalog size and discloses the incomplete search scope', async () => {

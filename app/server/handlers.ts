@@ -46,7 +46,10 @@ export function createServerHandlers(env: Env, options: ServerHandlerOptions = {
   // Open invites and find-a-time: off until supabase/proposals/20261125030000_open_invites_REVIEW_ONLY.sql is approved.
   const socialApi = createSocialApiFromEnv(env)
   const groupApi = createGroupApi(createSupabaseGroupGatewayFromEnv(env))
-  const ai = createAiDiscoverApi(catalog, { apiKey: env.OPENAI_API_KEY, model: env.SIDEQUEST_AI_MODEL })
+  const ai = createAiDiscoverApi(catalog, {
+    apiKey: env.OPENAI_API_KEY, model: env.SIDEQUEST_AI_MODEL,
+    providerDailyLimit: Number(env.SIDEQUEST_AI_DAILY_LIMIT),
+  })
   const api = createCatalogApi(catalog, Date.now, options.publisher)
   // Built on the first /api/google/ request, once per environment.
   const google: RequestHandler = async (req, res) =>
