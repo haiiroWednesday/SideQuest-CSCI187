@@ -76,7 +76,10 @@ for (const width of [390, 1280]) {
     await expect(access).toBeVisible()
     const first = access.locator('li').first(), last = access.locator('li').last()
     await expect(first).toHaveText(/^[A-Z][a-z]+ [A-Z][a-z]+ · [a-z]+\.[a-z]+@example\.edu$/)
-    const [name, email] = (await first.innerText()).split(' · ')
+    const contactText = (await first.innerText()).replace(/\s+/g, ' ').trim()
+    const match = /^([A-Z][a-z]+ [A-Z][a-z]+) · ([a-z]+\.[a-z]+@example\.edu)$/.exec(contactText)
+    expect(match, 'organizer and public email must remain readable').not.toBeNull()
+    const [, name, email] = match!
     await expect(last).toHaveText(`${START}${name} at ${email}.`)
     const look = await access.evaluate(list => [...list.querySelectorAll(':scope > li')].map(li => {
       const s = getComputedStyle(li.querySelector('span') ?? li)
