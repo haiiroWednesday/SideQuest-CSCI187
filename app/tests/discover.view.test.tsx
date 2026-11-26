@@ -132,7 +132,7 @@ describe('Discover View: draws the Controller screen', () => {
 
   it('removes an event that expires while Discover remains mounted', async () => {
     vi.useFakeTimers()
-    vi.setSystemTime(new Date('2030-11-07T09:59:45-08:00'))
+    vi.setSystemTime(new Date('2030-11-07T09:59:30-08:00'))
     const expiring = {
       ...events[0],
       id: 'expiring-ceramics',

@@ -71,8 +71,10 @@ export function GroupPlanningView({ actorId, client, events, routes }: GroupPlan
     }
   }
 
+  const canCreate = !loading && !busy && eventNames.has(eventId)
+
   const create = async () => {
-    if (!eventId || busy || !events.some(event => event.id === eventId)) return
+    if (!canCreate) return
     const current = generation.current
     setBusy(true)
     setError(null)
@@ -100,9 +102,15 @@ export function GroupPlanningView({ actorId, client, events, routes }: GroupPlan
     try {
       const latest = await client.act(plan.id, command)
       // An old reply must not replace a newer selection or tab session.
-      if (generation.current === current && activeId === latest.id) {
-        setSelected(latest)
-        setGroups(old => old.map(row => row.id === latest.id ? latest : row))
+      if (generation.current === current && activeId === plan.id) {
+        if (latest === null) {
+          setSelected(null)
+          setActiveId(null)
+          setGroups(old => old.filter(row => row.id !== plan.id))
+        } else if (activeId === latest.id) {
+          setSelected(latest)
+          setGroups(old => old.map(row => row.id === latest.id ? latest : row))
+        }
       }
     } catch (problem) {
       // Stale/denied updates remain visible only while this plan is current.
@@ -125,6 +133,10 @@ export function GroupPlanningView({ actorId, client, events, routes }: GroupPlan
         <div className="sq-group-page-layout">
           <section aria-labelledby="sq-group-list-title" className="sq-group-sidebar">
             <h2 id="sq-group-list-title">Your group outings</h2>
+            <label htmlFor="sq-group-own-account">Your account ID</label>
+            <input id="sq-group-own-account" value={actorId} readOnly
+              aria-describedby="sq-group-own-account-help" onFocus={event => event.currentTarget.select()} />
+            <p id="sq-group-own-account-help">Share this ID with someone you want to invite you.</p>
             <button type="button" className="sq-group-link" onClick={() => { void refreshList() }}
               disabled={loading || busy}>Refresh group list</button>
             {loading && <p role="status">Loading group plans…</p>}
@@ -152,7 +164,7 @@ export function GroupPlanningView({ actorId, client, events, routes }: GroupPlan
                 <option value="">Choose an event</option>
                 {events.map(event => <option key={event.id} value={event.id}>{event.title}</option>)}
               </select>
-              <button type="button" disabled={!eventId || busy} onClick={() => { void create() }}>
+              <button type="button" disabled={!canCreate} onClick={() => { void create() }}>
                 {busy ? 'Saving…' : 'Create group proposal'}
               </button>
             </section>

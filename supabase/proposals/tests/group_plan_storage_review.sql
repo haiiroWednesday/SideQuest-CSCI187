@@ -19,7 +19,15 @@ declare
   first_member uuid := '22222222-2222-4222-8222-222222222222';
   outsider uuid := '33333333-3333-4333-8333-333333333333';
 begin
-  -- No direct client table access, even if authenticated.
+  -- No direct client table access, even with permissive default grants.
+  if exists (
+    select 1 from unnest(array['anon','authenticated']) as roles(role_name)
+    cross join unnest(array['public.group_plans','public.group_participants','public.group_invitations']) as tables(table_name)
+    cross join unnest(array['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) as privileges(privilege_name)
+    where has_table_privilege(role_name, table_name, privilege_name)
+  ) then
+    raise exception 'A client role inherited direct group-table access';
+  end if;
   if has_table_privilege('anon', 'public.group_plans', 'SELECT') or
      has_table_privilege('anon', 'public.group_participants', 'SELECT') or
      has_table_privilege('authenticated', 'public.group_plans', 'SELECT') or
@@ -28,13 +36,13 @@ begin
     raise exception 'Client role can bypass the server-filtered group view';
   end if;
   if (select count(*) from pg_policies
-      where schemaname='public' and tablename in ('group_plans','group_participants')) <> 0 then
+      where schemaname='public' and tablename in ('group_plans','group_participants','group_invitations')) <> 0 then
     raise exception 'Review-only schema must not expose client RLS policies';
   end if;
   if (select count(*) from pg_class
-       where oid in ('public.group_plans'::regclass,'public.group_participants'::regclass)
-       and relrowsecurity = true) <> 2 then
-    raise exception 'Both group tables must have RLS enabled';
+       where oid in ('public.group_plans'::regclass,'public.group_participants'::regclass,'public.group_invitations'::regclass)
+       and relrowsecurity = true) <> 3 then
+    raise exception 'All group tables must have RLS enabled';
   end if;
 
   insert into public.group_plans(id, event_id, organizer_id) values (plan_id,event_id,organizer);

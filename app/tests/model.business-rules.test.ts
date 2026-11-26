@@ -87,6 +87,8 @@ describe('Model search and list rules', () => {
 describe('Saved-event boundary validation', () => {
   it('rejects long titles/locations and whitespace-only IDs in restored JSON', () => {
     const valid = created('good')
+    const exactLimit = { ...valid, id: 'exact-limit', title: 'x'.repeat(100), location: 'y'.repeat(100) }
+    expect(isCampusEvent(exactLimit)).toBe(true)
     const invalidTitle = { ...valid, id: 'long-title', title: 'x'.repeat(101) }
     const invalidLocation = { ...valid, id: 'long-place', location: 'y'.repeat(101) }
     const invalidId = { ...valid, id: '   ' }
@@ -94,7 +96,7 @@ describe('Saved-event boundary validation', () => {
     expect(isCampusEvent(invalidLocation)).toBe(false)
     expect(isCampusEvent(invalidId)).toBe(false)
 
-    const storage = { getItem: () => JSON.stringify([valid, invalidTitle, invalidLocation, invalidId]) }
-    expect(readStoredEventsChecked(storage)).toEqual({ events: [valid], blocked: true })
+    const storage = { getItem: () => JSON.stringify([valid, exactLimit, invalidTitle, invalidLocation, invalidId]) }
+    expect(readStoredEventsChecked(storage)).toEqual({ events: [valid, exactLimit], blocked: true })
   })
 })

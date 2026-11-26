@@ -2,7 +2,7 @@
 
 [Open the two-page editable CRC drawing](FINAL_PROJECT_CRC.drawio) in [diagrams.net](https://app.diagrams.net/) (File → Open From → Device). The drawing keeps the implemented/draft distinction on every responsibility card.
 
-## Working code contracts on the November 20 integration branches
+## Working code contracts merged through #82 (November 23), group correction #84 proposed
 
 ```mermaid
 classDiagram
@@ -102,19 +102,21 @@ class GroupPlanRepository {
   +create()
   +compareAndSwap()
 }
-class AuthenticatedInvitations {
-  <<not implemented>>
-  +bindInviteToRealIdentity()
-  +authorizeParticipation()
+class PendingInvitation {
+  <<review-only correction PR 84>>
+  +recipientId
+  +expiresAt
+  +acceptOrDeclineByVerifiedRecipient()
 }
 GroupPlan "1" *-- "0..12" Participant : membership
 GroupPlanService ..> GroupPlan : rule enforcement
 GroupPlanService ..> GroupPlanRepository : proposed durable persistence
 GroupPlanService ..> VerifiedServerActor : requires actual authentication
-AuthenticatedInvitations ..> GroupPlanService : pending
+GroupPlan "1" *-- "0..12" PendingInvitation : expiring offers
+PendingInvitation ..> GroupPlanService : requires consent
 GroupPlan --> Event : real eventId
 ```
 
-**Critical security limitation:** The code currently lacks verified server sessions, durable group-plan persistence, database row-level security, authorized invitation claims, live group HTTP endpoints, and two-account tests. A rule-engine unit test cannot establish that public collaboration is safe. [Detailed security acceptance gates](../GROUP_PLAN_SECURITY_CONTRACT.md).
+**Critical security limitation:** The gated HTTP and Auth code and review-only SQL exist; real provider sessions, deployed storage and actual cross-account authorization remain unverified. PR #84 separates pending invitations from accepted membership; the combined capacity is 12. Accepting is distinct from answering Works. A rule-engine unit test cannot establish that public collaboration is safe. [Detailed security acceptance gates](../GROUP_PLAN_SECURITY_CONTRACT.md).
 
-**Code evidence:** `app/src/model/eventCatalog.ts`, `app/src/model/schedule.ts`, `app/src/model/someday.ts`, `app/src/model/groupPlans.ts`, `app/src/controller/presentDiscover.ts`, `app/src/controller/presentSchedule.ts`, `app/src/controller/calendarExport.ts`, `app/src/model/campusRoutes.ts`, `app/server/groupPlansService.ts`. These paths occur across stacked draft branches, not the unchanged M2 `master`.
+**Code evidence:** `app/src/model/eventCatalog.ts`, `app/src/model/schedule.ts`, `app/src/model/someday.ts`, `app/src/model/groupPlans.ts`, `app/src/controller/presentDiscover.ts`, `app/src/controller/presentSchedule.ts`, `app/src/controller/calendarExport.ts`, `app/src/model/campusRoutes.ts`, `app/server/groupPlansService.ts`. Core final modules are merged via #82; the new consent correction remains an open review proposal.

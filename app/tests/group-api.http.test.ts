@@ -1,4 +1,4 @@
-import { createServer, type Server } from 'node:http'
+import { createServer, request, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -17,6 +17,7 @@ const outsiderToken = 'C'.repeat(40)
 const invalidToken = 'X'.repeat(40)
 const secretPlan = {
   id: planId, eventId, organizerId: orgId, status: 'proposed', revision: 2,
+  invitations: [],
   participants: [
     { userId: memberId, response: 'if', privateCondition: 'Private exam schedule' },
     { userId: outsiderId, response: null, privateCondition: null },
@@ -62,7 +63,7 @@ async function send(base: string, path: string, token = orgToken, body?: unknown
     method: hasBody ? 'POST' : 'GET',
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+      ...(hasBody ? { 'Content-Type': 'application/json', Origin: base } : {}),
       ...headers,
     },
     ...(hasBody ? { body: typeof body === 'string' ? body : JSON.stringify(body) } : {}),
@@ -119,6 +120,25 @@ describe('opt-in group HTTP gateway and verified identity contract', () => {
     expect((await denied.json()).error).toBe('Plan unavailable.')
   })
 
+  it('withholds the entire roster from pending recipients even if the RPC returns it', async () => {
+    const raw = { ...secretPlan, invitations: [outsiderId], participants: [secretPlan.participants[0]] }
+    const gateway = { ...mockGateway(), read: vi.fn(async () => raw) }
+    const base = await listen(gateway)
+    const result = await send(base, '/api/groups/' + planId, outsiderToken)
+    expect(result.status).toBe(200)
+    expect(await result.json()).toMatchObject({ invitations: [outsiderId], participants: [] })
+  })
+
+  it('returns only a null receipt for decline and leave', async () => {
+    const gateway = { ...mockGateway(), action: vi.fn(async () => null) }
+    const base = await listen(gateway)
+    for (const action of ['decline', 'leave']) {
+      const res = await send(base, '/api/groups/' + planId + '/actions', memberToken, { expectedRevision: 2, action })
+      expect(res.status).toBe(200)
+      expect(await res.json()).toBeNull()
+    }
+  })
+
   it('allows only validated actions without forged user targets', async () => {
     const gateway = mockGateway(), base = await listen(gateway)
     const path = '/api/groups/' + planId + '/actions'
@@ -164,6 +184,48 @@ describe('opt-in group HTTP gateway and verified identity contract', () => {
     expect(result.status).toBe(409)
     expect(await result.json()).toEqual({ error: 'The group request could not be completed.' })
     expect(result.headers.get('cache-control')).toBe('private, no-store')
+  })
+
+  it('limits verified accounts independently of a shared proxy address', async () => {
+    const base = await listen(mockGateway())
+    for (let i = 0; i < 40; i++) expect((await send(base, '/api/groups', orgToken)).status).toBe(200)
+    expect((await send(base, '/api/groups', orgToken)).status).toBe(429)
+    expect((await send(base, '/api/groups', memberToken)).status).toBe(200)
+  })
+
+  it('rejects missing origins, unsupported media and oversized bodies', async () => {
+    const gateway = mockGateway(), base = await listen(gateway)
+    expect((await send(base, '/api/groups', orgToken, { eventId }, { Origin: '' })).status).toBe(403)
+    expect((await send(base, '/api/groups', orgToken, { eventId }, { 'Content-Type': 'text/plain' })).status).toBe(415)
+    expect((await send(base, '/api/groups', orgToken, { text: 'x'.repeat(9000) })).status).toBe(413)
+    expect(gateway.create).not.toHaveBeenCalled()
+  })
+
+  it('rejects an oversized chunked body before the client ends the upload', async () => {
+    const gateway = mockGateway(), base = await listen(gateway)
+    const status = await new Promise<number>((resolve, reject) => {
+      const req = request(base + '/api/groups', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + orgToken, Origin: base, 'Content-Type': 'application/json' },
+      }, res => {
+        res.resume()
+        res.once('end', () => { resolve(res.statusCode ?? 0); req.destroy() })
+      })
+      req.on('error', reject)
+      req.setTimeout(2000, () => { req.destroy(new Error('Server waited for the entire oversized body')) })
+      req.write('x'.repeat(9000))
+    })
+    expect(status).toBe(413)
+    expect(gateway.create).not.toHaveBeenCalled()
+  })
+
+  it('reports Auth provider outages without invalidating a session', async () => {
+    const gateway = { ...mockGateway(), verify: vi.fn(async () => {
+      throw new GroupGatewayError(503, 'Authentication is temporarily unavailable.')
+    }) }
+    const base = await listen(gateway)
+    expect((await send(base, '/api/groups')).status).toBe(503)
+    expect(gateway.list).not.toHaveBeenCalled()
   })
 
   it('lists only explicit public summary fields, not participant roster data', async () => {

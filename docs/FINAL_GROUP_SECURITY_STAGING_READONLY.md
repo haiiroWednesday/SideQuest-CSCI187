@@ -1,5 +1,16 @@
 # Group security: read-only HTTPS staging acceptance
 
+## Automated real-provider test (PR #84, November 23)
+
+The new [disposable Supabase integration workflow](../.github/workflows/supabase-group-integration.yml) provisions its own Supabase CLI project inside a temporary GitHub Actions directory. It copies the committed migrations and review-only group SQL into that **temporary project only**, never links to a hosted project and never uses team credentials. The [test harness](../app/scripts/test-disposable-supabase.mjs) exercises actual Auth, Mailpit OTP emails, three isolated Chromium sessions, the built Node gateway, real PostgREST and PostgreSQL permissions. It tests public catalog persistence, pending invitation consent, outsider isolation, direct-table denials, Unicode note limits, stale revisions, decline, confirmation, capacity, provider logout, account deletion and natural signed-token expiry.
+
+The SQL RPCs additionally check the JWT session ID against the provider's active session row. Supabase's signed access tokens can otherwise remain valid until their expiry after logout. This tests **provider-side revocation**; the existing application sign-out still clears the current tab only and must not be represented as a provider logout.
+
+No hosted verification is implied by a local-stack pass. The hosted provider configuration, email delivery, HTTPS/reverse-proxy behavior, deployed permissions and real student acceptance still require a controlled staging check. Do not promote the SQL or enable public group flags solely on an automated pass.
+
+**Evidence:** use the GitHub Actions run on the exact PR head. The real-stack workflow has no conditional skip for missing production credentials, and a failed startup or test is a failed job. No provider tokens or OTP codes should appear in logs.
+
+
 **Status: tool ready for review; live authorization not yet established.** The probe lives at `app/scripts/smoke-group-permissions.mjs` and makes **GET requests only**. It never changes data. It can verify existing restricted group and Auth behavior after the backend owner approves staging; it cannot replace independent RLS, revocation, mutation or browser tests.
 
 ## 1. Default public preview must remain OFF
@@ -17,7 +28,7 @@ The probe checks `GET /api/auth/status` reports disabled and `GET /api/groups` r
 
 **Do not run until Daven and the team approve the group SQL/grants, staging Supabase Auth configuration, and three dedicated disposable test accounts**. The proposed SQL files remain outside `supabase/migrations/` and must not be copied into production without review.
 
-Prepare a **pre-existing** test event and group plan owned by organizer A with invitee B, plus outsider C. Have B submit a conditional or other response through the already reviewed application UI. Confirm all three test identities are legitimately authenticated in the approved staging project. Their short-lived access tokens must be supplied as protected shell environment variables, never in CLI arguments, chat, screenshots, issue comments or Git. The probe requires:
+Prepare a **pre-existing** test event and group plan owned by organizer A with invitee B, plus outsider C. After B explicitly accepts the invitation, have B submit a conditional or other response through the already reviewed application UI. Separately test pending invitation preview before acceptance, decline, leave and account deletion in the authorized staging environment. Confirm all three test identities are legitimately authenticated in the approved staging project. Their short-lived access tokens must be supplied as protected shell environment variables, never in CLI arguments, chat, screenshots, issue comments or Git. The probe requires:
 
 | Protected environment variable | Meaning |
 | --- | --- |

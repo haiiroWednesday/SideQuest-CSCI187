@@ -1,12 +1,12 @@
 // HTTP CONTROLLER: an opt-in, bearer-authenticated gateway to caller-scoped
 // group RPCs. This controller never accepts a client-supplied acting user ID.
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { MAX_GROUP_INVITEES, MAX_PRIVATE_CONDITION, type ResponseKind } from '../src/model/groupPlans'
+import { MAX_GROUP_INVITEES, MAX_PRIVATE_CONDITION, privateConditionLength, type ResponseKind } from '../src/model/groupPlans'
 
 export type VerifiedGroupActor = { userId: string }
 export type GroupActionInput = {
   expectedRevision: number
-  action: 'invite' | 'remove' | 'respond' | 'confirm' | 'cancel'
+  action: 'invite' | 'remove' | 'respond' | 'confirm' | 'cancel' | 'accept' | 'decline' | 'leave'
   inviteeId?: string | null
   response?: ResponseKind | null
   condition?: string | null
@@ -26,8 +26,10 @@ export class GroupGatewayError extends Error {
 
 const GROUP_MAX_BODY_BYTES = 8192
 const GROUP_REQUESTS_PER_MINUTE = 40
+const GROUP_AUTH_CHECKS_PER_MINUTE = 600
+const MAX_TRACKED_GROUP_ACTORS = 10000
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const VALID_ACTIONS = new Set(['invite', 'remove', 'respond', 'confirm', 'cancel'])
+const VALID_ACTIONS = new Set(['invite', 'remove', 'respond', 'confirm', 'cancel', 'accept', 'decline', 'leave'])
 const VALID_RESPONSES: ReadonlySet<string> = new Set<ResponseKind>(['works', 'if', 'cant'])
 
 class RequestError extends Error {
@@ -69,7 +71,7 @@ function validatedAction(value: JsonObject): GroupActionInput {
     input.response = value.response as GroupActionInput['response']
     if (input.response === 'if') {
       if (typeof value.condition !== 'string' || value.condition.trim().length === 0 ||
-          value.condition.length > MAX_PRIVATE_CONDITION) {
+          privateConditionLength(value.condition) > MAX_PRIVATE_CONDITION) {
         throw new RequestError(400, 'A conditional response needs up to 280 characters of text.')
       }
       input.condition = value.condition.trim()
@@ -89,11 +91,15 @@ function projectPlan(raw: unknown, actorId: string): unknown {
   if (!plan || typeof plan.id !== 'string' || typeof plan.eventId !== 'string' ||
       typeof plan.organizerId !== 'string' || !Number.isSafeInteger(plan.revision) ||
       !['proposed', 'confirmed', 'cancelled'].includes(String(plan.status)) ||
-      !Array.isArray(plan.participants) || plan.participants.length > MAX_GROUP_INVITEES) {
+      !Array.isArray(plan.participants) || !Array.isArray(plan.invitations) ||
+      plan.invitations.some((id: unknown) => typeof id !== 'string' || !UUID.test(id)) ||
+      plan.participants.length + plan.invitations.length > MAX_GROUP_INVITEES) {
     throw new GroupGatewayError(503, 'The group response is unavailable.')
   }
-  if (plan.organizerId !== actorId &&
-      !plan.participants.some((entry: unknown) => object(entry)?.userId === actorId)) {
+  const organizer = plan.organizerId === actorId
+  const member = organizer || plan.participants.some((entry: unknown) => object(entry)?.userId === actorId)
+  const invited = plan.status === 'proposed' && plan.invitations.includes(actorId)
+  if (!member && !invited) {
     // Defense in depth if a future SQL or transport bug returns another
     // account's group: do not expose its event, roster or metadata.
     throw new GroupGatewayError(404, 'Plan unavailable.')
@@ -101,7 +107,8 @@ function projectPlan(raw: unknown, actorId: string): unknown {
   return {
     id: plan.id, eventId: plan.eventId, organizerId: plan.organizerId,
     status: plan.status, revision: plan.revision,
-    participants: plan.participants.map((rawParticipant: unknown) => {
+    invitations: plan.status === 'proposed' ? plan.invitations.filter((id: string) => organizer || id === actorId) : [],
+    participants: (member ? plan.participants : []).map((rawParticipant: unknown) => {
       const participant = object(rawParticipant)
       if (!participant || typeof participant.userId !== 'string' ||
           (participant.response !== null && !VALID_RESPONSES.has(String(participant.response)))) {
@@ -146,16 +153,20 @@ function response(res: ServerResponse, status: number, data: unknown): void {
 }
 
 async function jsonBody(req: IncomingMessage): Promise<JsonObject> {
-  if (!req.headers['content-type']?.toLowerCase().startsWith('application/json')) {
+  if (req.headers['content-type']?.split(';')[0].trim().toLowerCase() !== 'application/json') {
     throw new RequestError(415, 'Send group details as JSON.')
   }
   let size = 0
   const chunks: Buffer[] = []
-  for await (const part of req) {
+  const declared = Number(req.headers['content-length'])
+  if (declared > GROUP_MAX_BODY_BYTES) throw new RequestError(413, 'Group request is too large.')
+  // Stop reading immediately rather than draining attacker-controlled input.
+  // The error response closes the connection after delivering HTTP 413.
+  for await (const part of req.iterator({ destroyOnReturn: false })) {
     size += Buffer.byteLength(part)
-    if (size <= GROUP_MAX_BODY_BYTES) chunks.push(Buffer.isBuffer(part) ? part : Buffer.from(part))
+    if (size > GROUP_MAX_BODY_BYTES) throw new RequestError(413, 'Group request is too large.')
+    chunks.push(Buffer.isBuffer(part) ? part : Buffer.from(part))
   }
-  if (size > GROUP_MAX_BODY_BYTES) throw new RequestError(413, 'Group request is too large.')
   let value: unknown
   try { value = JSON.parse(Buffer.concat(chunks).toString('utf8')) }
   catch { throw new RequestError(400, 'Group details must be valid JSON.') }
@@ -169,6 +180,9 @@ export function createGroupApi(
   clock: () => number = Date.now,
 ) {
   const limits = new Map<string, { count: number; until: number }>()
+  // A fixed, process-wide budget protects Auth without trusting proxy headers.
+  // Normal request quotas are independent for verified accounts.
+  let authBudget = { count: 0, until: 0 }
 
   return async (req: IncomingMessage, res: ServerResponse): Promise<boolean> => {
     let pathname: string
@@ -192,17 +206,13 @@ export function createGroupApi(
         throw new RequestError(405, 'Unsupported group request method.')
       }
 
-      const now = clock(), ip = req.socket.remoteAddress ?? 'unknown'
-      for (const [key, item] of limits) if (item.until <= now) limits.delete(key)
-      if (limits.size >= 10000 && !limits.has(ip)) throw new RequestError(429, 'The group service is busy.')
-      const limit = limits.get(ip) ?? { count: 0, until: now + 60000 }
-      if (limit.count >= GROUP_REQUESTS_PER_MINUTE) throw new RequestError(429, 'Too many group requests.')
-      limit.count++; limits.set(ip, limit)
-
-      if (method === 'POST' && req.headers.origin) {
+      if (method === 'POST') {
         let sameOrigin = false
-        try { sameOrigin = new URL(req.headers.origin).host === req.headers.host }
-        catch { /* malformed Origin is denied */ }
+        try {
+          const origin = new URL(req.headers.origin ?? '')
+          sameOrigin = ['http:', 'https:'].includes(origin.protocol) &&
+            origin.host === req.headers.host && !origin.username && !origin.password
+        } catch { /* missing or malformed Origin is denied */ }
         if (!sameOrigin) throw new RequestError(403, 'Use the SideQuest site for group changes.')
       }
 
@@ -212,10 +222,25 @@ export function createGroupApi(
       if (!token) throw new RequestError(401, 'Sign in before accessing group plans.')
 
       // Confirm the identity with Auth *before* calling any private RPC.
+      const now = clock()
+      if (authBudget.until <= now) authBudget = { count: 0, until: now + 60000 }
+      if (authBudget.count >= GROUP_AUTH_CHECKS_PER_MINUTE) {
+        throw new RequestError(429, 'The group service is busy.')
+      }
+      authBudget.count++
       const actor = await gateway.verify(token)
       if (!actor?.userId || !UUID.test(actor.userId)) {
         throw new RequestError(401, 'Your group session is not valid.')
       }
+
+      for (const [key, item] of limits) if (item.until <= now) limits.delete(key)
+      if (limits.size >= MAX_TRACKED_GROUP_ACTORS && !limits.has(actor.userId)) {
+        throw new RequestError(429, 'The group service is busy.')
+      }
+      const limit = limits.get(actor.userId) ?? { count: 0, until: now + 60000 }
+      if (limit.count >= GROUP_REQUESTS_PER_MINUTE) throw new RequestError(429, 'Too many group requests.')
+      limit.count++
+      limits.set(actor.userId, limit)
 
       if (isRoot && method === 'GET') {
         response(res, 200, projectList(await gateway.list(token)))
@@ -228,7 +253,14 @@ export function createGroupApi(
         response(res, 201, projectPlan(await gateway.create(token, body.eventId), actor.userId))
       } else if (isAction) {
         const body = await jsonBody(req)
-        response(res, 200, projectPlan(await gateway.action(token, match[1], validatedAction(body)), actor.userId))
+        const command = validatedAction(body)
+        const updated = await gateway.action(token, match[1], command)
+        if (command.action === 'decline' || command.action === 'leave') {
+          if (updated !== null) throw new GroupGatewayError(503, 'The group response is unavailable.')
+          response(res, 200, null)
+        } else {
+          response(res, 200, projectPlan(updated, actor.userId))
+        }
       } else {
         response(res, 200, projectPlan(await gateway.read(token, match[1]), actor.userId))
       }
@@ -237,6 +269,11 @@ export function createGroupApi(
         ? error.status : 503
       const message = error instanceof RequestError || error instanceof GroupGatewayError
         ? error.message : 'Group planning is unavailable.'
+      if (status === 413) {
+        req.pause()
+        res.setHeader('Connection', 'close')
+        res.once('finish', () => req.destroy())
+      }
       response(res, status, { error: message })
     }
     return true

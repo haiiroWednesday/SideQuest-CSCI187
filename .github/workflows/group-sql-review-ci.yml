@@ -53,12 +53,37 @@ jobs:
           create role authenticated nologin;
           create schema auth;
           create table auth.users(id uuid primary key);
+          create table auth.sessions(id uuid primary key, user_id uuid references auth.users(id) on delete cascade, not_after timestamptz);
+          -- Stub only: assign one fixture session per user. The real Supabase CI
+          -- independently tests actual issued JWTs and real session deletion.
+          create function auth.fixture_session() returns trigger language plpgsql as $fixture$
+          begin
+            insert into auth.sessions(id,user_id) values (new.id,new.id);
+            return new;
+          end;
+          $fixture$;
+          create trigger fixture_session after insert on auth.users
+            for each row execute function auth.fixture_session();
           -- TEST-ONLY stub. The real Supabase gateway verifies JWT signatures.
           create function auth.uid() returns uuid language sql stable as $sidequest_fixture$
             select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
           $sidequest_fixture$;
+          create function auth.jwt() returns jsonb language sql stable as $sidequest_fixture$
+            select jsonb_build_object('session_id', nullif(current_setting('request.jwt.claim.sub', true), ''),
+              'is_anonymous',
+              coalesce(nullif(current_setting('request.jwt.claim.is_anonymous', true), ''), 'false')::boolean,
+              'exp', coalesce(nullif(current_setting('request.jwt.claim.exp', true), '')::jsonb,
+                to_jsonb(extract(epoch from statement_timestamp()) + 3600)))
+          $sidequest_fixture$;
           SQL
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261103000000_create_events.sql
+          # Supabase projects may inherit permissive public-schema grants.
+          # The proposals must explicitly revoke these, not depend on the
+          # isolated PostgreSQL fixture's ordinarily restrictive defaults.
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          alter default privileges in schema public grant all on tables to anon, authenticated;
+          alter default privileges in schema public grant execute on functions to anon, authenticated;
+          SQL
       - name: Validate proposed group tables, constraints and deny-by-default permissions
         run: |
           psql -v ON_ERROR_STOP=1 -f supabase/proposals/20261120000000_group_plan_storage_REVIEW_ONLY.sql
