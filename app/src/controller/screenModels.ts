@@ -1,7 +1,8 @@
 // CONTROLLER: share typed presentation models and event/date formatters.
 // Clock-sensitive presenters accept injected time for deterministic tests.
 import { EVENT_SOURCE_TEXT, TAG_SOURCE_TEXT, isEventSource, isEventTag, isTagSource, tagLabel } from '../model/eventTags'
-import type { LegacyCampusEvent } from '../model/events'
+import { clockText, toMinutes, type LegacyCampusEvent } from '../model/events'
+import { attendOf } from '../model/attend'
 import type { EventCategorySelection } from '../model/eventCategories'
 import { campusNow } from '../model/eventCatalog'
 import { calendarDay, eventDuration, eventPhase, minutesUntilStart } from '../model/eventTiming'
@@ -47,6 +48,10 @@ export type StubModel = {
   start: TimeParts
   endText: string
   durationText: string
+  /** Only on a drop-in event (the host said "Drop in any time"). `label` stands where a set-time
+   *  ticket shows its length, `name` is added to the ticket's accessible name, and `line` is the
+   *  opened card's sentence: "Drop in any time between 11am and 3pm." */
+  dropIn?: { label: string; name: string; line: string }
   calendarUrl?: string | null
   planned: boolean
   /** null while no complete, valid free-time window is set */
@@ -200,6 +205,7 @@ export function toStub(event: ScreenEvent, now: Date, planned: ReadonlySet<strin
     start: splitTime(event.start),
     endText: displayTime(event.end),
     durationText: spanText(eventDuration(event)),
+    ...dropInWords(event),
     calendarUrl: googleCalendarDraftUrl({
       id: event.id, title: event.title, description: event.description ?? '',
       location: event.location, date: event.date, start: event.start, end: event.end,
@@ -209,6 +215,16 @@ export function toStub(event: ScreenEvent, now: Date, planned: ReadonlySet<strin
     live: liveNote(event, now),
     clock: { start: event.start, end: event.end },
   }
+}
+
+/** The words a drop-in event carries. Nothing for an event that starts at a set time. */
+function dropInWords(event: ScreenEvent): Pick<StubModel, 'dropIn'> {
+  if (attendOf(event) !== 'dropin') return {}
+  const start = toMinutes(event.start), end = toMinutes(event.end)
+  return { dropIn: {
+    label: 'Drop in', name: 'drop in any time',
+    line: start === null || end === null ? 'Drop in any time.' : `Drop in any time between ${clockText(start)} and ${clockText(end)}.`,
+  } }
 }
 
 /** Present a freshly verified Event with the same display contract as Discover. */

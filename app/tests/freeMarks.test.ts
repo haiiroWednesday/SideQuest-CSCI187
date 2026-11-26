@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CELL, addBusy, fillGap, freeWindows, paintMarks, presentMarks, reshapeBusy } from '../src/controller/freeMarks'
+import { CELL, MIN_GAP_MINUTES, addBusy, editBusy, fillGap, freeWindows, paintMarks, presentMarks, reshapeBusy } from '../src/controller/freeMarks'
 import type { LegacyCampusEvent } from '../src/model/events'
 
 // Tuesday 24 November 2026, 10:40 in Santa Clara. Planned: class 11:00–12:00 and lab 13:00–18:00.
@@ -25,22 +25,22 @@ describe('free time comes from busy time', () => {
     expect(m.cells[cell('15:00')].state).toBe('busy')
   })
 
-  it('with nothing marked, the free gaps are what My Schedule leaves (an hour or more)', () => {
-    // 10:30–11:00 is only half an hour, so it is too short to be a gap.
-    expect(today(freeWindows(base))).toEqual(['12:00-13:00', '18:00-23:00'])
-    expect(presentMarks(base).windows.map(w => w.label)).toEqual(['12–1pm', '6–11pm'])
+  it('with nothing marked, the free gaps are what My Schedule leaves (20 minutes or more)', () => {
+    // Nov 25: with one mode, a short break counts. 10:40–11:00 is 20 minutes, the least that does.
+    expect(today(freeWindows(base))).toEqual(['10:40-11:00', '12:00-13:00', '18:00-23:00'])
+    expect(presentMarks(base).windows.map(w => w.label)).toEqual(['10:40–11am', '12–1pm', '6–11pm'])
   })
 
   it('dragging busy time splits a gap', () => {
     const marks = paintMarks({ ...base, date: '2026-11-24' }, cell('19:00'), upto('21:00'), true)
-    expect(today(freeWindows({ ...base, marks }))).toEqual(['12:00-13:00', '18:00-19:00', '21:00-23:00'])
+    expect(today(freeWindows({ ...base, marks }))).toEqual(['10:40-11:00', '12:00-13:00', '18:00-19:00', '21:00-23:00'])
     expect(presentMarks({ ...base, marks }).mine.map(r => r.label)).toEqual(['7–9pm'])
   })
 
   it('a drag across My Schedule time marks only the open steps', () => {
     const marks = paintMarks({ ...base, date: '2026-11-24' }, cell('12:00'), upto('19:00'), true)
     expect(marks['2026-11-24']).toEqual([...steps('12:00', '13:00'), ...steps('18:00', '19:00')])
-    expect(today(freeWindows({ ...base, marks }))).toEqual(['19:00-23:00'])
+    expect(today(freeWindows({ ...base, marks }))).toEqual(['10:40-11:00', '19:00-23:00'])
   })
 
   it('dragging back over busy time frees it again', () => {
@@ -66,17 +66,37 @@ describe('free time comes from busy time', () => {
     expect(addBusy(input, '08:00', '09:99')).toBeNull()
   })
 
+  it('a gap shorter than 20 minutes is not free time', () => {
+    expect(MIN_GAP_MINUTES).toBe(20)
+    // busy 10:55–11:00 leaves 10:40–10:55, 15 minutes: too short
+    const marks = paintMarks({ ...base, date: '2026-11-24' }, cell('10:55'), upto('11:00'), true)
+    expect(today(freeWindows({ ...base, marks }))).toEqual(['12:00-13:00', '18:00-23:00'])
+  })
+
+  it('typing new times for a busy stretch moves it in one change', () => {
+    const drawn = paintMarks({ ...base, date: '2026-11-24' }, cell('19:00'), upto('21:00'), true)
+    const run = presentMarks({ ...base, marks: drawn }).mine[0]
+    expect([run.start, run.end]).toEqual(['19:00', '21:00'])
+    const moved = editBusy({ ...base, marks: drawn, date: '2026-11-24' }, run, '19:00', '20:15')!
+    expect(presentMarks({ ...base, marks: moved }).mine.map(r => r.label)).toEqual(['7–8:15pm'])
+    // an end before the start is refused and nothing changes
+    expect(editBusy({ ...base, marks: drawn, date: '2026-11-24' }, run, '21:00', '20:00')).toBeNull()
+    // it never lands on My Schedule time: 17:00–19:30 keeps only the open part from 18:00
+    const clipped = editBusy({ ...base, marks: drawn, date: '2026-11-24' }, run, '17:00', '19:30')!
+    expect(presentMarks({ ...base, marks: clipped }).mine.map(r => r.label)).toEqual(['6–7:30pm'])
+  })
+
   it('"Mark busy" fills a whole gap', () => {
-    const w = presentMarks(base).windows[0]
+    const w = presentMarks(base).windows.find(x => x.label === '12–1pm')!
     const marks = fillGap(base, w)
-    expect(today(freeWindows({ ...base, marks }))).toEqual(['18:00-23:00'])
+    expect(today(freeWindows({ ...base, marks }))).toEqual(['10:40-11:00', '18:00-23:00'])
   })
 
   it('busy time on another day only changes that day', () => {
     const marks = paintMarks({ ...base, date: '2026-11-26' }, cell('09:00'), upto('17:00'), true)
     const thu = freeWindows({ ...base, marks }).filter(w => w.date === '2026-11-26').map(w => `${w.start}-${w.end}`)
     expect(thu).toEqual(['08:00-09:00', '17:00-23:00'])
-    expect(today(freeWindows({ ...base, marks }))).toEqual(['12:00-13:00', '18:00-23:00'])
+    expect(today(freeWindows({ ...base, marks }))).toEqual(['10:40-11:00', '12:00-13:00', '18:00-23:00'])
     expect(presentMarks({ ...base, marks }).days[2].marked).toBe(8 * 60 / CELL)
   })
 

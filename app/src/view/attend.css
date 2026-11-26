@@ -1,0 +1,16 @@
+/* How to attend: the Post choice, the opened card's line and the drop-in fit mark.
+   The ticket's "Drop in" needs no rule here: it uses the length's own style. */
+
+/* Post. The two choices reuse the washi strips of "Good to know" (.sq-post-tag) with a radio
+   in place of the checkbox, so one is always chosen. */
+.sq-post-panel .event-form .sq-post-attend .sq-post-tag input[type="radio"], .event-form .sq-post-attend .sq-post-tag input[type="radio"] {
+  flex: none; width: 20px; height: 20px; min-height: 0; min-width: 0; padding: 0; margin: 0; box-shadow: none; accent-color: var(--sq-red-deep, #751728); }
+.sq-post-attend .sq-post-tags-hint { margin: 6px 0 0; }
+
+/* Opened card: "Drop in any time between 11am and 3pm." Plain ink under the facts. On a narrow
+   card it breaks into two even lines, so no word is left alone on the second. */
+.sq-dropin-line { margin: 0 0 4px; font: 500 16px/1.4 var(--font-sans); letter-spacing: 0; color: var(--sq-ink, #302421); text-wrap: balance; }
+
+/* Fit mark. On a drop-in event the hours outside the free time are no warning, so they are an
+   outline of the event in its own maroon, never the red of a miss that fits nothing. */
+.sq-fitmark-dropin.sq-fitmark-fits .sq-fitmark-out { background: transparent; border: 1px solid var(--sq-red-deep, #751728); }

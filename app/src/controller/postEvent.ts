@@ -64,6 +64,7 @@ export {
   accessStatement, ACCESS_STATEMENT_START, ACCESS_POLICY_ON, HOST_KINDS,
 } from '../model/eventCatalog'
 export { initialCampusWindow } from '../model/eventTiming'
+export { ATTEND_CHOICES, attendOf, type AttendMode } from '../model/attend'
 
 export type PostResult =
   | { status: 'posted'; event: CampusEvent; message: string }

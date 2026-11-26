@@ -1,0 +1,9 @@
+/* Discover: one plain ink link from the event list to the campus map, with "Fits my free time" on.
+   It replaces the old List/Map switch. The ink look itself comes from .sq-look-link (taste.css). */
+.sq-fit-map-links { margin: 4px 0 2px; }
+/* .sq-look-link is hidden unless a Look setting asks for it. This one always shows when events fit. */
+.sq-look-links .sq-fit-map-link { display: inline-flex; align-items: center; min-height: 44px; }
+/* The compact phone look draws the page at .88, so 50px here is a 44px target under a thumb. */
+@media (max-width: 760px) { .sq-look-links .sq-fit-map-link { min-height: 50px; } }
+/* In the look that moves Map into Discover's header on phones, that header link does this job. */
+@media (max-width: 760px) { :root[data-look-nav="map-in-discover"] .sq-fit-map-links { display: none; } }

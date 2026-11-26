@@ -23,10 +23,12 @@ const empty = () => {
   localStorage.setItem('sidequest.planned-event-ids.v1', '[]')
   localStorage.setItem('sidequest.someday-intentions.v1', '[]')
 }
-type State = { route: string; go?: (page: Page) => Promise<void>; root?: string; init?: () => void; map?: boolean }
+type State = { route: string; go?: (page: Page) => Promise<void>; root?: string; init?: () => void; map?: boolean | string }
 export const STATES: Record<string, State> = {
   'Discover': { route: 'discover' },
-  'Discover map': { route: 'discover', go: tap(/^Map$/) },
+  // Nov 25: Discover's own map is gone. With free time told, a "See these on the map" link sits above the list.
+  // Only the link is censused here: the rest of Discover is the 'Discover' state's job.
+  'Discover, link to the map': { route: 'discover', go: tap(/^Mark busy, Today/), root: '.sq-fit-map-links' },
   "Who's in sheet": { route: 'discover', go: async page => { await page.locator('.sq-slip-who').first().click(); await page.waitForTimeout(700) }, root: '[role=dialog]' },
   'opened event': { route: 'discover', go: async page => { await page.locator('.sq-stub').first().click(); await page.waitForTimeout(800) }, root: '.sq-sticker-card' },
   'My Schedule, Trail': { route: 'schedule', go: tap(/^Trail$/) },
@@ -43,6 +45,15 @@ export const STATES: Record<string, State> = {
   'empty My Schedule': { route: 'schedule', init: empty },
   'empty Someday': { route: 'someday', init: empty },
   'campus map page': { route: '', map: true },
+  // The map as the app shows it, with "Fits my free time" on: the chip, the count line and the list of places.
+  'campus map, fits my free time': { route: '', map: '?embed=1', go: async page => {
+    await page.evaluate(() => {
+      const ticket = { time: '1:15', ampm: 'pm', endText: '1:45pm', durationText: '30 min', host: 'Club', day: 'Today' }
+      const ev = (id: string, fits: boolean) => ({ id, title: `Talk ${id}`, location: 'Benson Memorial Center', when: 'Today · 1:15pm–1:45pm', planned: false, posted: false, short: '1:15pm', at: '2026-11-24T13:15', fits, ticket })
+      window.postMessage({ type: 'sq-events', events: [ev('a', true), ev('b', false)], fit: { shown: true, on: true, line: '1 event fits your free time' } }, location.origin)
+    })
+    await page.waitForTimeout(700)
+  } },
 }
 
 export async function collect(page: Page, name: string, s: State, width: number): Promise<Sample[]> {
@@ -50,8 +61,9 @@ export async function collect(page: Page, name: string, s: State, width: number)
   if (s.init) await page.addInitScript(s.init)
   if (s.map) {
     await page.setViewportSize({ width, height: width < 700 ? 844 : 900 })
-    await page.goto('/map/index.html')
+    await page.goto('/map/index.html' + (typeof s.map === 'string' ? s.map : ''))
     await page.waitForTimeout(900)
+    if (s.go) await s.go(page)
   } else {
     await open(page, s.route, width)
     await page.waitForTimeout(900)

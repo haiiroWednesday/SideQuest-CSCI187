@@ -79,6 +79,6 @@ describe('live table without the tags column yet', () => {
       auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: fetcher },
     }), vi.fn()), clock)
     expect((await catalog.create(draft({ tags: ['registration'] }))).tags).toEqual(['registration'])
-    expect(selects[0]).toMatch(/,tags,tags_by$/)
+    expect(selects[0]).toMatch(/,tags,tags_by,attend$/)
   })
 })

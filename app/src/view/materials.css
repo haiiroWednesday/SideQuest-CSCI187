@@ -11,19 +11,28 @@
 .sq-category-option[aria-pressed="true"] .sq-category-dab { fill: #fff; opacity: .3; }
 
 /* Event tickets: the stub and dotted line inside an apothecary label, picture flush on the right. */
-.sq-stubs > li { filter: drop-shadow(1.2px 0 0 #9b8b7e) drop-shadow(-1.2px 0 0 #9b8b7e) drop-shadow(0 1.2px 0 #9b8b7e) drop-shadow(0 -1.2px 0 #9b8b7e); }
-.sq-stub { border: 0; border-radius: 0;
-  -webkit-mask: radial-gradient(circle 13px at 0 0, #0000 12px, #000 12.5px) top left, radial-gradient(circle 13px at 100% 0, #0000 12px, #000 12.5px) top right, radial-gradient(circle 13px at 0 100%, #0000 12px, #000 12.5px) bottom left, radial-gradient(circle 13px at 100% 100%, #0000 12px, #000 12.5px) bottom right;
-  -webkit-mask-size: 51% 51%; -webkit-mask-repeat: no-repeat;
-  mask: radial-gradient(circle 13px at 0 0, #0000 12px, #000 12.5px) top left, radial-gradient(circle 13px at 100% 0, #0000 12px, #000 12.5px) top right, radial-gradient(circle 13px at 0 100%, #0000 12px, #000 12.5px) bottom left, radial-gradient(circle 13px at 100% 100%, #0000 12px, #000 12.5px) bottom right;
-  mask-size: 51% 51%; mask-repeat: no-repeat; }
+/* Nov 25: the outline used to be a filter on the whole row, so any words in the row outside the paper
+   ("Preview complete…" under a past event) were traced four times in grey. Now it sits on .sq-edge,
+   which holds the ticket and nothing else. */
+.sq-edge { display: grid; grid-template: 1fr / minmax(0, 1fr); height: 100%; min-width: 0; filter: drop-shadow(1.2px 0 0 #9b8b7e) drop-shadow(-1.2px 0 0 #9b8b7e) drop-shadow(0 1.2px 0 #9b8b7e) drop-shadow(0 -1.2px 0 #9b8b7e); }
+/* The ticket's shape is cut out of it for real: four corner cuts and the two half-circle bites where the
+   stub tears off. Each layer is "everything except one circle" and the layers intersect, so whatever is
+   behind the ticket shows through every cut. --stub-w (set beside each grid-template-columns) puts the
+   bites on the dotted line. The outline is the drop-shadow of this shape, so it follows every cut. */
+.sq-stub { border: 0; border-radius: 0; --cut: 12px; --bite: 10px; --seam: calc(var(--stub-w, 126px) - 1px);
+  -webkit-mask-image: radial-gradient(circle at 0 0, #0000 var(--cut), #000 calc(var(--cut) + .5px)), radial-gradient(circle at 100% 0, #0000 var(--cut), #000 calc(var(--cut) + .5px)), radial-gradient(circle at 0 100%, #0000 var(--cut), #000 calc(var(--cut) + .5px)), radial-gradient(circle at 100% 100%, #0000 var(--cut), #000 calc(var(--cut) + .5px)), radial-gradient(circle at var(--seam) 0, #0000 var(--bite), #000 calc(var(--bite) + .5px)), radial-gradient(circle at var(--seam) 100%, #0000 var(--bite), #000 calc(var(--bite) + .5px));
+  -webkit-mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; -webkit-mask-composite: source-in;
+  mask-image: radial-gradient(circle at 0 0, #0000 var(--cut), #000 calc(var(--cut) + .5px)), radial-gradient(circle at 100% 0, #0000 var(--cut), #000 calc(var(--cut) + .5px)), radial-gradient(circle at 0 100%, #0000 var(--cut), #000 calc(var(--cut) + .5px)), radial-gradient(circle at 100% 100%, #0000 var(--cut), #000 calc(var(--cut) + .5px)), radial-gradient(circle at var(--seam) 0, #0000 var(--bite), #000 calc(var(--bite) + .5px)), radial-gradient(circle at var(--seam) 100%, #0000 var(--bite), #000 calc(var(--bite) + .5px));
+  mask-size: 100% 100%; mask-repeat: no-repeat; mask-composite: intersect; }
+/* The bites used to be cream discs painted over the edge. They are cut now, so the discs go. */
+.sq-stub .sq-stub-time::before, .sq-stub .sq-stub-time::after { content: none; }
 @media (hover: hover) and (pointer: fine) { .sq-stub:not(.sq-stub-selected):hover { box-shadow: none; } }
-.sq-stubs .sq-stub-faced { grid-template-columns: 126px minmax(0, 1fr) auto; }
+.sq-stubs .sq-stub-faced { --stub-w: 126px; grid-template-columns: 126px minmax(0, 1fr) auto; }
 .sq-stub-face { position: relative; display: block; align-self: stretch; border-left: 1.4px solid #9b8b7e; overflow: hidden; background: #2f4f8f; }
 .sq-greet { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .sq-greet-it { font-family: var(--font-display); font-style: italic; fill: #f6e7c8; }
 .sq-greet-word { font-family: var(--font-display); font-weight: 400; fill: #fdf6e7; stroke: #fdf6e7; stroke-width: .5px; paint-order: stroke; }
-@media (max-width: 760px) { .sq-stubs .sq-stub-faced { grid-template-columns: 86px minmax(0, 1fr) auto; } .sq-stub-faced .sq-stub-time b { font-size: 27px; } .sq-stub-faced .sq-stub-time small { font-size: 13px; } }
+@media (max-width: 760px) { .sq-stubs .sq-stub-faced { --stub-w: 86px; grid-template-columns: 86px minmax(0, 1fr) auto; } .sq-stub-faced .sq-stub-time b { font-size: 27px; } .sq-stub-faced .sq-stub-time small { font-size: 13px; } }
 
 /* Plan to go: a brush swatch. */
 .sq-plan-button { border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding-left: 22px; padding-right: 22px;
@@ -52,6 +61,7 @@
 /* End of the list: a message, then its own button underneath. */
 .sq-endcap2 { display: grid; justify-items: start; gap: 12px; margin: 26px 0 8px; padding-left: 4px; }
 .sq-endcap2 p { margin: 0; font: italic 400 22px var(--font-display); color: var(--sq-muted); }
+@media (max-width: 760px) { .sq-endcap2 p { font-size: 16px; } } /* the phone type scale's italic size */
 .sq-endcap-post { display: inline-flex !important; width: auto !important; align-items: center; justify-content: center; min-height: 46px; padding: 10px 34px !important; text-decoration: none; color: #fff !important; background: var(--sq-red); font: 700 16px var(--font-sans); }
 .sqm-bar .sqm-toggle button { position: relative !important; isolation: isolate !important; display: inline-block; }
 
@@ -126,7 +136,7 @@
 .sq-pc-row .sq-plan-button { width: auto; padding: 10px 24px; }
 .sq-pc-row span, .sq-pc-sent { font: italic 400 15px var(--font-display); color: var(--sq-muted); margin: 6px 0; }
 .sq-done .sq-stubs > li { display: grid; gap: 8px; align-content: start; }
-.sq-done .sq-stubs > li > .sq-stub { height: auto; min-height: 120px; }
+.sq-done .sq-stubs > li > .sq-edge > .sq-stub { height: auto; min-height: 120px; }
 .sq-stub details > summary, .sq-carded details > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; margin-left: -8px; border-radius: 6px;
   font: 650 15px var(--font-sans) !important; color: var(--sq-ink) !important; text-decoration: none !important; }
 .sq-stub details > summary::-webkit-details-marker, .sq-carded details > summary::-webkit-details-marker { display: none; }
@@ -280,7 +290,7 @@
 /* Very narrow phones (320–360px): nav words stay whole, and cards give the title room. */
 @media (max-width: 360px) {
   .sq-tab { font-size: 10.5px !important; letter-spacing: -.1px; padding-left: 0 !important; padding-right: 0 !important; overflow-wrap: normal; word-break: keep-all; hyphens: none; }
-  .sq-stubs .sq-stub-faced { grid-template-columns: 70px minmax(0, 1fr) auto !important; }
+  .sq-stubs .sq-stub-faced { --stub-w: 70px; grid-template-columns: 70px minmax(0, 1fr) auto !important; }
   .sq-stub-faced .sq-stub-stamp { zoom: .62; margin-right: 6px; }
   .sq-stub-faced .sq-stub-time b { font-size: 22px !important; }
 }
@@ -397,7 +407,7 @@
   @keyframes sq-bookmark-in { from { transform: scaleY(.2); } }
 }
 /* Cards far off screen skip painting until they scroll near (opening a card no longer repaints the whole list). */
-.sq-stubs > li { content-visibility: auto; contain-intrinsic-size: auto 120px; }
+.sq-stubs > li { content-visibility: auto; contain-intrinsic-size: auto 120px; overflow-clip-margin: 4px; } /* content-visibility clips painting to the row; the 1.2px outline on .sq-edge sits just outside it */
 .sq-stubs > li:has(.sq-flip) { content-visibility: visible; }
 
 /* Opened card: the end time and the length each get a line; the length never breaks (Nov 24). */
@@ -422,7 +432,7 @@
   .sq-stamp-flyer .sq-greet { width: 72px; height: 96px; }
   .sq-stamp-wide .sq-greet { width: 104px; height: 72px; }
   .sq-stamp-paper { padding: 5px; }
-  .sq-stubs .sq-stub-faced { grid-template-columns: 80px minmax(0, 1fr) auto; }
+  .sq-stubs .sq-stub-faced { --stub-w: 80px; grid-template-columns: 80px minmax(0, 1fr) auto; }
 }
 
 /* Calendar draft and walking directions on the short card (Nov 24): one low torn strip holding both,
@@ -484,10 +494,16 @@
 /* Apothecary label (B2, her pick): corners cut inward like old jar labels, with a thin second line inside.
    The inner line follows the cut corners at a small inset, drawn as gradients so it scales with any card. */
 .sq-stub::before { content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
-  background-image: linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), radial-gradient(circle at -5px -5px, #0000 16.80px, rgba(155, 139, 126, .62) 17.00px, rgba(155, 139, 126, .62) 18.00px, #0000 18.20px), radial-gradient(circle at calc(100% + 5px) -5px, #0000 16.80px, rgba(155, 139, 126, .62) 17.00px, rgba(155, 139, 126, .62) 18.00px, #0000 18.20px), radial-gradient(circle at -5px calc(100% + 5px), #0000 16.80px, rgba(155, 139, 126, .62) 17.00px, rgba(155, 139, 126, .62) 18.00px, #0000 18.20px), radial-gradient(circle at calc(100% + 5px) calc(100% + 5px), #0000 16.80px, rgba(155, 139, 126, .62) 17.00px, rgba(155, 139, 126, .62) 18.00px, #0000 18.20px);
-  background-position: left 16.77px top 5px, left 16.77px bottom 5px, left 5px top 16.77px, right 5px top 16.77px, left 5px top 5px, right 5px top 5px, left 5px bottom 5px, right 5px bottom 5px;
-  background-size: calc(100% - 33.54px) 1px, calc(100% - 33.54px) 1px, 1px calc(100% - 33.54px), 1px calc(100% - 33.54px), 13.27px 13.27px, 13.27px 13.27px, 13.27px 13.27px, 13.27px 13.27px;
-  background-repeat: no-repeat; }
+  background-image: linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), radial-gradient(circle at -5px -5px, #0000 16.80px, rgba(155, 139, 126, .62) 17.00px, rgba(155, 139, 126, .62) 18.00px, #0000 18.20px), radial-gradient(circle at calc(100% + 5px) -5px, #0000 16.80px, rgba(155, 139, 126, .62) 17.00px, rgba(155, 139, 126, .62) 18.00px, #0000 18.20px), radial-gradient(circle at -5px calc(100% + 5px), #0000 16.80px, rgba(155, 139, 126, .62) 17.00px, rgba(155, 139, 126, .62) 18.00px, #0000 18.20px), radial-gradient(circle at calc(100% + 5px) calc(100% + 5px), #0000 16.80px, rgba(155, 139, 126, .62) 17.00px, rgba(155, 139, 126, .62) 18.00px, #0000 18.20px), radial-gradient(circle at 17px -5px, #0000 14.8px, rgba(155, 139, 126, .62) 15px, rgba(155, 139, 126, .62) 16px, #0000 16.2px), radial-gradient(circle at 17px calc(100% + 5px), #0000 14.8px, rgba(155, 139, 126, .62) 15px, rgba(155, 139, 126, .62) 16px, #0000 16.2px);
+  /* (the last two layers carry the inner line round each bite) */
+  background-position: left 16.77px top 5px, left 16.77px bottom 5px, left 5px top 16.77px, right 5px top 16.77px, left 5px top 5px, right 5px top 5px, left 5px bottom 5px, right 5px bottom 5px, left calc(var(--seam) - 17px) top 5px, left calc(var(--seam) - 17px) bottom 5px;
+  background-size: calc(100% - 33.54px) 1px, calc(100% - 33.54px) 1px, 1px calc(100% - 33.54px), 1px calc(100% - 33.54px), 13.27px 13.27px, 13.27px 13.27px, 13.27px 13.27px, 13.27px 13.27px, 34px 12px, 34px 12px;
+  background-repeat: no-repeat;
+  /* The straight inner line stops where a bite is, and the arc above takes over. */
+  -webkit-mask-image: radial-gradient(circle at var(--seam) 0, #0000 14.7px, #000 14.9px), radial-gradient(circle at var(--seam) 100%, #0000 14.7px, #000 14.9px);
+  -webkit-mask-composite: source-in;
+  mask-image: radial-gradient(circle at var(--seam) 0, #0000 14.7px, #000 14.9px), radial-gradient(circle at var(--seam) 100%, #0000 14.7px, #000 14.9px);
+  mask-composite: intersect; }
 .sq-carded { position: relative; }
 .sq-carded::after { content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
   background-image: linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), linear-gradient(rgba(155, 139, 126, .62), rgba(155, 139, 126, .62)), radial-gradient(circle at -6px -6px, #0000 19.80px, rgba(155, 139, 126, .62) 20.00px, rgba(155, 139, 126, .62) 21.00px, #0000 21.20px), radial-gradient(circle at calc(100% + 6px) -6px, #0000 19.80px, rgba(155, 139, 126, .62) 20.00px, rgba(155, 139, 126, .62) 21.00px, #0000 21.20px), radial-gradient(circle at -6px calc(100% + 6px), #0000 19.80px, rgba(155, 139, 126, .62) 20.00px, rgba(155, 139, 126, .62) 21.00px, #0000 21.20px), radial-gradient(circle at calc(100% + 6px) calc(100% + 6px), #0000 19.80px, rgba(155, 139, 126, .62) 20.00px, rgba(155, 139, 126, .62) 21.00px, #0000 21.20px);

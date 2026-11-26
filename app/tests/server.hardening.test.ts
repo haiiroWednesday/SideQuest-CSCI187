@@ -354,7 +354,7 @@ describe('startup schema check for public.events', () => {
     const table = createSupabaseEventTable(createClient('https://sidequest-http.test', 'sb_publishable_fixture', {
       auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: fetcher },
     }), warn)
-    expect(await table.checkSchema()).toEqual({ access: false, tags: false })
+    expect(await table.checkSchema()).toEqual({ access: false, tags: false, attend: true })
     expect(warn).toHaveBeenCalledTimes(2)
     expect(warn.mock.calls.every(([message]) => /^Schema check: /.test(message))).toBe(true)
     methods.length = 0

@@ -90,3 +90,25 @@ test('a day leaf shows a focus ring for keyboard users', async ({ page }) => {
   const ring = await page.locator(`${leaf(1)} .sq-dayleaf-num`).evaluate(e => getComputedStyle(e).outlineStyle)
   expect(ring).toBe('solid')
 })
+
+// Nov 25, Cyn: the list's day circles go back to M2: weekday above the number, today maroon, other days
+// gold, joined by the dotted line. The long weekday is not written again beside the circle.
+for (const width of [390, 1280]) {
+  test(`day circles down the list are M2's: weekday and number, today maroon, others gold (${width}px)`, async ({ page }) => {
+    await open(page, 'discover', width)
+    const circles = page.locator('.sq-trail .sq-trail-day .sq-bubble')
+    await expect(circles.first()).toBeVisible()
+    await expect(circles.first()).toHaveText(/TUE\s*24/i)
+    await expect.poll(() => bg(page, '.sq-trail .sq-trail-day.sq-today .sq-bubble')).toBe(MAROON)
+    for (const i of [1, 2, 3]) await expect.poll(() => circles.nth(i).evaluate(e => getComputedStyle(e).backgroundColor)).toBe('rgb(232, 170, 36)')
+    // neither line of the circle touches its rim
+    const fit = await circles.first().evaluate(el => { const r = el.getBoundingClientRect(); return [...el.children].every(c => { const b = c.getBoundingClientRect(); return b.top >= r.top + 3 && b.bottom <= r.bottom - 3 }) })
+    expect(fit).toBe(true)
+    // the dotted line joining the days
+    const line = await page.locator('.sq-trail').evaluate(el => getComputedStyle(el, '::before').borderLeftStyle)
+    expect(line).toBe('dotted')
+    // "Today" and "Tomorrow" are written out; a later day's name is kept for screen readers only
+    await expect(page.locator('.sq-trail-day').nth(0).locator('.sq-day .sq-quiet-day')).toHaveText('Today')
+    await expect(page.locator('.sq-trail-day').nth(2).locator('.sq-day .sq-quiet-day')).toHaveClass(/sq-visually-hidden/)
+  })
+}

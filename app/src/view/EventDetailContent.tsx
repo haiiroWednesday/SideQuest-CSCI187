@@ -11,6 +11,7 @@ import type React from 'react'
 import { Bookmark, NowMark } from './Marks'
 import { shownHost } from './shownHost'
 import { GoingFaces, ShareGoing } from './FriendsGoing'
+import './attend.css'
 
 export type SelectedDetailState =
   | { id: string; status: 'loading' }
@@ -65,6 +66,7 @@ function VerifiedEventDetails({ event, onPlan, onRemove, planningBlocked }: {
           {(event.organizer || event.contact) && <><dt>Contact</dt><dd>{[event.organizer, event.contact].filter(Boolean).join(', ')}</dd></>}
           {event.accessibility && <><dt>Access</dt><dd>{event.accessibility}</dd></>}
         </dl>
+        {event.dropIn && <p className="sq-dropin-line">{event.dropIn.line}</p>}
         <p className="sq-sticker-desc">{event.description ?? 'No description was provided.'}</p>
         <div className="sq-venue-map-links">
           {event.location.trim() && <a className="sq-map-link" href={`#map/${encodeURIComponent(event.location.trim())}`}>Find it on the SideQuest map</a>}
@@ -136,6 +138,7 @@ function QuietDetails({ event, onPlan, onRemove, planningBlocked }: { event: Stu
             <span>{event.organizer}{event.organizer && event.contact && <span className="sq-access-sep">{' · '}</span>}{event.contact && <span className="sq-access-contact">{event.contact.split('@').map((part, i) => i ? <span key={i}>@<wbr />{part}</span> : part)}</span>}</span></li>}
           {ACCESS_POLICY_ON && event.accessibility && <li><svg viewBox="0 0 24 24" aria-label="Accessibility" role="img"><circle cx="12" cy="4.5" r="2" /><path d="M5 8.5c2.3.7 4.6 1 7 1s4.7-.3 7-1M12 9.5v5m0 0-3 6.5m3-6.5 3 6.5" /></svg><span>{event.accessibility}</span></li>}
         </ul>}
+        {event.dropIn && <p className="sq-dropin-line">{event.dropIn.line}</p>}
         <GoingFaces eventId={event.id} big />
         {event.description && !/Sample data for the design review/.test(event.description) && <p className="sq-sticker-desc">{event.description}</p>}
         <QuietHandoffs event={event} />

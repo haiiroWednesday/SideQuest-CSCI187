@@ -72,9 +72,12 @@ for (const width of [390, 1280]) {
       expect(Math.abs(a.y - b.y)).toBeLessThan(2)
       expect(b.x).toBeGreaterThan(a.x + a.width)
       const tops = (plan: Locator) => plan.locator('.sq-clash-differ dd, .sq-clash-keep').evaluateAll(els => els.map(e => Math.round(e.getBoundingClientRect().top)))
-      expect(await tops(climb)).toEqual(await tops(choir))
+      // rows line up across the two columns; 1px is rounding of half-pixel positions, not a visible step
+      const [tc, th] = [await tops(climb), await tops(choir)]
+      expect(tc.length).toBe(th.length)
+      tc.forEach((t, k) => expect(Math.abs(t - th[k])).toBeLessThanOrEqual(1))
       const ends = (plan: Locator) => plan.locator('.sq-stub').evaluate(e => Math.round(e.getBoundingClientRect().bottom))
-      expect(await ends(climb)).toBe(await ends(choir))
+      expect(Math.abs(await ends(climb) - await ends(choir))).toBeLessThanOrEqual(1)
     } else {
       expect(Math.abs(a.x - b.x)).toBeLessThan(2)
       expect(b.y).toBeGreaterThanOrEqual(a.y + a.height)

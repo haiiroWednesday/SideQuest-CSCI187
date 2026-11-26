@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
-import { noSidewaysScroll, open, pickTime, shooter } from './helpers'
+import { noSidewaysScroll, onlyFree, open, shooter } from './helpers'
 
 // The fit mark (Nov 25): a small flat bar on every Discover ticket and on "Our pick" that answers
 // "does this fit my free time?" before the title is read. Gold is the free stretch, the maroon piece
@@ -7,11 +7,7 @@ import { noSidewaysScroll, open, pickTime, shooter } from './helpers'
 // A few plain words sit beside it. It replaced the "Fits your free time" line.
 // Demo day: Tuesday 24 Nov, 10:40am. Tonight has a reception 7–7:45pm, Stargazing 7–8:30pm
 // and Slices of Religious Life 6:30–7:30pm, none of them planned.
-const typeFree = async (page: Page, from: string, until: string) => {
-  await page.getByRole('button', { name: 'Free', exact: true }).click()
-  await pickTime(page, 'Free from', from); await pickTime(page, 'until', until)
-  await page.getByRole('button', { name: 'Add', exact: true }).click()
-}
+const typeFree = onlyFree
 const ticket = (page: Page, title: string) => page.locator('.sq-stub', { has: page.locator('strong', { hasText: title }) }).first()
 const box = async (el: Locator) => (await el.boundingBox())!
 const words = (mark: Locator) => mark.locator('.sq-fitmark-words')
@@ -32,7 +28,8 @@ async function expectFlatGlyph(mark: Locator) {
     return cs.borderTopLeftRadius === '0px' && cs.boxShadow === 'none' && cs.backgroundImage === 'none' && cs.transform === 'none'
   }))
   expect(flat).toBe(true)
-  expect((await words(mark).innerText()).trim().split(/\s+/).length).toBeLessThanOrEqual(3)
+  // An amount ("45 min", "1 hr 30 min") counts as one word, so "Drop in 45 min" is three.
+  expect((await words(mark).innerText()).trim().replace(/\d+ hr( \d+ min)?|\d+ min/g, 'N').split(/\s+/).length).toBeLessThanOrEqual(3)
   // The words sit beside the bar, on its line, and nothing is cut.
   const w = await box(words(mark))
   expect(w.x).toBeGreaterThan(b.x + b.width)
@@ -63,10 +60,12 @@ for (const width of [390, 1280]) {
     await reception.scrollIntoViewIfNeeded()
     await shot('fits-exactly')
 
-    // "Our pick" carries the same mark.
+    // "Our pick" carries the same mark as the pick's own ticket. Since Nov 25 the drop-in Open Studio
+    // Evening (6:30–8pm) also fits these 45 minutes, and it is the shorter walk from dinner at Benson.
     const pick = page.locator('.sq-onepick').first()
-    await expect(pick.locator('strong')).toHaveText('LGBTQ+ Affinity Night Reception')
-    await expect(words(pick.locator('.sq-fitmark'))).toHaveText('Fits exactly')
+    await expect(pick.locator('strong')).toHaveText('Open Studio Evening')
+    await expect(words(pick.locator('.sq-fitmark'))).toHaveText('Drop in 45 min')
+    await expect(words(pick.locator('.sq-fitmark'))).toHaveText(await words(ticket(page, 'Open Studio Evening').locator('.sq-fitmark')).innerText())
     await expectFlatGlyph(pick.locator('.sq-fitmark'))
     await pick.scrollIntoViewIfNeeded()
     await shot('our-pick')
@@ -90,10 +89,12 @@ for (const width of [390, 1280]) {
     await expect(words(early)).toHaveText('30 min early')
     await expectFlatGlyph(early)
 
-    // Wednesday has no free time marked, so its tickets say nothing about fit.
+    // With one mode (Nov 25), a day with no busy time is free apart from its plans, so Wednesday's
+    // tickets carry a mark too, and this one sits inside free time.
     const tomorrow = ticket(page, 'Coffee tasting')
     await expect(tomorrow).toBeVisible()
-    await expect(tomorrow.locator('.sq-fitmark')).toHaveCount(0)
+    await expect(tomorrow.locator('.sq-fitmark')).toHaveCount(1)
+    await expect(words(tomorrow.locator('.sq-fitmark'))).not.toHaveText(/over|early|late|Not free/)
     await tomorrow.scrollIntoViewIfNeeded()
     await shot('nothing-marked')
 

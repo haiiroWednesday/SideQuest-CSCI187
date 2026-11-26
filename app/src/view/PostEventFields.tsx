@@ -4,7 +4,8 @@ import { useQuiet } from './quietContext'
 import { DatePick, TimePick } from './Pickers'
 import { EVENT_TAGS, type EventTag } from '../controller/tags'
 import './foodtime.css'
-import { ACCESS_LIMITS, ACCESS_POLICY_ON, ACCESS_STATEMENT_START, HOST_KINDS, POSTING_LIMITS, campusNow, trimDraft, latestPostingDate, type CatalogFieldErrors, type EventDraft } from '../controller/postEvent'
+import { ACCESS_LIMITS, ACCESS_POLICY_ON, ACCESS_STATEMENT_START, ATTEND_CHOICES, HOST_KINDS, POSTING_LIMITS, attendOf, campusNow, trimDraft, latestPostingDate, type CatalogFieldErrors, type EventDraft } from '../controller/postEvent'
+import './attend.css'
 
 type PostEventFieldsProps = {
   draft: EventDraft
@@ -139,6 +140,24 @@ export function PostEventFields({ draft, fieldErrors, submitting, now, onSubmit,
             {fieldError('end')}
           </div>
         </div>
+        {/* One choice of two, set by the host and never guessed. Native radios in one group, so
+            Tab reaches the chosen one and the arrow keys move between them. */}
+        <fieldset className="field sq-post-tags sq-post-attend">
+          <legend id="post-attend-legend"><span>HOW TO ATTEND</span></legend>
+          <div className="sq-post-tag-row" role="radiogroup" aria-labelledby="post-attend-legend" aria-describedby="post-attend-hint">
+            {ATTEND_CHOICES.map(choice => {
+              const on = attendOf(draft) === choice.id
+              return (
+                <label key={choice.id} className={`sq-post-tag sq-post-attend-option${on ? ' sq-on' : ''}`}>
+                  <input type="radio" name="post-attend" value={choice.id} checked={on} onChange={() => onChange('attend', choice.id)} />
+                  <span>{choice.label}</span>
+                </label>
+              )
+            })}
+          </div>
+          <p className="sq-post-tags-hint" id="post-attend-hint">Drop in is for fairs, tabling and open studios.</p>
+          {fieldError('attend')}
+        </fieldset>
         {ACCESS_POLICY_ON && (<>
         {/* SCU's posting policy: the primary student organizer, their email or phone, and the
             Access Policy Statement built from them word for word. The statement cannot be edited.

@@ -68,7 +68,10 @@ export function FlipCard({ mode, from, front, children, closing, onClosed, phone
       const grow = el.animate(frames(Math.max(t.offsetHeight, last.h)), { duration: DO, easing: ease, fill: 'forwards' })
       growing = grow.finished
     }
-    const a = t.animate([{ transform: `rotate${axis}(0deg)` }, { transform: `rotate${axis}(180deg)` }], { duration: lift ? D : DO, easing: ease, fill: 'forwards' })
+    // A card opened with a mouse was already tipped back by the hover hint (flip.css). The turn carries on
+    // from that tilt instead of snapping flat first (Cyn, Nov 25).
+    const start = axis === 'X' && openedByPointer() ? HOVER_TILT_DEG : 0
+    const a = t.animate([{ transform: `rotate${axis}(${start}deg)` }, { transform: `rotate${axis}(180deg)` }], { duration: lift ? D : DO, easing: ease, fill: 'forwards' })
     a.finished.then(() => growing).then(() => { el.classList.remove('sq-flip-running', 'sq-flip-running-x'); done(); focusTitle(el) }).catch(() => {})
   // Runs once per opened card.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -140,4 +143,10 @@ export function snapCards(list: Element | null): Map<string, Box> {
   const m = new Map<string, Box>()
   list?.querySelectorAll<HTMLElement>('[data-flip-id]').forEach(li => m.set(li.dataset.flipId!, boxOf(li)))
   return m
+}
+
+/** The hover hint's tilt, matched by eye to flip.css (rotateX 9deg at a closer perspective). */
+const HOVER_TILT_DEG = 14
+function openedByPointer(): boolean {
+  return document.documentElement.dataset.input === 'pointer' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
 }

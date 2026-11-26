@@ -4,7 +4,8 @@
 // decides what fits and gives the minutes. This file turns them into the few words beside the
 // bar, the sentence a screen reader says, and where each part of the bar sits. Views only draw it.
 import { clockSpan, toMinutes } from '../model/events'
-import { fitSpan } from '../model/fitMark'
+import { fitSpan, sharedOf } from '../model/fitMark'
+import { MIN_DROP_IN_MINUTES } from '../model/fitAssessment'
 import type { FitTimeRecord, FitWindow } from '../model/fitAssessment'
 import { spanText, type DiscoverScreen } from './screenModels'
 
@@ -12,7 +13,11 @@ import { spanText, type DiscoverScreen } from './screenModels'
 export type FitPart = { left: number; width: number }
 export type FitMarkModel = {
   kind: 'fits' | 'over' | 'outside'
-  /** A few plain words beside the bar: "Fits", "Fits exactly", "10 min spare", "35 min over", "30 min early". */
+  /** Present only for a drop-in event. Its words say what the student gets, and the part of the
+   *  event outside the free time is drawn quietly, because leaving early is the point. */
+  dropIn?: true
+  /** A few plain words beside the bar: "Fits", "Fits exactly", "10 min spare", "35 min over", "30 min early",
+   *  and for a drop-in event "Drop in 45 min" or "Only 15 min". */
   label: string
   /** The same fact as a sentence, for the mark's accessible name. */
   say: string
@@ -39,6 +44,11 @@ const TIGHT_MINUTES = 60
 export function missText(early: number, over: number): string {
   return early && over ? `runs ${spanText(early + over)} longer than your free time`
     : over ? `runs ${spanText(over)} over` : `starts ${spanText(early)} before you're free`
+}
+
+/** How a drop-in event misses: the student is free for too little of it. Shared with the fit line. */
+export function dropInMissText(shared: number): string {
+  return `shares only ${spanText(shared)} with your free time`
 }
 
 const sentence = (text: string) => text.charAt(0).toUpperCase() + text.slice(1)
@@ -72,6 +82,12 @@ export function presentFitMark(event: FitTimeRecord, windows: readonly FitWindow
     outside: [...(early ? [part(eventStart, freeStart)] : []), ...(over ? [part(freeEnd, eventEnd)] : [])],
   }
   const free = clockSpan(freeStart, freeEnd)
+  if (span.dropIn) {
+    // What the student gets: the minutes the event and the free time share, never more than the event.
+    const shared = sharedOf(span)
+    if (span.kind === 'fits') return { kind: 'fits', dropIn: true, label: `Drop in ${spanText(shared)}`, say: `Drop in for up to ${spanText(shared)} of your free time, ${free}.`, ...drawing }
+    return { kind: 'over', dropIn: true, label: `Only ${spanText(shared)}`, say: `You are free for only ${spanText(shared)} of it, ${free}. Dropping in takes at least ${spanText(MIN_DROP_IN_MINUTES)}.`, ...drawing }
+  }
   if (span.kind === 'fits') {
     if (spare === 0) return { kind: 'fits', label: 'Fits exactly', say: `Fits exactly. It fills your free time, ${free}.`, ...drawing }
     if (spare < TIGHT_MINUTES) return { kind: 'fits', label: `${spanText(spare)} spare`, say: `Fits your free time, ${free}, with ${spanText(spare)} spare.`, ...drawing }
@@ -105,7 +121,7 @@ export function withFitMarks(screen: DiscoverScreen, days: readonly FitDay[] | u
         if (stub.fitMark || stub.planned || stub.live?.kind === 'now' || !stub.clock) return stub
         const windows = knownDay(days, stub.date)
         if (!windows) return stub
-        const fitMark = presentFitMark({ date: stub.date, ...stub.clock }, windows, 'say')
+        const fitMark = presentFitMark({ date: stub.date, ...stub.clock, ...(stub.dropIn ? { attend: 'dropin' as const } : {}) }, windows, 'say')
         return fitMark ? { ...stub, fitMark } : stub
       }),
     })),

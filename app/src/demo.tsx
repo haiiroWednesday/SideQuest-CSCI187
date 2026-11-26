@@ -66,6 +66,11 @@ const ROWS: Row[] = [
   [4, "11:45", "12:50", "Signs of the Times: Solidarity and Social Justice Panel", "SCU Mission and Ministry", "Forbes, Lucas Hall", false],
 ]
 const EXTRAS_KEY = 'sidequest.demo-extras.v1'
+// Made-up sample events that are plainly drop-in by nature: a fair, an open studio, a study jam,
+// a garden shift, a drop-in review. Real SCU listings are left alone, because how to attend is a
+// fact only the host sets (on Post), never a guess from a title.
+const DROP_IN_KEY = 'sidequest.demo-dropin.v1'
+const SAMPLE_DROP_IN = new Set(['Club fair sign-up', 'Study Jam', 'Open Studio Evening', 'Garden shift', 'Volunteer fair', 'Resume review drop-in'])
 const SAMPLE_TAGS: Record<string, string[]> = {
   'Dinner with the Games Society': ['free-food'],
   'Lunch talk on climate': ['free-food', 'guest-speaker'],
@@ -121,6 +126,13 @@ try {
     const posted = JSON.parse(localStorage.getItem(POSTED_IDS_KEY) ?? '[]') as string[]
     localStorage.setItem(POSTED_IDS_KEY, JSON.stringify([...new Set([...posted, uid(2)])]))
     localStorage.setItem(EXTRAS_KEY, day(0))
+  }
+  // How to attend (Nov 25). Marked only on the standard sample week, like the tags above.
+  const sampleRows = JSON.parse(localStorage.getItem(LOCAL_CATALOG_KEY) ?? '[]') as Record<string, unknown>[]
+  if (localStorage.getItem(DROP_IN_KEY) !== day(0) && sampleRows[0]?.id === uid(0) && sampleRows[0]?.title === ROWS[0][3]) {
+    localStorage.setItem(LOCAL_CATALOG_KEY, JSON.stringify(sampleRows.map(row =>
+      SAMPLE_DROP_IN.has(String(row.title)) && row.source !== 'scu-calendar' ? { ...row, attend: 'dropin' } : row)))
+    localStorage.setItem(DROP_IN_KEY, day(0))
   }
   // The review starts on the flip cards; the switch on Discover changes it.
   // Round five picks: cards flip down like a postcard.

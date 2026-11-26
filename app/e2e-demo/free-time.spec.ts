@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { open, pickTime, shooter, slips } from './helpers'
+import { noSidewaysScroll, onlyFree, open, pickTime, shooter, slips } from './helpers'
 
 // Scenarios for free time on Discover. Demo day: Tuesday 24 Nov, 10:40am.
 // People add when they're BUSY (type a from–until, or "Mark busy" on a gap). SideQuest works out the
@@ -8,10 +8,11 @@ import { open, pickTime, shooter, slips } from './helpers'
 // aria-hidden because the typed form and the slips do the same jobs by keyboard.
 const typeBusy = async (page: import('@playwright/test').Page, from: string, until: string) => {
   await pickTime(page, 'Busy from', from); await pickTime(page, 'until', until)
-  await page.getByRole('button', { name: 'Add', exact: true }).click()
+  await page.getByRole('button', { name: /^Add( another)?$/ }).click()
 }
 const free = async (page: import('@playwright/test').Page) => (await slips(page)).filter(s => s.startsWith('FREE')).map(s => s.replace('FREE ', ''))
-const busy = async (page: import('@playwright/test').Page) => (await slips(page)).filter(s => s.startsWith('BUSY')).map(s => s.replace('BUSY ', ''))
+// Busy times are listed under the bar; each row's × is named "Free again 7–9pm".
+const busy = async (page: import('@playwright/test').Page) => (await page.locator('.sq-busy-time .sq-slip-x').evaluateAll(els => els.map(e => (e.getAttribute('aria-label') ?? '').replace('Free again ', ''))))
 
 for (const width of [390, 1280]) {
   test(`Maya types her 7–9pm shift and a 12–1 lunch as busy, and the gaps follow (${width}px)`, async ({ page }, info) => {
@@ -47,7 +48,7 @@ for (const width of [390, 1280]) {
     expect(await busy(page)).toEqual(['12–1pm'])
     // "Clear busy time" wipes it, says so, and Undo puts it back.
     await page.getByRole('button', { name: 'Clear busy time' }).click()
-    await expect(page.locator('.sq-slip-mine')).toHaveCount(0)
+    await expect(page.locator('.sq-busy-time')).toHaveCount(0)
     const cleared = page.locator('.sq-toast', { hasText: 'Busy time cleared.' })
     // The shared helper hides toasts from screenshots, so the toast is checked by its presence.
     await expect(cleared).toBeAttached()
@@ -91,7 +92,7 @@ test('typing an end before the start says so and changes nothing', async ({ page
   await open(page, 'discover')
   await typeBusy(page, '20:00', '19:00')
   await expect(page.getByRole('alert')).toHaveText('End after start')
-  await expect(page.locator('.sq-slip-mine')).toHaveCount(0)
+  await expect(page.locator('.sq-busy-time')).toHaveCount(0)
   await shot('typed-wrong')
 })
 
@@ -140,7 +141,7 @@ test('the time picker: two taps, Escape or a tap outside closes it, focus comes 
   await pickTime(page, 'Busy from', '18:30')
   await expect(page.getByRole('button', { name: 'Busy from, 6:30pm' })).toBeVisible()
   // Add with only one time set says what is missing.
-  await page.getByRole('button', { name: 'Add', exact: true }).click()
+  await page.getByRole('button', { name: /^Add( another)?$/ }).click()
   await expect(page.getByRole('alert')).toHaveText('Pick both times')
   await shot('one-time')
 })
@@ -200,33 +201,74 @@ test('a tap on a blue My Schedule block says where to change it, and it does not
   expect(await page.locator('.sq-mbar-busy').first().getAttribute('style')).toBe(before)
 })
 
-test('Free mode: mark 6:25 to 7:50pm free on the bar, to five minutes, and only what fits is listed', async ({ page }, info) => {
+test('one mode: busy before and after leaves 6:25 to 7:50pm free, to five minutes, and only what fits is listed', async ({ page }, info) => {
   const shot = shooter(page, info)
   await open(page, 'discover', 1280)
   await page.locator('.sq-mbar').scrollIntoViewIfNeeded()
-  const mode = page.getByRole('group', { name: 'What you mark on the bar' })
-  await expect(mode.getByRole('button', { name: 'Busy', exact: true })).toHaveAttribute('aria-pressed', 'true')
-  await mode.getByRole('button', { name: 'Free', exact: true }).click()
-  await dragBar(page, await cellX(page, '18:25'), await cellX(page, '19:45'))
+  // Nov 25, Cyn: "just keep the busy one". There is no Busy/Free switch any more.
+  await expect(page.locator('.sq-markmode')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Free', exact: true })).toHaveCount(0)
+  await onlyFree(page, '18:25', '19:50')
   expect(await free(page)).toEqual(['6:25–7:50pm'])
   const note = page.locator('.sq-fit-note')
   await expect(note).toHaveText(/^(Nothing fits\..+\.|Nothing fits your free time|1 event fits your free time|\d+ events fit your free time)$/)
   const n = Number(((await note.innerText()).match(/^\d+/) ?? ['0'])[0])
   await expect(page.locator('.sq-stub')).toHaveCount(n)
-  await shot('free-mode', true)
-  // Back in Busy mode nothing was marked busy, so nothing is filtered; Free mode still has its stretch.
-  await mode.getByRole('button', { name: 'Busy', exact: true }).click()
-  await expect(note).toHaveCount(0)
-  await mode.getByRole('button', { name: 'Free', exact: true }).click()
-  expect(await free(page)).toEqual(['6:25–7:50pm'])
+  await shot('one-mode', true)
 })
 
-test('Free mode names the nearest miss when nothing fits', async ({ page }) => {
+test('a short break that nothing fits lists nothing for today', async ({ page }) => {
   await open(page, 'discover', 1280)
   await page.locator('.sq-mbar').scrollIntoViewIfNeeded()
-  await page.getByRole('group', { name: 'What you mark on the bar' }).getByRole('button', { name: 'Free', exact: true }).click()
-  // 6:10 to 6:55pm: Nourish Nights (6 to 7pm) starts 10 minutes early and ends 5 minutes late.
-  await dragBar(page, await cellX(page, '18:10'), await cellX(page, '18:50'))
-  expect(await free(page)).toEqual(['6:10–6:55pm'])
-  await expect(page.locator('.sq-fit-note')).toHaveText('Nothing fits. Nourish Nights runs 15 min longer than your free time.')
+  // 6:05 to 6:45pm: Nourish Nights (6 to 7pm, set time) starts 5 minutes early and ends 15 late,
+  // 20 minutes short. Open Studio Evening (6:30 to 8pm, drop in) shares 15 minutes, 5 short of the
+  // 20 a drop-in needs, so it is the nearest miss.
+  await onlyFree(page, '18:05', '18:45')
+  expect(await free(page)).toEqual(['6:05–6:45pm'])
+  // With one mode the other days stay free, so the week still has matches. Today has none: the list's
+  // first day is no longer today. (The "nearest miss" sentence is covered in tests/free-mode.test.ts.)
+  await expect(page.locator('.sq-trail-day.sq-today .sq-stub')).toHaveCount(0)
 })
+
+test('a short break keeps a drop-in event that shares 20 minutes or more', async ({ page }) => {
+  await open(page, 'discover', 1280)
+  await page.locator('.sq-mbar').scrollIntoViewIfNeeded()
+  // 6:10 to 6:55pm: Nourish Nights still runs 15 min longer than the free time and stays out.
+  // Open Studio Evening shares 25 minutes, so it fits.
+  await onlyFree(page, '18:10', '18:55')
+  expect(await free(page)).toEqual(['6:10–6:55pm'])
+  // today lists exactly the one drop-in event
+  await expect(page.locator('.sq-trail-day.sq-today .sq-stub')).toHaveCount(1)
+  const studio = page.locator('.sq-stub', { has: page.locator('strong', { hasText: 'Open Studio Evening' }) }).first()
+  await expect(studio.locator('.sq-fitmark-words')).toHaveText('Drop in 25 min')
+  await expect(page.locator('.sq-stub', { has: page.locator('strong', { hasText: 'Nourish Nights' }) })).toHaveCount(0)
+})
+
+for (const width of [390, 1280]) {
+  test(`drag a busy block, then type its exact end; add a second one (${width}px)`, async ({ page }, info) => {
+    // Nov 25, Cyn: "after I added a draggable window, couldn't I also have the option of modifying the
+    // time manually? ... it's not very clear that I can add multiple busy windows".
+    const shot = shooter(page, info)
+    await open(page, 'discover', width)
+    await page.locator('.sq-mbar').scrollIntoViewIfNeeded()
+    await dragBar(page, await cellX(page, '18:30'), await cellX(page, '19:25'))
+    const rows = page.locator('.sq-busy-time')
+    await expect(rows).toHaveCount(1)
+    // the dragged block's end opens the same time picker as Add
+    await pickTime(page, /^Busy 6:30–7:30pm, ends, /, '20:15', rows.first())
+    await expect(page.getByRole('button', { name: /^Busy 6:30–8:15pm, ends, 8:15pm/ })).toBeVisible()
+    // the bar moved with it
+    await expect(page.getByRole('button', { name: 'Free again 6:30–8:15pm' })).toBeVisible()
+    // a second busy time is added from the typed row; both are listed
+    await pickTime(page, 'Busy from', '12:05'); await pickTime(page, 'until', '12:40')
+    await page.getByRole('button', { name: /^Add( another)?$/ }).click()
+    await expect(rows).toHaveCount(2)
+    // the button itself says there can be more
+    await expect(page.getByRole('button', { name: 'Add another', exact: true })).toBeVisible()
+    await shot('two-busy-times', true)
+    await noSidewaysScroll(page)
+    // × frees one again
+    await page.getByRole('button', { name: 'Free again 12:05–12:40pm' }).click()
+    await expect(rows).toHaveCount(1)
+  })
+}

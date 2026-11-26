@@ -50,7 +50,7 @@
    whatever the screen width: the card's own width decides, not the window's. */
 :root[data-quiet] .sq-stubs > li { container-type: inline-size; }
 @container (max-width: 440px) {
-  :root[data-quiet] .sq-stub-faced { grid-template-columns: 80px minmax(0, 1fr) auto !important; }
+  :root[data-quiet] .sq-stub-faced { --stub-w: 80px; grid-template-columns: 80px minmax(0, 1fr) auto !important; }
   :root[data-quiet] .sq-stub-faced .sq-stub-time b { font-size: 27px; }
   :root[data-quiet] .sq-stub-faced .sq-stub-stamp { zoom: 1; margin: 14px 12px 14px 2px; }
   :root[data-quiet] .sq-stub-faced .sq-stamp-square .sq-greet { width: 64px; height: 64px; }
@@ -61,7 +61,7 @@
 }
 /* Narrowest cards (a 320px phone): a smaller stamp, so the words keep their column. */
 @container (max-width: 340px) {
-  :root[data-quiet] .sq-stub-faced { grid-template-columns: 66px minmax(0, 1fr) auto !important; }
+  :root[data-quiet] .sq-stub-faced { --stub-w: 66px; grid-template-columns: 66px minmax(0, 1fr) auto !important; }
   :root[data-quiet] .sq-stub-faced .sq-stub-time b { font-size: 22px !important; }
   :root[data-quiet] .sq-stub-faced .sq-stub-stamp { zoom: .6; margin: 22px 20px 22px 0; }
   :root[data-quiet] .sq-stub-faced .sq-stub-body { padding-left: 10px; padding-right: 6px; }
@@ -83,13 +83,13 @@
 .sq-stub-body > .sq-fr-status { display: block; }
 .sq-fr-cancelled .sq-stub { opacity: .6; }
 .sq-fr-cancelled .sq-stub-body strong { text-decoration: line-through; text-decoration-thickness: 1.5px; }
-.sq-stub.sq-stub-compact { grid-template-columns: 96px minmax(0, 1fr) !important; cursor: default; }
+.sq-stub.sq-stub-compact { --stub-w: 96px; grid-template-columns: 96px minmax(0, 1fr) !important; cursor: default; }
 :root[data-quiet] .sq-stub-compact .sq-stub-body strong { font-size: 23px; }
 :root[data-quiet] .sq-stub-compact .sq-stub-time b { font-size: 26px; }
 :root[data-quiet] .sq-stub-compact .sq-stub-time b i { font-size: 17px; }
 :root[data-quiet] .sq-stub-compact .sq-stub-body { padding-top: 12px; padding-right: 14px; }
-@media (max-width: 760px) { .sq-stub.sq-stub-compact { grid-template-columns: 80px minmax(0, 1fr) !important; } }
-@container (max-width: 340px) { .sq-stub.sq-stub-compact { grid-template-columns: 66px minmax(0, 1fr) !important; } }
+@media (max-width: 760px) { .sq-stub.sq-stub-compact { --stub-w: 80px; grid-template-columns: 80px minmax(0, 1fr) !important; } }
+@container (max-width: 340px) { .sq-stub.sq-stub-compact { --stub-w: 66px; grid-template-columns: 66px minmax(0, 1fr) !important; } }
 :is(.sq-fr, .sq-oi, .sq-someday-card) .sq-stub { cursor: default; }
 .sq-someday-match .sq-someday-planned { display: block; margin-top: 8px; font: 700 14px/1.3 var(--font-sans); color: #7a5a08; }
 .sq-someday-match .sq-someday-plan { justify-self: start; width: auto; min-height: 46px; margin-top: 10px; padding: 0 18px; }

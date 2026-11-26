@@ -61,3 +61,15 @@ export async function pickDate(page: Page, label: string, ymd: string, scope?: i
   await root.getByRole('button', { name: new RegExp(`^${label}, `) }).click()
   await page.getByRole('dialog').last().getByRole('button', { name: `${months[mo - 1]} ${d}`, exact: true }).click()
 }
+
+/** Says "I am only free from → until today" the way a student does now that there is one mode: Busy from
+ *  8am up to `from`, and Busy from `until` to 11pm, typed into the Busy row under the day bar. */
+export async function onlyFree(page: Page, from: string, until: string) {
+  const add = async (a: string, b: string) => {
+    await pickTime(page, 'Busy from', a); await pickTime(page, 'until', b)
+    await page.getByRole('button', { name: /^Add( another)?$/ }).click()
+    await page.waitForTimeout(150)
+  }
+  if (from > '08:00') await add('08:00', from)
+  if (until < '23:00') await add(until, '23:00')
+}

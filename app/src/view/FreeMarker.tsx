@@ -9,10 +9,11 @@ import { CELL, DAY_START, TAP_CELLS, cellAtX, span, type MarkMode, type MarkMode
 import { TimePick } from './Pickers'
 import { GroupFitNote, WhosInButton } from './Social'
 import { OpenNowLine } from './OpenNow'
+import { MAP_FITS_ROUTE } from '../controller/presentMap'
 import './gaps.css'
 import './marks.css'
 
-export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnbusy, onReshape, onClear, onClearBusy = null, onMode, social = false }: {
+export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnbusy, onReshape, onEditBusy, onClear, onClearBusy = null, onMode, social = false }: {
   model: MarkModel
   fitText: string | null
   onDate: (date: string) => void
@@ -23,6 +24,8 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnb
   onFillGap: (w: MarkWindow) => void
   onUnbusy: (run: Pick<MarkRun, 'first' | 'last'>) => void
   onReshape: (from: { first: number; last: number } | null, first: number, last: number) => void
+  /** New typed times for a busy time you already have. Returns false when they make no sense. */
+  onEditBusy?: (run: MarkRun, start: string, end: string) => boolean
   /** "Show all events": stop filtering by free time. Changes no marks. */
   onClear: (() => void) | null
   /** "Clear busy time": removes every busy mark (the page offers Undo). */
@@ -53,7 +56,7 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnb
         <div>
           <h1 id="sq-discover-title">What fits your free time?</h1>
           <p>Mark when you're busy. Gold is your free time.</p>
-          <nav className="sq-look-links" aria-label="Also on Discover"><a className="sq-look-link sq-look-link-map" href="#map">See it on the map</a></nav>
+          <nav className="sq-look-links" aria-label="Also on Discover"><a className="sq-look-link sq-look-link-map" href={MAP_FITS_ROUTE}>See it on the map</a></nav>
         </div>
       </div>
 
@@ -90,22 +93,28 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnb
         <p className="sq-mbar-key"><a href="#schedule" aria-label="My Schedule, change your plans there"><i className="sq-key-busy" aria-hidden="true" />My Schedule</a> {freeMode
           ? <span><i className="sq-key-free" aria-hidden="true" />free, drag to add</span>
           : <><span><i className="sq-key-mine" aria-hidden="true" />busy, drag to add</span> <span><i className="sq-key-free" aria-hidden="true" />free</span></>}</p>
+
+      {/* Nov 25, Cyn: typing a time sits right under the bar it adds to, and every busy time you have is
+          listed with times you can change by tapping them. Drag still works on the bar above. */}
+      <form className="sq-busy-form sq-busy-row" onSubmit={submit} aria-label={`Add ${markName.toLowerCase()} time, ${dayName}`}>
+        <span className="sq-busy-form-name" aria-hidden="true">Busy</span>
+        <TimePick label={`${markName} from`} placeholder="From" value={from} onChange={v => { setFrom(v); setTypedError(false) }} step={5} firstHour={8} lastHour={22} />
+        <span aria-hidden="true">–</span>
+        <TimePick label="until" placeholder="Until" value={until} onChange={v => { setUntil(v); setTypedError(false) }} step={5} firstHour={8} lastHour={23} />
+        <button type="submit" className="sq-text-button sq-ink-act sq-busy-add sq-busy-add-small">{!freeMode && model.mine.length > 0 ? 'Add another' : 'Add'}</button>
+      </form>
+      {typedError && <p className="sq-busy-error" role="alert">{from && until ? 'End after start' : 'Pick both times'}</p>}
+      {!freeMode && model.mine.length > 0 && (
+        <ul className="sq-busy-list" aria-label={`Your busy times, ${dayName}`}>
+          {model.mine.map(r => <BusyTime key={r.first} run={r} onEdit={onEditBusy} onRemove={() => onUnbusy(r)} />)}
+        </ul>
+      )}
       </div>
 
       </div>
       <div className="sq-marks-right">
-      {/* One compact row: From, Until and a small Add, on phones too. */}
-      <form className="sq-busy-form sq-busy-row" onSubmit={submit} aria-label={`Add ${markName.toLowerCase()} time, ${dayName}`}>
-        <span className="sq-busy-form-name" aria-hidden="true">{markName}</span>
-        <TimePick label={`${markName} from`} placeholder="From" value={from} onChange={v => { setFrom(v); setTypedError(false) }} step={5} firstHour={8} lastHour={22} />
-        <span aria-hidden="true">–</span>
-        <TimePick label="until" placeholder="Until" value={until} onChange={v => { setUntil(v); setTypedError(false) }} step={5} firstHour={8} lastHour={23} />
-        <button type="submit" className="sq-text-button sq-ink-act sq-busy-add sq-busy-add-small">Add</button>
-      </form>
-      {typedError && <p className="sq-busy-error" role="alert">{from && until ? 'End after start' : 'Pick both times'}</p>}
-
-      {(model.windows.length > 0 || (!freeMode && model.mine.length > 0)) && (
-        <ul className="sq-slips" aria-label={`Free and busy, ${dayName}`}>
+      {model.windows.length > 0 && (
+        <ul className="sq-slips" aria-label={`Free time, ${dayName}`}>
           {model.windows.map(w => (
             <li key={'f' + w.first} className="sq-slip sq-slip-free">
               <span className="sq-slip-when"><i className="sq-key-free" aria-hidden="true" /><b>Free</b> {w.label}</span>
@@ -114,12 +123,6 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnb
                 ? <button type="button" className="sq-slip-x" aria-label={`Not free ${w.label}`} onClick={() => onUnbusy(w)}>×</button>
                 : <button type="button" className="sq-slip-act" aria-label={`Mark busy, ${w.dayLabel} ${w.label}`} onClick={() => onFillGap(w)}>Mark busy</button>}
               <OpenNowLine slot={{ date: w.date, start: w.start, end: w.end }} />
-            </li>
-          ))}
-          {!freeMode && model.mine.map(r => (
-            <li key={'m' + r.first} className="sq-slip sq-slip-mine">
-              <span className="sq-slip-when"><i className="sq-key-mine" aria-hidden="true" /><b>Busy</b> {r.label}</span>
-              <button type="button" className="sq-slip-x" aria-label={`Free again ${r.label}`} onClick={() => onUnbusy(r)}>×</button>
             </li>
           ))}
         </ul>
@@ -214,5 +217,26 @@ function DayBar({ model, past, onReshape }: { model: MarkModel; past: number; on
         </span>
       )}
     </div>
+  )
+}
+
+/** One busy time under the bar: its start and end open the same time pickers as Add, so a dragged block
+ *  can be set to the exact minute. × frees it again. */
+function BusyTime({ run, onEdit, onRemove }: { run: MarkRun; onEdit?: (r: MarkRun, start: string, end: string) => boolean; onRemove: () => void }) {
+  const [error, setError] = useState(false)
+  const change = (start: string, end: string) => { const ok = onEdit ? onEdit(run, start, end) : false; setError(!ok) }
+  return (
+    <li className="sq-busy-time">
+      <i className="sq-key-mine" aria-hidden="true" />
+      {onEdit
+        ? <>
+            <TimePick label={`Busy ${run.label}, starts`} placeholder="From" value={run.start} onChange={v => change(v, run.end)} step={5} firstHour={8} lastHour={22} />
+            <span aria-hidden="true">–</span>
+            <TimePick label={`Busy ${run.label}, ends`} placeholder="Until" value={run.end} onChange={v => change(run.start, v)} step={5} firstHour={8} lastHour={23} />
+          </>
+        : <span className="sq-busy-time-label">{run.label}</span>}
+      <button type="button" className="sq-slip-x" aria-label={`Free again ${run.label}`} onClick={onRemove}>×</button>
+      {error && <span className="sq-busy-error" role="alert">End after start</span>}
+    </li>
   )
 }

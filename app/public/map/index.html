@@ -197,8 +197,10 @@ body.embed .find{margin-right:0!important}
 .evs{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:10px}
 .evs li{filter:drop-shadow(1.2px 0 0 #9b8b7e) drop-shadow(-1.2px 0 0 #9b8b7e) drop-shadow(0 1.2px 0 #9b8b7e) drop-shadow(0 -1.2px 0 #9b8b7e)}
 .evs .sq-stub{all:unset;box-sizing:border-box;position:relative;display:grid;grid-template-columns:90px minmax(0,1fr);width:100%;min-height:110px;background:#fffdf8;color:#302421;cursor:pointer;
-  -webkit-mask:radial-gradient(circle 13px at 0 0,#0000 12px,#000 12.5px) top left,radial-gradient(circle 13px at 100% 0,#0000 12px,#000 12.5px) top right,radial-gradient(circle 13px at 0 100%,#0000 12px,#000 12.5px) bottom left,radial-gradient(circle 13px at 100% 100%,#0000 12px,#000 12.5px) bottom right;
-  -webkit-mask-size:51% 51%;-webkit-mask-repeat:no-repeat;mask:radial-gradient(circle 13px at 0 0,#0000 12px,#000 12.5px) top left,radial-gradient(circle 13px at 100% 0,#0000 12px,#000 12.5px) top right,radial-gradient(circle 13px at 0 100%,#0000 12px,#000 12.5px) bottom left,radial-gradient(circle 13px at 100% 100%,#0000 12px,#000 12.5px) bottom right;mask-size:51% 51%;mask-repeat:no-repeat}
+  /* Nov 25: corner cuts and the two bites on the seam are holes in the paper, as on Discover's tickets. */
+  --cut:12px;--bite:10px;--seam:89px;
+  -webkit-mask-image:radial-gradient(circle at 0 0,#0000 var(--cut),#000 calc(var(--cut) + .5px)),radial-gradient(circle at 100% 0,#0000 var(--cut),#000 calc(var(--cut) + .5px)),radial-gradient(circle at 0 100%,#0000 var(--cut),#000 calc(var(--cut) + .5px)),radial-gradient(circle at 100% 100%,#0000 var(--cut),#000 calc(var(--cut) + .5px)),radial-gradient(circle at var(--seam) 0,#0000 var(--bite),#000 calc(var(--bite) + .5px)),radial-gradient(circle at var(--seam) 100%,#0000 var(--bite),#000 calc(var(--bite) + .5px));-webkit-mask-size:100% 100%;-webkit-mask-repeat:no-repeat;-webkit-mask-composite:source-in;
+  mask-image:radial-gradient(circle at 0 0,#0000 var(--cut),#000 calc(var(--cut) + .5px)),radial-gradient(circle at 100% 0,#0000 var(--cut),#000 calc(var(--cut) + .5px)),radial-gradient(circle at 0 100%,#0000 var(--cut),#000 calc(var(--cut) + .5px)),radial-gradient(circle at 100% 100%,#0000 var(--cut),#000 calc(var(--cut) + .5px)),radial-gradient(circle at var(--seam) 0,#0000 var(--bite),#000 calc(var(--bite) + .5px)),radial-gradient(circle at var(--seam) 100%,#0000 var(--bite),#000 calc(var(--bite) + .5px));mask-size:100% 100%;mask-repeat:no-repeat;mask-composite:intersect}
 .evs .sq-stub::before{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
   background-image:linear-gradient(rgba(155,139,126,.62),rgba(155,139,126,.62)),linear-gradient(rgba(155,139,126,.62),rgba(155,139,126,.62)),linear-gradient(rgba(155,139,126,.62),rgba(155,139,126,.62)),linear-gradient(rgba(155,139,126,.62),rgba(155,139,126,.62)),radial-gradient(circle at -5px -5px,#0000 16.8px,rgba(155,139,126,.62) 17px,rgba(155,139,126,.62) 18px,#0000 18.2px),radial-gradient(circle at calc(100% + 5px) -5px,#0000 16.8px,rgba(155,139,126,.62) 17px,rgba(155,139,126,.62) 18px,#0000 18.2px),radial-gradient(circle at -5px calc(100% + 5px),#0000 16.8px,rgba(155,139,126,.62) 17px,rgba(155,139,126,.62) 18px,#0000 18.2px),radial-gradient(circle at calc(100% + 5px) calc(100% + 5px),#0000 16.8px,rgba(155,139,126,.62) 17px,rgba(155,139,126,.62) 18px,#0000 18.2px);
   background-position:left 16.77px top 5px,left 16.77px bottom 5px,left 5px top 16.77px,right 5px top 16.77px,left 5px top 5px,right 5px top 5px,left 5px bottom 5px,right 5px bottom 5px;
@@ -206,8 +208,7 @@ body.embed .find{margin-right:0!important}
 .evs .sq-stub:hover{background:#fff8ea}
 .evs .sq-stub:focus-visible{outline:3px solid var(--sq-focus,#2f6fdb);outline-offset:-3px}
 .evs .sq-stub-time{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:14px 8px;background:#f3e6dc;color:#7d1f52;border-right:2px dashed #cdbfae;text-align:center}
-.evs .sq-stub-time::before,.evs .sq-stub-time::after{content:"";position:absolute;right:-11px;width:20px;height:20px;border-radius:50%;background:var(--sq-paper,#f8f5ee);border:1.5px solid #9b8b7e;box-sizing:border-box}
-.evs .sq-stub-time::before{top:-11px}.evs .sq-stub-time::after{bottom:-11px}
+.evs .sq-stub-time::before,.evs .sq-stub-time::after{content:none}
 .evs .sq-stub-time b{font:400 26px/.9 var(--font-display);letter-spacing:-1px;white-space:nowrap;-webkit-text-stroke:.9px currentColor;paint-order:stroke fill}
 .evs .sq-stub-time b i{font:italic 400 17px var(--font-display);letter-spacing:0;margin-left:1px;-webkit-text-stroke:0}
 .evs .sq-stub-time small{display:block;margin-top:8px;font:600 14px/1.25 "Urbanist Variable",var(--font-sans);color:#302421}
@@ -295,6 +296,10 @@ body.embed .find{margin-right:0!important}
 body.embed #walk{display:none!important}
 body.disc .pills{display:none!important}
 body.embed .pills button{min-height:40px;padding:0 12px;font-size:15px}
+/* "Fits my free time" (Nov 25): the one event filter, first in the row of kinds. It is there only when the
+   app knows some of the student's free time. On phones it is a full 44px target, and the row stretches with it. */
+#fitChip[hidden]{display:none}
+@media (max-width:899px){body.embed .pills #fitChip{min-height:44px}}
 #zme[aria-pressed="true"] svg path{fill:#a32035;stroke:#a32035}
 .legend.open{z-index:7}
 
@@ -601,7 +606,8 @@ function buildLegend(PAL){legend.hidden=false;const NAMES={kind:'kind of place',
   const lnsw=(st)=>`<i class="ln"><svg width="22" height="14" viewBox="0 0 22 14">${st}</svg></i>`;
   const lines=`<h4>Lines</h4><ul>`+[[lnsw(`<path d="M1 7H21" stroke="${C.walk}" stroke-width="4" stroke-linecap="round"/>`),'Walking paths'],[lnsw(`<path d="M1 7H21" stroke="${C.pencil}" stroke-width="1.6"/>`),'Sidewalks'],[lnsw(`<path d="M1 7H21" stroke="${C.walk}" stroke-width="6" stroke-dasharray="2.2 2.2"/>`),'Steps'],[lnsw(`<g fill="${ROUTE_INK}" stroke="#fffaf2" stroke-width="1.6" paint-order="stroke"><circle cx="3" cy="7" r="2.4"/><circle cx="11" cy="7" r="2.4"/><circle cx="19" cy="7" r="2.4"/></g>`),'Your route']].concat(LAB.mk&&LAB.fac==='2d'&&LAB.port?[[lnsw(`<rect x="3" y="2" width="16" height="10" rx="1" fill="#fffdf8" stroke="${C.outline}" stroke-width="1.2" transform="rotate(-6 11 7)"/>`),LAB.hv==='wall'?'Drawn fronts are turned to face you':LAB.hv==='stick'?'Sticker: how it looks from the front':'Drawn front: the shape behind is the real one']]:[]).map(x=>`<li>${x[0]}<span>${x[1]}</span></li>`).join('')+`</ul>`;
   const fitsRow=`<li><i style="background:linear-gradient(90deg,#302421 0 34%,#fffaf2 34%);border-color:#302421"></i><span>Fits your free time</span></li>`;
-  const yours=EMBED?`<h4>${DISC?'On the map':'Your events'}</h4><ul>${DISC?fitsRow:''}<li><i style="background:linear-gradient(90deg,#a32035 0 34%,#fffaf2 34%);border-color:#a32035"></i><span>In My Schedule</span></li><li><i style="background:linear-gradient(90deg,#e8aa24 0 34%,#fffaf2 34%);border-color:#e8aa24"></i><span>You posted</span></li></ul>`:'';
+  /* On the Map tab the ink marker is every event that is not yours. With "Fits my free time" on, those are the ones that fit. */
+  const yours=EMBED?`<h4>${DISC?'On the map':'Events'}</h4><ul>${DISC||FIT.on?fitsRow:''}<li><i style="background:linear-gradient(90deg,#a32035 0 34%,#fffaf2 34%);border-color:#a32035"></i><span>In My Schedule</span></li><li><i style="background:linear-gradient(90deg,#e8aa24 0 34%,#fffaf2 34%);border-color:#e8aa24"></i><span>You posted</span></li>${DISC||FIT.on?'':fitsRow.replace('Fits your free time','Other events')}</ul>`:'';
   legendBody.innerHTML=yours+lines+(S.theme!=='gnr'?`<h4>Gold is your pick</h4><ul><li><i style="background:${C.hi}"></i><span>Main use</span></li><li><i style="background:${mix(C.ticket,C.hi,.35)};background-image:${patSVG('wide',mix(C.hi,C.outline,.12))}"></i><span>Also here</span></li></ul>`:'')+(LAB.cm!=='off'?`<h4>Colour is ${NAMES[LAB.cm]}</h4>${rows(LAB.cm,false)}`:'')+(LAB.pm!=='off'?`<h4>Pattern is ${NAMES[LAB.pm]}</h4>${rows(LAB.pm,true)}`:'');}
 document.getElementById('legendBtn').onclick=()=>{const o=legend.classList.toggle('open');document.getElementById('legendBtn').setAttribute('aria-expanded',String(o));};
 if(innerWidth>=900&&!new URLSearchParams(location.search).has('embed')){legend.classList.add('open');document.getElementById('legendBtn').setAttribute('aria-expanded','true');}
@@ -1326,7 +1332,7 @@ walk.addEventListener('click',e=>{const b=e.target.closest('[data-min]');if(b){c
 document.getElementById('walkClear').onclick=()=>{setStart(null);if(S.sel)select(S.sel);};
 const themes=document.getElementById('themes');
 themes.innerHTML=D.themes.map(([k,n])=>`<button class="pill" data-th="${k}" aria-pressed="false"><i class="dot"></i>${esc(n)}</button>`).join('')+(HOURS?`<button class="pill" data-th="open" aria-pressed="false"><i class="dot"></i>Open now</button>`:'');
-themes.addEventListener('click',e=>{const b=e.target.closest('[data-th]');if(!b)return;S.theme=S.theme===b.dataset.th?null:b.dataset.th;buildLegend(PALS[LAB.pal]||TC);for(const x of themes.children)x.setAttribute('aria-pressed',String(x.dataset.th===S.theme));if(!S.sel)render();else{S.sel=null;S.route=null;render();}dirty();});
+themes.addEventListener('click',e=>{const b=e.target.closest('[data-th]');if(!b)return;S.theme=S.theme===b.dataset.th?null:b.dataset.th;buildLegend(PALS[LAB.pal]||TC);for(const x of themes.querySelectorAll('[data-th]'))x.setAttribute('aria-pressed',String(x.dataset.th===S.theme));if(!S.sel)render();else{S.sel=null;S.route=null;render();}dirty();});
 
 /* ---------- search ---------- */
 const q=document.getElementById('q'),hits=document.getElementById('hits');
@@ -1399,7 +1405,11 @@ if(EMBED)document.body.classList.add('embed');
 /* Discover's map mode: the events that fit your free time, not only your own. */
 const DISC=EMBED&&new URLSearchParams(location.search).get('mode')==='discover';
 if(DISC)document.body.classList.add('disc');
-const EV={list:[],at:new Map(),ready:false};
+const EV={list:[],at:new Map(),ready:false,all:[]};
+/* "Fits my free time": EV.all is every event the app sent, EV.list the ones on show. The app says whether the
+   filter is offered and how it starts (shown, on) and gives the count line. A press here is the student's choice:
+   it stays while they move around the map, and later messages from the app do not undo it. */
+const FIT={shown:false,on:false,touched:false,line:''};
 const norm=t=>' '+String(t||'').toLowerCase().replace(/[^a-z0-9' ]+/g,' ').replace(/\s+/g,' ').trim()+' ';
 /* A venue is pinned only when its text names a place on this map (a building name, its short name, an alias or a room inside it). Anything else stays off the map. */
 function placeFor(loc){const v=norm(loc);let best=null,bl=0;
@@ -1414,10 +1424,10 @@ function evRow(e){const t=e.ticket;if(!t)return`<li><button class="sq-stub sq-st
   const place=String(e.location).split(/,\s*/).filter(Boolean).map((p,i,a)=>`<span class="sq-place-part">${esc(p)}${i<a.length-1?',':''}</span>${i<a.length-1?' ':''}`).join('');
   return`<li><button class="sq-stub sq-stub-compact${e.planned?' sq-stub-mine':''}" data-ev="${esc(e.id)}" aria-label="View details for ${esc(e.title)}"><span class="sq-stub-time"><b>${esc(t.time)}<i>${esc(t.ampm)}</i></b><small>to ${esc(t.endText)}</small><em>${durs.map((d,i)=>`${i?' ':''}<span class="sq-dur-part">${esc(d)}</span>`).join('')}</em></span><span class="sq-stub-body"><span class="sq-stub-date">${esc(t.day)}</span><strong>${esc(e.title)}</strong><span class="sq-by">${t.host&&t.host.trim().toLowerCase()!==String(e.location).trim().toLowerCase()?`<b>${esc(t.host)}</b>${e.location?'<i> · </i>':''}`:''}<span>${place}</span></span></span>${e.planned?BOOKMARK:''}</button></li>`;}
 function evHere(p){if(!EMBED||!EV.ready)return'';const l=EV.at.get(p)||[];
-  return l.length?`<p class="evs-head">Happening here · ${l.length}</p><ul class="evs">${l.map(evRow).join('')}</ul>`:`<p class="evs-none">No SideQuest events listed here yet.</p>`;}
-function evIndex(){if(!EMBED||!EV.ready||!EV.at.size)return'';const ps=[...EV.at.keys()].sort((a,b)=>EV.at.get(b).length-EV.at.get(a).length||a.name.localeCompare(b.name));
+  return l.length?`<p class="evs-head">Happening here · ${l.length}</p><ul class="evs">${l.map(evRow).join('')}</ul>`:`<p class="evs-none">${FIT.on&&EV.all.some(e=>placeFor(e.location)===p)?'Nothing here fits your free time.':'No SideQuest events listed here yet.'}</p>`;}
+function evIndex(){if(!EMBED||!EV.ready)return'';if(!EV.at.size)return FIT.on?`<p class="count-line" id="fitLine">${esc(FIT.line)}</p>${EV.list.length?`<p class="evs-none">${EV.list.length} ${EV.list.length===1?'event has a venue':'events have venues'} the map can't place.</p>`:''}`:'';const ps=[...EV.at.keys()].sort((a,b)=>EV.at.get(b).length-EV.at.get(a).length||a.name.localeCompare(b.name));
   const n=EV.list.length-[...EV.at.values()].reduce((t,l)=>t+l.length,0);
-  return`<p class="count-line">Places with events · ${ps.length}</p><ul class="index">${ps.map(p=>{const l=EV.at.get(p),mine=l.some(e=>e.planned);return`<li><button data-id="${p.id}"><span class="num">${esc((p.num||'').split(',')[0])}</span><span><span class="nm">${esc(p.name)}<b class="evn${mine?' mine':''}">${l.length} ${l.length===1?'event':'events'}</b></span><span class="by">${esc(l[0].when)} · ${esc(l[0].title)}${l.length>1?' and more':''}</span></span></button></li>`;}).join('')}</ul>${n>0?`<p class="evs-none">${n} ${n===1?'event has a venue':'events have venues'} the map can't place.</p>`:''}`;}
+  return`<p class="count-line"${FIT.on?' id="fitLine"':''}>${FIT.on?esc(FIT.line):`Places with events · ${ps.length}`}</p><ul class="index">${ps.map(p=>{const l=EV.at.get(p),mine=l.some(e=>e.planned);return`<li><button data-id="${p.id}"><span class="num">${esc((p.num||'').split(',')[0])}</span><span><span class="nm">${esc(p.name)}<b class="evn${mine?' mine':''}">${l.length} ${l.length===1?'event':'events'}</b></span><span class="by">${esc(l[0].when)} · ${esc(l[0].title)}${l.length>1?' and more':''}</span></span></button></li>`;}).join('')}</ul>${n>0?`<p class="evs-none">${n} ${n===1?'event has a venue':'events have venues'} the map can't place.</p>`:''}`;}
 /* Event markers: the building name stays as it is. A ticket (or a flag, for plans in My Schedule) grows out of the building and says when, what, and how many more. Markers never cover a name: they try other spots on the building, then drop the title, then shrink to a dot. */
 const MK={style:'ticket',t0:0};
 const easeBack=u=>{const c=1.6;u=Math.max(0,Math.min(1,u));return 1+(c+1)*Math.pow(u-1,3)+c*Math.pow(u-1,2);};
@@ -1493,12 +1503,18 @@ function evKey(){return;if(!EMBED||document.getElementById('evKey'))return;const
   k.innerHTML='<svg width="40" height="18" viewBox="0 0 40 18" aria-hidden="true"><path d="M1 2H39V7A2.2 2.2 0 0 0 39 11V16H1V11A2.2 2.2 0 0 0 1 7Z" fill="#fffaf2" stroke="#a32035" stroke-width="1.4"/><rect x="1.7" y="2.7" width="13" height="12.6" fill="#a32035"/></svg>In My Schedule <svg width="40" height="18" viewBox="0 0 40 18" aria-hidden="true" style="margin-left:10px"><path d="M1 2H39V7A2.2 2.2 0 0 0 39 11V16H1V11A2.2 2.2 0 0 0 1 7Z" fill="#fffaf2" stroke="#e8aa24" stroke-width="1.4"/><rect x="1.7" y="2.7" width="13" height="12.6" fill="#e8aa24"/></svg>You posted';
   document.querySelector('.tools').appendChild(k);}
 function openEvent(id){if(EMBED&&parent!==window)parent.postMessage({type:'sq-open',id},location.origin);}
+const fitChip=EMBED&&!DISC?(themes.insertAdjacentHTML('afterbegin','<button class="pill" id="fitChip" aria-pressed="false" hidden>Fits my free time</button>'),document.getElementById('fitChip')):null;
+function fitSync(){if(!fitChip)return;fitChip.hidden=!FIT.shown;fitChip.setAttribute('aria-pressed',String(FIT.on));}
+function applyFit(){fitSync();setEvents(FIT.on?EV.all.filter(e=>e.fits):EV.all);buildLegend(PALS[LAB.pal]||TC);}
+function fitFromApp(f){const shown=!!(f&&f.shown)&&!DISC;FIT.line=String(f&&f.line||'');
+  if(!shown){FIT.on=false;FIT.touched=false;}else if(!FIT.touched)FIT.on=!!f.on;FIT.shown=shown;}
+if(fitChip)fitChip.addEventListener('click',()=>{FIT.on=!FIT.on;FIT.touched=true;applyFit();if(parent!==window)parent.postMessage({type:'sq-fit',on:FIT.on},location.origin);});
 /* A tap on a marker: one event opens its card in the app, several open the building's list. */
 function markerAt(x,y){if(!EMBED||!MK.plan)return null;for(const m of MK.plan){const rs=m.dot?[{x:m.ax-9,y:m.ay-18,w:18,h:20}]:m.rs;if(rs&&rs.some(r=>x>=r.x-3&&x<=r.x+r.w+3&&y>=r.y-3&&y<=r.y+r.h+3))return m.v;}return null;}
 function focusVenue(loc){const p=placeFor(loc);if(p){select(p,true);if(phone())openSheet(true);return;}
   q.value=String(loc||'');search();q.focus();}
 addEventListener('message',e=>{if(e.origin!==location.origin||!e.data)return;const d=e.data;
-  if(d.type==='sq-events'&&Array.isArray(d.events)){EV.ready=true;evKey();setEvents(d.events.filter(x=>x&&typeof x.id==='string').map(x=>({id:x.id,title:String(x.title||''),location:String(x.location||''),when:String(x.when||''),planned:!!x.planned,posted:!!x.posted,short:String(x.short||''),at:String(x.at||''),ticket:x.ticket&&typeof x.ticket==='object'?{time:String(x.ticket.time||''),ampm:String(x.ticket.ampm||''),endText:String(x.ticket.endText||''),durationText:String(x.ticket.durationText||''),host:x.ticket.host?String(x.ticket.host):null,day:String(x.ticket.day||'')}:null})));}
+  if(d.type==='sq-events'&&Array.isArray(d.events)){EV.ready=true;evKey();EV.all=d.events.filter(x=>x&&typeof x.id==='string').map(x=>({id:x.id,title:String(x.title||''),location:String(x.location||''),when:String(x.when||''),planned:!!x.planned,posted:!!x.posted,fits:!!x.fits,short:String(x.short||''),at:String(x.at||''),ticket:x.ticket&&typeof x.ticket==='object'?{time:String(x.ticket.time||''),ampm:String(x.ticket.ampm||''),endText:String(x.ticket.endText||''),durationText:String(x.ticket.durationText||''),host:x.ticket.host?String(x.ticket.host):null,day:String(x.ticket.day||'')}:null}));fitFromApp(d.fit);applyFit();}
   if(d.type==='sq-focus')focusVenue(d.location);
   if(d.type==='sq-walk')walkTo(d.location);
   if(d.type==='sq-style'&&['flag','ticket'].includes(d.style))mkStyle(d.style);});
@@ -1671,7 +1687,7 @@ addEventListener('resize',()=>{resize();if(phone()!==lastPhone){lastPhone=phone(
 resize();recolor();paintPlaces();buildLabels();labSync();render();fitBox(coreBB,0,false);dirty();fromHash();
 if(EMBED&&parent!==window)parent.postMessage({type:'sq-map-ready'},location.origin);
 {const w=new URLSearchParams(location.search).get('walk');if(w&&!EMBED)setTimeout(()=>walkTo(w),300);}
-window.__map={hoursAt,openNowAt,EV,MK,MUTE,ROUTE_INK,routeShown,ME,WALK,SIM,PICK,walkTo,stopWalk,pickSpot,setPretend,walkIt,ll2d,S,cam,PL,select,setStart,setMins,fitBox,LB,D,LAB,setLab,QUESTS,openQuest,applyTheme,THEMES,paintPlaces};
+window.__map={hoursAt,openNowAt,EV,FIT,MK,MUTE,ROUTE_INK,routeShown,ME,WALK,SIM,PICK,walkTo,stopWalk,pickSpot,setPretend,walkIt,ll2d,S,cam,PL,select,setStart,setMins,fitBox,LB,D,LAB,setLab,QUESTS,openQuest,applyTheme,THEMES,paintPlaces};
 })();
 </script>
 </body>

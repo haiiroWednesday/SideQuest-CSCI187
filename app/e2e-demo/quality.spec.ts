@@ -29,7 +29,8 @@ async function words(page: Page, scope: string) {
       const cs = getComputedStyle(el), r = el.getBoundingClientRect()
       // Invisible text (opacity 0, like the Trail's hidden clash notes) is not read, so it is not counted.
       const faded = (e: Element | null): boolean => !!e && (getComputedStyle(e).opacity === '0' || faded(e.parentElement))
-      if (cs.visibility === 'hidden' || cs.display === 'none' || r.width < 2 || faded(el) || el.closest('.sq-visually-hidden, .sq-look, nav, option, select, script, style, [data-dup], .sq-quiet-access, .sq-access-preview')) continue
+      if (cs.visibility === 'hidden' || cs.display === 'none' || r.width < 2 || faded(el) || el.closest('.sq-visually-hidden, .sq-look, .sq-going-faces, nav, option, select, script, style, [data-dup], .sq-quiet-access, .sq-access-preview')) continue
+      // A friend's initial inside a face circle (.sq-going-faces) is a picture, not a word to read.
       // SCU's required ADA/504 sentence (.sq-quiet-access, .sq-access-preview) is policy wording, not our interface, so it is not counted.
       // Only what one screen shows: people judge a screen, not a scroll.
       if (r.bottom < 0 || r.top > innerHeight || r.left > innerWidth || r.right < 0) continue
@@ -111,7 +112,14 @@ for (const s of SCREENS) for (const width of [390, 1280]) {
     expect(found.font, 'sans font').toEqual([])
     expect(found.small, 'tap targets under 40px on a phone').toEqual([])
     // A day is named once: the heading or the leaf, never both with the weekday.
-    const repeats = await page.evaluate(sel => Array.from(document.querySelectorAll(`${sel} .sq-day, ${sel} .sqm-dayhead`)).filter(h => /\b(MON|TUE|WED|THU|FRI|SAT|SUN)\b/.test((h as HTMLElement).innerText) && /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/.test((h as HTMLElement).innerText)).map(h => (h as HTMLElement).innerText.replace(/\s+/g, ' ').slice(0, 40)), scope)
+    // Judged on what is shown: a name kept only for screen readers (.sq-visually-hidden) is not a repeat.
+    const repeats = await page.evaluate(sel => {
+      const shown = (h: Element) => { const c = h.cloneNode(true) as HTMLElement; c.querySelectorAll('.sq-visually-hidden').forEach(x => x.remove()); return (c.textContent ?? '').replace(/\s+/g, ' ').trim() }
+      return Array.from(document.querySelectorAll(`${sel} .sq-day, ${sel} .sqm-dayhead, ${sel} .sq-trail-day`))
+        .map(h => h.matches('.sq-trail-day') ? `${shown(h.querySelector('.sq-bubble') ?? h)} ${shown(h.querySelector('.sq-day') ?? h)}` : shown(h))
+        .filter(t => /\b(MON|TUE|WED|THU|FRI|SAT|SUN)\b/i.test(t.replace(/(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/g, '')) && /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/.test(t))
+        .map(t => t.slice(0, 40))
+    }, scope)
     expect(repeats, 'day named twice').toEqual([])
     // A clock time reads as one thing: "10:00am" never breaks across lines.
     const split = await page.evaluate(sel => {

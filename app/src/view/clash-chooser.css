@@ -47,3 +47,6 @@
    button's own side margin is fixed by the shared style. */
 .sq-clash-act { margin: 2px 0 0; padding-left: calc(var(--differ-label) - 10px); }
 .sq-clash-chooser .sq-clash-foot { margin-top: 12px; padding: 6px 0 0; border-top: 1px solid rgba(60, 40, 30, .16); }
+
+/* The outline wrapper stretches with its row, so two tickets side by side end on the same line. */
+.sq-clash-chooser .sq-clash-plans > li > .sq-edge { height: auto; }

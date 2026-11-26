@@ -29,6 +29,7 @@ declare -A PROPOSAL_TESTS=(
   [group_plan_rpc_review.sql]="$root/proposals/20261120000000_group_plan_storage_REVIEW_ONLY.sql $root/proposals/20261120010000_group_plan_rpcs_REVIEW_ONLY.sql"
   [open_invites_review.sql]="$OPEN_INVITES_SQL"
   [event_access_contact_review.sql]="$root/proposals/20261125010000_event_access_contact_REVIEW_ONLY.sql"
+  [event_attend_review.sql]="$root/proposals/20261126000000_event_attend_REVIEW_ONLY.sql"
 )
 # proposals with no behaviour test yet: applied once so a syntax or dependency error still fails
 APPLY_ONLY=("$root/proposals/20261125000000_google_connections_REVIEW_ONLY.sql")

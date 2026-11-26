@@ -16,8 +16,11 @@ export const DAY_END = 23 * 60
 export const CELLS = (DAY_END - DAY_START) / CELL
 const HOUR = 60 / CELL
 const WEEK = 7
-/** In Busy mode a free gap is what is left over, so it must be worth going to: an hour or more. */
-const MIN_GAP_CELLS = HOUR
+/** A free gap is what is left over between busy times and plans. It counts once it could hold a short
+ *  visit: 20 minutes, the same as the least a drop-in event must share (model/attend.ts). It was an hour
+ *  while a separate Free mode covered short breaks; that mode's switch was removed on Nov 25. */
+export const MIN_GAP_MINUTES = 20
+const MIN_GAP_CELLS = MIN_GAP_MINUTES / CELL
 
 /** Steps the student marked, by campus date. Each list is sorted and has no repeats. */
 export type FreeMarks = Readonly<Record<string, readonly number[]>>
@@ -31,7 +34,7 @@ export type CellState = 'past' | 'busy' | 'mine' | 'free' | 'unset'
 export type MarkDay = { date: string; dow: string; day: number; month: string; today: boolean; marked: number; selected: boolean }
 export type MarkWindow = { date: string; start: string; end: string; label: string; dayLabel: string; first: number; last: number }
 export type MarkCell = { i: number; state: CellState; label: string }
-export type MarkRun = { first: number; last: number; left: number; width: number; label: string }
+export type MarkRun = { first: number; last: number; left: number; width: number; label: string; start: string; end: string }
 export type MarkModel = {
   mode: MarkMode
   days: MarkDay[]
@@ -223,7 +226,7 @@ export function presentMarks(input: MarkInput): MarkModel {
     const what = state === 'past' ? 'already over' : state === 'busy' ? 'in My Schedule' : state === 'mine' ? said : state === 'unset' ? 'not marked' : 'free'
     return { i, state, label: `${span(cellStart(i), cellStart(i) + CELL)}, ${what}` }
   })
-  const toRun = ([a, b]: [number, number]): MarkRun => ({ first: a, last: b, left: pct(a), width: pct(b + 1) - pct(a), label: span(cellStart(a), cellStart(b + 1)) })
+  const toRun = ([a, b]: [number, number]): MarkRun => ({ first: a, last: b, left: pct(a), width: pct(b + 1) - pct(a), label: span(cellStart(a), cellStart(b + 1)), start: hhmmOf(cellStart(a)), end: hhmmOf(cellStart(b + 1)) })
   const d = days.find(x => x.selected)!
   const windows = gapsOf(input, date).map(([a, b]) => ({ date, first: a, last: b, start: hhmmOf(cellStart(a)), end: hhmmOf(cellStart(b + 1)), label: span(cellStart(a), cellStart(b + 1)), dayLabel: d.today ? 'Today' : `${d.dow} ${d.day}` }))
   const p = parts(today), when = input.when ?? 'week'
@@ -261,6 +264,17 @@ export function addBusy(input: MarkInput & { date: string }, start: string, end:
   const first = Math.max(0, Math.floor((a - DAY_START) / CELL)), last = Math.min(CELLS - 1, Math.ceil((b - DAY_START) / CELL) - 1)
   if (last < first) return null
   return paintMarks(input, first, last, true)
+}
+
+/** Typed new times for a busy stretch you already have (Nov 25: "I want to type in something"): the old
+ *  stretch is lifted and the new one laid down, in one change so Undo restores it whole. Null when the
+ *  times make no sense. */
+export function editBusy(input: MarkInput & { date: string }, from: { first: number; last: number }, start: string, end: string): FreeMarks | null {
+  const a = toMinutes(start), b = toMinutes(end)
+  if (a === null || b === null || b <= a) return null
+  const first = Math.max(0, Math.floor((a - DAY_START) / CELL)), last = Math.min(CELLS - 1, Math.ceil((b - DAY_START) / CELL) - 1)
+  if (last < first) return null
+  return reshapeBusy(input, from, first, last)
 }
 
 /** A drag on the day bar: the old stretch (if any) is lifted and the new one is laid down.

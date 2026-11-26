@@ -1,7 +1,11 @@
 // CONTROLLER: what Discover says around the fitting events. One pick and a short plan per free
 // stretch, a "Leave by" or "you'd be late" note on fitting cards, and live food notices.
-// The strict full-fit rule (findEvents) picks the events; nothing here widens or narrows it.
+// The fit rule (findEvents) picks the events; nothing here widens or narrows it. That rule lets a
+// drop-in event fit a stretch it only shares part of, so this file measures such an event by the
+// part inside the stretch, which is when the student would be there.
 import { findEvents } from './findEvents'
+import { attendOf } from '../model/attend'
+import { hhmmOf, toMinutes } from '../model/events'
 import { displayTime } from './findEvents'
 import { leaveNotes, onePick, planStretch, type TimedPlace } from './timeAdvice'
 import { activeFoodNotices, isHappeningNow, minutesLeft, type FoodNotice } from '../model/foodNow'
@@ -19,6 +23,14 @@ export type StretchAdvice = {
 }
 
 const place = (e: ScreenEvent): TimedPlace => ({ id: e.id, title: e.title, location: e.location, date: e.date, start: e.start, end: e.end })
+const isDropIn = (e: ScreenEvent) => attendOf(e) === 'dropin'
+/** A fitting event as the student would attend it in this stretch. A drop-in event that runs past
+ *  the stretch is cut to the part inside it; `cut` says so. Every other event is unchanged. */
+function inStretch(e: ScreenEvent, window: { start: string; end: string }): TimedPlace & { cut: boolean } {
+  const from = toMinutes(window.start), to = toMinutes(window.end), start = toMinutes(e.start), end = toMinutes(e.end)
+  if (!isDropIn(e) || from === null || to === null || start === null || end === null || (start >= from && end <= to)) return { ...place(e), cut: false }
+  return { ...place(e), start: hhmmOf(Math.max(start, from)), end: hhmmOf(Math.min(end, to)), cut: true }
+}
 
 export function presentStretchAdvice(input: {
   events: readonly ScreenEvent[]
@@ -27,20 +39,32 @@ export function presentStretchAdvice(input: {
   now: Date
 }): StretchAdvice[] {
   const planned = new Set(input.plannedIds)
-  const open = input.events.filter(e => !planned.has(e.id) && eventPhase(e, input.now) === 'future')
+  // A set-time event has to be still ahead. A drop-in event can also be picked while it is on.
+  const open = input.events.filter(e => {
+    const phase = eventPhase(e, input.now)
+    return !planned.has(e.id) && (phase === 'future' || (phase === 'live' && isDropIn(e)))
+  })
   const plans = input.events.filter(e => planned.has(e.id)).map(place)
   return input.windows.flatMap(window => {
     const found = findEvents(open, window.date, window.start, window.end)
     if (found.error || !found.matches.length) return []
-    const fitting = found.matches.map(place)
+    const fitting = found.matches.map(event => inStretch(event, window))
     const pick = onePick(fitting, window, plans)
     if (!pick) return []
-    const plan = planStretch(fitting, window)
+    // A chain only holds events attended from start to end. A drop-in event that runs past the
+    // stretch would clash in My Schedule with the stop after it, so it stays out of the chain.
+    const plan = planStretch(fitting.filter(event => !event.cut), window)
+    // The pick shows the event's own hours, as its ticket does. Its fit mark says how long you get.
+    const own = found.matches.find(event => event.id === pick.event.id)!
+    const openBefore = isDropIn(own) && own.start < window.start
+    const reason = openBefore
+      ? pick.reason.replace(/^Starts first\. /, '').replace(/^Starts first in this free time$/, 'Open when your free time starts')
+      : pick.reason
     return [{
       id: `${window.date}-${window.start}`,
       label: window.label,
       count: fitting.length,
-      pick: { id: pick.event.id, title: pick.event.title, time: `${displayTime(pick.event.start)} to ${displayTime(pick.event.end)}`, location: pick.event.location, reason: pick.reason },
+      pick: { id: own.id, title: own.title, time: `${displayTime(own.start)} to ${displayTime(own.end)}`, location: own.location, reason },
       plan: plan && {
         ids: plan.stops.map(stop => stop.event.id),
         stops: plan.stops.map(stop => ({
@@ -63,7 +87,8 @@ export function presentLeaveNotes(input: { events: readonly ScreenEvent[]; fitti
   const out = new Map<string, { text: string; warn: boolean }>()
   for (const id of input.fittingIds) {
     const event = byId.get(id)
-    if (!event || planned.has(id)) continue
+    // No walking note for a drop-in event: the student picks when to arrive and when to leave.
+    if (!event || planned.has(id) || isDropIn(event)) continue
     const { notes } = leaveNotes(place(event), plans)
     const note = notes.find(n => n.kind !== 'leave-by') ?? notes[0]
     if (note) out.set(id, { text: note.text, warn: note.kind !== 'leave-by' })

@@ -2,14 +2,16 @@
 // shown in a frame. The app sends it the listed events; the map pins only
 // venues whose text names a place on the map, and asks the app to open an
 // event when one is tapped. Both sides check the message origin.
+// The map's one event filter, "Fits my free time", is drawn by the map page. The
+// controller says whether it shows and how it starts; the page reports each press.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { CampusEvent } from '../controller/postEvent'
-import { presentMapEvents } from '../controller/presentMap'
+import { presentMap, readFitChoice, saveFitChoice, type FreeStretch } from '../controller/presentMap'
 import type { MapMarkerStyle } from '../controller/viewPreferences'
 import { SideQuestHeader, type SideQuestRoutes } from './DiscoverView'
 import './map.css'
 
-export function MapView({ routes, plannedCount, events, plannedIds, postedIds = [], focus, walk = null, now, onOpenEvent, designReview = false }: {
+export function MapView({ routes, plannedCount, events, plannedIds, postedIds = [], focus, walk = null, now, onOpenEvent, designReview = false, free = null, fitAsked = false }: {
   routes: SideQuestRoutes
   plannedCount: number
   events: CampusEvent[]
@@ -23,13 +25,23 @@ export function MapView({ routes, plannedCount, events, plannedIds, postedIds = 
   onOpenEvent: (id: string) => void
   /** Design review only: the switch between marker styles. */
   designReview?: boolean
+  /** The student's free stretches, or null while they have said nothing about their time. */
+  free?: readonly FreeStretch[] | null
+  /** Opened from Discover's "See these on the map": the filter starts on. */
+  fitAsked?: boolean
 }) {
   const markers: MapMarkerStyle = 'ticket'
   const frame = useRef<HTMLIFrameElement>(null)
   const area = useRef<HTMLElement>(null)
   const [ready, setReady] = useState(false)
   const [height, setHeight] = useState<number | null>(null)
-  const payload = JSON.stringify(presentMapEvents(events, plannedIds, now, postedIds))
+  // The student's choice on the chip, as it stood when this page opened.
+  const [choice] = useState(readFitChoice)
+  const model = presentMap({ events, plannedIds, now, postedIds, free, fitAsked, venueAsked: Boolean(focus || walk), choice })
+  const payload = JSON.stringify(model)
+  // Arriving from Discover's link with the filter on counts as the student's choice.
+  const askedOn = fitAsked && model.fit.on
+  useEffect(() => { if (askedOn) saveFitChoice(true) }, [askedOn])
 
   // Fill the space between the masthead and the phone tab bar.
   useLayoutEffect(() => {
@@ -51,13 +63,15 @@ export function MapView({ routes, plannedCount, events, plannedIds, postedIds = 
       if (e.origin !== window.location.origin || e.source !== frame.current?.contentWindow || !e.data) return
       if (e.data.type === 'sq-map-ready') setReady(true)
       if (e.data.type === 'sq-open' && typeof e.data.id === 'string') onOpenEvent(e.data.id)
+      // A press on "Fits my free time", kept for the rest of this visit.
+      if (e.data.type === 'sq-fit' && typeof e.data.on === 'boolean') saveFitChoice(e.data.on)
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
   }, [onOpenEvent])
 
   useEffect(() => {
-    if (ready) frame.current?.contentWindow?.postMessage({ type: 'sq-events', events: JSON.parse(payload) }, window.location.origin)
+    if (ready) frame.current?.contentWindow?.postMessage({ type: 'sq-events', ...JSON.parse(payload) }, window.location.origin)
   }, [ready, payload])
   useEffect(() => {
     if (ready) frame.current?.contentWindow?.postMessage({ type: 'sq-style', style: markers }, window.location.origin)

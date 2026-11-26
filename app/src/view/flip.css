@@ -36,7 +36,7 @@
 @media (min-width: 1000px) {
   .sq-flipmode .sq-stubs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 18px; align-items: start; }
 }
-.sq-flipmode .sq-stubs > li.sq-flip-hidden > .sq-stub { visibility: hidden; }
+.sq-flipmode .sq-stubs > li.sq-flip-hidden > .sq-edge > .sq-stub { visibility: hidden; }
 
 /* Demo-only switcher. */
 .sq-layout-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 16px; font: 600 13px var(--font-sans, 'Urbanist Variable', system-ui, sans-serif); color: #5b4b45; }
@@ -58,8 +58,8 @@
 
 /* A hint that the card turns down: pointing at it tips its top edge back a little. */
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .sq-flipmode .sq-stubs > li > .sq-stub { transition: transform .35s cubic-bezier(.3,1.4,.5,1), box-shadow .35s; transform-origin: 50% 100%; }
-  .sq-flipmode .sq-stubs > li > .sq-stub:hover { transform: perspective(700px) rotateX(9deg); box-shadow: 0 8px 12px -8px rgba(48, 36, 33, .35); }
+  .sq-flipmode .sq-stubs > li > .sq-edge > .sq-stub { transition: transform .35s cubic-bezier(.3,1.4,.5,1), box-shadow .35s; transform-origin: 50% 100%; }
+  .sq-flipmode .sq-stubs > li > .sq-edge > .sq-stub:hover { transform: perspective(700px) rotateX(9deg); box-shadow: 0 8px 12px -8px rgba(48, 36, 33, .35); }
 }
 .sq-flip[data-axis='X'] { perspective: 3200px; }
 .sq-flip-running-x { clip-path: inset(-2px -80px 0 -80px); }

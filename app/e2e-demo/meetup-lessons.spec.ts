@@ -3,21 +3,23 @@ import { open } from './helpers'
 
 // Nov 24: learn from Meetup's map and "friends going", without letting anyone stalk anyone.
 
+// Nov 25: Discover's own List/Map switch is gone. There is one campus map, on the Map tab, and Discover's
+// "See these on the map" link opens it with "Fits my free time" on. The filter has its own spec (map-fit-filter).
 async function mapFrame(page: Page) {
-  const frame = page.frameLocator('.sq-disc-map-frame')
+  const frame = page.frameLocator('.sq-map-frame')
   await expect(frame.locator('canvas').first()).toBeVisible()
   // Look the frame up on every poll: the iframe can still be navigating when the canvas shows,
   // and window.__map is set by a script that runs after first paint.
-  const discoverFrame = () => page.frames().find(f => f.url().includes('mode=discover'))
+  const theFrame = () => page.frames().find(f => f.url().includes('map/index.html'))
   await expect.poll(async () => {
-    const f = discoverFrame()
+    const f = theFrame()
     return f ? f.evaluate('Boolean(window.__map && window.__map.EV && window.__map.EV.ready)').catch(() => false) : false
   }, { timeout: 15_000 }).toBe(true)
-  return discoverFrame()!
+  return theFrame()!
 }
 
 for (const width of [390, 1280]) {
-  test(`Discover map shows only the events that fit, and a marker opens its card (${width}px)`, async ({ page }) => {
+  test(`from Discover, the map shows only the events that fit, and a marker opens its card (${width}px)`, async ({ page }) => {
     await open(page, 'discover', width)
     await expect(page.locator('.sq-mbar-busy').first()).toBeAttached()
     const everything = await page.locator('[data-flip-id]').count()
@@ -27,11 +29,14 @@ for (const width of [390, 1280]) {
     const listed = await page.locator('[data-flip-id]').evaluateAll(els => els.map(e => e.getAttribute('data-flip-id')))
     expect(listed.length).toBeGreaterThan(0)
 
-    await page.getByRole('button', { name: 'Map', exact: true }).click()
-    await expect(page.locator('.sq-board')).toBeHidden()
+    await page.getByRole('link', { name: 'See these on the map' }).click()
+    await expect(page.locator('.sq-tab-map')).toHaveAttribute('aria-current', 'page')
     const frame = await mapFrame(page)
-    const sent = await frame.evaluate('__map.EV.list.map(e => e.id)') as string[]
-    expect(sent.sort()).toEqual([...listed].sort())
+    await expect(frame.getByRole('button', { name: 'Fits my free time' })).toHaveAttribute('aria-pressed', 'true')
+    // Every event is sent. Only the ones that fit are on show.
+    const shown = await frame.evaluate('__map.EV.list.map(e => e.id)') as string[]
+    expect(shown.sort()).toEqual([...listed].sort())
+    expect(await frame.evaluate('__map.EV.all.length')).toBeGreaterThan(listed.length)
 
     // Find a marker for a single event and tap it.
     await expect.poll(() => frame.evaluate('(__map.MK.plan || []).some(m => !m.dot && m.v.l.length === 1)')).toBe(true)
@@ -44,18 +49,24 @@ for (const width of [390, 1280]) {
     await expect.poll(async () => { const now = JSON.stringify(await readTarget()); const still = now === last; last = now; return still },
       { intervals: [250] }).toBe(true)
     const target = await readTarget()
-    await page.frameLocator('.sq-disc-map-frame').locator('canvas').first().click({ position: { x: target.x, y: target.y } })
+    await page.frameLocator('.sq-map-frame').locator('canvas').first().click({ position: { x: target.x, y: target.y } })
+    await expect(page).toHaveURL(/#discover$/)
     await expect(page.locator('.sq-board')).toBeVisible()
     await expect(page.locator('#sq-detail-title')).toHaveText(target.title)
   })
 }
 
-test('the map key in Discover names the ink marker for events that fit', async ({ page }) => {
+test('the map key names the ink marker: events that fit with the filter on, other events with it off', async ({ page }) => {
   await open(page, 'discover', 1280)
-  await page.getByRole('button', { name: 'Map', exact: true }).click()
+  await page.getByRole('button', { name: /^Mark busy, Today/ }).first().click()
+  await page.getByRole('link', { name: 'See these on the map' }).click()
   const frame = await mapFrame(page)
   await frame.locator('#legendBtn').click()
   await expect(frame.locator('.legend')).toContainText('Fits your free time')
+  await expect(frame.locator('.legend')).not.toContainText('Other events')
+  await frame.getByRole('button', { name: 'Fits my free time' }).click()
+  await expect(frame.locator('.legend')).toContainText('Other events')
+  await expect(frame.locator('.legend')).not.toContainText('Fits your free time')
 })
 
 test('friends going: names only from your own groups, never from a group that only invited you', async ({ page }) => {

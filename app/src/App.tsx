@@ -3,6 +3,7 @@ import { postFoodNotice, presentFoodNotices, presentLeaveNotes, presentStretchAd
 import { isEventTag, type EventTag } from './controller/tags'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MapView } from './view/MapView'
+import { MAP_FITS_ROUTE } from './controller/presentMap'
 import type { EventCategorySelection } from './controller/presentScreens'
 import { CATALOG_RECOVERY_CONFIRMATION, connectBrowserEventCatalog, localCatalogDamaged, recoverLocalCatalog, type ConnectedCatalog } from './controller/postEvent'
 import { DiscoverView, SideQuestHeader, useDiscoverScreen } from './view/DiscoverView'
@@ -27,7 +28,8 @@ import type { GroupFit } from './view/Social'
 // demo.tsx's dynamic import, so the shipped app never bundles it.
 import type { DesignReviewKit } from './view/DesignReview'
 import { QuietContext } from './view/quietContext'
-import { addBusy, dayTime, fillGap, freeMinutesBetween, freeWindows, hasTold, paintMarks, presentMarks, reshapeBusy, type FreeMarks, type When } from './controller/freeMarks'
+import { trackInputModality } from './view/inputModality'
+import { addBusy, editBusy, dayTime, fillGap, freeMinutesBetween, freeWindows, hasTold, paintMarks, presentMarks, reshapeBusy, type FreeMarks, type When } from './controller/freeMarks'
 import { BUSY_CLEARED_TEXT, storageNotice } from './controller/planFeedback'
 import type { MarkerProps } from './view/DiscoverView'
 import { addPostedId, readPostedIds } from './controller/myPosts'
@@ -71,7 +73,7 @@ const discoverDayFromHash = () => {
   return m ? m[1] : null
 }
 const pageFromHash = () => {
-  if (window.location.hash === '#map' || window.location.hash.startsWith('#map/') || window.location.hash.startsWith('#walk/')) return 'map'
+  if (window.location.hash === '#map' || window.location.hash === MAP_FITS_ROUTE || window.location.hash.startsWith('#map/') || window.location.hash.startsWith('#walk/')) return 'map'
   if (window.location.hash === '#schedule' || window.location.hash.startsWith('#day/')) return 'schedule'
   if (window.location.hash === '#someday') return 'someday'
   if (window.location.hash === '#groups') return 'groups'
@@ -99,6 +101,8 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   groupSession?: VerifiedGroupSession
   emailAuth?: GroupEmailAuthFlow
 } = {}) {
+  // keyboard focus rings only after keyboard use (see inputModality.ts)
+  useEffect(() => trackInputModality(), [])
   const [connection] = useState(() => catalog ?? connectBrowserEventCatalog({}))
   const [page, setPage] = useState(pageFromHash)
   const look = designReview || quiet
@@ -152,7 +156,8 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
       setMarks({})
       setNotice({ key: `busy-cleared-${Date.now()}`, text: BUSY_CLEARED_TEXT, undo: () => setMarks(before) })
     } : null,
-    onMode: mode => { setShowAll(false); busyMarks.setMode(mode) },
+    // Nov 25, Cyn: "just keep the busy one". The Busy/Free switch is no longer offered (onMode left out).
+    onEditBusy: (r, start, end) => { const next = editBusy({ ...drawInput, date: markModel.date }, r, start, end); if (next) setDrawn(next); return next !== null },
     social: designReview,
   }
   const [eventTags, setEventTags] = useState<EventTag[]>([])
@@ -283,7 +288,15 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
 
   const content = page === 'map' ? (
         <MapView routes={routes} plannedCount={plans.schedule.ids.length} events={events.events}
-          plannedIds={plans.schedule.ids} postedIds={postedIds} focus={mapFocus} walk={mapWalk} now={now?.() ?? new Date()} onOpenEvent={openFromMap} designReview={designReview} />
+          plannedIds={plans.schedule.ids} postedIds={postedIds} focus={mapFocus} walk={mapWalk} now={now?.() ?? new Date()} designReview={designReview}
+          // The map's "Fits my free time" filter reads the same free stretches Discover filters by.
+          free={look && hasTold(markInput) ? freeWindows(markInput) : null} fitAsked={window.location.hash === MAP_FITS_ROUTE}
+          onOpenEvent={id => {
+            // The map can show events Discover is not listing just now (outside your free time, or another
+            // category). Discover then lists everything, so the event that was tapped always opens.
+            if (!discover.days.some(day => day.events.some(stub => stub.id === id))) { setShowAll(true); setCategory('all'); setEventTags([]) }
+            openFromMap(id)
+          }} />
       ) : page === 'schedule' ? (
         <ScheduleTrailView screen={schedule} routes={routes} accountStorage={Boolean(personalStore)} now={now?.() ?? new Date()} focusId={dayFocus}
           onPlan={id => { void plans.add(id) }}

@@ -76,10 +76,11 @@ for (const width of [390, 1280]) {
     await open(page, 'post', width)
     const group = page.getByRole('group', { name: /GOOD TO KNOW/ })
     await expect(group.getByRole('checkbox')).toHaveCount(4)
-    const label = page.locator('.sq-post-tag').first()
+    // Scoped to this group: "How to attend" (Nov 25) uses the same strips for its two choices.
+    const label = group.locator('.sq-post-tag').first()
     expect((await label.boundingBox())!.height).toBeGreaterThanOrEqual(44)
     await group.getByRole('checkbox', { name: 'Free food' }).check()
-    await expect(page.locator('.sq-post-tag.sq-on')).toHaveCount(1)
+    await expect(group.locator('.sq-post-tag.sq-on')).toHaveCount(1)
     await noSidewaysScroll(page)
   })
 }

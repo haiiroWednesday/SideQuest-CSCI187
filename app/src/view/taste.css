@@ -211,3 +211,13 @@ button.sq-stub:focus-visible, .sq-stub > button:focus-visible, .sq-stub[tabindex
 .sq-fr-groups li button > span:not(.sq-fr-faces) { font: 650 14px/1.3 var(--font-sans); white-space: normal; }
 
 .sq-fr-groups .sq-fr-invited-tag { font-weight: 650; }
+
+/* Nov 25: no keyboard focus ring after a click or tap (Safari drew one around "SAT 28"). See inputModality.ts. */
+:root[data-input="pointer"] :focus-visible,
+:root[data-input="pointer"] :focus-visible *,
+:root[data-input="pointer"] :focus-visible::before,
+:root[data-input="pointer"] :focus-visible::after { outline: none !important; }
+
+/* Nov 25: "5 going" sat on the same line as My day / Walk there when an event had no description. It is a
+   fact about the event, so it gets its own line under the place, and the ways onward start a new row. */
+.sq-sticker-body > .sq-going { display: flex; width: 100%; margin: 10px 0 0; }

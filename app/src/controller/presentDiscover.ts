@@ -6,8 +6,8 @@ import { findEvents } from './findEvents'
 import { EVENT_TAGS, hasAllTags, type EventTag } from '../model/eventTags'
 import { campusNow } from '../model/eventCatalog'
 import { byTime, groupDays, toStub, type ScreenEvent, type FreeWindow, type FreeWindowModel, type DiscoverScreen, type NearMissModel } from './screenModels'
-import { fitSpan } from '../model/fitMark'
-import { missText, presentFitMark } from './presentFitMark'
+import { fitSpan, minutesShort, sharedOf } from '../model/fitMark'
+import { dropInMissText, missText, presentFitMark } from './presentFitMark'
 
 // ---------- Discover
 
@@ -130,21 +130,25 @@ export function presentDiscover(input: {
 
 /** "3 events fit your free time", or, when nothing fits, the nearest miss in one plain line:
  *  "Nothing fits. Climbing Club Intro runs 35 min over." Only events that overlap a free
- *  stretch can be near; the one with the fewest minutes outside it is named. */
+ *  stretch can be near; the one that needs the fewest extra free minutes is named. For a set-time
+ *  event that is every minute outside the stretch. A drop-in event only needs enough to stop by:
+ *  "Nothing fits. Volunteer fair shares only 15 min with your free time." */
 export function fitLineFor(events: readonly ScreenEvent[], count: number, windows: readonly { date: string; start: string; end: string }[]): string {
   if (count === 1) return '1 event fits your free time'
   if (count > 1) return `${count} events fit your free time`
   // The Model measures each event against its nearest free stretch. The same numbers draw the fit mark.
-  let best: { title: string; early: number; over: number; start: number } | null = null
+  let best: { title: string; miss: number; start: number; how: string } | null = null
   for (const event of events) {
     const span = fitSpan(event, windows)
-    if (!span) continue
-    const { early, over, eventStart: start } = span
-    const miss = early + over
-    if (!best || miss < best.early + best.over || (miss === best.early + best.over && start < best.start)) best = { title: event.title, early, over, start }
+    // The count says nothing fits, so a span that fits can only be an event the list left out.
+    if (!span || span.kind === 'fits') continue
+    const miss = minutesShort(span), start = span.eventStart
+    if (!best || miss < best.miss || (miss === best.miss && start < best.start)) {
+      best = { title: event.title, miss, start, how: span.dropIn ? dropInMissText(sharedOf(span)) : missText(span.early, span.over) }
+    }
   }
   if (!best) return 'Nothing fits your free time'
-  return `Nothing fits. ${best.title} ${missText(best.early, best.over)}.`
+  return `Nothing fits. ${best.title} ${best.how}.`
 }
 
 /** A complete window that ends before the campus clock (an earlier day, or earlier today). */

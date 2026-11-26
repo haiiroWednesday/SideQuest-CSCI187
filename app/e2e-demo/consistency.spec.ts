@@ -33,9 +33,12 @@ function read(where: Page | Frame, selector: string, parts: Parts, opened = fals
         const stub = card.querySelector(':scope > .sq-stub-time')
         has('time stub', Boolean(stub))
         has('body', Boolean(card.querySelector(':scope > .sq-stub-body')))
-        has('top bite', (pseudo(stub, '::before')?.content ?? 'none') !== 'none')
-        has('bottom bite', (pseudo(stub, '::after')?.content ?? 'none') !== 'none')
+        // Nov 25: the bites are holes in the ticket's mask now, not painted discs (ticket-cut.spec checks
+        // the pixels). Four corner cuts plus a top and a bottom bite make six round holes.
         const s = getComputedStyle(card)
+        const holes = ((s.maskImage || s.webkitMaskImage || '').match(/radial-gradient/g) ?? []).length
+        has('top bite', holes >= 6)
+        has('bottom bite', holes >= 6)
         has('cut corners', /radial-gradient/.test(s.maskImage || s.webkitMaskImage || ''))
         has('inner line', /gradient/.test(pseudo(card, '::before')?.backgroundImage ?? ''))
       }
@@ -62,7 +65,8 @@ function wordProblems(where: string, cards: Card[]) {
     if (c.words.time && !/^\d{1,2}:\d{2}$/.test(c.words.time.replace(/(am|pm)$/, ''))) out.push(`${at}: time reads "${c.words.time}"`)
     if (c.words.ampm && !/^(am|pm)$/.test(c.words.ampm)) out.push(`${at}: am/pm reads "${c.words.ampm}"`)
     if (c.words.end && !/^to \d{1,2}:\d{2}(am|pm)$/.test(c.words.end)) out.push(`${at}: end reads "${c.words.end}"`)
-    if (c.words.duration && !/^(\d+ hr)?( ?\d+ min)?$/.test(c.words.duration)) out.push(`${at}: length reads "${c.words.duration}"`)
+    // A drop-in event (Nov 25) says "Drop in" where a set-time event says its length.
+    if (c.words.duration && !/^(\d+ hr)?( ?\d+ min)?$/.test(c.words.duration) && c.words.duration !== 'Drop in any time') out.push(`${at}: length reads "${c.words.duration}"`)
     if (c.bookmark !== null && c.bookmark !== 'In My Schedule') out.push(`${at}: bookmark says "${c.bookmark}"`)
     out.push(...c.structure.map(s => `${at}: ${s}`))
   }
@@ -75,6 +79,8 @@ async function surfaces(page: Page, width: number) {
 
   await open(page, 'discover', width)
   await page.addStyleTag({ content: '.sq-stubs > li { content-visibility: visible !important; }' })
+  // wait for the list itself; reading straight after the page opens sometimes found no cards yet
+  await expect(page.locator('.sq-stubs .sq-stub').first()).toBeVisible()
   found.Discover = await read(page, '.sq-stubs .sq-stub', TICKET)
   const card = page.locator('.sq-stubs .sq-stub').first()
   await card.click(); await page.waitForTimeout(600)

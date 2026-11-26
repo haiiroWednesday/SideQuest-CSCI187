@@ -31,13 +31,14 @@ import './materials.css'
 import './card-fit.css'
 import { CategoryFilters } from './CategoryFilters'
 import { AiDiscoverPanel } from './AiDiscoverPanel'
+import { QuietDayName } from './QuietDayName'
 import type { EventCategorySelection } from '../controller/presentScreens'
 import { useMobileDetailFocus, usePhoneViewport } from './useMobileDetailFocus'
 import { FlipCard, boxOf, slideOthers, snapCards, type Box } from './FlipCard'
 import { readDiscoverLayout, saveDiscoverLayout, type DiscoverLayout } from '../controller/viewPreferences'
-import { presentFitMap } from '../controller/presentMap'
+import { MAP_FITS_ROUTE } from '../controller/presentMap'
 import { useInboxCount } from './Social'
-import { DiscoverMap } from './DiscoverMap'
+import './fit-map-link.css'
 import { GoingFaces, useGoing } from './FriendsGoing'
 import { FitMark } from './FitMark'
 import { withFitMarks } from '../controller/presentFitMark'
@@ -167,6 +168,8 @@ export type MarkerProps = {
   onUnbusy: (run: Pick<MarkRun, 'first' | 'last'>) => void
   /** A drag on the day bar. `from` is the busy stretch that was picked up, or null for a new one. */
   onReshape: (from: { first: number; last: number } | null, first: number, last: number) => void
+  /** Typed new times for one busy time. */
+  onEditBusy?: (run: MarkRun, start: string, end: string) => boolean
   /** "Show all events": stop filtering by free time, keep every mark. */
   onClear: (() => void) | null
   /** "Clear busy time": remove all busy marks (with Undo). */
@@ -208,7 +211,10 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
       <span className="sq-stub-time">
         <b>{stub.start.time}<i>{stub.start.ampm}</i></b>
         <small>to {stub.endText}</small>
-        <em>{durationParts(stub.durationText).map((part, i) => <Fragment key={i}>{i ? ' ' : ''}<span className="sq-dur-part">{part}</span></Fragment>)}</em>
+        {/* A drop-in event says so where a set-time event says its length, in the same type. */}
+        <em>{stub.dropIn
+          ? <span className="sq-dur-part">{stub.dropIn.label}<span className="sq-visually-hidden"> any time</span></span>
+          : durationParts(stub.durationText).map((part, i) => <Fragment key={i}>{i ? ' ' : ''}<span className="sq-dur-part">{part}</span></Fragment>)}</em>
       </span>
       <BodyTag className="sq-stub-body">
         {dated && <span className="sq-stub-date">{stub.dayLabel ?? stub.dateText}</span>}
@@ -228,20 +234,19 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
       {face && !compact && <span className={`sq-stub-stamp sq-stamp-${stampFormatFor(stub.title)}`} aria-hidden="true"><span className="sq-stamp-paper"><Greetings location={stub.location} format={stampFormatFor(stub.title)} /></span></span>}
     </>
   )
+  // The grey outline is a filter on this wrapper. It traces only the ticket, never text placed beside it.
   return onSelect ? (
-    <button type="button" className={classes} style={catStyle} aria-pressed={selected} aria-label={`View details for ${stub.title}${extraLabel ? `. ${extraLabel}` : ''}`} aria-describedby={stub.fitMark ? fitId : undefined} onClick={onSelect}>{body}</button>
+    <span className="sq-edge"><button type="button" className={classes} style={catStyle} aria-pressed={selected} aria-label={`View details for ${stub.title}${stub.dropIn ? `, ${stub.dropIn.name}` : ''}${extraLabel ? `. ${extraLabel}` : ''}`} aria-describedby={stub.fitMark ? fitId : undefined} onClick={onSelect}>{body}</button></span>
   ) : (
-    <div className={classes} style={catStyle}>{body}</div>
+    <div className="sq-edge"><div className={classes} style={catStyle}>{body}</div></div>
   )
 }
 
 export function DayBubble({ dow, dayNumber, monthTag }: { dow: string; dayNumber: number; monthTag: string | null }) {
-  // The heading beside the leaf names the day, so the short design shows only the number,
-  // and the month only where it changes.
-  const quiet = useQuiet()
+  // Nov 25, Cyn: bring back M2's weekday above the number ("I like it"). The month shows only where it changes.
   return (
     <div className="sq-bubble" aria-hidden="true">
-      {!quiet && <small>{dow}</small>}<b>{dayNumber}</b>{monthTag && <small className="sq-bubble-month">{monthTag}</small>}
+      <small>{dow}</small><b>{dayNumber}</b>{monthTag && <small className="sq-bubble-month">{monthTag}</small>}
     </div>
   )
 }
@@ -299,9 +304,6 @@ export function DiscoverView({
   const trigger = useRef<HTMLElement | null>(null)
   const phone = usePhoneViewport()
   const [layout, setLayout] = useState<DiscoverLayout>(() => readDiscoverLayout())
-  // Design review: Discover as a list or as a map of what fits (Nov 24, learning from Meetup's map).
-  const [view, setView] = useState<'list' | 'map'>('list')
-  const showMap = Boolean(marker) && view === 'map'
   const flip = layout !== 'panel'
   const [flipFrom, setFlipFrom] = useState<Box | null>(null)
   const [closing, setClosing] = useState(false)
@@ -405,25 +407,12 @@ export function DiscoverView({
   // A pick or a food notice opens its card in the list, like a tap on the map does.
   const openListed = (id: string) => {
     if (!stubs.some(s => s.id === id)) return
-    setView('list')
     openRef.current(id, null)
     requestAnimationFrame(() => document.querySelector(`[data-flip-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'center' }))
   }
-  // A marker tapped on the map: back to the list with that card open and in view.
-  const fromMap = useRef<string | null>(null)
-  const openFromMap = useCallback((id: string) => {
-    if (!stubs.some(s => s.id === id)) return
-    fromMap.current = id
-    setView('list')
-    openRef.current(id, null)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen])
-  useEffect(() => {
-    if (view !== 'list' || !fromMap.current) return
-    const id = fromMap.current; fromMap.current = null
-    requestAnimationFrame(() => document.querySelector(`[data-flip-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'center' }))
-  }, [view])
-  const mapRows = showMap ? presentFitMap(screen.days) : []
+  // There is one campus map, on the Map tab (owner decision, Nov 25). Discover used to carry a List/Map
+  // switch with its own copy. Now a link takes the events that fit there, with "Fits my free time" on.
+  const someFit = stubs.some(stub => stub.fit === 'fits')
   // Arriving with a pick (from the map): bring its card into view on wide screens.
   useEffect(() => {
     if (!openId || phone) return
@@ -464,17 +453,13 @@ export function DiscoverView({
           }} />
         </div>}
 
-        {marker && ready && screen.count > 0 && (
-          <div className="sq-viewswitch" role="group" aria-label="Show events as" inert={modal || undefined}>
-            <button type="button" aria-pressed={view === 'list'} onClick={() => setView('list')}>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M3.5 6h.5M3.5 12h.5M3.5 18h.5" /></svg>List</button>
-            <button type="button" aria-pressed={view === 'map'} onClick={() => setView('map')}>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5l5.5-2.5 7 2.5 5.5-2.5v13.5l-5.5 2.5-7-2.5L3 20z M8.5 4v13.5 M15.5 6.5V20" /></svg>Map</button>
-          </div>
+        {marker && ready && someFit && routes?.map && (
+          <p className="sq-look-links sq-fit-map-links" inert={modal || undefined}>
+            <a className="sq-look-link sq-fit-map-link" href={MAP_FITS_ROUTE}>See these on the map</a>
+          </p>
         )}
-        {showMap && ready && screen.count > 0 && <DiscoverMap rows={mapRows} onOpenEvent={openFromMap} />}
 
-        <div className={`sq-board${flip ? ' sq-flipmode' : ''}`} hidden={(showMap && ready && screen.count > 0) || undefined}>
+        <div className={`sq-board${flip ? ' sq-flipmode' : ''}`}>
           <section inert={modal || undefined} className="sq-results" aria-labelledby="sq-events-heading">
             <h2 id="sq-events-heading" className="sq-visually-hidden">{screen.headingText}</h2>
             {layoutSwitcher && (
@@ -511,7 +496,7 @@ export function DiscoverView({
                 {screen.days.map(day => (
                   <section key={day.date} aria-label={day.long} className={`sq-trail-day${day.isToday ? ' sq-today' : ''}`}>
                     <DayBubble dow={day.dow} dayNumber={day.dayNumber} monthTag={day.monthTag} />
-                    <h3 className="sq-day" id={`sq-day-${day.date}`}>{quiet ? <span className="sq-quiet-day">{shortDay(day.tag, day.long)}</span> : <><span>{day.tag}</span>{day.long}</>}</h3>
+                    <h3 className="sq-day" id={`sq-day-${day.date}`}>{quiet ? <QuietDayName tag={day.tag} long={day.long} /> : <><span>{day.tag}</span>{day.long}</>}</h3>
                     <ol className="sq-stubs">
                       {day.events.map(stub => {
                         const isOpen = openFlipId === stub.id

@@ -200,19 +200,19 @@
 .sq-mbar-busy { cursor: default; }
 .sq-mbar-wrap:has(.sq-mbar-dragging) .sq-mbar-label { opacity: 0; }
 
-/* Timeline beads (Cyn, Nov 24): the day picker's gold thread turned vertical.
-   Flat beads, no shading: today is the gold bead with the maroon star, other days are cream. */
+/* Day circles down the list. Flat, no shading. Colours are M2's (see below). */
 /* The line joining the days is the MVP's dotted trail; today's gold bead sits on it. */
-:root[data-quiet] .sq-trail::before { border-left: 3px dotted var(--sq-red, #a32035) !important; width: 0; background: none; opacity: .5 !important; }
-:root[data-quiet] .sq-trail .sq-bubble { border-radius: 50% !important; background: #fffaf2 !important; color: var(--sq-ink) !important;
-  box-shadow: inset 0 0 0 1.4px rgba(48, 36, 33, .35), 0 0 0 6px var(--sq-paper) !important; outline: 0 !important;
+:root[data-quiet] .sq-trail::before { border-left: 4px dotted var(--sq-red, #a32035) !important; width: 0; background: none; opacity: .55 !important; } /* M2's dot size (Nov 25) */
+:root[data-quiet] .sq-trail .sq-bubble { border-radius: 50% !important; background: var(--sq-gold, #e8aa24) !important; color: #3a2408 !important;
+  box-shadow: none !important; outline: 0 !important;
   -webkit-mask: none !important; mask: none !important; transform: none !important; padding-top: 2px !important; overflow: visible; }
-:root[data-quiet] .sq-trail .sq-trail-day.sq-today .sq-bubble { background: var(--sq-gold, #e8aa24) !important; color: #5a1020 !important;
-  box-shadow: 0 0 0 6px var(--sq-paper) !important; }
-:root[data-quiet] .sq-trail .sq-trail-day.sq-today .sq-bubble::after { content: ""; position: absolute; right: -2px; top: -4px; width: 17px; height: 17px;
-  background: var(--sq-red-deep, #751728); clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); }
+/* Nov 25, Cyn: "I still prefer the M2 design where today is maroon and the other days are gold." Today's
+   maroon also matches the maroon TODAY tab in the day picker. The cream circles and the star are retired. */
+:root[data-quiet] .sq-trail .sq-trail-day.sq-today .sq-bubble { background: var(--sq-red-deep, #751728) !important; color: #fffaf2 !important;
+  box-shadow: none !important; }
+:root[data-quiet] .sq-trail .sq-trail-day.sq-today .sq-bubble::after { content: none; }
 :root[data-quiet] .sq-trail .sq-bubble b { font: 400 26px/1 var(--font-display) !important; }
-:root[data-quiet] .sq-trail .sq-bubble-missing { background: var(--sq-paper) !important; box-shadow: inset 0 0 0 1.6px var(--sq-rule-strong, #b9a99a), 0 0 0 6px var(--sq-paper) !important; }
+:root[data-quiet] .sq-trail .sq-bubble-missing { background: var(--sq-paper) !important; box-shadow: inset 0 0 0 1.6px var(--sq-rule-strong, #b9a99a) !important; }
 
 /* Busy/Free switch on the day bar (Nov 25): a plain text toggle, the chosen side inked and underlined. No pills. */
 .sq-markmode { display: flex; gap: 2px; margin: 0 0 6px; font: 600 15px var(--font-sans); }
@@ -230,3 +230,21 @@
 .sq-busy-form .sq-busy-add.sq-busy-add-small { min-width: 56px; padding-left: 14px; padding-right: 14px; font-size: 15px; }
 .sq-busy-error { margin-top: 6px; }
 @media (max-width: 760px) { .sq-busy-row .sq-busy-form-name { display: none; } }
+
+/* Nov 25: typing sits under the bar; each busy time is a row whose times you can tap to change. */
+.sq-marks-left .sq-busy-form { margin: 14px 0 0; max-width: 520px; }
+.sq-busy-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; max-width: 520px; }
+.sq-busy-time { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sq-busy-time > .sq-key-mine { flex: none; width: 22px; height: 14px; margin-right: 4px; }
+.sq-busy-time .sq-pick { flex: 1 1 0; min-width: 0; }
+.sq-busy-time .sq-pick-btn { width: 100%; min-width: 0; padding: 0 8px; }
+.sq-busy-time .sq-busy-error { flex-basis: 100%; margin: 0; }
+.sq-busy-time .sq-slip-x { flex: none; min-width: 50px; min-height: 50px; border: 0; background: none; cursor: pointer; font: 400 26px/50px var(--font-sans); color: var(--sq-muted); }
+.sq-busy-time .sq-slip-x:hover { color: var(--sq-red-deep, #751728); }
+.sq-busy-time .sq-slip-x:focus-visible { outline: 3px solid var(--sq-focus, #751728); outline-offset: -4px; }
+
+/* The circle holds the weekday and the number again (M2). Sized so neither touches the rim. */
+:root[data-quiet] .sq-trail .sq-bubble { align-content: center; row-gap: 1px; padding-top: 0 !important; }
+:root[data-quiet] .sq-trail .sq-bubble small { font: 800 9px/1 var(--font-sans) !important; letter-spacing: .1em; }
+:root[data-quiet] .sq-trail .sq-bubble b { font: 400 22px/1 var(--font-display) !important; }
+@media (min-width: 761px) { :root[data-quiet] .sq-trail .sq-bubble small { font-size: 11px !important; } :root[data-quiet] .sq-trail .sq-bubble b { font-size: 30px !important; } }

@@ -3,6 +3,7 @@
 // Historical M1 event data remains in events.ts for existing browser records.
 import { isValidDate, toMinutes } from './events'
 import { isEventSource, isTagSource, normalizeTags, TAG_ERROR, type EventSource, type EventTag, type TagSource } from './eventTags'
+import { ATTEND_ERROR, isAttendMode, type AttendMode } from './attend'
 
 export type CampusEvent = {
   id: string
@@ -28,6 +29,9 @@ export type CampusEvent = {
   tagsBy?: TagSource
   /** Where the event came from; absent means a host posted it in SideQuest. */
   source?: EventSource
+  /** How to attend, set by the host on Post: 'set' (be there for all of it) or 'dropin' (stop by
+   *  any time). Absent means 'set', which is what every event from before this field means. */
+  attend?: AttendMode
 }
 
 export const HOST_KINDS = ['student-org', 'department'] as const
@@ -142,7 +146,7 @@ export type CatalogFieldErrors = Partial<Record<keyof EventDraft, string>>
 // The order in which fields are checked. It is also the order of the form.
 // The seven fields every stored event has. Organizer, contact and the space check follow them in the form.
 export const BASE_FIELD_ORDER = ['title', 'hostName', 'description', 'location', 'date', 'start', 'end'] as const
-export const DRAFT_FIELD_ORDER: readonly (keyof EventDraft)[] = [...BASE_FIELD_ORDER, 'hostKind', 'organizer', 'contact', 'spaceConfirmed', 'tags']
+export const DRAFT_FIELD_ORDER: readonly (keyof EventDraft)[] = [...BASE_FIELD_ORDER, 'attend', 'hostKind', 'organizer', 'contact', 'spaceConfirmed', 'tags']
 
 export function trimDraft(draft: EventDraft): EventDraft {
   return {
@@ -164,6 +168,8 @@ export function trimDraft(draft: EventDraft): EventDraft {
     ...(draft.tags !== undefined ? { tags: draft.tags } : {}),
     // A post can only ever be tagged by its host; reviewer tags come from the import pipeline.
     ...(draft.tags !== undefined ? { tagsBy: 'host' as const } : {}),
+    // Kept as given; catalogDraftErrors() refuses anything but the two known values.
+    ...(draft.attend !== undefined ? { attend: draft.attend } : {}),
   }
 }
 
@@ -196,6 +202,7 @@ export function catalogDraftErrors(draft: EventDraft): CatalogFieldErrors {
   }
   if (trimmed.tags !== undefined && normalizeTags(trimmed.tags) === null) errors.tags = TAG_ERROR
   if (trimmed.hostKind !== undefined && !isHostKind(trimmed.hostKind)) errors.hostKind = 'Choose who hosts the event.'
+  if (trimmed.attend !== undefined && !isAttendMode(trimmed.attend)) errors.attend = ATTEND_ERROR
   return errors
 }
 
@@ -216,6 +223,7 @@ export function isCatalogEvent(value: unknown): value is CampusEvent {
   for (const field of ACCESS_FIELDS) if (event[field] !== undefined && typeof event[field] !== 'string') return false
   if (event.tags !== undefined && normalizeTags(event.tags) === null) return false
   if (event.hostKind !== undefined && !isHostKind(event.hostKind)) return false
+  if (event.attend !== undefined && !isAttendMode(event.attend)) return false
   return firstFieldError(catalogDraftErrors(event as EventDraft)) === null
 }
 
@@ -356,6 +364,9 @@ export type EventRow = {
   tags_by?: string | null
   /** Set by the import pipeline (PR #86); absent on events posted in SideQuest. */
   source?: string | null
+  /** 'dropin', or null/absent for an event that starts at a set time
+   *  (supabase/proposals/20261126000000_event_attend_REVIEW_ONLY.sql, review only). */
+  attend?: string | null
 }
 
 export type NewEventRow = Omit<EventRow, 'id'>
@@ -389,6 +400,8 @@ export function toEventRow(draft: EventDraft): NewEventRow {
     ...(draft.hostKind !== undefined ? { host_kind: draft.hostKind } : {}),
     ...(draft.tags !== undefined && normalizeTags(draft.tags)?.length ? { tags: normalizeTags(draft.tags)!, tags_by: draft.tagsBy ?? 'host' } : {}),
     ...(draft.contact ? { contact: draft.contact } : {}),
+    // Only a drop-in event writes the column. A set-time event stays NULL, like every older row.
+    ...(draft.attend === 'dropin' ? { attend: 'dropin' } : {}),
   }
 }
 
@@ -416,6 +429,8 @@ export function fromEventRow(row: EventRow): CampusEvent {
     // An unknown tag from storage is dropped rather than shown; the rest stay.
     ...rowTags(row.tags, row.tags_by),
     ...(isEventSource(row.source) ? { source: row.source } : {}),
+    // Anything but a stored 'dropin' reads as a set-time event, the strict rule.
+    ...(row.attend === 'dropin' ? { attend: 'dropin' as const } : {}),
   }
 }
 

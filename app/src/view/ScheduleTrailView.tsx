@@ -9,6 +9,7 @@ import { NowMark } from './Marks'
 import { QuietTop } from './EventDetailContent'
 import { EventPicture } from './EventPicture'
 import { PostcardPrompt } from './PostcardPrompt'
+import { QuietDayName } from './QuietDayName'
 import { DayBubble, EventStub, SideQuestHeader, useMinuteTick, type SideQuestRoutes } from './DiscoverView'
 import { shownHost } from './shownHost'
 import { titleSizeClass } from './titleSize'
@@ -200,7 +201,7 @@ export function ScheduleTrailView({ screen, accountStorage = false, onRemove, on
                       <div className="sqm-dayrow">
                         <button type="button" className="sqm-dayhead" onClick={() => openDay(day.date)}>
                           <DayBubble dow={day.dow} dayNumber={day.dayNumber} monthTag={day.monthTag} />
-                          <h3>{quiet ? <span className="sq-quiet-day">{shortDay(day.tag, day.long)}</span> : <><span>{day.tag}</span>{day.long}</>}<span className="sq-visually-hidden">, show as tickets</span></h3>
+                          <h3>{quiet ? <QuietDayName tag={day.tag} long={day.long} /> : <><span>{day.tag}</span>{day.long}</>}<span className="sq-visually-hidden">, show as tickets</span></h3>
                         </button>
                         {onRemove && day.clashes.length > 0 && (() => {
                           // Counts clashes, the way the sheet lists them, not the plans in them.
@@ -248,14 +249,14 @@ export function ScheduleTrailView({ screen, accountStorage = false, onRemove, on
                   <ol className="sq-stubs">
                     {screen.missing.map(item => (
                       <li key={item.id}>
-                        <div className="sq-stub sq-stub-missing">
+                        <div className="sq-edge"><div className="sq-stub sq-stub-missing">
                           <span className="sq-stub-time"><b>?</b></span>
                           <span className="sq-stub-body">
                             <strong>An event you planned</strong>
                             <span className="sq-by">This event is no longer available in the catalog.</span>
                             {remove(item.id, `unavailable event ${item.id}`)}
                           </span>
-                        </div>
+                        </div></div>
                       </li>
                     ))}
                   </ol>
