@@ -251,10 +251,28 @@ try {
     'Deleted participant did not invalidate confirmed plan and advance revision.')
   await denied(await directRead(b.token), 'Deleted account direct RPC')
   pass('Real Auth account deletion, FK cascade and confirmation invalidation')
+  // Preserve the existing member-deletion case, then exercise organizer
+  // deletion with a different plan that still has a live accepted member.
+  const owned = await json(await app('/api/groups', a.token, { eventId: event.id }), 201, 'Create organizer-deletion fixture')
+  const ownedPath = '/api/groups/' + owned.id
+  const ownedAction = (user, revision, action, extra = {}) => app(ownedPath + '/actions', user.token,
+    { expectedRevision: revision, action, ...extra })
+  await json(await ownedAction(a, 0, 'invite', { inviteeId: c.id }), 200, 'Invite surviving member')
+  await json(await ownedAction(c, 1, 'accept'), 200, 'Accept organizer-deletion fixture')
+  const withPending = await json(await ownedAction(a, 2, 'invite', { inviteeId: randomUUID() }), 200, 'Leave pending invitation')
+  check(withPending.participants.some(m => m.userId === c.id) && withPending.invitations.length === 1,
+    'Organizer-deletion fixture must contain both membership and invitation.')
+  await expectStatus(await app(ownedPath, c.token), 200, 'Accepted member read before organizer deletion')
   const removeOrganizer = await admin.auth.admin.deleteUser(a.id)
   check(!removeOrganizer.error, 'Disposable organizer deletion failed.')
   await denied(await directRead(a.token), 'Deleted organizer direct RPC')
-  pass('Organizer account deletion revokes access')
+  await denied(await app(ownedPath, c.token), 'Surviving member cannot read deleted plan')
+  await denied(await rpc('sidequest_group_read', c.token, { p_plan_id: owned.id }), 'Surviving member direct RPC denied')
+  const survivingList = await json(await app('/api/groups', c.token), 200, 'Surviving account remains usable')
+  check(!survivingList.some(p => p.id === owned.id), 'Deleted organizer plan remains in surviving member list.')
+  const survivingCatalog = await json(await app('/api/events'), 200, 'Public catalog after organizer deletion')
+  check(survivingCatalog.some(e => e.id === event.id), 'Organizer deletion removed the public event.')
+  pass('Organizer deletion removes group access without deleting other accounts or the event')
   // Use an actual issued access token, not a mocked expiry claim. The local
   // Auth configuration issues 180-second JWTs. Outsider C remains signed in;
   // list is accessible now, then both gateways must reject after its expiry.
