@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { MAX_GROUP_INVITEES, MAX_IF_CONDITION } from '../src/model/groupPlans'
+import { GROUP_SIZE_LIMIT, MAX_GROUP_INVITEES, MAX_IF_CONDITION } from '../src/model/groupPlans'
 
 // The SQL proposal runs independently of TypeScript. These narrow contract
 // assertions stop a release from silently changing just one implementation.
@@ -14,6 +14,10 @@ const rpc = readFileSync(
 )
 
 describe('group domain / SQL proposal parity', () => {
+  it('counts the organizer in the twelve-person limit', () => {
+    expect(GROUP_SIZE_LIMIT).toBe(12)
+    expect(MAX_GROUP_INVITEES + 1).toBe(GROUP_SIZE_LIMIT)
+  })
   it('uses the same participant capacity in the domain and SQL authorization function', () => {
     expect(rpc).toContain(`>= ${MAX_GROUP_INVITEES}`)
   })
