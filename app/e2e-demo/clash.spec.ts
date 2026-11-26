@@ -76,12 +76,10 @@ for (const width of [390, 1280]) {
       expect(b.x).toBeGreaterThan(a.x + a.width)
       const tops = (plan: Locator) => plan.locator('.sq-clash-differ dd, .sq-clash-keep').evaluateAll(els => els.map(e => Math.round(e.getBoundingClientRect().top)))
       expect(await tops(climb)).toEqual(await tops(choir))
-      await expect.poll(async () => sheet.locator('.sq-clash-plan .sq-stub').evaluateAll(cards =>
-        cards.map(card => Math.round(card.getBoundingClientRect().bottom)),
-      )).toEqual(await choir.locator('.sq-stub').evaluate(card => {
-        const bottom = Math.round(card.getBoundingClientRect().bottom)
-        return [bottom, bottom]
-      }))
+      await expect.poll(() => sheet.locator('.sq-clash-plan .sq-stub').evaluateAll(cards => {
+        const bottoms = cards.map(card => Math.round(card.getBoundingClientRect().bottom))
+        return Math.max(...bottoms) - Math.min(...bottoms)
+      })).toBe(0)
     } else {
       expect(Math.abs(a.x - b.x)).toBeLessThan(2)
       expect(b.y).toBeGreaterThanOrEqual(a.y + a.height)
