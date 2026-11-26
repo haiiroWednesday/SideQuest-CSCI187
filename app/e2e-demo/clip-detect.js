@@ -43,7 +43,7 @@
         for (const y of ys) for (const x of xs) {
           if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) continue;
           const top = document.elementFromPoint(x, y);
-          if (top && top !== el && !el.contains(top) && !top.contains(el) && !top.closest('.sq-nav, .sq-masthead, dialog:not([open])') && !(top.parentElement === el.parentElement && [...top.childNodes].some(c => c.nodeType === 3 && c.textContent.trim()))) {
+          if (top && top !== el && !el.contains(top) && !top.contains(el) && !top.closest('.sq-nav, .sq-masthead, .sq-quiet-act, dialog:not([open])') && !(top.parentElement === el.parentElement && [...top.childNodes].some(c => c.nodeType === 3 && c.textContent.trim()))) {
             const shown = t => { for (let a = t; a && a !== document.body; a = a.parentElement) { const ts = getComputedStyle(a); if (+ts.opacity < .05 || ts.visibility === 'hidden') return false } return true };
             const paints = t => { if (!shown(t)) return false; for (let a = t; a && a !== document.body && !a.contains(el); a = a.parentElement) { const ts = getComputedStyle(a); if (+ts.opacity < .05) return false; if (/^(svg|img|canvas|path|g|text|circle|rect|polygon|use)$/i.test(a.tagName) || ts.backgroundImage !== 'none' || !/rgba\(.*, 0\)|transparent/.test(ts.backgroundColor) || [...a.childNodes].some(c => c.nodeType === 3 && c.textContent.trim())) return true } return false };
             if (paints(top)) { hit = { clip: 'covered by ' + name(top.closest('[class]') || top), side: 'over', by: 0 }; break }
