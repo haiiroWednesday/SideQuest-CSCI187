@@ -55,7 +55,7 @@ async function clippedOrCovered(page: Page, scope: string) {
       const top = document.elementFromPoint(x, y)
       const tcs = top ? getComputedStyle(top) : null
       const invisible = !!tcs && (tcs.backgroundColor === 'rgba(0, 0, 0, 0)' || tcs.opacity === '0') && !top!.textContent!.trim() && tcs.backgroundImage === 'none'
-      if (top && !invisible && top !== el && !el.contains(top) && !top.contains(el) && !top.closest('.sq-nav, header, .sq-masthead') && !el.closest('.sq-nav, header')) bad.push('covered: ' + el.textContent!.trim().slice(0, 30) + ' by ' + (top.className || top.tagName))
+      if (top && !invisible && top !== el && !el.contains(top) && !top.contains(el) && !top.closest('.sq-nav, header, .sq-masthead, .sq-quiet-act') && !el.closest('.sq-nav, header')) bad.push('covered: ' + el.textContent!.trim().slice(0, 30) + ' by ' + (top.className || top.tagName))
     }
     return bad
   }, scope)

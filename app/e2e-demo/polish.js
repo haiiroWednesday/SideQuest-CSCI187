@@ -147,6 +147,7 @@
       const A = flat[i], B = flat[j]
       if (A.el === B.el || A.el.contains(B.el) || B.el.contains(A.el)) continue
       if (A.el.closest(allowPic) || B.el.closest(allowPic)) continue
+      if (!!A.el.closest('.sq-quiet-act') !== !!B.el.closest('.sq-quiet-act')) continue  // sticky footer over scrolling text
       const w = Math.min(A.r.right, B.r.right) - Math.max(A.r.left, B.r.left), h = Math.min(A.r.bottom, B.r.bottom) - Math.max(A.r.top, B.r.top)
       if (w > 2 && h > 3 && painted(A.el, B.el, (Math.max(A.r.left, B.r.left) + Math.min(A.r.right, B.r.right)) / 2, (Math.max(A.r.top, B.r.top) + Math.min(A.r.bottom, B.r.bottom)) / 2)) add('overlap', A.el, A.r, A.el.textContent, `under/over "${B.el.textContent.trim().slice(0, 24)}" (${name(B.el)})`)
     }

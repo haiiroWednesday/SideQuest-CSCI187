@@ -4,9 +4,13 @@ import { AuthenticatedApp } from './view/AuthenticatedApp'
 import { connectServerEventCatalog } from './controller/postEvent'
 import { takeSignInLink } from './controller/signInLink'
 import './style.css'
+import { registerInstallableApp } from './controller/installApp'
 
 // First thing: a sign-in link's token leaves the address bar and history before anything else runs.
 const link = takeSignInLink()
+
+// Installable on a phone's home screen. Caches only built files and an offline page, never data.
+if (import.meta.env.PROD) registerInstallableApp()
 
 const root = document.getElementById('root')
 if (!root) throw new Error('Root element missing')

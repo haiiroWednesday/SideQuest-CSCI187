@@ -39,8 +39,22 @@ export function useSomeday(store?: PersonalStorePort | null) {
     setState(next)
     return next.error === null
   }
+  /** Talk to Someday: save the card and link the event the student picked, in one go. */
+  const addLinked = (title: string, note: string, eventId: string | null): boolean => {
+    if (account) {
+      const added = account.add(title, note)
+      if (!step(added)) return false
+      const id = added.now.items[0]?.id
+      if (eventId && id) step(account.link(id, eventId))
+      return true
+    }
+    const next = local.add(title, note)
+    if (next.error !== null) { setState(next); return false }
+    setState(eventId && next.items[0] ? local.link(next.items[0].id, eventId) : next)
+    return true
+  }
   return {
-    ...state, refresh, add,
+    ...state, refresh, add, addLinked,
     link: (id: string, eventId: string | null) => { if (account) step(account.link(id, eventId)); else setState(local.link(id, eventId)) },
     setStatus: (id: string, status: IntentionStatus) => { if (account) step(account.setStatus(id, status)); else setState(local.setStatus(id, status)) },
     recover: () => {

@@ -279,7 +279,7 @@ describe('static files from memory', () => {
 describe('one handler list for both servers', () => {
   it('includes the social and Google routes the dev server used to miss', async () => {
     const handlers = createServerHandlers({}, { catalog: null })
-    expect(handlers.map(h => h.name)).toEqual(['auth', 'personal', 'google', 'social', 'groups', 'ai', 'catalog'])
+    expect(handlers.map(h => h.name)).toEqual(['auth', 'personal', 'google', 'social', 'groups', 'ai', 'ai-assist', 'catalog'])
     const base = await listen((req, res) => runHandlers(handlers, req, res))
     expect(await (await fetch(base + '/api/social/status')).json()).toEqual({ enabled: false })
     const google = await fetch(base + '/api/google/status')

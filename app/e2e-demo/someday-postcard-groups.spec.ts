@@ -34,6 +34,8 @@ test('a past plan offers a postcard preview without claiming delivery', async ({
 test('you can belong to many groups, start another, propose an event and answer', async ({ page }) => {
   await open(page, 'groups')
   const groups = page.getByRole('navigation', { name: 'Your groups' })
+  // The group list loads after the page; count once it is there (it was read too early on a busy run).
+  await expect(groups.getByRole('listitem').nth(1)).toBeVisible()
   const before = await groups.getByRole('listitem').count()
   expect(before).toBeGreaterThan(1)
   await page.getByRole('button', { name: 'New group' }).click()

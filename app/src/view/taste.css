@@ -277,3 +277,34 @@ button.sq-stub:focus-visible, .sq-stub > button:focus-visible, .sq-stub[tabindex
   color: var(--sq-red-deep, #751728) !important; font: 650 15px var(--font-sans) !important; text-decoration: none !important; border: 0 !important; background: none !important; border-radius: 0 !important; }
 :root :is(.sq-carded, .sq-schedule-page, .sq-sticker) .sq-remove::before { content: "×"; font-size: 18px; line-height: 1; }
 :root :is(.sq-carded, .sq-schedule-page, .sq-sticker) .sq-remove:hover { background: #f6e4e4 !important; }
+/* The Trail legend's overlap swatch matches the plain tint (audit, Nov 26). */
+.sqm-key .sqm-key-hatch { background: rgba(163, 32, 53, .22) !important; }
+
+/* H3, Cyn's pick (Nov 26): the opened card keeps every piece it had. The picture fades into a maroon
+   time band, the gold seam moves under the band, the ticket bites stay, and Plan it stays in reach. */
+:root .sq-sticker-card .sq-quiet-top { background: var(--sq-red-deep, #751728) !important; color: #fff6e2; border-bottom: 10px solid var(--sq-gold, #e8aa24); }
+.sq-sticker-card .sq-quiet-top .sq-quiet-pic { position: relative; }
+/* The fade covers the lower quarter only, so a photo's faces and objects stay clear. */
+.sq-sticker-card .sq-quiet-top .sq-quiet-pic::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 26%; pointer-events: none;
+  background: linear-gradient(rgba(117, 23, 40, 0), var(--sq-red-deep, #751728)); }
+:root .sq-sticker-card .sq-quiet-top :is(.sq-quiet-time, .sq-quiet-time b, .sq-quiet-time i, .sq-quiet-until) { color: #fff6e2 !important; }
+:root .sq-sticker-card .sq-quiet-top .sq-quiet-length { color: #f6dcc0 !important; }
+:root .sq-sticker-card .sq-quiet-top .sq-quiet-stamp { color: #fff6e2 !important; }
+:root .sq-sticker-card .sq-quiet-top :is(.sq-live-now, .sq-soon) { color: #fff6e2 !important; }
+:root .sq-sticker-card .sq-quiet-top .sq-live-now::before { background: #ffb3c0; box-shadow: 0 0 0 4px rgba(255, 179, 192, .25); }
+/* The share box and Plan it, together, stay above the phone's bottom bar while the card is read.
+   Paper behind them covers what scrolls underneath. */
+.sq-sticker-card .sq-quiet-act { position: relative; bottom: 0; z-index: 4; margin: 0 -30px -30px; padding: 10px 30px 18px; background: var(--sq-paper-card, #fffaf2);
+  border-top: 1.5px solid rgba(48, 36, 33, .16); }
+.sq-sticker-card .sq-quiet-act .sq-share-going { margin: 0 0 8px; }
+.sq-sticker-card .sq-quiet-act :is(.sq-plan-button, .sq-quiet-planned) { margin-top: 0; }
+/* Sticks only on a card opened from Discover (in the list, or as the phone sheet). My Schedule's cards stay as they were. */
+.sq-flip-back .sq-sticker-card .sq-quiet-act { position: sticky; }
+@media (max-width: 760px) {
+  .sq-sticker-card .sq-quiet-act { bottom: 68px; margin: 0 -20px -28px; padding: 10px 20px 16px; }
+}
+/* A card opened in the list clips its corners without becoming a scroll box, so the footer sticks to the window (laptop). */
+.sq-flip:not(.sq-flip-lift) .sq-flip-back .sq-sticker-card { overflow: clip !important; }
+/* My Schedule's resting card is a grid item, so its z-index 40 (meant for the phone sheet) put it over the
+   bottom bar. At rest it takes no layer of its own. */
+:root .sq-sticker-static { z-index: auto !important; }

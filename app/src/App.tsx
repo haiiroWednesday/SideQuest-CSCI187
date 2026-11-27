@@ -31,7 +31,7 @@ import { QuietContext } from './view/quietContext'
 import { trackInputModality } from './view/inputModality'
 import { OnwardContext } from './view/onwardContext'
 import { presentOnward } from './controller/presentOnward'
-import { addBusy, editBusy, dayTime, fillGap, freeMinutesBetween, freeWindows, hasTold, paintMarks, presentMarks, reshapeBusy, type FreeMarks, type When } from './controller/freeMarks'
+import { addBusy, editBusy, addBusyBlocks, dayTime, fillGap, freeMinutesBetween, freeWindows, hasTold, paintMarks, presentMarks, reshapeBusy, type FreeMarks, type When } from './controller/freeMarks'
 import { BUSY_CLEARED_TEXT, storageNotice } from './controller/planFeedback'
 import type { MarkerProps } from './view/DiscoverView'
 import { addPostedId, readPostedIds } from './controller/myPosts'
@@ -169,6 +169,13 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
     } : null,
     // Nov 25, Cyn: "just keep the busy one". The Busy/Free switch is no longer offered (onMode left out).
     onEditBusy: (r, start, end) => { const next = editBusy({ ...drawInput, date: markModel.date }, r, start, end); if (next) setDrawn(next); return next !== null },
+    // Busy time from a sentence, the mic or a calendar file: laid down in one change, with Undo.
+    onBringIn: blocks => {
+      const before = marks
+      setShowAll(false); setMarks(addBusyBlocks(markInput, blocks))
+      setNotice({ key: `busy-in-${Date.now()}`, text: `Added ${blocks.length} busy ${blocks.length === 1 ? 'time' : 'times'}.`, undo: () => setMarks(before) })
+      return blocks.length
+    },
     social: designReview,
   }
   const [eventTags, setEventTags] = useState<EventTag[]>([])
@@ -320,6 +327,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
           ideas={someday.items} accountStorage={Boolean(personalStore)} blocked={someday.blocked} error={someday.error}
           events={events.events} plannedIds={plans.schedule.ids} routes={routes}
           onAdd={someday.add}
+          onAddLinked={(title, note, eventId) => someday.addLinked(title, note, eventId && events.events.some(e => e.id === eventId) ? eventId : null)}
           onLink={(id, eventId) => {
             if (eventId === null || events.events.some(event => event.id === eventId)) {
               someday.link(id, eventId)

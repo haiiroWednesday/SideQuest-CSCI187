@@ -146,10 +146,13 @@ function QuietDetails({ event, onPlan, onRemove, planningBlocked }: { event: Stu
         {event.description && !/Sample data for the design review/.test(event.description) && <p className="sq-sticker-desc">{event.description}</p>}
         <QuietHandoffs event={event} />
       </div>
-      {onPlan && <ShareGoing eventId={event.id} planned={event.planned} />}
-      {onPlan && (event.planned
-        ? <div className="sq-quiet-planned"><Bookmark label="In My Schedule" big /><span aria-hidden="true">Planned</span>{onRemove && <RemovePlan event={event} onRemove={onRemove} disabled={planningBlocked} />}</div>
-        : <button className="sq-plan-button" type="button" disabled={planningBlocked} onClick={() => onPlan(event.id)}>Plan it</button>)}
+      {/* H3 (Nov 26): the share box and Plan it travel together and stay in reach while the card is read. */}
+      {onPlan && <div className="sq-quiet-act">
+        <ShareGoing eventId={event.id} planned={event.planned} />
+        {event.planned
+          ? <div className="sq-quiet-planned"><Bookmark label="In My Schedule" big /><span aria-hidden="true">Planned</span>{onRemove && <RemovePlan event={event} onRemove={onRemove} disabled={planningBlocked} />}</div>
+          : <button className="sq-plan-button" type="button" disabled={planningBlocked} onClick={() => onPlan(event.id)}>Plan it</button>}
+      </div>}
     </>
   )
 }

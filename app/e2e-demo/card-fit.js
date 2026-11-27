@@ -173,6 +173,8 @@
     for (let a = 0; a < inks.length; a++) for (let b = a + 1; b < inks.length; b++) {
       const A = inks[a], B = inks[b]
       if (A.el === B.el || A.el.contains(B.el) || B.el.contains(A.el)) continue
+      // The opened card's footer (share + Plan it) sticks over text that scrolls under it, like the nav bar.
+      if (!!A.el.closest('.sq-quiet-act') !== !!B.el.closest('.sq-quiet-act')) continue
       if (meets(A.b, B.b, 1.5)) add('words overlap', `"${short(A.t)}" and "${short(B.t)}"`)
     }
 
