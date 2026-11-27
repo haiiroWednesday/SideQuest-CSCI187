@@ -32,6 +32,19 @@ describe('email sign-in screen: code first', () => {
     expect(container.textContent).not.toContain('access_token')
   })
 
+  it('announces confirmed sign-out and distinguishes an unconfirmed revocation', () => {
+    const props = { routes, busy: false, requestCode: vi.fn(async () => true),
+      verifyCode: vi.fn(async () => false), onSuccess: vi.fn() }
+    const { rerender } = render(<GroupEmailLoginView {...props}
+      error={null} message="Signed out of this session." />)
+    expect(screen.getByRole('status').textContent).toBe('Signed out of this session.')
+    rerender(<GroupEmailLoginView {...props}
+      error="Server revocation could not be confirmed." message={null} />)
+    expect(screen.getByRole('alert').textContent).toContain('could not be confirmed')
+    expect(screen.queryByRole('status')).toBeNull()
+    expect(screen.getByLabelText('Santa Clara email')).toBeTruthy()
+  })
+
   it('makes the student wait a minute before asking for another code', async () => {
     vi.useFakeTimers()
     const requestCode = vi.fn(async () => true)
