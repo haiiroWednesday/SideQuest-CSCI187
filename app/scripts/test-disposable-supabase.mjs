@@ -110,14 +110,16 @@ async function readCode(email) {
 async function signIn(identity) {
   const context = await browser.newContext()
   const page = await context.newPage()
+  console.log('Checking current login UI for a disposable account.')
   await page.goto(base + '/#login')
-  await page.getByLabel('Email address').fill(identity.email)
-  await page.getByRole('button', { name: 'Send sign-in code' }).click()
-  await page.getByLabel('Verification code').fill(await readCode(identity.email))
+  await page.getByLabel('Santa Clara email', { exact: true }).fill(identity.email)
+  await page.getByRole('button', { name: 'Email me a code', exact: true }).click()
+  await page.getByLabel('Verification code', { exact: true }).waitFor()
+  await page.getByLabel('Verification code', { exact: true }).fill(await readCode(identity.email))
   // This response is intercepted only in the test harness; never log its body.
   const verified = page.waitForResponse(r => new URL(r.url()).pathname === '/api/auth/verify-code')
   const groupRequest = page.waitForRequest(r => new URL(r.url()).pathname === '/api/groups' && r.method() === 'GET')
-  await page.getByRole('button', { name: 'Verify and continue' }).click()
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
   const response = await verified
   check(response.status() === 200, 'Real OTP verification failed.')
   const session = await response.json()
@@ -231,13 +233,13 @@ try {
   // access token can still be within its expiry. RPC session guard must deny.
   const revoked = b.page.waitForResponse(r =>
     new URL(r.url()).pathname === '/api/auth/sign-out' && r.request().method() === 'POST')
-  await b.page.getByRole('button', { name: 'End session' }).click()
+  await b.page.getByRole('button', { name: 'Sign out', exact: true }).click()
   const logout = await revoked
   check(logout.status() === 200 && (await logout.json()).revoked === true,
     'Application did not confirm provider logout.')
   await b.page.getByRole('status').filter({ hasText: 'Signed out of this session.' }).waitFor()
-  await b.page.getByLabel('Email address').waitFor()
-  check(await b.page.getByRole('button', { name: 'End session' }).count() === 0,
+  await b.page.getByLabel('Santa Clara email', { exact: true }).waitFor()
+  check(await b.page.getByRole('button', { name: 'Sign out', exact: true }).count() === 0,
     'Logged-out tab still offers a private session.')
   await expectStatus(await app(path, a.token), 200, 'Organizer remains signed in')
   await expectStatus(await app('/api/groups', c.token), 200, 'Unrelated session unaffected')
