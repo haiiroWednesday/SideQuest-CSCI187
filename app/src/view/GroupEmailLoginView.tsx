@@ -19,7 +19,7 @@ export type GroupEmailLoginProps = {
 }
 
 export function GroupEmailLoginView({
-  routes, busy, error, requestCode, verifyCode, onSuccess, accounts = false,
+  routes, busy, error, message, requestCode, verifyCode, onSuccess, accounts = false,
 }: GroupEmailLoginProps) {
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
@@ -71,6 +71,7 @@ export function GroupEmailLoginView({
             ? <p className="sq-login-sent">We sent a 6-digit code to <strong>{email}</strong>. It can take a minute. Read it on any device.</p>
             : <p>SideQuest keeps your sign-in only in this tab. Closing the tab signs you out.</p>}
           {error && <p role="alert" className="sq-login-error">{error}</p>}
+          {message && step === 'email' && !error && <p role="status" className="sq-login-sent">{message}</p>}
           <label htmlFor="sq-login-email">Santa Clara email</label>
           <input id="sq-login-email" type="email" required autoComplete="email"
             value={email} maxLength={254} disabled={busy || step !== 'email'}
