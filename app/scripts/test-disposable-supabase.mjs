@@ -39,7 +39,7 @@ const server = spawn(process.execPath, ['dist-server/index.js'], {
     SUPABASE_URL: supabase, SUPABASE_PUBLISHABLE_KEY: anon,
     SIDEQUEST_GROUPS_ENABLED: 'true', SIDEQUEST_AUTH_EMAIL_ENABLED: 'true',
     SIDEQUEST_AUTH_ALLOW_SIGNUP: 'false', SIDEQUEST_PUBLIC_GROUP_LOGIN: 'true',
-    SIDEQUEST_AUTH_ALLOWED_DOMAINS: 'example.test',
+    SIDEQUEST_AUTH_ALLOWED_DOMAINS: 'scu.edu', SIDEQUEST_PUBLIC_ORIGIN: base,
   },
   stdio: 'ignore',
 })
@@ -86,7 +86,7 @@ async function waitForServer() {
   throw Error('Built SideQuest server did not start.')
 }
 async function provision(role) {
-  const email = 'sq-' + role + '-' + runId + '@example.test'
+  const email = 'sq-' + role + '-' + runId + '@scu.edu'
   const { data, error } = await admin.auth.admin.createUser({
     email, password: randomUUID() + 'aA1!', email_confirm: true,
   })
