@@ -116,7 +116,7 @@ export function calendarConfigFromEnv(env: Readonly<Record<string, unknown>>): C
   return { clientId, clientSecret, redirectUri, sealKey }
 }
 
-type Pending = { userId: string; verifier: string; scopes: string[]; exportEnabled: boolean; until: number }
+type Pending = { userId: string; sealedSession: string; verifier: string; scopes: string[]; exportEnabled: boolean; until: number }
 
 export type CalendarDeps = {
   config: CalendarConfig | null
@@ -210,7 +210,7 @@ export function createGoogleCalendarService(deps: CalendarDeps) {
     },
 
     /** Starts consent. Returns Google's consent address; the person comes back to /#google/... */
-    begin(userId: string, wantExport: boolean): string {
+    begin(userId: string, wantExport: boolean, sessionToken: string): string {
       const cfg = need()
       const now = clock()
       for (const [key, row] of pending) if (row.until <= now) pending.delete(key)
@@ -219,7 +219,7 @@ export function createGoogleCalendarService(deps: CalendarDeps) {
       const verifier = b64url(randomBytes(48))
       const challenge = b64url(createHash('sha256').update(verifier).digest())
       const scopes = wantExport ? [SCOPE_FREEBUSY, SCOPE_EVENTS] : [SCOPE_FREEBUSY]
-      pending.set(state, { userId, verifier, scopes, exportEnabled: wantExport, until: now + PENDING_MS })
+      pending.set(state, { userId, sealedSession: seal(cfg.sealKey, sessionToken), verifier, scopes, exportEnabled: wantExport, until: now + PENDING_MS })
       const url = new URL(AUTHORIZE)
       url.search = new URLSearchParams({
         client_id: cfg.clientId,
@@ -246,6 +246,13 @@ export function createGoogleCalendarService(deps: CalendarDeps) {
       if (query.get('error')) return 'google/declined'
       const code = query.get('code')
       if (!code || code.length > 2048) return 'google/failed'
+      // A consent callback has no bearer header. Recheck the initiating session,
+      // including logout while the Google consent tab was open.
+      const stillActive = async () => {
+        try { return (await deps.identity?.verify(unseal(cfg.sealKey, row.sealedSession)))?.userId === row.userId }
+        catch { return false }
+      }
+      if (!await stillActive()) return 'google/failed'
       let data: Record<string, unknown>
       try {
         data = await tokenRequest({
@@ -260,6 +267,7 @@ export function createGoogleCalendarService(deps: CalendarDeps) {
       const granted = String(data.scope ?? '').split(/\s+/).filter(Boolean)
       const access = String(data.access_token ?? '')
       if (!access || !granted.includes(SCOPE_FREEBUSY)) return 'google/declined'
+      if (!await stillActive()) return 'google/failed'
       const before = await deps.connections.get(row.userId)
       const refresh = typeof data.refresh_token === 'string' ? data.refresh_token : null
       await deps.connections.put({
@@ -423,7 +431,7 @@ export function createGoogleCalendarApi(
       limit(me.userId)
       const data = await readJson(req)
       if (path === '/api/google/calendar/connect') {
-        sendJson(res, 200, { authorizeUrl: service.begin(me.userId, data.export === true) })
+        sendJson(res, 200, { authorizeUrl: service.begin(me.userId, data.export === true, me.session) })
       } else if (path === '/api/google/calendar/import') {
         const blocks = await service.importBusy(me.userId, me.session, String(data.from), String(data.to))
         sendJson(res, 200, { blocks })
@@ -431,7 +439,7 @@ export function createGoogleCalendarApi(
         if (typeof data.enabled !== 'boolean') throw new GoogleHttpError(400, 'Invalid request.')
         const result = await service.setExport(me.userId, data.enabled)
         sendJson(res, 200, result.needsConsent
-          ? { ...result, authorizeUrl: service.begin(me.userId, true) }
+          ? { ...result, authorizeUrl: service.begin(me.userId, true, me.session) }
           : result)
       } else if (path === '/api/google/calendar/plans') {
         sendJson(res, 200, await service.syncPlan(me.userId, planChangeFrom(data)))
