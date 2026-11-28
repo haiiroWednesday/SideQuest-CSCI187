@@ -34,6 +34,9 @@ services:
         value: "false"
       - key: SIDEQUEST_AUTH_EMAIL_ENABLED
         value: "false"
+      # Required for sign-in email links; set to the approved HTTPS public origin.
+      - key: SIDEQUEST_PUBLIC_ORIGIN
+        sync: false
       - key: SIDEQUEST_AUTH_ALLOW_SIGNUP
         value: "false"
       - key: SIDEQUEST_PUBLIC_GROUP_LOGIN
