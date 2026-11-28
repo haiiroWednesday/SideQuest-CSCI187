@@ -1,0 +1,133 @@
+name: Campus event intake
+on:
+  pull_request:
+    paths:
+      - 'app/scripts/campus-intake/**'
+      - 'app/scripts/refresh-campus-events.mjs'
+      - 'app/data/campus-event-sources.json'
+      - 'app/src/controller/prepareReviewedPublication.ts'
+      - 'app/tests/reviewed-campus-publication.test.ts'
+      - 'supabase/review/campus_intake_publication.sql'
+      - 'supabase/tests/campus_intake_publication.sql'
+      - '.github/workflows/campus-event-intake.yml'
+  workflow_dispatch:
+    inputs:
+      collect:
+        description: 'Run approved read-only collection (requires repository approval variable)'
+        type: boolean
+        default: false
+  schedule:
+    - cron: '23 */6 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: campus-intake-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test app/scripts/campus-intake/intake.test.mjs
+      - run: node --test app/scripts/campus-intake/knownAnswers.test.mjs
+      - run: node app/scripts/refresh-campus-events.mjs
+  collect:
+    needs: offline-tests
+    if: (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.collect)) && vars.SIDEQUEST_CAMPUS_FEED_APPROVED == 'yes'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Collect public source review candidates
+        env:
+          SIDEQUEST_CAMPUS_FEED_APPROVED: 'yes'
+        run: node app/scripts/refresh-campus-events.mjs --approved-read --output intake-output/scu-events.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scu-event-review-snapshot
+          path: intake-output/scu-events.json
+          if-no-files-found: error
+          retention-days: 7
+
+  isolated-publication:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: sidequest-intake-fixture
+          POSTGRES_DB: sidequest_intake_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: sidequest-intake-fixture
+      PGDATABASE: sidequest_intake_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exercise reviewed publication against the actual catalog schema
+        run: |
+          if ! command -v psql >/dev/null; then sudo apt-get update && sudo apt-get install -y postgresql-client; fi
+          psql -v ON_ERROR_STOP=1 -c 'create role anon nologin; create role authenticated nologin;'
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261103000000_create_events.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261108000000_event_date_sanity_bound.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110000000_event_date_posting_horizon.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261111000000_event_text_posting_rules.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/review/campus_intake_publication.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/campus_intake_publication.sql
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Run operator command on a synthetic fixture
+        working-directory: app
+        env:
+          SIDEQUEST_INTAKE_WRITE_APPROVED: 'yes'
+        run: |
+          npm ci --no-audit --no-fund
+          npx vite build --ssr scripts/campus-intake/publishReviewed.ts --outDir "$RUNNER_TEMP/sidequest-intake"
+          node --input-type=module <<'NODE'
+          import { writeFileSync } from 'node:fs'
+          const future = new Date(Date.now() + 7 * 86400000)
+          const date = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit'
+          }).format(future)
+          writeFileSync(process.env.RUNNER_TEMP + '/review-fixture.json', JSON.stringify({
+            provider: 'scu-livewhale', occurrenceId: 'synthetic-ci-only',
+            sourceUrl: 'https://events.scu.edu/event/123-synthetic-fixture',
+            checkedAt: new Date().toISOString(), identityVerified: true, reuseApproved: true,
+            eligibilityVerified: true, duplicateReviewed: true,
+            draft: { title: "Fixture's workshop", hostName: 'Fixture club', description: 'Synthetic fixture only',
+              location: 'Fixture room', date, start: '14:00', end: '15:00' }
+          }))
+          NODE
+          cli="$RUNNER_TEMP/sidequest-intake/publishReviewed.js"
+          review="$RUNNER_TEMP/review-fixture.json"
+          node "$cli" --validate "$review"
+          if SIDEQUEST_INTAKE_WRITE_APPROVED=no node "$cli" --publish-reviewed "$review"; then exit 1; fi
+          first=$(node "$cli" --publish-reviewed "$review")
+          second=$(node "$cli" --publish-reviewed "$review")
+          test "$first" = "$second"
+          test "$(psql -X -qAt -v ON_ERROR_STOP=1 -c "select count(*) from public.events where title = 'Fixture''s workshop'")" = 1
+          test "$(psql -X -qAt -v ON_ERROR_STOP=1 -c "select count(*) from sidequest_intake.source_occurrences where occurrence_id = 'synthetic-ci-only'")" = 1
+
+      - name: Verify published fixture reaches existing Discover rules
+        working-directory: app
+        run: |
+          npx vite build --ssr scripts/campus-intake/verifyPublishedFixture.ts --outDir "$RUNNER_TEMP/sidequest-intake-discovery"
+          node "$RUNNER_TEMP/sidequest-intake-discovery/verifyPublishedFixture.js"
