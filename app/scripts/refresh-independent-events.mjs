@@ -18,17 +18,15 @@ async function main() {
   if (!config || typeof config !== 'object' || Array.isArray(config)) throw new Error('Invalid source approval configuration')
   const entries = Object.entries(config)
   if (!entries.length || entries.length > 20) throw new Error('No approved independent sources or too many configured sources')
-  for (const [id, value] of entries) {
-    const source = registry.sources.find(s => s.id === id)
-    if (value?.transport !== undefined && (source?.adapter !== 'google-public-calendar' || value.transport !== 'public-ics')) throw new Error('Unsupported transport for ' + id)
-    if (!source || id === 'scu-livewhale' || !value || value.approved !== true ||
-        (!['google-public-calendar','scu-presents-dance','engineering-newsletter'].includes(source.adapter) && typeof value.url !== 'string')) {
-      throw new Error('Unknown or unapproved independent source: ' + id)
-    }
-  }
   const now = new Date()
   const results = await Promise.all(entries.map(async ([id, value]) => {
     const source = registry.sources.find(s => s.id === id)
+    const supported = source && !['qlusion', 'scu-livewhale'].includes(id) &&
+      value?.approved === true &&
+      (value.transport === undefined || (source.adapter === 'google-public-calendar' && value.transport === 'public-ics')) &&
+      (['google-public-calendar', 'scu-presents-dance', 'engineering-newsletter'].includes(source.adapter) ||
+        typeof value.url === 'string')
+    if (!supported) return { id, status:'failed', reason:'invalid-or-unapproved-source', checkedAt:now.toISOString() }
     try {
       let snapshot
       if (id === 'scu-engineering-newsletter') snapshot = await collectEngineeringNewsletters({approvedRead:true, now})
