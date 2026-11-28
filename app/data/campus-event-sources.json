@@ -145,6 +145,38 @@
       "adapter": null,
       "access": "organizer-partnership-needed",
       "coverage": "Official page directs readers to Instagram. Request organizer-approved structured export, not automated social-media scraping."
+    },
+    {
+      "id": "scu-engineering-newsletter",
+      "name": "Graduate Engineering Circuit",
+      "page": "https://www.scu.edu/engineering/current-student-resources/current-graduate-students/",
+      "adapter": "engineering-newsletter",
+      "access": "public-index-verified-recurring-reuse-pending",
+      "coverage": "School index links current issues; timed upcoming rows go to review."
+    },
+    {
+      "id": "scu-csa-calendar",
+      "name": "Chinese Student Association calendar",
+      "page": "https://linktr.ee/SCU_CSA",
+      "adapter": null,
+      "access": "calendar-linked-access-unverified",
+      "coverage": "Organizer links Google Calendar and newsletter. Public embed returned 401 in research environment; request an approved export."
+    },
+    {
+      "id": "scu-asg-weekly",
+      "name": "This Week at SCU",
+      "page": "https://www.scu.edu/csi/organizations/resources/advertising/",
+      "adapter": null,
+      "access": "organizer-partnership-needed",
+      "coverage": "ASG reviews weekly club and department submissions; request a permitted announcement feed."
+    },
+    {
+      "id": "scu-business-bulletin",
+      "name": "Leavey Business Bulletin and calendar",
+      "page": "https://www.scu.edu/business/undergraduates/beyond-the-classroom/student-organizations/marketing-your-event/",
+      "adapter": null,
+      "access": "research-only",
+      "coverage": "Official event promotion and submission channels; compare central feed and request approved export."
     }
   ]
 }
