@@ -56,7 +56,8 @@ function bearer(req: IncomingMessage): string {
 const STATUS: Record<PersonalStoreError['kind'], number> = { invalid: 400, limit: 409, 'not-found': 404, 'signed-out': 401, unavailable: 503 }
 
 export function createPersonalApi(gateway: PersonalGateway | null, clock: () => number = Date.now) {
-  const sessions = createVerifiedTokenGuard(clock)
+  // Identity must be rechecked after every request, including within the old cache TTL.
+  const sessions = createVerifiedTokenGuard(clock, { ttlMs: 0 })
   const writes = new Map<string, { count: number; until: number }>()
   const countWrite = (userId: string) => {
     const now = clock()

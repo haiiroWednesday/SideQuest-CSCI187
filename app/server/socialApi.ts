@@ -45,7 +45,7 @@ const str = (v: unknown) => (typeof v === 'string' ? v : '')
 const ALLOWED_INVITE = ['title', 'place', 'eventId', 'date', 'start', 'end', 'groupIds']
 
 export function createSocialApi(store: SocialStorePort | null, clock: () => Date = () => new Date()) {
-  const sessions = createVerifiedTokenGuard(() => clock().getTime())
+  const sessions = createVerifiedTokenGuard(() => clock().getTime(), { ttlMs: 0 })
   return async function socialApi(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
     let url: URL
     // A malformed request line (for example "GET //[") must not throw out of the server.

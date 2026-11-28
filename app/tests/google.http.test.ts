@@ -154,7 +154,7 @@ describe('Google HTTP routes', () => {
     expect(s.googleCalls).toHaveLength(1)
   })
 
-  it('asks Supabase Auth once per token in 30 s, and caps new tokens per IP', async () => {
+  it('rechecks the session on every status call, and caps checks per IP', async () => {
     let checks = 0
     const counting: SessionIdentity = { async verify(token) { checks++; return token === session ? { userId: user } : null } }
     const calendar = createGoogleCalendarService({ config: null, identity: counting, connections: memoryConnectionStore(), links: memoryPlanLinkStore(), busy: null })
@@ -165,11 +165,11 @@ describe('Google HTTP routes', () => {
     const base = 'http://127.0.0.1:' + (server.address() as AddressInfo).port
     const status = (token: string) => fetch_(base + '/api/google/status', { headers: { Authorization: `Bearer ${token}` } })
     for (let i = 0; i < 5; i++) expect((await status(session)).status).toBe(200)
-    expect(checks).toBe(1)
+    expect(checks).toBe(5)
     // A script spraying made-up tokens gets cut off before each one reaches Supabase Auth.
     const codes: number[] = []
     for (let i = 0; i < 130; i++) codes.push((await status(`made-up-token-number-${String(i).padStart(4, '0')}`)).status)
     expect(codes.filter(code => code === 429).length).toBeGreaterThan(0)
-    expect(checks).toBeLessThanOrEqual(1 + 120)
+    expect(checks).toBeLessThanOrEqual(120)
   })
 })

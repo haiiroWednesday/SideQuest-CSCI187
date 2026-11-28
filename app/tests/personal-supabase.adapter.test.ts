@@ -33,13 +33,16 @@ describe('personal Supabase adapter', () => {
     expect(() => createSupabasePersonalGatewayFromEnv({ ...env, SUPABASE_PUBLISHABLE_KEY: 'sb_secret_should_never_be_here' })).toThrow()
   })
   it('checks the session with Supabase Auth using the student\'s token', async () => {
-    const { impl, seen } = fakeFetch(({ url }) => url.includes('/auth/v1/user') ? { status: 200, body: { id: USER, aud: 'authenticated', email: 'student@scu.edu' } } : { status: 404, body: {} })
+    const { impl, seen } = fakeFetch(({ url }) => url.includes('/auth/v1/user') ? { status: 200, body: { id: USER, aud: 'authenticated', email: 'student@scu.edu' } } : url.includes('/rpc/sidequest_private_active_actor') ? { status: 200, body: USER } : { status: 404, body: {} })
     const gateway = createSupabasePersonalGatewayFromEnv(env, impl)!
     expect(await gateway.userFor(TOKEN)).toBe(USER)
     // A token for an address outside the Santa Clara rule reads nothing.
     const outside = fakeFetch(({ url }) => url.includes('/auth/v1/user') ? { status: 200, body: { id: USER, aud: 'authenticated', email: 'someone@gmail.com' } } : { status: 404, body: {} })
     expect(await createSupabasePersonalGatewayFromEnv(env, outside.impl)!.userFor(TOKEN)).toBeNull()
     expect(seen[0].headers.get('authorization')).toBe(`Bearer ${TOKEN}`)
+    expect(seen[1].headers.get('authorization')).toBe(`Bearer ${TOKEN}`)
+    const revoked = fakeFetch(({ url }) => url.includes('/auth/v1/user') ? { status: 200, body: { id: USER, aud: 'authenticated', email: 'student@scu.edu' } } : { status: 200, body: null })
+    expect(await createSupabasePersonalGatewayFromEnv(env, revoked.impl)!.userFor(TOKEN)).toBeNull()
     const expired = fakeFetch(() => ({ status: 401, body: { message: 'expired' } }))
     expect(await createSupabasePersonalGatewayFromEnv(env, expired.impl)!.userFor(TOKEN)).toBeNull()
   })

@@ -159,7 +159,10 @@ export function createSupabasePersonalGatewayFromEnv(
       const { data, error } = await auth.auth.getUser(token)
       if (error || !data.user?.id) return null
       // Same account rule as sign-in: a token for an address outside the policy reads nothing.
-      return policy.allows(data.user.email) ? data.user.id : null
+      if (!policy.allows(data.user.email) || data.user.is_anonymous === true) return null
+      const live = await clientFor(token).rpc('sidequest_private_active_actor')
+      if (live.error) throw new Error('Active session check unavailable')
+      return live.data === data.user.id ? data.user.id : null
     },
     storeFor(token, userId) { return createSupabasePersonalStore(clientFor(token), userId) },
   }
