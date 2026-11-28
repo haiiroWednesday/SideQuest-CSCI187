@@ -25,7 +25,7 @@ as $$
     -- The database is also a public API boundary. Never trust a Node-only
     -- allowlist or the JWT's email claim: require the current verified Auth address.
     and u.email_confirmed_at is not null
-    and lower(u.email) ~ '^[^@[:space:]]+@([a-z0-9-]+[.])*scu[.]edu
+    and lower(u.email) ~ '^[^@[:space:]]+@([a-z0-9-]+[.])*scu[.]edu$'
     and coalesce(auth.jwt()->>'is_anonymous', 'false') <> 'true'
     and case
       when jsonb_typeof(auth.jwt()->'exp') = 'number'
