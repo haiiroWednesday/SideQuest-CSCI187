@@ -11,8 +11,8 @@ afterEach(async () => {
       server.close(error => error ? reject(error) : resolve()))
   }
 })
-async function start(gateway: EmailOtpGateway | null) {
-  const api = createEmailAuthApi(gateway)
+async function start(gateway: EmailOtpGateway | null, configured = true) {
+  let api: ReturnType<typeof createEmailAuthApi>
   const server = createServer((req, res) => {
     void api(req, res).then(handled => {
       if (!handled) { res.statusCode = 404; res.end() }
@@ -20,7 +20,9 @@ async function start(gateway: EmailOtpGateway | null) {
   })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
   servers.push(server)
-  return 'http://127.0.0.1:' + (server.address() as AddressInfo).port
+  const base = 'http://127.0.0.1:' + (server.address() as AddressInfo).port
+  api = createEmailAuthApi(gateway, Date.now, undefined, undefined, configured ? { publicOrigin: base } : {})
+  return base
 }
 function sample(): EmailOtpGateway {
   return {
@@ -40,6 +42,11 @@ function post(base: string, path: string, body: unknown, origin = base) {
 }
 
 describe('passwordless email-code HTTP contract', () => {
+  it('does not send email when the public redirect origin is missing', async () => {
+    const gateway = sample(), base = await start(gateway, false)
+    expect((await post(base, '/api/auth/request-code', { email: 'person@example.edu' })).status).toBe(503)
+    expect(gateway.requestCode).not.toHaveBeenCalled()
+  })
   it('reports session revocation only after the provider confirms it', async () => {
     const gateway = sample()
     const revoke = vi.fn(async () => undefined)
