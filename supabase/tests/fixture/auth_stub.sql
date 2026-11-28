@@ -5,7 +5,7 @@
 do $$ begin create role anon nologin; exception when duplicate_object then null; end $$;
 do $$ begin create role authenticated nologin; exception when duplicate_object then null; end $$;
 create schema auth;
-create table auth.users (id uuid primary key);
+create table auth.users (id uuid primary key, email text, email_confirmed_at timestamptz);
 grant usage on schema auth to anon, authenticated;
 create function auth.uid() returns uuid language sql stable as $fixture$
   select coalesce(

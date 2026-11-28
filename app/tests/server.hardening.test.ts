@@ -94,8 +94,8 @@ describe('email sign-in limits and the public origin', () => {
 
   it(`sends one address at most ${CODE_REQUESTS_PER_EMAIL_PER_HOUR} emails an hour, from any number of IPs`, async () => {
     configureClientIp({ SIDEQUEST_TRUST_PROXY: 'true' })
-    const g = gateway(), base = await listen(createEmailAuthApi(g))
-    const from = (n: number) => ({ 'X-Forwarded-For': `198.51.100.${n}` })
+    const g = gateway(), base = await listen(createEmailAuthApi(g, Date.now, undefined, undefined, { publicOrigin: 'http://sq.test' }))
+    const from = (n: number) => ({ Origin: 'http://sq.test', 'X-Forwarded-For': `198.51.100.${n}` })
     const statuses: number[] = []
     for (let i = 0; i < CODE_REQUESTS_PER_EMAIL_PER_HOUR + 1; i++) statuses.push((await ask(base, 'target@scu.edu', from(i))).status)
     expect(statuses.slice(0, -1).every(code => code === 200)).toBe(true)
@@ -106,7 +106,7 @@ describe('email sign-in limits and the public origin', () => {
   })
 
   it('drops the oldest counters when the table is full instead of refusing everyone', async () => {
-    const api = createEmailAuthApi(gateway())
+    const api = createEmailAuthApi(gateway(), Date.now, undefined, undefined, { publicOrigin: 'http://sq.test' })
     const call = async (email: string) => {
       const body = Buffer.from(JSON.stringify({ email }))
       const req = Object.assign((async function* () { yield body })(), {

@@ -34,11 +34,13 @@ afterEach(async () => {
   for (const server of servers.splice(0)) await new Promise<void>(resolve => server.close(() => resolve()))
 })
 async function start(gateway: EmailOtpGateway) {
-  const api = createEmailAuthApi(gateway, Date.now, undefined, createSignInPolicy({}))
+  let api: ReturnType<typeof createEmailAuthApi>
   const server = createServer((req, res) => { void api(req, res).then(handled => { if (!handled) { res.statusCode = 404; res.end() } }) })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
   servers.push(server)
-  return 'http://127.0.0.1:' + (server.address() as AddressInfo).port
+  const base = 'http://127.0.0.1:' + (server.address() as AddressInfo).port
+  api = createEmailAuthApi(gateway, Date.now, undefined, createSignInPolicy({}), { publicOrigin: base })
+  return base
 }
 const post = (base: string, path: string, body: unknown) => fetch(base + path, {
   method: 'POST', headers: { Origin: base, 'Content-Type': 'application/json' }, body: JSON.stringify(body),

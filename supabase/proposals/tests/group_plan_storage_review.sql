@@ -70,8 +70,8 @@ begin
 
   begin
     insert into public.group_participants(plan_id,user_id,response,if_condition,responded_at)
-      values (plan_id, outsider, 'works', 'should remain private', now());
-    raise exception 'Nonconditional private text was accepted';
+      values (plan_id, outsider, 'works', 'invalid note for Works', now());
+    raise exception 'Nonconditional If-note text was accepted';
   exception when check_violation then null;
   end;
 

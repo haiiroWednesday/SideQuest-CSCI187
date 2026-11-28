@@ -22,6 +22,9 @@ as $$
   from auth.sessions s
   join auth.users u on u.id = s.user_id
   where s.user_id = auth.uid()
+    -- Check the current verified Auth address, not a Node-only allowlist or JWT email.
+    and u.email_confirmed_at is not null
+    and lower(u.email) ~ '^[^@[:space:]]+@([a-z0-9-]+[.])*scu[.]edu$'
     and s.id::text = auth.jwt()->>'session_id'
     and coalesce(auth.jwt()->>'is_anonymous', 'false') <> 'true'
     and case

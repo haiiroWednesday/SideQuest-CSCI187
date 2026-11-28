@@ -1,6 +1,7 @@
 // HTTP CONTROLLER: an opt-in, bearer-authenticated gateway to caller-scoped
 // group RPCs. This controller never accepts a client-supplied acting user ID.
 import { createHash } from 'node:crypto'
+import { clientIp } from './clientIp'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { MAX_GROUP_INVITEES, MAX_IF_CONDITION, ifConditionLength, type ResponseKind } from '../src/model/groupPlans'
 
@@ -29,6 +30,7 @@ const GROUP_MAX_BODY_BYTES = 8192
 const GROUP_REQUESTS_PER_MINUTE = 40
 const GROUP_AUTH_CHECKS_PER_MINUTE = 600
 const GROUP_AUTH_RESERVED_CHECKS = 200
+const GROUP_NEW_AUTH_PER_IP_PER_MINUTE = 60
 const GROUP_AUTH_HINT_LIFETIME_MS = 5 * 60_000
 const MAX_TRACKED_GROUP_ACTORS = 10000
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -191,12 +193,25 @@ async function jsonBody(req: IncomingMessage): Promise<JsonObject> {
 export function createGroupApi(
   gateway: AuthenticatedGroupGateway | null,
   clock: () => number = Date.now,
+  ipOf: (req: IncomingMessage) => string = clientIp,
 ) {
   const limits = new Map<string, { count: number; until: number }>()
   // A token digest is an admission hint, never a cached authorization decision.
   // Auth and the caller-scoped RPC must still verify every admitted request.
   const verifiedHints = new Map<string, { userId: string; until: number }>()
   let authBudget = { count: 0, until: 0 }
+  const newTokenLimits = new Map<string, { count: number; until: number }>()
+
+  function consumeNewTokenQuota(ip: string, now: number): void {
+    for (const [key, item] of newTokenLimits) if (item.until <= now) newTokenLimits.delete(key)
+    if (newTokenLimits.size >= MAX_TRACKED_GROUP_ACTORS && !newTokenLimits.has(ip)) {
+      throw new RequestError(429, 'The group service is busy.')
+    }
+    const limit = newTokenLimits.get(ip) ?? { count: 0, until: now + 60000 }
+    if (limit.count >= GROUP_NEW_AUTH_PER_IP_PER_MINUTE) throw new RequestError(429, 'Too many new group sessions from this connection.')
+    limit.count++
+    newTokenLimits.set(ip, limit)
+  }
 
   function consumeAccountQuota(userId: string, now: number): void {
     for (const [key, item] of limits) if (item.until <= now) limits.delete(key)
@@ -221,7 +236,7 @@ export function createGroupApi(
   }
 
   async function verifyAdmittedToken(
-    activeGateway: AuthenticatedGroupGateway, token: string, now: number,
+    activeGateway: AuthenticatedGroupGateway, token: string, now: number, ip: string,
   ): Promise<VerifiedGroupActor> {
     const digest = createHash('sha256').update(token).digest('hex')
     const hint = verifiedHints.get(digest)
@@ -239,6 +254,7 @@ export function createGroupApi(
     // Charge a known account before awaiting Auth, including concurrent calls.
     // The hint only selects the quota; it cannot grant access.
     if (knownActor) consumeAccountQuota(knownActor, now)
+    else consumeNewTokenQuota(ip, now)
     authBudget.count++
 
     const actor = await activeGateway.verify(token)
@@ -290,7 +306,7 @@ export function createGroupApi(
       if (!token) throw new RequestError(401, 'Sign in before accessing group plans.')
 
       // Confirm the identity with Auth *before* calling any private RPC.
-      const actor = await verifyAdmittedToken(gateway, token, clock())
+      const actor = await verifyAdmittedToken(gateway, token, clock(), ipOf(req))
 
       if (isRoot && method === 'GET') {
         response(res, 200, projectList(await gateway.list(token)))

@@ -1,4 +1,4 @@
-import { createServer, request, type Server } from 'node:http'
+import { createServer, request, type Server, type IncomingMessage } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -32,8 +32,8 @@ afterEach(async () => {
   }
 })
 
-async function listen(gateway: AuthenticatedGroupGateway | null, clock: () => number = Date.now) {
-  const api = createGroupApi(gateway, clock)
+async function listen(gateway: AuthenticatedGroupGateway | null, clock: () => number = Date.now, ipOf?: (req: IncomingMessage) => string) {
+  const api = createGroupApi(gateway, clock, ipOf)
   const server = createServer((req, res) => {
     void api(req, res).then(handled => {
       if (!handled) { res.statusCode = 404; res.end('Not found') }
@@ -243,18 +243,32 @@ describe('opt-in group HTTP gateway and verified identity contract', () => {
     expect((await send(base, '/api/groups', memberToken)).status).toBe(200)
   })
 
+  it('caps rotating unknown tokens per IP without charging established accounts', async () => {
+    const gateway = mockGateway()
+    const base = await listen(gateway, () => 0, () => 'fixture-same-ip')
+    expect((await send(base, '/api/groups', orgToken)).status).toBe(200)
+    for (let i = 0; i < 59; i++) {
+      expect((await send(base, '/api/groups', 'unknown-token-'.repeat(2) + i)).status).toBe(401)
+    }
+    expect((await send(base, '/api/groups', invalidToken)).status).toBe(429)
+    expect(gateway.verify).toHaveBeenCalledTimes(60)
+    expect((await send(base, '/api/groups', orgToken)).status).toBe(200)
+    expect(gateway.verify).toHaveBeenCalledTimes(61)
+  })
+
   it('reserves Auth capacity for established sessions without caching authorization', async () => {
     let now = 0
     const gateway = mockGateway()
-    const base = await listen(gateway, () => now)
+    const base = await listen(gateway, () => now, req => String(req.headers['x-fixture-ip'] ?? 'fixture'))
+    let fixtureIp = 0
     const status = async (token: string) => {
-      const result = await send(base, '/api/groups', token)
+      const result = await send(base, '/api/groups', token, undefined, { 'X-Fixture-IP': 'fixture-' + Math.floor(fixtureIp++ / 50) })
       await result.text()
       return result.status
     }
     expect(await status(orgToken)).toBe(200)
     // 399 rotating invalid tokens plus the verified request exhaust the
-    // 400 general admissions, regardless of the apparent proxy address.
+    // 400 general admissions across simulated distinct client addresses.
     for (let start = 0; start < 399; start += 20) {
       const batch = Array.from({ length: Math.min(20, 399 - start) },
         (_, i) => status('invalid-token-'.repeat(2) + (start + i)))
@@ -288,9 +302,10 @@ describe('opt-in group HTTP gateway and verified identity contract', () => {
       const index = tokens.indexOf(token)
       return index < 0 ? null : { userId: '11111111-1111-4111-8111-' + String(index).padStart(12, '0') }
     })
-    const base = await listen(gateway, () => now)
+    const base = await listen(gateway, () => now, req => String(req.headers['x-fixture-ip'] ?? 'fixture'))
+    let fixtureIp = 0
     const status = async (token: string) => {
-      const result = await send(base, '/api/groups', token)
+      const result = await send(base, '/api/groups', token, undefined, { 'X-Fixture-IP': 'fixture-' + Math.floor(fixtureIp++ / 50) })
       await result.text()
       return result.status
     }

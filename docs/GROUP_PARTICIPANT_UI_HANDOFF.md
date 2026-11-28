@@ -5,7 +5,7 @@
 The application now contains a responsive, testable React group-planning interface and a typed client adapter:
 
 - `app/src/view/GroupPlanningView.tsx`: lists an authenticated person's accessible plans, creates a group proposal referencing a real catalog Event, opens plans, refreshes responses and shows safe error states.
-- `app/src/view/GroupPlanPanel.tsx`: organizer invites/revokes verified participant IDs, reviews pending/Works/If/Can't, confirms only when all participants explicitly say Works, or cancels. Invitees update their own responses and can supply a private If condition. Only the author can see that private text.
+- `app/src/view/GroupPlanPanel.tsx`: organizer invites/revokes verified participant IDs, reviews pending/Works/If/Can't, confirms only when all participants explicitly say Works, or cancels. Invitees update their own responses and can supply an optional If note visible to accepted members and the organizer, never pending invitees or outsiders.
 - `app/src/controller/groupClient.ts`: requests an access token from a supplied verified session provider, calls same-origin group endpoints with no cookies or localStorage credential persistence, parses/sanitizes returned records, and turns expired sessions, stale edits and failures into explicit errors.
 - `App.tsx` and `SideQuestHeader`: conditionally expose a Groups route when a `VerifiedGroupSession` prop is supplied by an actual login integration. **The normal app entry point supplies no group session, so unconfigured users do not see a misleading social feature.**
 
