@@ -19,7 +19,31 @@ function links(html) {
 }
 
 /** "4:00-5:30 p.m.", "1-3 p.m.", "10:00 a.m. to 3:00 p.m.", "10:45 a.m.-12:15 p.m.", "8:00 p.m." (no end). */
+// A clock printed in an announcement is not necessarily its start time.
+// Reject unclear starts rather than treating a registration deadline or door time as evidence.
 export function parseTimeRange(text) {
+  if (/\b(?:time|start(?:\s+time)?)\s*(?::\s*)?(?:is\s+)?(?:tba|tbd|to be announced|to be determined)\b/i.test(text)) return null
+  for (const [, hour, minute] of text.matchAll(/\b(\d+):(\d*)/g)) {
+    if (hour.length > 2 || +hour < 1 || +hour > 12 || minute.length !== 2 || +minute > 59) return null
+  }
+
+  const startLabel = /\b(?:starts?|begins?)\s*(?:at\s+|:\s*)/gi
+  const labels = [...text.matchAll(startLabel)]
+  if (labels.length > 1) return null
+  const explicitlyStarting = labels.length === 1
+  const auxiliary = /\b(?:doors?\s+open|check[- ]in|registration\s+(?:closes?|ends?|deadline)|register\s+by|rsvp\s+by|(?:application|submission)\s+deadline|deadline|due\s+by)\b/i
+  if (!explicitlyStarting && auxiliary.test(text)) return null
+
+  const timing = explicitlyStarting ? text.slice(labels[0].index + labels[0][0].length).trimStart() : text
+  const parsed = parseClockRange(timing)
+  if (!parsed || (explicitlyStarting && !timing.startsWith(parsed.passage))) return null
+  const remaining = timing.slice(timing.indexOf(parsed.passage) + parsed.passage.length)
+  // Multiple independent clock expressions are ambiguous; an explicit range is already consumed.
+  if (/\b(?:noon|midnight|\d{1,2}(?::\d{2})?\s*[ap]\.?m\.?)\b/i.test(remaining)) return null
+  return parsed
+}
+
+function parseClockRange(text) {
   // Match complete clock tokens, not substrings of malformed clocks. "Noon"
   // is explicit; midnight without a date boundary is held by the interval rules.
   const token = '(?<![\\d:])(?:\\bnoon\\b|\\bmidnight\\b|\\d{1,2}(?::\\d{2})?\\s*(?:a\\.?m\\.?|p\\.?m\\.?)?)(?![\\d:])'
