@@ -26,7 +26,7 @@ export function parseTimeRange(text) {
   // Match complete clock tokens, not substrings of malformed clocks. "Noon"
   // is explicit; midnight without a date boundary is held by the interval rules.
   const token = '(?<![\\d:])(?:noon|midnight|\\d{1,2}(?::\\d{2})?\\s*(?:a\\.?m\\.?|p\\.?m\\.?)?)(?![\\d:])'
-  const range = new RegExp('(' + token + ')\\s*(?:-|–|—|\\bto\\b)\\s*(' + token + ')', 'i')
+  const range = new RegExp('(' + token + ')\\s*(?:-|–|—|\\bto\\b)\\s*(' + token + ')', 'gi')
   const single = new RegExp('(?<![\\d:])(?:noon|midnight|\\d{1,2}(?::\\d{2})?\\s*(?:a\\.?m\\.?|p\\.?m\\.?))(?![\\d:])', 'i')
   function clock(raw) {
     const t = raw.trim().toLowerCase()
@@ -38,8 +38,7 @@ export function parseTimeRange(text) {
   }
   const minutes = (c, mer) => c.hour % 12 * 60 + c.minute + (mer === 'p' ? 720 : 0)
   const format = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0')
-  const m = range.exec(text)
-  if (m) {
+  for (const m of text.matchAll(range)) {
     const a = clock(m[1]), b = clock(m[2])
     // A bare range (e.g. date 11-13) is not a clock. Fall through to an
     // explicitly marked range or start elsewhere in the sentence.
