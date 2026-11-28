@@ -40,7 +40,11 @@ test('save an undated idea, connect a real event, plan it and defer without losi
   const otherContext = await browser.newContext()
   const other = await otherContext.newPage()
   await other.goto('/#someday')
-  await expect(other.getByText('Nothing saved yet.')).toBeVisible()
+  const otherIdeas = other.getByRole('region', { name: /^(Ideas|Saved possibilities)\s*0$/ })
+  await expect(otherIdeas).toBeVisible()
+  await expect(otherIdeas.getByRole('listitem')).toHaveCount(0)
+  expect(await other.evaluate(() => JSON.parse(localStorage.getItem('sidequest.someday-intentions.v1') ?? '[]'))).toEqual([])
+  expect(await other.evaluate(() => JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1') ?? '[]'))).toEqual([])
   await otherContext.close()
 })
 
@@ -54,7 +58,14 @@ test('Someday corrupt storage is preserved unless recovery is explicitly confirm
   expect(await page.evaluate(() => localStorage.getItem('sidequest.someday-intentions.v1'))).toBe('{corrupt')
   page.once('dialog', dialog => dialog.accept())
   await page.getByRole('button', { name: 'Reset unreadable ideas' }).click()
-  await expect(page.getByText('Nothing saved yet.')).toBeVisible()
+  const recoveredIdeas = page.getByRole('region', { name: /^(Ideas|Saved possibilities)\s*0$/ })
+  await expect(recoveredIdeas).toBeVisible()
+  await expect(recoveredIdeas.getByRole('listitem')).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Your saved ideas cannot be read.' })).toHaveCount(0)
+  expect(await page.evaluate(() => localStorage.getItem('sidequest.someday-intentions.v1'))).toBe('[]')
+  await page.reload()
+  await expect(recoveredIdeas).toBeVisible()
+  await expect(recoveredIdeas.getByRole('listitem')).toHaveCount(0)
 })
 
 test('Someday preserves over-limit clipboard pastes, explains limits, and saves only complete text', async ({ page, browserName }) => {
