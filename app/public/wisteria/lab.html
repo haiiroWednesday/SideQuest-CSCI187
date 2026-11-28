@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wisteria flowers, nine ways</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Urbanist:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a sketchbook spread of one flower tried nine ways.
+   IDEA: the page of a botanical sketchbook, each study labelled in the margin.
+   PICTURE: every study is the real Wisteria week, with a close-up of one cluster beside it.
+   COLOUR and TYPE: white page, ink text, her category colours do the rest; Instrument Serif + Urbanist.
+   LAYOUT: one study per row on laptop (close-up left, week right), stacked on phones. */
+:root{color-scheme:light;--font-sans:Urbanist,Helvetica,Arial,sans-serif}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:#fff;color:#241a1d;font:16px/1.5 Urbanist,system-ui,sans-serif;overflow-x:clip}
+header{max-width:1240px;margin:0 auto;padding:clamp(24px,4vw,48px) max(5vw,16px) 6px}
+h1{font:400 clamp(34px,5vw,50px)/1.05 'Instrument Serif',Georgia,serif;margin:0 0 6px}
+header p{margin:0;color:#6d6064;max-width:62ch}
+main{max-width:1240px;margin:0 auto;padding:12px max(5vw,16px) 64px;display:grid;gap:28px}
+.study{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:18px;align-items:start;border-top:1px solid #ece4df;padding-top:18px}
+.study h2{font:400 28px/1.1 'Instrument Serif',Georgia,serif;margin:0 0 4px}
+.study p{margin:0 0 10px;color:#6d6064;font-size:15px}
+.close{background:#fffdf8;border:1px solid #ece4df;border-radius:8px;aspect-ratio:1/1.15;overflow:hidden}
+.week{background:#fffdf8;border:1px solid #ece4df;border-radius:8px;overflow:hidden}
+.close svg,.week svg{display:block;width:100%;height:100%}
+.night .close,.night .week{background:#221c45;border-color:#221c45}
+.tag{display:inline-block;font:700 13px Urbanist;color:#b3203d;margin-bottom:2px}
+@media(max-width:760px){.study{grid-template-columns:minmax(0,1fr)}.close{max-width:360px}}
+#scratch{position:absolute;width:0;height:0;overflow:hidden}
+</style></head><body>
+<header><h1>Wisteria flowers, nine ways</h1>
+<p>Each study keeps the vine, leaves and wood you liked and changes only the flowers, buds and bees. Left: one cluster up close. Right: the whole week. Tell me the number, or mix two.</p></header>
+<main id="studies"></main>
+
+<svg id="scratch" aria-hidden="true"><defs id="labdefs">
+<filter id="wmk" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.6" xChannelSelector="R" yChannelSelector="G" result="d"/><feTurbulence type="fractalNoise" baseFrequency="0.06 0.5" numOctaves="2" seed="12" result="s"/><feColorMatrix in="s" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.1 1.25" result="sa"/><feComposite in="d" in2="sa" operator="in" result="t"/><feMorphology in="d" operator="erode" radius="0.6" result="e"/><feComposite in="d" in2="e" operator="out" result="edge"/><feComponentTransfer in="edge" result="edge2"><feFuncA type="linear" slope="0.7"/></feComponentTransfer><feMerge><feMergeNode in="t"/><feMergeNode in="edge2"/></feMerge></filter>
+<filter id="wpn" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.5" numOctaves="1" seed="6" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+<!-- watercolor: soft wobbly edge, pigment pooled darker at the rim, a little granulation -->
+<filter id="wc" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+  <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="3" seed="9" result="w"/>
+  <feDisplacementMap in="SourceGraphic" in2="w" scale="2.6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+  <feGaussianBlur in="d" stdDeviation=".12" result="soft"/>
+  <feMorphology in="d" operator="erode" radius=".7" result="inner"/>
+  <feComposite in="d" in2="inner" operator="out" result="rim"/>
+  <feGaussianBlur in="rim" stdDeviation=".45" result="rim2"/>
+  <feComponentTransfer in="rim2" result="rim3"><feFuncA type="linear" slope=".8"/></feComponentTransfer>
+  <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="1" seed="2" result="g"/>
+  <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -.5 1.12" result="gran"/>
+  <feComposite in="soft" in2="gran" operator="in" result="body"/>
+  <feMerge><feMergeNode in="body"/><feMergeNode in="rim3"/></feMerge></filter>
+<filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<filter id="bloom" x="-50%" y="-50%" width="200%" height="200%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="5" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="8"/><feGaussianBlur stdDeviation="2.4"/></filter>
+</defs><g id="art"></g></svg>
+<svg width="0" height="0" style="position:absolute"><g id="wv"><defs></defs></g></svg>
+<button id="tg" hidden></button><span id="cap" hidden></span>
+<script src="wis_final.js"></script>
+<script>
+{
+const ORIG = { floret, bud, raceme }
+const labdefs = document.getElementById('labdefs')
+// wis_final put its gradients into #wv defs; move them where every study can use them.
+labdefs.insertAdjacentHTML('beforeend', document.querySelector('#wv defs').innerHTML)
+
+// Four-point star, our logo's sparkle: long top and bottom points, curved waist.
+const star = (x, y, R, rot = 0, waist = .2, wide = .78) => {
+  const a = rot * Math.PI / 180, c = Math.cos(a), s = Math.sin(a), P = (u, v) => `${f(x + u * c - v * s)} ${f(y + u * s + v * c)}`, k = R * waist
+  return `M${P(0, -R)}Q${P(k, -k)} ${P(R * wide, 0)}Q${P(k, k)} ${P(0, R * 1.08)}Q${P(-k, k)} ${P(-R * wide, 0)}Q${P(-k, -k)} ${P(0, -R)}Z`
+}
+let grads = ''
+for (const [k, [c]] of Object.entries(KIND)) {
+  grads += `<radialGradient id="sg-${k}" cx="50%" cy="50%" r="55%"><stop offset="0" stop-color="#fffbe8"/><stop offset=".3" stop-color="${mix(c, '#ffffff', .72)}"/><stop offset=".75" stop-color="${mix(c, '#ffffff', .3)}"/><stop offset="1" stop-color="${c}"/></radialGradient>`
+  grads += `<radialGradient id="sw-${k}" cx="45%" cy="40%" r="60%"><stop offset="0" stop-color="${mix(c, '#ffffff', .8)}" stop-opacity=".55"/><stop offset=".6" stop-color="${mix(c, '#ffffff', .35)}" stop-opacity=".75"/><stop offset="1" stop-color="${mix(c, INK, .1)}" stop-opacity=".9"/></radialGradient>`
+  grads += `<radialGradient id="sn-${k}" cx="50%" cy="50%" r="55%"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="${mix(c, '#ffffff', .65)}"/><stop offset="1" stop-color="${mix(c, '#ffffff', .25)}"/></radialGradient>`
+}
+labdefs.insertAdjacentHTML('beforeend', grads)
+
+let CENTERS = []
+const STUDIES = [
+  { n: 1, name: 'Star, soft light', note: 'Each floret is our four-point star, lit from its middle: cream heart, colour at the tips.',
+    floret: (x, y, sz, side, k) => { CENTERS.push([x, y]); return `<path d="${star(x, y, 5.6 * sz + 2, side * 10 + j(10))}" fill="url(#sg-${k})"/>` },
+    bud: (x, y, sz, a, k) => `<path d="${star(x, y, 2.8 * sz + 1.2, a * 40, .14, .45)}" fill="url(#gd-${k})"/>` },
+  { n: 2, name: 'Star, watercolor', note: 'The same stars in watercolor: soft wobbly edges, pigment pooled at the rim, overlaps deepen.',
+    wc: true,
+    floret: (x, y, sz, side, k) => { CENTERS.push([x, y]); return `<path d="${star(x, y, 6 * sz + 2.1, side * 10 + j(12))}" fill="url(#sw-${k})"/>` },
+    bud: (x, y, sz, a, k) => `<path d="${star(x, y, 2.9 * sz + 1.2, a * 40, .14, .45)}" fill="${mix(KIND[k][0], INK, .15)}" fill-opacity=".75"/>` },
+  { n: 3, name: 'Watercolor stars, joined like a constellation', note: 'Fine gold lines join the open stars down the cluster, the way a star chart joins a figure.',
+    wc: true, lines: 'solid',
+    floret: (x, y, sz, side, k) => { CENTERS.push([x, y]); return `<path d="${star(x, y, 5.8 * sz + 2, side * 10 + j(12))}" fill="url(#sw-${k})"/>` },
+    bud: (x, y, sz, a, k) => `<path d="${star(x, y, 2.8 * sz + 1.2, a * 40, .14, .45)}" fill="${mix(KIND[k][0], INK, .15)}" fill-opacity=".75"/>` },
+  { n: 4, name: 'Ink line and watercolor', note: 'Like your illustrations: a thin ink outline drawn by hand, colour washed in under it.',
+    wc: true, ink: true,
+    floret: (x, y, sz, side, k) => { CENTERS.push([x, y]); const d = star(x, y, 5.8 * sz + 2, side * 10 + j(12)); return `<path d="${d}" fill="url(#sw-${k})"/>` },
+    bud: (x, y, sz, a, k) => `<path d="${star(x, y, 2.8 * sz + 1.2, a * 40, .14, .45)}" fill="${mix(KIND[k][0], INK, .15)}" fill-opacity=".8"/>` },
+  { n: 5, name: 'Watercolor stars, stitched together', note: 'The constellation lines are dotted, like the If star, so a cluster reads as one figure without getting busy.',
+    wc: true, lines: 'dotted',
+    floret: (x, y, sz, side, k) => { CENTERS.push([x, y]); return `<path d="${star(x, y, 5.8 * sz + 2, side * 10 + j(12))}" fill="url(#sw-${k})"/>` },
+    bud: (x, y, sz, a, k) => `<path d="${star(x, y, 2.8 * sz + 1.2, a * 40, .14, .45)}" fill="${mix(KIND[k][0], INK, .15)}" fill-opacity=".75"/>` },
+  { n: 6, name: 'Constellation over a wash', note: 'Small bright stars on gold lines, over one soft watercolor bloom of the cluster’s colour.',
+    lines: 'solid', bloom: true,
+    floret: (x, y, sz, side, k) => { CENTERS.push([x, y]); return `<path d="${star(x, y, 3.2 * sz + 1.5, j(8), .16, .7)}" fill="url(#sg-${k})"/>` },
+    bud: (x, y, sz, a, k) => `<circle cx="${f(x)}" cy="${f(y)}" r="${f(.7 * sz + .5)}" fill="${mix(KIND[k][0], INK, .2)}" opacity=".8"/>` },
+  { n: 7, name: 'Night sky', note: 'Like your clock room: an indigo ground, the flowers as glowing stars, the clusters joined by faint light.',
+    night: true, lines: 'solid',
+    floret: (x, y, sz, side, k) => { CENTERS.push([x, y]); return `<path d="${star(x, y, 4.6 * sz + 1.8, j(10), .17, .72)}" fill="url(#sn-${k})" filter="url(#glow)"/>` },
+    bud: (x, y, sz, a, k) => `<circle cx="${f(x)}" cy="${f(y)}" r="${f(.7 * sz + .45)}" fill="${mix(KIND[k][0], '#ffffff', .45)}" opacity=".85"/>` },
+  { n: 8, name: 'Open stars, closed stars', note: 'Open florets are full stars; buds are the same star still folded: slim, darker, pointing down.',
+    wc: true,
+    floret: (x, y, sz, side, k) => { CENTERS.push([x, y]); return `<path d="${star(x, y, 6 * sz + 2.1, side * 12 + j(12))}" fill="url(#sw-${k})"/>` },
+    bud: (x, y, sz, a, k) => `<path d="${star(x, y + 1, 3.8 * sz + 1.5, a * 30, .1, .28)}" fill="${mix(KIND[k][0], INK, .22)}" fill-opacity=".85"/>` },
+  { n: 9, name: 'Pea flowers, in watercolor', note: 'Today’s petal shapes, repainted in watercolor, to compare against the stars.',
+    wc: true, floret: null, bud: null },
+]
+
+function render(st) {
+  // Swap the flower painters for this study; vine, leaves and wood stay as they are.
+  floret = st.floret ?? ORIG.floret
+  bud = st.bud ?? ORIG.bud
+  raceme = function (x, y, hrs, kind, friends, state, info, delay) {
+    CENTERS = []
+    // no misty glow behind clusters: she found it snowy
+    let out = ORIG.raceme(x, y, hrs, kind, friends, state, info, delay).replace(/<ellipse[^>]*filter="url\(#wsoft\)"\/>/, '')
+    const c = KIND[kind][0]
+    if (st.wc) out = out.replace('<g filter="url(#wfz)">', '<g filter="url(#wc)" style="mix-blend-mode:multiply">')
+    if (st.night) out = out.replace('<g filter="url(#wfz)">', '<g>')
+    let extra = ''
+    if (st.lines && CENTERS.length > 1) {
+      // Join stars the way a star chart does: each to its nearest neighbour already in the figure (a spanning tree).
+      const pts = [...CENTERS], inT = [0], segs = []
+      while (inT.length < pts.length) {
+        let best = null
+        for (const a of inT) for (let b = 0; b < pts.length; b++) if (!inT.includes(b)) {
+          const dd = Math.hypot(pts[a][0] - pts[b][0], pts[a][1] - pts[b][1])
+          if (!best || dd < best[2]) best = [a, b, dd]
+        }
+        inT.push(best[1]); segs.push(best)
+      }
+      const d = segs.map(([a, b]) => `M${f(pts[a][0])} ${f(pts[a][1])}L${f(pts[b][0])} ${f(pts[b][1])}`).join('')
+      const col = st.night ? '#f3e2a6' : '#c89b3c'
+      extra += `<path d="${d}" fill="none" stroke="${col}" stroke-width="${st.night ? .45 : .5}" stroke-opacity="${st.night ? .55 : .8}" ${st.lines === 'dotted' ? 'stroke-dasharray=".6 1.6" stroke-linecap="round"' : ''}/>`
+      extra += pts.map(([px, py]) => `<circle cx="${f(px)}" cy="${f(py)}" r=".55" fill="${col}"/>`).join('')
+    }
+    if (st.bloom && CENTERS.length) {
+      const ys = CENTERS.map(p => p[1]), xs = CENTERS.map(p => p[0])
+      const cx = xs.reduce((a, b) => a + b, 0) / xs.length, top = Math.min(...ys), bot = Math.max(...ys)
+      extra = `<ellipse cx="${f(cx)}" cy="${f((top + bot) / 2)}" rx="10" ry="${f((bot - top) / 2 + 6)}" fill="${mix(c, '#ffffff', .55)}" opacity=".45" filter="url(#wc)"/>` + extra
+    }
+    // put the extras under the bees, over the flowers
+    const at = out.lastIndexOf('<g class="bee"')
+    return at > 0 ? out.slice(0, at) + extra + out.slice(at) : out.replace(/<\/g>$/, extra + '</g>')
+  }
+  draw(FULL)
+  return document.getElementById('art').innerHTML
+}
+// Outline pass for study 4: draw the star outlines on top, by re-running the floret math with an ink stroke.
+const inkStudy = STUDIES.find(s => s.ink)
+inkStudy.floret = (x, y, sz, side, k) => { CENTERS.push([x, y]); const d = star(x, y, 5.8 * sz + 2, side * 10 + j(12)); return `<path d="${d}" fill="url(#sw-${k})"/><path d="${d}" fill="none" stroke="${INK}" stroke-width=".38" stroke-opacity=".7" filter="url(#wpn)" style="mix-blend-mode:normal"/>` }
+
+const html = STUDIES.map(st => {
+  let art = render(st)
+  if (st.night) art = art.replace(/(<text[^>]*?)fill="#2a1c22"/g, '$1fill="#efe6ff"')
+  const bg = st.night ? '<rect x="0" y="0" width="360" height="300" fill="#221c45"/>' : ''
+  return `<section class="study${st.night ? ' night' : ''}" id="study-${st.n}">
+    <div><span class="tag">Study ${st.n}</span><h2>${st.name}</h2><p>${st.note}</p>
+      <div class="close"><svg viewBox="98 44 62 71" role="img" aria-label="Close-up of one cluster, study ${st.n}">${bg}${art}</svg></div></div>
+    <div class="week"><svg viewBox="0 0 360 212" role="img" aria-label="The week, study ${st.n}">${bg}${art}</svg></div>
+  </section>`
+}).join('')
+document.getElementById('studies').innerHTML = html
+}
+</script>
+</body></html>

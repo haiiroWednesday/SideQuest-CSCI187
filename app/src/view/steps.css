@@ -1,0 +1,29 @@
+/* Discover in steps (Nov 27, D6). A quiet step bar, a Next button at the foot of each step,
+   and the filters along the top of Events. */
+.sq-steps { margin: 6px 0 4px; }
+.sq-steps ol { list-style: none; display: flex; gap: 4px; margin: 0; padding: 0; counter-reset: sq-step; }
+.sq-steps li { counter-increment: sq-step; }
+.sq-steps a::before { content: counter(sq-step); font: italic 400 19px/1 var(--font-display); }
+.sq-steps li { flex: 1 1 0; min-width: 0; }
+.sq-steps a { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 0 6px;
+  border-bottom: 3px solid rgba(110, 74, 60, .22); color: var(--sq-muted, #6d625b); text-decoration: none;
+  font: 650 15px/1.1 var(--font-sans); white-space: nowrap; }
+.sq-steps .sq-step-done a { color: var(--sq-ink, #302421); border-bottom-color: var(--sq-gold, #e8aa24); }
+.sq-steps a[aria-current="step"] { color: var(--sq-red-deep, #751728); border-bottom-color: var(--sq-red-deep, #751728); }
+.sq-steps a:hover:not([aria-current]) { color: var(--sq-red-deep, #751728); }
+.sq-steps a:focus-visible { outline: 3px solid var(--sq-focus, #751728); outline-offset: 2px; }
+
+.sq-step-head { margin: 22px 0 12px; }
+.sq-step-head h1 { margin: 0; font: 400 clamp(34px, 6vw, 52px)/1.05 var(--font-display); color: var(--sq-ink, #302421); }
+.sq-step-head p { margin: 8px 0 0; font: 500 16px/1.45 var(--font-sans); color: var(--sq-muted, #6d625b); max-width: 52ch; }
+
+.sq-step-next { display: flex; align-items: center; gap: 18px; margin: 26px 0 36px; }
+.sq-step-go { width: auto !important; min-height: 50px; padding-inline: 26px !important; }
+.sq-step-skip { font-weight: 700; }
+
+.sq-step-filters { margin-bottom: 8px; }
+
+@media (max-width: 560px) {
+  .sq-steps a { flex-direction: column; gap: 3px; padding-bottom: 5px; }
+  .sq-step-next { gap: 14px; }
+}

@@ -1,0 +1,104 @@
+/* The agreed type scale for design mode, one look per role on every page.
+   e2e-demo/type-census.spec.ts checks it, and e2e-demo/type-scale.json lists the looks.
+   Serif for titles, always with the S7 stroke. Urbanist for everything else.
+   Event tickets (materials.css, card-fit.css) and the day picker (marks.css) keep their own rules.
+   The :is(#id, ...) lists are on purpose: they outrank each page's own heading rule. */
+
+:root[data-quiet] {
+  --ts-title: 56px;
+  --ts-section: 32px;
+  --ts-sub: 26px;
+}
+@media (max-width: 760px) {
+  :root[data-quiet] { --ts-title: 40px; --ts-section: 28px; --ts-sub: 24px; }
+}
+
+/* Page title: one per page. */
+:root[data-quiet] :is(#sq-discover-title, .sq-step-head h1, #schedule-heading, #post-heading, #sq-login-heading, #sq-group-page-title, .sq-hero h1, .sq-fr-groups h1, .sq-someday-hero h1, .sq-post-panel h1) {
+  font: 400 var(--ts-title)/1 var(--font-display);
+  letter-spacing: -.01em;
+  -webkit-text-stroke: .7px currentColor;
+  paint-order: stroke fill;
+  padding-bottom: .04em;
+}
+
+/* Section heading, and the one line an empty page says. */
+:root[data-quiet] :is(#sq-fr-title, #sq-ideas-heading, #sq-oi-title, #sq-oi-h, #sq-clash-title, #sq-category-heading, #sq-near-heading, #sq-ai-heading, #sq-google-title, #sq-group-list-title, #sq-group-new-title, .sq-someday-page .sq-someday-form h2, .sq-someday-page .sq-someday-talk h2, .sq-foodnow h2, .sq-message h3, .sq-empty-card > b) {
+  font: 400 var(--ts-section)/1.12 var(--font-display);
+  letter-spacing: 0;
+  -webkit-text-stroke: .7px currentColor;
+  paint-order: stroke fill;
+  padding-bottom: .04em;
+}
+
+/* Sub heading. */
+:root[data-quiet] :is(.sq-done-h, .sq-ft h3) {
+  font: 400 var(--ts-sub)/1.15 var(--font-display);
+  -webkit-text-stroke: .7px currentColor;
+  paint-order: stroke fill;
+  padding-bottom: .04em;
+}
+
+/* An event's name inside a sheet: the same size as the free-time sheet's event names. */
+:root[data-quiet] .sq-clash-plan h3 {
+  font: 400 24px/1.12 var(--font-display);
+  -webkit-text-stroke: .7px currentColor;
+  paint-order: stroke fill;
+}
+
+/* Form labels: Post's spaced red caps everywhere a form asks for something. */
+:root[data-quiet] :is(.sq-fr-new label, .sq-someday-form label, .sq-oi-field > span, .sq-oi-groups legend) {
+  font: 700 13px/1.3 var(--font-sans);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--sq-red, #a32035);
+}
+:root[data-quiet] .sq-oi-field small { color: var(--sq-muted); letter-spacing: 0; text-transform: none; }
+
+/* Eyebrows: the small caps line above a thing. */
+:root[data-quiet] :is(.sq-fr-eyebrow, .sq-clash-tag, .sq-clash-when, .sq-clash-plan dt) {
+  font: 800 12px/1.3 var(--font-sans);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+/* Text boxes. Post's title and place keep their serif. */
+:root[data-quiet] :is(.sq-someday-form input, .sq-someday-form textarea, .sq-fr-new input, .sq-fr-note input, .sq-fr-find-box input, .sq-oi-field input, .sq-post-panel .event-form textarea) {
+  font: 500 16px/1.35 var(--font-sans);
+}
+:root[data-quiet] .sq-post-panel .event-form textarea::placeholder { font-weight: 500; }
+
+/* Small print: hints under a field or a block. */
+:root[data-quiet] :is(.sq-source-note, .sq-post-tags-hint, .sq-fr-limit) {
+  font: 500 14px/1.5 var(--font-sans);
+}
+/* Character counters. */
+:root[data-quiet] :is(.sq-someday-form .sq-someday-counter, .sq-post-panel .field-count) {
+  font: 600 13px/1.4 var(--font-sans);
+}
+
+/* Text links under a page title. */
+:root[data-quiet] .sq-look-link { font: 650 15px/1.3 var(--font-sans); }
+
+/* The red button is one size everywhere. */
+:root[data-quiet] .sq-endcap-post { font: 700 20px var(--font-sans); }
+
+/* Day headings in Discover and My Schedule ("Friday", "Tomorrow"). */
+:root[data-quiet] .sq-quiet-day { -webkit-text-stroke: .7px currentColor; paint-order: stroke fill; }
+
+/* Counts and tags inside a stroked heading stay plain. */
+:root[data-quiet] :is(#sq-ideas-heading small, #sq-clash-title .sq-clash-tag, .sq-foodnow h2 :is(small, span, b)) { -webkit-text-stroke: 0; }
+
+/* The month in the date picker is a title: serif with the stroke, never a faked bold. */
+:root[data-quiet] .sq-cal-head b { font: 400 22px/1.1 var(--font-display); -webkit-text-stroke: .7px currentColor; paint-order: stroke fill; }
+
+/* Discover's List / Map switch: the picked one gets the full S7 stroke. */
+:root[data-quiet] .sq-viewswitch button[aria-pressed='true'] { -webkit-text-stroke-width: .7px; }
+
+/* Option labels next to a checkbox, and the line under them. */
+:root[data-quiet] .sq-share-text b { font: 650 15px/1.3 var(--font-sans); }
+:root[data-quiet] :is(.sq-share-text small, .sq-oi-reach, .sq-fr-reps .sq-fr-their-note) { font: 500 14px/1.4 var(--font-sans); }
+:root[data-quiet] .sq-oi-field small { font: 600 13px var(--font-sans); }
+:root[data-quiet] .sq-post-tags label span { font: 650 15px/1.3 var(--font-sans); }
+
+/* Postcard lettering ("Greetings from DOWD") is Instrument Serif with the stroke, set in materials.css. */

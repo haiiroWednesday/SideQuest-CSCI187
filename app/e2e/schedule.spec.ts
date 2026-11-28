@@ -50,7 +50,12 @@ test('Schedule reveals legacy-length event text by keyboard on narrow screens', 
   // Reload to make the application read the localStorage records seeded above.
   await page.reload()
   await page.goto('/#schedule')
-  const details = page.locator('.sq-trail .sq-plan-details').first()
+  // Trail is an overview; switch to Tickets and open the plan by keyboard.
+  await page.getByRole('button', { name: 'Tickets', exact: true }).focus()
+  await page.keyboard.press('Enter')
+  await page.getByRole('button', { name: new RegExp(`^${title}, `) }).focus()
+  await page.keyboard.press('Enter')
+  const details = page.locator('.sqm-open .sq-plan-details').first()
   const summary = details.locator('summary')
   await expect(summary).toBeVisible()
   await expect(summary).toHaveAttribute('aria-label', `View full details for ${title}`)
@@ -78,23 +83,28 @@ test('Schedule reveals legacy-length event text by keyboard on narrow screens', 
 })
 
 test('Schedule timeline uses event minutes and prevents horizontal overflow at phone width', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.setViewportSize({ width: 320, height: 812 })
   await seed(page)
   await page.goto('/#schedule')
-  const first = page.locator('.sq-timeline-block[data-event-id="' + ids[0] + '"]')
-  const second = page.locator('.sq-timeline-block[data-event-id="' + ids[1] + '"]')
+  await page.getByRole('button', { name: 'Tickets', exact: true }).click()
+  const first = page.locator('.sqm-tickets .sqm-plan[data-event-id="' + ids[0] + '"]')
+  const second = page.locator('.sqm-tickets .sqm-plan[data-event-id="' + ids[1] + '"]')
   await expect(first).toBeVisible()
   await expect(second).toBeVisible()
-  const firstHeight = await first.evaluate(node => node.getBoundingClientRect().height)
-  const secondHeight = await second.evaluate(node => node.getBoundingClientRect().height)
-  expect(firstHeight).toBeCloseTo(72, 1) // 60 actual minutes * 1.2 px
-  expect(secondHeight).toBeCloseTo(72, 1)
-  const firstLeft = await first.evaluate(node => node.getBoundingClientRect().left)
-  const secondLeft = await second.evaluate(node => node.getBoundingClientRect().left)
-  expect(firstLeft).not.toBe(secondLeft) // 30-minute overlap is laid out side by side
+  const sizes = await page.locator('.sqm-tickets .sqm-plan[data-event-id]').evaluateAll(nodes =>
+    nodes.map(node => {
+      const { height, left } = node.getBoundingClientRect()
+      return { height, left }
+    }),
+  )
+  // Both plans last an hour. Their half-hour overlap puts them in separate lanes.
+  expect(sizes[0].height).toBeGreaterThan(50)
+  expect(Math.abs(sizes[0].height - sizes[1].height)).toBeLessThan(1)
+  expect(sizes[0].left).not.toBe(sizes[1].left)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
   await expect(page.getByText('2 plans have conflicts')).toBeVisible()
-  await expect(page.locator('.sq-trail .sq-plan-details')).toHaveCount(2)
+  await expect(page.locator('.sqm-tickets .sqm-plan[data-event-id]')).toHaveCount(2)
 })
 
 test('phone details are hidden while closed, trap keyboard focus, and return focus on Escape', async ({ page }) => {
@@ -116,10 +126,21 @@ test('phone details are hidden while closed, trap keyboard focus, and return foc
   await expect(officialMap).toBeVisible()
   await expect(venueSearch).toBeVisible()
   await expect(calendar).toBeVisible()
+  // A planned event's card ends with its Remove button, so that is the last stop before the trap wraps.
+  const remove = dialog.getByRole('button', { name: 'Remove Choir rehearsal from My Schedule' })
+  await page.keyboard.press('Shift+Tab')
+  await expect(remove).toBeFocused()
   await page.keyboard.press('Shift+Tab')
   await expect(calendar).toBeFocused()
   await page.keyboard.press('Tab')
+  await expect(remove).toBeFocused()
+  await page.keyboard.press('Tab')
   await expect(close).toBeFocused()
+  await page.keyboard.press('Tab')
+  // The event's picture opens full screen, so it is the next stop after Close.
+  await expect(dialog.getByRole('button', { name: /show full screen/ })).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(dialog.getByRole('link', { name: 'Find it on the SideQuest map' })).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(officialMap).toBeFocused()
   await page.keyboard.press('Tab')
@@ -128,6 +149,8 @@ test('phone details are hidden while closed, trap keyboard focus, and return foc
   await expect(dialog.getByRole('button', { name: 'Use my location' })).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(calendar).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(remove).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(close).toBeFocused()
   await page.screenshot({ path: test.info().outputPath('discover-phone-sheet.png'), fullPage: true })
@@ -154,8 +177,9 @@ test('blocked storage does not crash startup', async ({ page }) => {
   await page.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('blocked', 'SecurityError') } }))
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'More to do. Right here.' })).toBeVisible()
-  await expect(page.getByText('Events could not be loaded.')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Recover valid plans' })).toBeVisible()
+  // Storage that throws falls back to memory for this visit: the page works and says plans won't be kept.
+  await expect(page.getByText("This browser won't save your plans.")).toBeVisible()
+  await expect(page.getByText('Events could not be loaded.')).toHaveCount(0)
 })
 
 test('another tab refreshes the same device Schedule automatically', async ({ page, context }) => {
@@ -219,6 +243,11 @@ test('phone keyboard focus stays in the sheet when planning disables the focused
   await page.keyboard.press('Enter')
   await expect(dialog.getByRole('button', { name: 'In My Schedule' })).toBeDisabled()
   await expect(close).toBeFocused()
+  await page.keyboard.press('Tab')
+  // The event's picture opens full screen, so it is the next stop after Close.
+  await expect(dialog.getByRole('button', { name: /show full screen/ })).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(dialog.getByRole('link', { name: 'Find it on the SideQuest map' })).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(dialog.getByRole('link', { name: 'Browse official SCU campus map' })).toBeFocused()
   await page.keyboard.press('Tab')

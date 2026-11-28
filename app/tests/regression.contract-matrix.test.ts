@@ -17,7 +17,7 @@ const ID_A = '11111111-1111-4111-8111-111111111111'
 const ID_B = '22222222-2222-4222-8222-222222222222'
 const ID_C = '33333333-3333-4333-8333-333333333333'
 const draft = (patch: Partial<EventDraft> = {}): EventDraft => ({
-  title: 'Art Workshop', hostName: 'SCU Art Club', description: 'Bring a notebook.',
+  title: 'Art Workshop', hostName: 'SCU Art Club', organizer: 'Ana Ruiz', contact: 'ana@scu.edu', spaceConfirmed: true, description: 'Bring a notebook.',
   location: 'Benson Center', date: '2030-11-08', start: '14:30', end: '15:30',
   ...patch,
 })

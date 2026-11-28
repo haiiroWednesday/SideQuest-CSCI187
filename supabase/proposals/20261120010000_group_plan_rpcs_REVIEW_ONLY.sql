@@ -188,7 +188,7 @@ begin
       if p_invitee_id is null or p_invitee_id = v_actor then
         raise exception 'Invite another verified account' using errcode = '22023';
       end if;
-      if (select count(*) from public.group_participants where plan_id = p_plan_id) >= 12 then
+      if (select count(*) from public.group_participants where plan_id = p_plan_id) >= 11 then
         raise exception 'Participant limit reached' using errcode = '22023';
       end if;
       if exists (select 1 from public.group_participants

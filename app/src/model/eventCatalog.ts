@@ -2,6 +2,8 @@
 // Consumers depend on EventCatalogPort; adapters translate database rows.
 // Historical M1 event data remains in events.ts for existing browser records.
 import { isValidDate, toMinutes } from './events'
+import { isEventSource, isTagSource, normalizeTags, TAG_ERROR, type EventSource, type EventTag, type TagSource } from './eventTags'
+import { ATTEND_ERROR, isAttendMode, type AttendMode } from './attend'
 
 export type CampusEvent = {
   id: string
@@ -12,9 +14,44 @@ export type CampusEvent = {
   date: string  // YYYY-MM-DD in America/Los_Angeles
   start: string // HH:mm on date
   end: string   // HH:mm on date, strictly after start
+  // SCU's posting policy (scu.edu/csi/organizations/resources/advertising): every ad names
+  // the primary student organizer and their contact, and carries the Access Policy
+  // Statement built from them. Optional on read so events posted before the rule still load.
+  organizer?: string     // primary student organizer
+  contact?: string       // their email address or phone number
+  accessibility?: string // the Access Policy Statement, always accessStatement(organizer, contact)
+  // Who hosts it. Student organization events must carry the statement; university
+  // department events may skip it (team decision, Nov 24). Absent on older events.
+  hostKind?: HostKind
+  // Optional host-set attributes students can filter on (free food, guest speaker, ...).
+  tags?: EventTag[]
+  /** Who set the tags: the host on Post, or a reviewer for imported events. Never inferred. */
+  tagsBy?: TagSource
+  /** Where the event came from; absent means a host posted it in SideQuest. */
+  source?: EventSource
+  /** How to attend, set by the host on Post: 'set' (be there for all of it) or 'dropin' (stop by
+   *  any time). Absent means 'set', which is what every event from before this field means. */
+  attend?: AttendMode
 }
 
-export type EventDraft = Omit<CampusEvent, 'id'>
+export const HOST_KINDS = ['student-org', 'department'] as const
+export type HostKind = typeof HOST_KINDS[number]
+export const isHostKind = (value: unknown): value is HostKind => (HOST_KINDS as readonly unknown[]).includes(value)
+/** SCU's ADA/504 statement, organizer contact and space check on Post. Off (Cyn, Nov 24): it adds
+ *  friction for hosts without giving students anything they use, and it is not an extra-credit item.
+ *  The fields stay optional, so imported events that carry them keep them. */
+export const ACCESS_POLICY_ON = false
+// A post with no host kind is held to the student organization rule, the stricter one.
+const needsStatement = (draft: Pick<EventDraft, 'hostKind'>) => draft.hostKind !== 'department'
+// The statement exists only when both of its blanks are filled.
+function builtStatement(organizer: unknown, contact: unknown): string | undefined {
+  const name = String(organizer ?? '').trim(), reach = String(contact ?? '').trim()
+  return name && reach ? accessStatement(name, reach) : undefined
+}
+
+// A post also confirms its room or space is booked (SCU: advertise only after confirmation).
+// The confirmation gates posting and is not stored.
+export type EventDraft = Omit<CampusEvent, 'id'> & { spaceConfirmed?: boolean }
 
 export interface EventCatalogPort {
   create(draft: EventDraft): Promise<CampusEvent>
@@ -48,6 +85,28 @@ export const CATALOG_LIMITS = {
   description: 2000,
   location: 200,
 } as const
+
+// The posting-policy fields. Optional in storage (older events have none), required
+// for every new post. Mirrored by supabase/proposals/20261125010000_event_access_contact_REVIEW_ONLY.sql (review only).
+export const ACCESS_LIMITS = {
+  organizer: 60,
+  contact: 120,
+  accessibility: 500,
+} as const
+type AccessField = keyof typeof ACCESS_LIMITS
+const ACCESS_FIELDS = Object.keys(ACCESS_LIMITS) as AccessField[]
+
+// SCU's Access Policy Statement, word for word. Hosts fill NAME and contact only.
+export const ACCESS_STATEMENT_START = 'In compliance with the ADA/504, please direct your accommodation requests to '
+export function accessStatement(organizer: string | undefined, contact: string | undefined): string {
+  return `${ACCESS_STATEMENT_START}${String(organizer ?? '').trim()} at ${String(contact ?? '').trim()}.`
+}
+// SCU asks for an email address; a phone number is acceptable.
+const CONTACT_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const CONTACT_PHONE = /^\+?[\d\s().-]+$/
+export function isContactEmailOrPhone(text: string): boolean {
+  return CONTACT_EMAIL.test(text) || (CONTACT_PHONE.test(text) && text.replace(/\D/g, '').length >= 7 && text.replace(/\D/g, '').length <= 15)
+}
 
 // Posting-only limits, applied by catalogPostingErrors() and mirrored by the
 // anonymous INSERT policy in
@@ -85,8 +144,9 @@ const FIELD_LABELS: Record<keyof typeof CATALOG_LIMITS, string> = {
 export type CatalogFieldErrors = Partial<Record<keyof EventDraft, string>>
 
 // The order in which fields are checked. It is also the order of the form.
-export const DRAFT_FIELD_ORDER: readonly (keyof EventDraft)[] =
-  ['title', 'hostName', 'description', 'location', 'date', 'start', 'end']
+// The seven fields every stored event has. Organizer, contact and the space check follow them in the form.
+export const BASE_FIELD_ORDER = ['title', 'hostName', 'description', 'location', 'date', 'start', 'end'] as const
+export const DRAFT_FIELD_ORDER: readonly (keyof EventDraft)[] = [...BASE_FIELD_ORDER, 'attend', 'hostKind', 'organizer', 'contact', 'spaceConfirmed', 'tags']
 
 export function trimDraft(draft: EventDraft): EventDraft {
   return {
@@ -97,6 +157,19 @@ export function trimDraft(draft: EventDraft): EventDraft {
     date: draft.date,
     start: draft.start,
     end: draft.end,
+    // Present only when given, so drafts from before the posting rule keep their exact shape.
+    // The statement is always built from organizer and contact, never typed, so its wording stays SCU's.
+    ...(draft.organizer !== undefined ? { organizer: String(draft.organizer ?? '').trim() } : {}),
+    ...(draft.contact !== undefined ? { contact: String(draft.contact ?? '').trim() } : {}),
+    ...(builtStatement(draft.organizer, draft.contact) !== undefined ? { accessibility: builtStatement(draft.organizer, draft.contact) } : {}),
+    ...(draft.hostKind !== undefined ? { hostKind: draft.hostKind } : {}),
+    ...(draft.spaceConfirmed !== undefined ? { spaceConfirmed: draft.spaceConfirmed === true } : {}),
+    // Tags stay as given here; catalogDraftErrors() refuses unknown ones and toEventRow() orders them.
+    ...(draft.tags !== undefined ? { tags: draft.tags } : {}),
+    // A post can only ever be tagged by its host; reviewer tags come from the import pipeline.
+    ...(draft.tags !== undefined ? { tagsBy: 'host' as const } : {}),
+    // Kept as given; catalogDraftErrors() refuses anything but the two known values.
+    ...(draft.attend !== undefined ? { attend: draft.attend } : {}),
   }
 }
 
@@ -121,8 +194,24 @@ export function catalogDraftErrors(draft: EventDraft): CatalogFieldErrors {
   if (start === null || end === null || start >= end) {
     errors[start === null ? 'start' : 'end'] = 'The event must end later than it starts, on the same day.'
   }
+  for (const field of ACCESS_FIELDS) {
+    const value = trimmed[field]
+    if (value === undefined) continue
+    if (typeof value !== 'string') errors[field] = ACCESS_MESSAGES[field].missing
+    else if (value.length > ACCESS_LIMITS[field]) errors[field] = `The ${ACCESS_MESSAGES[field].label} must be ${ACCESS_LIMITS[field]} characters or fewer.`
+  }
+  if (trimmed.tags !== undefined && normalizeTags(trimmed.tags) === null) errors.tags = TAG_ERROR
+  if (trimmed.hostKind !== undefined && !isHostKind(trimmed.hostKind)) errors.hostKind = 'Choose who hosts the event.'
+  if (trimmed.attend !== undefined && !isAttendMode(trimmed.attend)) errors.attend = ATTEND_ERROR
   return errors
 }
+
+const ACCESS_MESSAGES: Record<AccessField, { label: string; missing: string }> = {
+  organizer: { label: 'organizer name', missing: 'Add the primary student organizer\'s name.' },
+  contact: { label: 'contact', missing: 'Add the organizer\'s email or phone number.' },
+  accessibility: { label: 'access statement', missing: 'Add the organizer\'s name and contact for the access statement.' },
+}
+export const SPACE_CONFIRM_ERROR = 'Confirm the room or space is booked. SCU asks hosts to advertise only after that.'
 
 export const postingDraftErrors = catalogPostingErrors
 
@@ -130,7 +219,11 @@ export function isCatalogEvent(value: unknown): value is CampusEvent {
   if (!value || typeof value !== 'object') return false
   const event = value as Partial<CampusEvent>
   if (typeof event.id !== 'string' || !event.id.trim()) return false
-  for (const field of DRAFT_FIELD_ORDER) if (typeof event[field] !== 'string') return false
+  for (const field of BASE_FIELD_ORDER) if (typeof event[field] !== 'string') return false
+  for (const field of ACCESS_FIELDS) if (event[field] !== undefined && typeof event[field] !== 'string') return false
+  if (event.tags !== undefined && normalizeTags(event.tags) === null) return false
+  if (event.hostKind !== undefined && !isHostKind(event.hostKind)) return false
+  if (event.attend !== undefined && !isAttendMode(event.attend)) return false
   return firstFieldError(catalogDraftErrors(event as EventDraft)) === null
 }
 
@@ -152,11 +245,14 @@ export function validateCatalogDraft(draft: EventDraft): { draft: EventDraft; er
 // in whatever timezone the visitor's laptop happens to use.
 export const CAMPUS_TIME_ZONE = 'America/Los_Angeles'
 
+// Building an Intl formatter is slow (it showed up as the lag when a card opens), so make one and reuse it.
+let campusFormat: Intl.DateTimeFormat | null = null
 export function campusNow(now: Date = new Date()): { date: string; time: string } {
-  const parts = new Intl.DateTimeFormat('en-CA', {
+  campusFormat ??= new Intl.DateTimeFormat('en-CA', {
     timeZone: CAMPUS_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-  }).formatToParts(now)
+  })
+  const parts = campusFormat.formatToParts(now)
   const get = (type: string) => parts.find(part => part.type === type)?.value ?? ''
   return { date: `${get('year')}-${get('month')}-${get('day')}`, time: `${get('hour')}:${get('minute')}` }
 }
@@ -200,6 +296,24 @@ export function catalogPostingErrors(draft: EventDraft, now: Date = new Date()):
       errors[field] = `The ${FIELD_LABELS[field]} must include at least one letter or number.`
     }
   }
+  // SCU's posting policy: a student organization post names its organizer and contact and
+  // carries the Access Policy Statement built from them. A department post may skip all three,
+  // but a statement it does give must be complete. Every post has its room or space confirmed.
+  const statementRequired = ACCESS_POLICY_ON && (needsStatement(value) || Boolean(value.organizer || value.contact))
+  for (const field of ['organizer', 'contact'] as const) {
+    if (errors[field]) continue
+    const text = value[field] ?? ''
+    if (!text && !statementRequired) continue
+    if (!text) errors[field] = ACCESS_POLICY_ON && needsStatement(value) ? ACCESS_MESSAGES[field].missing : `${ACCESS_MESSAGES[field].missing.replace(/\.$/, '')}, or leave both empty.`
+    else if (!hasLetterOrDigit(text)) errors[field] = `The ${ACCESS_MESSAGES[field].label} must include at least one letter or number.`
+  }
+  if (!errors.contact && value.contact && !isContactEmailOrPhone(value.contact)) {
+    errors.contact = 'Use an email address or a phone number.'
+  }
+  if (!errors.organizer && !errors.contact && value.accessibility && value.accessibility.length > ACCESS_LIMITS.accessibility) {
+    errors.contact = ACCESS_MESSAGES.accessibility.missing
+  }
+  if (ACCESS_POLICY_ON && value.spaceConfirmed !== true) errors.spaceConfirmed = SPACE_CONFIRM_ERROR
   if (!errors.date && value.date < campus.date) {
     errors.date = 'Events cannot be posted in the past. Choose today or a future date.'
   } else if (!errors.date && !isWithinPostingHorizon(value.date, now)) {
@@ -240,6 +354,19 @@ export type EventRow = {
   event_date: string // YYYY-MM-DD
   start_time: string // Postgres returns HH:mm:ss for `time` columns
   end_time: string
+  // Null on events posted before the posting-policy columns existed.
+  organizer?: string | null
+  contact?: string | null
+  accessibility?: string | null
+  host_kind?: string | null
+  // text[]; null on events posted before the tags column existed (20261125020000_event_tags.sql).
+  tags?: string[] | null
+  tags_by?: string | null
+  /** Set by the import pipeline (PR #86); absent on events posted in SideQuest. */
+  source?: string | null
+  /** 'dropin', or null/absent for an event that starts at a set time
+   *  (supabase/proposals/20261126000000_event_attend_REVIEW_ONLY.sql, review only). */
+  attend?: string | null
 }
 
 export type NewEventRow = Omit<EventRow, 'id'>
@@ -267,7 +394,21 @@ export function toEventRow(draft: EventDraft): NewEventRow {
     event_date: draft.date,
     start_time: draft.start,
     end_time: draft.end,
+    // The statement is rebuilt here too, so no caller can store other wording.
+    ...(draft.organizer ? { organizer: draft.organizer } : {}),
+    ...(builtStatement(draft.organizer, draft.contact) !== undefined ? { accessibility: builtStatement(draft.organizer, draft.contact) } : {}),
+    ...(draft.hostKind !== undefined ? { host_kind: draft.hostKind } : {}),
+    ...(draft.tags !== undefined && normalizeTags(draft.tags)?.length ? { tags: normalizeTags(draft.tags)!, tags_by: draft.tagsBy ?? 'host' } : {}),
+    ...(draft.contact ? { contact: draft.contact } : {}),
+    // Only a drop-in event writes the column. A set-time event stays NULL, like every older row.
+    ...(draft.attend === 'dropin' ? { attend: 'dropin' } : {}),
   }
+}
+
+function rowTags(value: unknown, by: unknown): { tags?: EventTag[]; tagsBy?: TagSource } {
+  if (!Array.isArray(value)) return {}
+  const known = normalizeTags(value.filter(tag => normalizeTags([tag]) !== null))
+  return known?.length ? { tags: known, tagsBy: isTagSource(by) ? by : 'host' } : {}
 }
 
 export function fromEventRow(row: EventRow): CampusEvent {
@@ -281,6 +422,15 @@ export function fromEventRow(row: EventRow): CampusEvent {
     // slice(0, 5) turns Postgres "14:00:00" into the contract's "14:00".
     start: row.start_time.slice(0, 5),
     end: row.end_time.slice(0, 5),
+    ...(typeof row.organizer === 'string' && row.organizer ? { organizer: row.organizer } : {}),
+    ...(typeof row.accessibility === 'string' && row.accessibility ? { accessibility: row.accessibility } : {}),
+    ...(typeof row.contact === 'string' && row.contact ? { contact: row.contact } : {}),
+    ...(isHostKind(row.host_kind) ? { hostKind: row.host_kind } : {}),
+    // An unknown tag from storage is dropped rather than shown; the rest stay.
+    ...rowTags(row.tags, row.tags_by),
+    ...(isEventSource(row.source) ? { source: row.source } : {}),
+    // Anything but a stored 'dropin' reads as a set-time event, the strict rule.
+    ...(row.attend === 'dropin' ? { attend: 'dropin' as const } : {}),
   }
 }
 

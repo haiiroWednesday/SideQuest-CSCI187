@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#751728">
+<title>SideQuest | Offline</title>
+<style>
+@font-face { font-family: 'Instrument Serif'; src: url(/fonts/instrument-serif-latin-400-normal.woff2) format('woff2'); font-weight: 400; }
+@font-face { font-family: Urbanist; src: url(/fonts/urbanist-latin-wght-normal.woff2) format('woff2'); font-weight: 100 900; }
+body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f8f2e9; color: #302421; font: 500 17px/1.5 Urbanist, system-ui, sans-serif; }
+main { max-width: 22em; padding: 24px; text-align: center; }
+h1 { font: 400 34px/1.15 'Instrument Serif', Georgia, serif; margin: 12px 0 8px; }
+button { margin-top: 16px; min-height: 48px; padding: 0 22px; border: 0; border-radius: 999px; background: #751728; color: #fff6e2; font: 600 16px Urbanist, system-ui, sans-serif; cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <img src="/icons/icon-192.png" width="72" height="72" alt="" style="border-radius: 16px">
+  <h1>You're offline</h1>
+  <p>SideQuest shows what's on right now, so it needs a connection. Nothing old is shown in its place.</p>
+  <button type="button" id="again">Try again</button>
+</main>
+<script src="/offline.js"></script>
+</body>
+</html>

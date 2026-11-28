@@ -9,9 +9,9 @@ const timerOf = (text: string) => screen.getByText(text).closest('.sq-toast')!.q
 describe('ToastStack: temporary action feedback', () => {
   it('leaves on its own when its timer bar finishes, with a short exit first', () => {
     vi.useFakeTimers()
-    render(<ToastStack toasts={[{ key: 'm1', tone: 'success', text: 'Added “Art” to your plans.' }]} />)
+    render(<ToastStack toasts={[{ key: 'm1', tone: 'success', text: 'Added “Art” to My Schedule.' }]} />)
     expect(screen.getByRole('status').textContent).toContain('Added “Art”')
-    fireEvent.animationEnd(timerOf('Added “Art” to your plans.'))
+    fireEvent.animationEnd(timerOf('Added “Art” to My Schedule.'))
     expect(screen.getByRole('status').className).toContain('sq-toast-leaving')
     act(() => { vi.advanceTimersByTime(250) })
     expect(screen.queryByRole('status')).toBeNull()

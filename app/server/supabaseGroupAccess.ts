@@ -4,6 +4,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { createSupabaseEventCatalogFromEnv } from '../src/model/supabaseEventTable'
 import { GroupGatewayError, type AuthenticatedGroupGateway, type GroupActionInput } from './groupApi'
+import { createSignInPolicy } from './signInPolicy'
 
 const DEADLINE_MS = 10_000
 
@@ -33,6 +34,7 @@ export function createSupabaseGroupGatewayFromEnv(
   })
 
   const anonymousAuth = client()
+  const policy = createSignInPolicy(env as Record<string, string | undefined>)
   const invoke = async (token: string, name: string, args: Record<string, unknown>): Promise<unknown> => {
     const scoped = client(token)
     const { data, error } = await scoped.rpc(name, args)
@@ -54,7 +56,8 @@ export function createSupabaseGroupGatewayFromEnv(
       try {
         const { data, error } = await anonymousAuth.auth.getUser(token)
         if (error || !data.user || !data.user.id) return null
-        return { userId: data.user.id }
+        // Same account rule as sign-in: a token for an address outside the policy reaches no group RPC.
+        return policy.allows(data.user.email) ? { userId: data.user.id } : null
       } catch {
         return null
       }

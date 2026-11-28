@@ -1,0 +1,64 @@
+/* The clash sheet. Native dialog: focus stays inside, Escape closes. */
+dialog.sq-clash:modal { width: min(860px, calc(100vw - 24px)); max-width: none; max-height: calc(100dvh - 24px); padding: 0; border: 0; background: #fffaf2; color: var(--sq-ink);
+  box-shadow: 0 24px 60px -18px rgba(40, 20, 20, .45); overflow: auto; }
+.sq-clash::backdrop { background: rgba(40, 22, 26, .42); }
+.sq-clash-inner { padding: 22px 24px 18px; }
+.sq-clash-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sq-clash-head h2 { margin: 0; display: flex; align-items: baseline; gap: 10px; font: 500 30px var(--look-display, var(--font-display)); }
+.sq-clash-tag { font: 700 12px var(--font-sans); letter-spacing: .12em; text-transform: uppercase; color: #fff; background: var(--sq-red-deep, #751728); padding: 4px 8px; transform: rotate(-3deg); }
+.sq-clash-close { all: unset; min-width: 46px; min-height: 46px; text-align: center; font: 400 30px/46px var(--font-sans); color: var(--sq-muted); cursor: pointer; }
+.sq-clash-close:focus-visible { outline: 3px solid var(--sq-focus, #751728); }
+
+/* One shared ruler. The overlap is a red hatched band across every row. */
+.sq-clash-ruler { margin: 18px 0 6px; }
+.sq-clash-rows { position: relative; display: grid; gap: 8px; padding: 4px 0; }
+.sq-clash-row { position: relative; height: 36px; }
+.sq-clash-bar { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; border-radius: 99px; background: var(--cat); color: #fff;
+  font: 650 14px var(--font-sans); overflow: hidden; z-index: 2; box-shadow: inset 0 0 0 2px rgba(255,255,255,.35); }
+.sq-clash-bar span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sq-clash-band { position: absolute; top: -6px; bottom: -6px; z-index: 3; pointer-events: none; border-left: 2px solid #b3203d; border-right: 2px solid #b3203d;
+  background: repeating-linear-gradient(-45deg, rgba(179, 32, 61, .28) 0 2px, transparent 2px 7px); }
+.sq-clash-band b { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); white-space: nowrap; font: 700 13px var(--font-sans); color: #8e1a30; }
+.sq-clash-ruler { padding-top: 18px; }
+.sq-clash-ticks { position: relative; height: 18px; margin-top: 6px; border-top: 1.4px solid rgba(60, 40, 30, .35); }
+.sq-clash-ticks span { position: absolute; top: 3px; transform: translateX(-50%); font: 600 12px var(--font-sans); color: var(--sq-muted); }
+.sq-clash-ticks span:first-child { transform: none; }
+.sq-clash-ticks span:last-child { transform: translateX(-100%); }
+
+/* Side by side, so they can be weighed. */
+.sq-clash-plans { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+/* Each plan is the same ticket as Discover (Nov 24); the overlap and the choice sit under its title. */
+.sq-stubs.sq-clash-plans { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.sq-clash-plan .sq-clash-over { display: block; margin-top: 6px; font: 650 15px/1.3 var(--font-sans); color: #8e1a30; }
+.sq-clash-plan .sq-clash-acts { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; }
+.sq-clash-acts .sq-plan-button { width: auto; min-height: 46px; }
+.sq-clash-drop { min-height: 46px; }
+.sq-clash-foot { margin-top: 14px; display: flex; justify-content: flex-end; }
+.sq-clash-foot .sq-text-button { min-height: 46px; }
+
+@media (max-width: 760px) {
+  dialog.sq-clash:modal { width: 100%; max-width: none; max-height: 92dvh; margin: auto 0 0; }
+  .sq-clash-inner { padding: 16px 16px 14px; }
+  .sq-clash-head h2 { font-size: 25px; }
+  .sq-clash-bar { font-size: 13px; padding: 0 8px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sq-clash[open] { animation: sq-clash-in .28s cubic-bezier(.2, .9, .3, 1); }
+  @keyframes sq-clash-in { from { transform: translateY(18px); opacity: 0; } }
+}
+
+/* The clash note on a day is a button now. */
+.sqm-dayrow .sqm-clash-open { min-height: 48px !important; min-width: 64px; margin-left: 8px; padding: 0 14px; border: 0; color: #fff; background: #b3203d; font: 700 14px var(--font-sans); cursor: pointer;
+  -webkit-mask: url('./assets/mat-brush.svg') 0 0 / 100% 100% no-repeat; mask: url('./assets/mat-brush.svg') 0 0 / 100% 100% no-repeat; }
+.sqm-clash-open:focus-visible { -webkit-mask: none; mask: none; outline: 3px solid var(--sq-focus, #751728); outline-offset: 3px; }
+.sqm-dayrow { display: flex; align-items: center; flex-wrap: wrap; }
+
+/* The overlap note on a card opens the same sheet. */
+.sq-warn-open { all: unset; display: block; cursor: pointer; }
+.sq-warn-open .sq-warn { display: block; }
+.sq-warn-open:focus-visible { outline: 3px solid var(--sq-focus, #751728); outline-offset: 2px; }
+.sq-warn::after { content: none !important; }
+.sq-warn-arrow { font-style: normal; margin-left: 6px; }
+.sq-clash-group + .sq-clash-group { margin-top: 26px; padding-top: 18px; border-top: 1.4px dashed rgba(60, 40, 30, .3); }
+.sq-clash-when { margin: 14px 0 0; font: 700 13px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #8e1a30; }
+.sq-warn { padding-left: 18px !important; }

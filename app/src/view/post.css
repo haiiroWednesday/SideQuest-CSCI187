@@ -46,3 +46,28 @@
 @media (max-width: 1160px) and (min-width: 761px) {
   .sq-post-panel h1 { font-size: 72px; }
 }
+
+/* An unfinished post kept from before switching tabs */
+.sq-draft-note { margin: 0 0 14px; padding: 10px 14px; border-radius: 12px; background: #fdf1cf; color: var(--sq-ink); font: 600 15px/1.35 var(--font-sans); }
+
+/* SCU posting policy: the Access Policy Statement as it will appear (not editable), and the space check. */
+.sq-post-panel .sq-access-preview-label { font: 700 13px/1 var(--font-sans); letter-spacing: .12em; color: var(--sq-red); }
+.sq-post-panel .sq-access-preview p { margin: 0; padding: 12px 14px; border: 1.5px dashed var(--sq-rule-strong); border-radius: 12px;
+  font: 500 16px/1.45 var(--font-sans); color: var(--sq-ink); overflow-wrap: break-word; }
+.sq-post-panel .sq-access-preview b { font-weight: 700; }
+.sq-post-panel .event-form .sq-space-confirm label { display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; }
+.sq-post-panel .event-form .sq-space-confirm label span { font: 600 17px/1.3 var(--font-sans); letter-spacing: 0; color: var(--sq-ink); }
+.sq-post-panel .event-form .sq-space-confirm input[type="checkbox"] { flex: none; width: 24px; height: 24px; min-height: 0; padding: 0; margin: 0; accent-color: var(--sq-red-deep); }
+.sq-post-panel .event-form .sq-space-confirm input[aria-invalid="true"] { outline: 2px solid var(--sq-red); outline-offset: 2px; }
+/* Who hosts the event: two plain choices; department events may skip the access statement. */
+.sq-post-panel .sq-host-kind { border: 0; margin: 0; padding: 0; min-width: 0; }
+.sq-post-panel .sq-host-kind legend { padding: 0; margin-bottom: 8px; }
+.sq-post-panel .sq-host-kind legend span { font: 700 13px/1 var(--font-sans); letter-spacing: .12em; color: var(--sq-red); }
+.sq-post-panel .sq-host-kind-row { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.sq-post-panel .event-form .sq-host-kind-option { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
+.sq-post-panel .event-form .sq-host-kind-option span { font: 600 17px/1.3 var(--font-sans); letter-spacing: 0; color: var(--sq-ink); }
+.sq-post-panel .event-form .sq-host-kind-option input { flex: none; width: 22px; height: 22px; min-height: 0; padding: 0; margin: 0; accent-color: var(--sq-red-deep); }
+.sq-post-panel .sq-host-kind-hint { margin: 4px 0 0; font: 500 15px/1.4 var(--font-sans); color: var(--sq-muted); }
+/* The base form styles stack every label's contents in a column; keep these checks on one line.
+   50px tall so they stay 44px+ under the phone's .88 page zoom. */
+.sq-post-panel .event-form :is(.sq-space-confirm label, .sq-host-kind-option) { flex-direction: row; flex: 0 0 auto; justify-content: flex-start; text-align: left; min-height: 50px; box-sizing: border-box; padding: 4px 0; }

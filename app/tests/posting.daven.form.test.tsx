@@ -14,6 +14,10 @@ import { STORAGE_KEY as M1_STORAGE_KEY } from '../src/model/events'
 import { campusDateFromToday } from './fixtures/campusDates'
 
 type User = ReturnType<typeof userEvent.setup>
+// delay: null types without a timer per key. The default waits a timer tick per character,
+// which under CI load made the typing tests pass the 5 s limit.
+// Renders the whole App; a loaded CI machine needed more than Vitest's 5 s default.
+const APP_TEST_TIMEOUT = 15_000
 
 function futureDate(): string {
   const d = new Date()
@@ -47,7 +51,7 @@ afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 describe('PostEventForm', () => {
   it('posts to the catalog, shows the new ID, and lists the event with its host', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ delay: null })
     const rows = new Map<string, EventRow>()
     render(<PostEventForm connection={{ catalog: createEventCatalog(createInMemoryEventTable(rows)), shared: true }} />)
 
@@ -63,10 +67,10 @@ describe('PostEventForm', () => {
     expect((form().getByLabelText('EVENT NAME') as HTMLInputElement).value).toBe('')
     expect((form().getByLabelText('HOST NAME') as HTMLInputElement).value).toBe('SCU Photography Club')
     expect(screen.queryByTestId('catalog-not-shared')).toBeNull()
-  })
+  }, APP_TEST_TIMEOUT)
 
   it('shows a whitespace-only title error next to the title field and stores nothing', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ delay: null })
     const rows = new Map<string, EventRow>()
     render(<PostEventForm connection={{ catalog: createEventCatalog(createInMemoryEventTable(rows)), shared: true }} />)
 
@@ -77,10 +81,10 @@ describe('PostEventForm', () => {
     expect(document.getElementById(title.getAttribute('aria-describedby')!.split(' ')[0])?.textContent).toContain('Please enter the event title.')
     expect(screen.getByRole('alert').textContent).toContain('Please fix the highlighted fields.')
     expect(rows.size).toBe(0)
-  })
+  }, APP_TEST_TIMEOUT)
 
   it('flags reversed times on END and a missing host name at the same time', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ delay: null })
     const rows = new Map<string, EventRow>()
     render(<PostEventForm connection={{ catalog: createEventCatalog(createInMemoryEventTable(rows)), shared: true }} />)
 
@@ -93,7 +97,7 @@ describe('PostEventForm', () => {
   })
 
   it('shows field errors after blur and keeps them until the value becomes valid', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ delay: null })
     const rows = new Map<string, EventRow>()
     render(<PostEventForm connection={{ catalog: createEventCatalog(createInMemoryEventTable(rows)), shared: true }} />)
 
@@ -140,7 +144,7 @@ describe('PostEventForm', () => {
   })
 
   it('caps the date input one campus year ahead and shows a field error beyond it', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ delay: null })
     const rows = new Map<string, EventRow>()
     // 12:00 noon in Santa Clara on 2026-11-08; the form and catalog share the clock.
     const now = () => new Date('2026-11-08T20:00:00Z')
@@ -163,7 +167,7 @@ describe('PostEventForm', () => {
   })
 
   it('shows an honest error on server failure and keeps what the user typed', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ delay: null })
     const down: EventCatalogPort = {
       create: async () => { throw new EventCatalogError('unavailable', 'Could not post this event right now. Please check your connection and try again.') },
       listUpcoming: async () => [],
@@ -179,7 +183,7 @@ describe('PostEventForm', () => {
   })
 
   it('keeps each field’s accessible name equal to its label, even after typing', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ delay: null })
     render(<PostEventForm connection={{ catalog: createEventCatalog(createInMemoryEventTable()), shared: true }} />)
 
     // A label wrapped around a textarea would make its name "DESCRIPTION Paint with friends".
@@ -192,7 +196,7 @@ describe('PostEventForm', () => {
   })
 
   it('shows a retry option when the posted list cannot load', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ delay: null })
     let fail = true
     const flaky: EventCatalogPort = {
       create: async () => { throw new Error('unused') },
@@ -210,7 +214,7 @@ describe('PostEventForm', () => {
 
 describe('App with the browser-only fallback catalog', () => {
   it('a posted event is readable again after a refresh, and the M1 key is untouched', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ delay: null })
     render(<App />)
     expect(screen.getByTestId('catalog-not-shared').textContent).toContain('this browser only')
 
@@ -226,5 +230,5 @@ describe('App with the browser-only fallback catalog', () => {
     expect(screen.getAllByText('SCU Photography Club').length).toBeGreaterThan(0)
     expect(window.localStorage.getItem(LOCAL_CATALOG_KEY)).toContain('Photo Walk')
     expect(window.localStorage.getItem(M1_STORAGE_KEY)).toBeNull()
-  })
+  }, APP_TEST_TIMEOUT)
 })

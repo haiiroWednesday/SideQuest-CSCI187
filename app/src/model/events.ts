@@ -1,5 +1,7 @@
 // MODEL: historical M1 browser-local events, validation and storage recovery.
 // Optional descriptions and local-clock rules preserve existing saved records.
+import { ATTEND_ERROR, attendOf, fitsFreeMinutes, isAttendMode, type AttendMode } from './attend'
+
 export type LegacyCampusEvent = {
   id: string
   title: string
@@ -8,6 +10,8 @@ export type LegacyCampusEvent = {
   date: string // YYYY-MM-DD, local calendar date
   start: string // HH:MM, same day
   end: string
+  /** How to attend (model/attend.ts). Absent means 'set': be there for all of it. */
+  attend?: AttendMode
 }
 
 // Historical drafts receive IDs when successfully stored.
@@ -37,6 +41,22 @@ export function toMinutes(time: string): number | null {
   const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(time)
   if (!match) return null
   return Number(match[1]) * 60 + Number(match[2])
+}
+
+// The one 12-hour clock for every screen. Times are minutes after midnight.
+/** 870 → "14:30", the shape events and forms store. */
+export function hhmmOf(minutes: number): string {
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+}
+/** 870 → "2:30pm", 840 → "2pm". Without the suffix: "2:30", "2". */
+export function clockText(minutes: number, withSuffix = true): string {
+  const h = Math.floor(minutes / 60) % 24, m = minutes % 60
+  return `${h % 12 || 12}${m ? ':' + String(m).padStart(2, '0') : ''}${withSuffix ? (h < 12 ? 'am' : 'pm') : ''}`
+}
+/** "2–3:30pm" when both ends share am or pm, "11am–1pm" when they don't. */
+export function clockSpan(from: number, to: number): string {
+  const same = (from < 720) === (to < 720)
+  return `${clockText(from, !same)}–${clockText(to)}`
 }
 
 // Check the date format and the real calendar day. JavaScript may roll
@@ -84,6 +104,9 @@ export function validateEventDraft(
   if (description.length > MAX_EVENT_DESCRIPTION_LENGTH) {
     return { event: null, error: 'Keep the event description under 500 characters.' }
   }
+  if (draft.attend !== undefined && !isAttendMode(draft.attend)) {
+    return { event: null, error: ATTEND_ERROR }
+  }
   const start = toMinutes(draft.start)
   const end = toMinutes(draft.end)
   if (start === null || end === null || start >= end) {
@@ -97,9 +120,13 @@ export function validateEventDraft(
   if (!id.trim() || existingEvents.some(event => event.id === id)) {
     return { event: null, error: 'Could not create a unique event. Please try again.' }
   }
-  // Preserve the historical storage shape when description is blank.
+  // Preserve the historical storage shape when description is blank, and when the event starts
+  // at a set time (the default is never written out).
   return {
-    event: { id, title, ...(description ? { description } : {}), location, date: draft.date, start: draft.start, end: draft.end },
+    event: {
+      id, title, ...(description ? { description } : {}), location, date: draft.date, start: draft.start, end: draft.end,
+      ...(draft.attend === 'dropin' ? { attend: 'dropin' as const } : {}),
+    },
     error: null,
   }
 }
@@ -114,10 +141,11 @@ export function validateSearchWindow(window: EventSearchWindow): string | null {
   return null
 }
 
-// Filter to events entirely inside the chosen free time, then sort matches.
+// Filter to events that fit the chosen free time, then sort matches. A set-time event fits when
+// it is entirely inside the free time; a drop-in event also fits when enough of it is shared.
 // The original events array is left in its existing order.
 export function matchingEvents(events: CampusEvent[], window: EventSearchWindow): CampusEvent[] {
-  return events.filter(event => fitsFully(event, window.date, window.start, window.end))
+  return events.filter(event => fitsFreeTime(event, window.date, window.start, window.end))
     .sort((a, b) => a.start.localeCompare(b.start))
 }
 
@@ -144,14 +172,25 @@ export function isPastEventDate(event: CampusEvent, now: Date = new Date()): boo
   return event.date < date || (event.date === date && event.end <= minute)
 }
 
+// The whole event inside the free time. This is the complete rule for a set-time event.
 export function fitsFully(event: CampusEvent, freeDate: string, freeStart: string, freeEnd: string): boolean {
+  return fitsWith('set', event, freeDate, freeStart, freeEnd)
+}
+
+// The fit rule for any event: as fitsFully for a set-time event, and by shared minutes for a
+// drop-in one. assessEventFit (fitAssessment.ts) explains the same rule from the same arithmetic.
+export function fitsFreeTime(event: CampusEvent, freeDate: string, freeStart: string, freeEnd: string): boolean {
+  return fitsWith(attendOf(event), event, freeDate, freeStart, freeEnd)
+}
+
+function fitsWith(attend: AttendMode, event: CampusEvent, freeDate: string, freeStart: string, freeEnd: string): boolean {
   const start = toMinutes(freeStart)
   const end = toMinutes(freeEnd)
   const eventStart = toMinutes(event.start)
   const eventEnd = toMinutes(event.end)
   if (!isValidDate(freeDate) || !isValidDate(event.date) || event.date !== freeDate) return false
   if (start === null || end === null || eventStart === null || eventEnd === null) return false
-  return start < end && eventStart < eventEnd && start <= eventStart && eventEnd <= end
+  return start < end && eventStart < eventEnd && fitsFreeMinutes(attend, eventStart, eventEnd, start, end)
 }
 
 export function isCampusEvent(value: unknown): value is CampusEvent {
@@ -165,7 +204,8 @@ export function isCampusEvent(value: unknown): value is CampusEvent {
     (item.description === undefined || (typeof item.description === 'string' && item.description.length <= MAX_EVENT_DESCRIPTION_LENGTH)) &&
     typeof item.location === 'string' && item.location.trim().length > 0 && item.location.trim().length <= MAX_EVENT_LOCATION_LENGTH &&
     typeof item.date === 'string' && isValidDate(item.date) &&
-    start !== null && end !== null && start < end
+    start !== null && end !== null && start < end &&
+    (item.attend === undefined || isAttendMode(item.attend))
 }
 
 // localStorage is a browser-only prototype store; other computers do NOT share its events.

@@ -10,7 +10,9 @@
 .sq-toast-warning .sq-toast-mark, .sq-toast-error .sq-toast-mark { background: var(--sq-red); color: var(--sq-on-red); }
 .sq-toast-error { border-color: var(--sq-red); }
 .sq-toast-text { margin: 0; font: 500 16px/1.4 var(--font-sans); }
-.sq-toast-action { grid-column: 2; grid-row: 2; justify-self: start; min-height: 36px; padding: 6px 14px; border: 0; border-radius: 999px; background: var(--sq-red); color: var(--sq-on-red); font: 700 14px var(--font-sans); cursor: pointer; white-space: nowrap; }
+.sq-toast-acts { grid-column: 2; grid-row: 2; display: flex; flex-wrap: wrap; gap: 8px; justify-self: start; }
+/* No capsules (owner rule): a squared ink button. */
+.sq-toast-action { justify-self: start; min-height: 40px; padding: 8px 14px; border: 0; border-radius: 2px; background: var(--sq-red); color: var(--sq-on-red); font: 700 14px var(--font-sans); cursor: pointer; white-space: nowrap; }
 .sq-toast-action:hover { background: var(--sq-red-deep); }
 .sq-toast-close { grid-column: 3; grid-row: 1; width: 34px; height: 34px; border: 0; border-radius: 50%; background: transparent; color: var(--sq-muted); font: 400 24px/1 var(--font-sans); cursor: pointer; }
 .sq-toast-close:hover { background: var(--sq-row-hover); color: var(--sq-ink); }
@@ -27,3 +29,6 @@
 }
 @media (prefers-reduced-motion: reduce) { .sq-toast, .sq-toast-leaving { animation-name: none; } }
 
+
+.sq-toast-undo { background: transparent; color: var(--sq-red); text-decoration: underline; text-underline-offset: 4px; }
+.sq-toast-undo:hover { background: transparent; color: var(--sq-red-deep); }

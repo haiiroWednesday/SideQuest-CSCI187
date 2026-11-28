@@ -1,0 +1,48 @@
+name: SideQuest SQL tests (every migration)
+
+# Starts a throwaway PostgreSQL 16, applies EVERY file in supabase/migrations plus the accounts SQL
+# that is live in Supabase, then runs every SQL test in supabase/tests and supabase/proposals/tests.
+# Each test raises on a broken rule and psql runs with ON_ERROR_STOP 1, so any error fails the job.
+# It never connects to a real Supabase project. Runner: supabase/tests/run-all.sh.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sql-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: sidequest-sql-fixture
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: sidequest-sql-fixture
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install psql if unavailable
+        run: |
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+      - name: Apply every migration and the live accounts SQL, then run all SQL tests
+        run: |
+          test "$PGHOST" = "127.0.0.1"
+          bash supabase/tests/run-all.sh

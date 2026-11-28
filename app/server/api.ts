@@ -1,6 +1,7 @@
 // HTTP Controller. Shared validation and persistence remain in Model.
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { EventCatalogError, DRAFT_FIELD_ORDER, type EventCatalogPort, type EventDraft } from '../src/model/eventCatalog'
+import { clientIp } from './clientIp'
+import { EventCatalogError, BASE_FIELD_ORDER, DRAFT_FIELD_ORDER, type EventCatalogPort, type EventDraft } from '../src/model/eventCatalog'
 import { readCatalogWithDeadline, CatalogReadTimeoutError } from '../src/controller/catalogReads'
 import type { CatalogPublisherPort } from '../src/model/catalogChanged'
 
@@ -30,10 +31,16 @@ export function createCatalogApi(catalog: EventCatalogPort | null, clock: () => 
     try { value = JSON.parse(Buffer.concat(chunks).toString('utf8')) } catch { throw new HttpError(400, 'Event details must be valid JSON.') }
     if (!value || typeof value !== 'object' || Array.isArray(value)) throw new HttpError(400, 'Provide an event object.')
     const data = value as Record<string, unknown>
-    if (Object.keys(data).some(key => !(DRAFT_FIELD_ORDER as readonly string[]).includes(key)) || DRAFT_FIELD_ORDER.some(key => typeof data[key] !== 'string')) {
-      throw new HttpError(400, 'Provide only the seven supported event fields. Event IDs are assigned by the catalog.')
+    // The seven base fields are always text. Organizer, contact and the space confirmation may be
+    // left out here; the catalog's posting rule then refuses the post with a readable message.
+    // The access statement is never accepted from a client: the catalog builds it word for word.
+    if (Object.keys(data).some(key => !(DRAFT_FIELD_ORDER as readonly string[]).includes(key)) ||
+        BASE_FIELD_ORDER.some(key => typeof data[key] !== 'string') ||
+        (['organizer', 'contact', 'hostKind'] as const).some(key => data[key] !== undefined && typeof data[key] !== 'string') ||
+        (data.spaceConfirmed !== undefined && typeof data.spaceConfirmed !== 'boolean')) {
+      throw new HttpError(400, 'Provide only the supported event fields. Event IDs are assigned by the catalog.')
     }
-    return Object.fromEntries(DRAFT_FIELD_ORDER.map(key => [key, data[key]])) as EventDraft
+    return Object.fromEntries(DRAFT_FIELD_ORDER.filter(key => data[key] !== undefined).map(key => [key, data[key]])) as EventDraft
   }
   return async function handle(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
     let url: URL
@@ -52,7 +59,7 @@ export function createCatalogApi(catalog: EventCatalogPort | null, clock: () => 
       } else {
         const origin = req.headers.origin
         if (origin && new URL(origin).host !== req.headers.host) throw new HttpError(403, 'Post events from the SideQuest site.')
-        const now = clock(), ip = req.socket.remoteAddress ?? 'unknown'
+        const now = clock(), ip = clientIp(req)
         for (const [key, value] of limits) if (value.until <= now) limits.delete(key)
         if (limits.size >= 10_000 && !limits.has(ip)) throw new HttpError(429, 'The catalog is busy. Please try again later.')
         const limit = limits.get(ip) ?? { count: 0, until: now + 60_000 }

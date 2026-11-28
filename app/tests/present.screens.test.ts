@@ -139,6 +139,8 @@ describe('presentDiscover: the clock decides the labels', () => {
   it('keeps every event exactly once, in time order, under the right day, for 300 random catalogs', () => {
     let seed = 7
     const rand = (k: number) => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % k }
+    const failures: string[] = []
+    let checked = 0
     for (let run = 0; run < 300; run++) {
       const now = at('2026-11-04', `${String(rand(24)).padStart(2, '0')}:${String(rand(60)).padStart(2, '0')}`)
       const events = Array.from({ length: rand(25) }, () => {
@@ -152,16 +154,22 @@ describe('presentDiscover: the clock decides the labels', () => {
       const screen = presentDiscover({ events, now })
       const shown = screen.days.flatMap(d => d.events)
       const expected = events.filter(e => e.date > '2026-11-04' || (e.date === '2026-11-04' && e.end > campusNow(now).time))
-      expect(new Set(shown.map(s => s.id))).toEqual(new Set(expected.map(e => e.id)))
-      expect(shown.map(s => s.date + s.id)).toHaveLength(expected.length)
+      // Plain checks collected per run and asserted once: thousands of expect() calls made this
+      // test pass the 5 s limit when the whole suite ran on a loaded machine.
+      const shownIds = shown.map(s => s.id).sort()
+      const expectedIds = expected.map(e => e.id).sort()
+      if (shownIds.join() !== expectedIds.join()) failures.push(`run ${run}: shown ${shownIds.join()} expected ${expectedIds.join()}`)
       screen.days.forEach((day, i) => {
-        expect(day.events.every(e => e.date === day.date)).toBe(true)
-        if (i) expect(day.date > screen.days[i - 1].date).toBe(true)
-        expect(day.tag).toBe(describeDay(day.date, now).tag)
+        if (!day.events.every(e => e.date === day.date)) failures.push(`run ${run}: ${day.date} holds another day's event`)
+        if (i && !(day.date > screen.days[i - 1].date)) failures.push(`run ${run}: ${day.date} out of order`)
+        if (day.tag !== describeDay(day.date, now).tag) failures.push(`run ${run}: ${day.date} tag ${day.tag}`)
       })
-      if (screen.days[0]?.date === '2026-11-04') expect(screen.days[0].tag).toBe('TODAY')
+      if (screen.days[0]?.date === '2026-11-04' && screen.days[0].tag !== 'TODAY') failures.push(`run ${run}: today not tagged TODAY`)
+      checked += expected.length
     }
-  })
+    expect(failures).toEqual([])
+    expect(checked).toBeGreaterThan(300)
+  }, 15_000) // 300 full Discover screens: about 0.3 s alone, several seconds when the suite shares 2 cores
 })
 
 describe('presentSchedule: Next up, overlaps and missing plans', () => {

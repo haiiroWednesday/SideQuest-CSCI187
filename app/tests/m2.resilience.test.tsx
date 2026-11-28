@@ -90,7 +90,7 @@ describe('production save failures and asynchronous actions', () => {
     fireEvent.click(remove[0])
     await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('could not save'))
     expect(screen.getAllByRole('button', { name: 'Remove Ceramics from plans' }).length).toBeGreaterThan(0)
-    expect(screen.queryByText(/Removed from your plans/)).toBeNull()
+    expect(screen.queryByText(/Removed from My Schedule/)).toBeNull()
     expect(JSON.parse(localStorage.getItem(PLANNED_IDS_KEY)!)).toEqual([ID])
   })
   it('a stale initial Schedule read cannot resurrect a removed plan', async () => {
@@ -102,7 +102,7 @@ describe('production save failures and asynchronous actions', () => {
     expect(result.current.schedule.ids).toEqual([])
     await act(async () => { first.resolve(event) })
     expect(result.current.schedule.ids).toEqual([])
-    expect(result.current.message).toContain('Removed from your plans')
+    expect(result.current.message).toContain('Removed from My Schedule')
   })
   it('a mismatched event identity is an error, never a substitute for the saved ID', async () => {
     localStorage.setItem(PLANNED_IDS_KEY, JSON.stringify([ID]))

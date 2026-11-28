@@ -1,0 +1,95 @@
+/* Card fit (Cyn's L0 pick, Nov 24): today's arrangement stays (time stub, words, "Greetings from" stamp,
+   bites, inner line, bookmark), but nothing is squashed, cut or over the line. A busy card grows taller.
+   e2e-demo/card-fit.spec.ts checks every rule here at 320, 390, 768 and 1280px. */
+
+/* Cards grow instead of squeezing. */
+:root[data-quiet] .sq-stubs > li { height: auto; }
+:root[data-quiet] .sq-stub { height: auto !important; align-items: stretch; }
+
+/* No clamps, no ellipsis, no hyphen breaks: titles wrap between whole words. */
+:root[data-quiet] .sq-stub-body strong {
+  display: block !important; -webkit-line-clamp: unset !important; line-clamp: none !important; overflow: visible !important;
+  hyphens: manual !important; -webkit-hyphens: manual !important; overflow-wrap: normal !important; word-break: normal !important;
+  text-wrap: pretty; padding-right: 0 !important; }
+:root[data-quiet] .sq-by { overflow: visible !important; overflow-wrap: normal !important; -webkit-line-clamp: unset !important; line-clamp: none !important; display: block !important; }
+:root[data-quiet] .sq-by > span { overflow: visible !important; text-overflow: clip !important; white-space: normal !important; }
+
+/* Whole units: a place part, a duration part, "until 12:00pm", "5 going" never break inside. */
+:root[data-quiet] :is(.sq-place-part, .sq-dur-part, .sq-live-until, .sq-going > b, .sq-going > small) { display: inline-block; max-width: 100%; }
+:root[data-quiet] .sq-stub-time em { text-align: center; line-height: 1.25; }
+:root[data-quiet] .sq-stub-time small { white-space: normal; text-align: center; }
+
+/* The stub keeps clear of the inner line and the bites; a planned card leaves room for the bookmark. */
+:root[data-quiet] .sq-stub-time { padding-left: 8px; padding-right: 8px; }
+:root[data-quiet] .sq-stub:has(.sq-planned-mark) .sq-stub-time { padding-top: 52px !important; }
+
+/* The stamp stays inside the line: a little more room on the right for its tilt. */
+:root[data-quiet] .sq-stub-faced .sq-stub-stamp { margin: 16px 16px 16px 4px; }
+/* Phones: a smaller stamp and slimmer side padding keep a real column for the words. */
+@media (max-width: 760px) {
+  :root[data-quiet] .sq-stub-faced .sq-stub-stamp { margin: 14px 12px 14px 2px; }
+  :root[data-quiet] .sq-stub-faced .sq-stamp-square .sq-greet { width: 64px; height: 64px; }
+  :root[data-quiet] .sq-stub-faced .sq-stamp-flyer .sq-greet { width: 56px; height: 74px; }
+  :root[data-quiet] .sq-stub-faced .sq-stamp-wide .sq-greet { width: 78px; height: 54px; }
+  :root[data-quiet] .sq-stub-faced .sq-stamp-paper { padding: 4px; }
+  :root[data-quiet] .sq-stub-faced .sq-stub-body { padding-left: 14px; padding-right: 10px; }
+}
+
+/* Tags, leave-by and going each take a line of their own. */
+:root[data-quiet] .sq-stub-body > :is(.sq-going, .sq-stub-tags, .sq-leave-note, .sq-live, .sq-now) { margin-left: 0; }
+
+/* The last line of words stays clear of the bottom bite and the inner line. */
+:root[data-quiet] .sq-stub .sq-stub-body { padding-bottom: 16px !important; }
+/* Laptops: cards sit two to a row, so the stamp gives the words a little more room. */
+@media (min-width: 761px) {
+  :root[data-quiet] .sq-stub-faced .sq-stamp-square .sq-greet { width: 100px; height: 100px; }
+  :root[data-quiet] .sq-stub-faced .sq-stamp-flyer .sq-greet { width: 86px; height: 116px; }
+  :root[data-quiet] .sq-stub-faced .sq-stamp-wide .sq-greet { width: 124px; height: 86px; }
+}
+/* A card in a narrow slot (My Schedule's Done grid on a tablet, two-up rows) takes the phone layout,
+   whatever the screen width: the card's own width decides, not the window's. */
+:root[data-quiet] .sq-stubs > li { container-type: inline-size; }
+@container (max-width: 440px) {
+  :root[data-quiet] .sq-stub-faced { --stub-w: 80px; grid-template-columns: 80px minmax(0, 1fr) auto !important; }
+  :root[data-quiet] .sq-stub-faced .sq-stub-time b { font-size: 27px; }
+  :root[data-quiet] .sq-stub-faced .sq-stub-stamp { zoom: 1; margin: 14px 12px 14px 2px; }
+  :root[data-quiet] .sq-stub-faced .sq-stamp-square .sq-greet { width: 64px; height: 64px; }
+  :root[data-quiet] .sq-stub-faced .sq-stamp-flyer .sq-greet { width: 56px; height: 74px; }
+  :root[data-quiet] .sq-stub-faced .sq-stamp-wide .sq-greet { width: 78px; height: 54px; }
+  :root[data-quiet] .sq-stub-faced .sq-stamp-paper { padding: 4px; }
+  :root[data-quiet] .sq-stub-faced .sq-stub-body { padding-left: 14px; padding-right: 10px; }
+}
+/* Narrowest cards (a 320px phone): a smaller stamp, so the words keep their column. */
+@container (max-width: 340px) {
+  :root[data-quiet] .sq-stub-faced { --stub-w: 66px; grid-template-columns: 66px minmax(0, 1fr) auto !important; }
+  :root[data-quiet] .sq-stub-faced .sq-stub-time b { font-size: 22px !important; }
+  :root[data-quiet] .sq-stub-faced .sq-stub-stamp { zoom: .6; margin: 22px 20px 22px 0; }
+  :root[data-quiet] .sq-stub-faced .sq-stub-body { padding-left: 10px; padding-right: 6px; }
+}
+/* The opened card's contact: an email never breaks, so it takes its own line, a size smaller on phones. */
+:root[data-quiet] .sq-quiet-access .sq-access-contact { display: inline-block; max-width: 100%; }
+@media (max-width: 760px) {
+  :root[data-quiet] .sq-quiet-access .sq-access-sep { display: none; }
+  :root[data-quiet] .sq-quiet-access .sq-access-contact { display: block; font-size: 16px; }
+}
+
+/* One ticket everywhere (Nov 24): Groups, open invites and Someday use the Discover ticket.
+   A single column list, the day said above the title, and a compact row for search results. */
+.sq-stubs.sq-stubs-one { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.sq-fr .sq-stubs, .sq-oi .sq-stubs, .sq-someday-card .sq-stubs { margin: 10px 0; }
+.sq-stub-date { display: block; font: 700 15px/1.3 var(--font-sans); color: var(--cat-deep, var(--sq-red)); margin-bottom: 4px; }
+.sq-stub-body > .sq-fr-by, .sq-stub-body > .sq-oi-by { display: block; font: 500 15px/1.35 var(--font-sans); color: var(--sq-muted); margin-top: 6px; }
+.sq-stub-body > .sq-fr-works { display: block; font: italic 400 17px/1.3 var(--font-display); color: #8a5a12; margin-top: 4px; }
+.sq-stub-body > .sq-fr-status { display: block; }
+.sq-fr-cancelled .sq-stub { opacity: .6; }
+.sq-fr-cancelled .sq-stub-body strong { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.sq-stub.sq-stub-compact { --stub-w: 96px; grid-template-columns: 96px minmax(0, 1fr) !important; cursor: default; }
+:root[data-quiet] .sq-stub-compact .sq-stub-body strong { font-size: 23px; }
+:root[data-quiet] .sq-stub-compact .sq-stub-time b { font-size: 26px; }
+:root[data-quiet] .sq-stub-compact .sq-stub-time b i { font-size: 17px; }
+:root[data-quiet] .sq-stub-compact .sq-stub-body { padding-top: 12px; padding-right: 14px; }
+@media (max-width: 760px) { .sq-stub.sq-stub-compact { --stub-w: 80px; grid-template-columns: 80px minmax(0, 1fr) !important; } }
+@container (max-width: 340px) { .sq-stub.sq-stub-compact { --stub-w: 66px; grid-template-columns: 66px minmax(0, 1fr) !important; } }
+:is(.sq-fr, .sq-oi, .sq-someday-card) .sq-stub { cursor: default; }
+.sq-someday-match .sq-someday-planned { display: block; margin-top: 8px; font: 700 14px/1.3 var(--font-sans); color: #7a5a08; }
+.sq-someday-match .sq-someday-plan { justify-self: start; width: auto; min-height: 46px; margin-top: 10px; padding: 0 18px; }

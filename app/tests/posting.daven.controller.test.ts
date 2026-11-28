@@ -20,7 +20,7 @@ const NOW = new Date('2026-11-03T20:00:00Z')
 
 const draft = (overrides: Partial<EventDraft> = {}): EventDraft => ({
   title: 'Photo Walk',
-  hostName: 'SCU Photography Club',
+  hostName: 'SCU Photography Club', organizer: 'Ana Ruiz', contact: 'ana@scu.edu', spaceConfirmed: true,
   description: 'Bring any camera, phones welcome.',
   location: 'Mission Gardens',
   date: '2026-11-05',
@@ -28,6 +28,9 @@ const draft = (overrides: Partial<EventDraft> = {}): EventDraft => ({
   end: '15:30',
   ...overrides,
 })
+
+// What the catalog returns: no space confirmation, and the access statement it builds.
+const stored = (d: EventDraft) => { const { spaceConfirmed: _s, ...rest } = d; return { ...rest, accessibility: 'In compliance with the ADA/504, please direct your accommodation requests to Ana Ruiz at ana@scu.edu.' } }
 
 const memoryCatalog = (rows = new Map<string, EventRow>()) =>
   createEventCatalog(createInMemoryEventTable(rows), () => NOW)
@@ -42,7 +45,7 @@ describe('postEvent: success and read-back', () => {
     expect(result.message).toContain(`Event ID: ${result.event.id}`)
     expect(result.message).toContain('shared catalog')
     // A second catalog over the same storage stands in for a new client.
-    expect(await memoryCatalog(rows).getById(result.event.id)).toEqual({ ...draft(), id: result.event.id })
+    expect(await memoryCatalog(rows).getById(result.event.id)).toEqual({ ...stored(draft()), id: result.event.id })
   })
 
   it('posting the same details twice creates two events with different IDs', async () => {

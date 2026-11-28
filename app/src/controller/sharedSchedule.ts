@@ -2,6 +2,7 @@
 import { readCatalogWithDeadline } from './catalogReads'
 import { createScheduleController, type ScheduleResult } from './personalSchedule'
 import { browserStorage } from './postEvent'
+import { deviceStorage } from '../model/deviceStorage'
 import { isCatalogEvent, type EventCatalogPort } from '../model/eventCatalog'
 import { PLANNED_IDS_KEY, type PlanStorage, type ScheduleEvent } from '../model/schedule'
 
@@ -78,7 +79,7 @@ export function createSharedScheduleController(
     async recover() { return finish(core().recover()) },
     handlesStorageChange(event: StorageEvent) {
       try {
-        const storage = getStorage === browserStorage ? window.localStorage : getStorage()
+        const storage = getStorage === browserStorage ? deviceStorage() : getStorage()
         return event.storageArea === storage && (event.key === null || event.key === PLANNED_IDS_KEY)
       } catch { return false }
     },

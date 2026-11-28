@@ -15,7 +15,7 @@ const clock = () => NOON_NOV_3
 
 const draft = (overrides: Partial<EventDraft> = {}): EventDraft => ({
   title: 'Photo Walk',
-  hostName: 'SCU Photography Club',
+  hostName: 'SCU Photography Club', organizer: 'Ana Ruiz', contact: 'ana@scu.edu', spaceConfirmed: true,
   description: 'Bring any camera, phones welcome.',
   location: 'Mission Gardens',
   date: '2026-11-05',
@@ -23,6 +23,9 @@ const draft = (overrides: Partial<EventDraft> = {}): EventDraft => ({
   end: '15:30',
   ...overrides,
 })
+
+// What the catalog returns: no space confirmation, and the access statement it builds.
+const stored = (d: EventDraft) => { const { spaceConfirmed: _s, ...rest } = d; return { ...rest, accessibility: 'In compliance with the ADA/504, please direct your accommodation requests to Ana Ruiz at ana@scu.edu.' } }
 
 describe('acceptance: a created event is readable again from catalog storage', () => {
   it('reads the event back through a SEPARATE catalog instance on the same storage', async () => {
@@ -39,7 +42,7 @@ describe('acceptance: a created event is readable again from catalog storage', (
     expect(rows.has(created.id)).toBe(true)
     // Every contract field survives the round trip, hostName included, and
     // the time comes back as "14:00", not Postgres-style "14:00:00".
-    expect(await reader.getById(created.id)).toEqual({ id: created.id, ...draft() })
+    expect(await reader.getById(created.id)).toEqual({ id: created.id, ...stored(draft()) })
     expect(await reader.listUpcoming()).toEqual([created])
   })
 })
@@ -164,8 +167,9 @@ describe('database mapping and configuration', () => {
     expect(row).toEqual({
       title: 'Photo Walk', host_name: 'SCU Photography Club', description: 'Bring any camera, phones welcome.',
       location: 'Mission Gardens', event_date: '2026-11-05', start_time: '14:00', end_time: '15:30',
+      organizer: 'Ana Ruiz', contact: 'ana@scu.edu', accessibility: 'In compliance with the ADA/504, please direct your accommodation requests to Ana Ruiz at ana@scu.edu.',
     })
-    expect(fromEventRow({ ...row, id: 'abc', start_time: '14:00:00', end_time: '15:30:00' })).toEqual({ id: 'abc', ...draft() })
+    expect(fromEventRow({ ...row, id: 'abc', start_time: '14:00:00', end_time: '15:30:00' })).toEqual({ id: 'abc', ...stored(draft()) })
   })
 
   it('returns null instead of a fake catalog when Supabase is not configured', () => {

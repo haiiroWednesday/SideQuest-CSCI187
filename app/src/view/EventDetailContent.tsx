@@ -1,8 +1,18 @@
 // VIEW: display a selected event and its verified catalog state.
+import { EventPicture } from './EventPicture'
 import type { StubModel } from '../controller/presentScreens'
 import { titleSizeClass } from './titleSize'
 import { OFFICIAL_SCU_CAMPUS_MAP, googleMapsVenueSearchUrl } from '../controller/campusMapLinks'
+import { ACCESS_POLICY_ON } from '../controller/postEvent'
 import { DeviceWalkingDirections } from './DeviceWalkingDirections'
+import { useQuiet } from './quietContext'
+import { DateStamp } from './DateStamp'
+import type React from 'react'
+import { Bookmark, NowMark } from './Marks'
+import { shownHost } from './shownHost'
+import { ShareGoing, GoingFact } from './FriendsGoing'
+import { useOnward } from './onwardContext'
+import './attend.css'
 
 export type SelectedDetailState =
   | { id: string; status: 'loading' }
@@ -15,15 +25,22 @@ type DetailProps = {
   verified: SelectedDetailState | null
   onRetryDetail?: () => void
   onPlan?: (eventId: string) => void
+  /** Take a planned event out of My Schedule from its open card. */
+  onRemove?: (eventId: string) => void
   planningBlocked: boolean
   onClose: () => void
+  /** More for this card from Discover, drawn inside it (the host's food control, where the event came from). */
+  extras?: React.ReactNode
 }
 
-function VerifiedEventDetails({ event, onPlan, planningBlocked }: {
+function VerifiedEventDetails({ event, onPlan, onRemove, planningBlocked }: {
   event: StubModel
   onPlan?: (eventId: string) => void
+  onRemove?: (eventId: string) => void
   planningBlocked: boolean
 }) {
+  const quiet = useQuiet()
+  if (quiet) return <QuietDetails event={event} onPlan={onPlan} onRemove={onRemove} planningBlocked={planningBlocked} />
   return (
     <>
       <div className="sq-sticker-top">
@@ -47,9 +64,14 @@ function VerifiedEventDetails({ event, onPlan, planningBlocked }: {
           <dd className={event.host ? undefined : 'sq-unset'}>{event.host ?? 'Host not provided'}</dd>
           <dt>Where</dt><dd>{event.location}</dd>
           <dt>Date</dt><dd>{event.dateText}</dd>
+          {/* Nov 26 (Cyn): the organizer and contact belong to the paused access policy. With it off, no person is shown. */}
+          {ACCESS_POLICY_ON && (event.organizer || event.contact) && <><dt>Contact</dt><dd>{[event.organizer, event.contact].filter(Boolean).join(', ')}</dd></>}
+          {ACCESS_POLICY_ON && event.accessibility && <><dt>Access</dt><dd>{event.accessibility}</dd></>}
         </dl>
+        {event.dropIn && <p className="sq-dropin-line">{event.dropIn.line}</p>}
         <p className="sq-sticker-desc">{event.description ?? 'No description was provided.'}</p>
         <div className="sq-venue-map-links">
+          {event.location.trim() && <a className="sq-map-link" href={`#map/${encodeURIComponent(event.location.trim())}`}>Find it on the SideQuest map</a>}
           {event.sourceUrl && <a href={event.sourceUrl} target="_blank" rel="noopener noreferrer">Official SCU event listing</a>}
           <a href={OFFICIAL_SCU_CAMPUS_MAP} target="_blank" rel="noopener noreferrer">Browse official SCU campus map</a>
           {googleMapsVenueSearchUrl(event.location) && (
@@ -71,11 +93,76 @@ function VerifiedEventDetails({ event, onPlan, planningBlocked }: {
           {event.planned ? 'In My Schedule' : '+ Plan to attend'}
         </button>
       )}
+      {event.planned && onRemove && <RemovePlan event={event} onRemove={onRemove} disabled={planningBlocked} />}
     </>
   )
 }
 
-export function EventDetailContent({ selected, verified, onRetryDetail, onPlan, planningBlocked, onClose }: DetailProps) {
+/** The card's top panel: the time on the left; the picture on the right, inside the same panel,
+ *  with the rubber date stamp pressed on its corner. Nothing floats above the card. */
+export function QuietTop({ event, live }: { event: StubModel; live: React.ReactNode }) {
+  const year = Number(event.dateText.slice(-4)) || undefined
+  return (
+    <div className="sq-sticker-top sq-quiet-top">
+      {/* Planned hangs from the card's top left, where it hangs on the ticket before it flips (Cyn, Nov 26). */}
+      {event.planned && <span className="sq-planned-mark sq-card-planned"><Bookmark label="In My Schedule" big /></span>}
+      <div className="sq-sticker-time">
+        {live}
+        <span className="sq-quiet-time"><b>{event.start.time}</b><i>{event.start.ampm}</i></span>
+        <span className="sq-quiet-until">to {event.endText}</span>
+        <span className="sq-quiet-length">{event.durationText}</span>
+      </div>
+      <div className="sq-quiet-pic">
+        <EventPicture title={event.title} location={event.location} plate />
+        {/* Below the plate, on the plain sand, so it needs no cream glow (Cyn, Nov 25). */}
+        <span className="sq-quiet-stamp" aria-hidden="true"><DateStamp dow={event.dow} day={event.dayNumber} month={event.month} year={year} /></span>
+      </div>
+    </div>
+  )
+}
+
+/** The short card: the stamp carries the date, icons replace labels, and one big tick says "planned". */
+/** A planned event can leave My Schedule from its own card; the toast that follows offers Undo. */
+function RemovePlan({ event, onRemove, disabled }: { event: StubModel; onRemove: (eventId: string) => void; disabled: boolean }) {
+  return <button type="button" className="sq-text-button sq-remove sq-card-remove" disabled={disabled} onClick={() => onRemove(event.id)}>Remove<span className="sq-visually-hidden"> {event.title} from My Schedule</span></button>
+}
+
+function QuietDetails({ event, onPlan, onRemove, planningBlocked }: { event: StubModel; onPlan?: (eventId: string) => void; onRemove?: (eventId: string) => void; planningBlocked: boolean }) {
+  const now = event.live?.kind === 'now'
+  return (
+    <>
+      <QuietTop event={event} live={now ? <NowMark /> : event.live ? <span className="sq-soon">{event.live.text}</span> : null} />
+      <div className="sq-sticker-body">
+        <h2 id="sq-detail-title" className={titleSizeClass(event.title)}>{event.title}</h2>
+        <ul className="sq-quiet-facts">
+          {shownHost(event) && <li><svg viewBox="0 0 24 24" aria-label="Host" role="img"><circle cx="12" cy="8" r="4" /><path d="M4 21c1-5 4-7 8-7s7 2 8 7" /></svg>{event.host}</li>}
+          <li><svg viewBox="0 0 24 24" aria-label="Where" role="img"><path d="M12 22s7-7 7-12a7 7 0 1 0-14 0c0 5 7 12 7 12z" /><circle cx="12" cy="10" r="2.5" /></svg>
+            {event.location.trim() ? <a href={`#map/${encodeURIComponent(event.location.trim())}`}>{event.location}</a> : 'Place not given'}</li>
+          <GoingFact eventId={event.id} />
+        </ul>
+        {/* Nov 26 (Cyn): with the access policy off, the card names no person and shows no email. */}
+        {ACCESS_POLICY_ON && (event.organizer || event.contact || event.accessibility) && <ul className="sq-quiet-facts sq-quiet-access">
+          {(event.organizer || event.contact) && <li><svg viewBox="0 0 24 24" aria-label="Contact" role="img"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3.5 6.5 8.5 6 8.5-6" /></svg>
+            <span>{event.organizer}{event.organizer && event.contact && <span className="sq-access-sep">{' · '}</span>}{event.contact && <span className="sq-access-contact">{event.contact.split('@').map((part, i) => i ? <span key={i}>@<wbr />{part}</span> : part)}</span>}</span></li>}
+          {ACCESS_POLICY_ON && event.accessibility && <li><svg viewBox="0 0 24 24" aria-label="Accessibility" role="img"><circle cx="12" cy="4.5" r="2" /><path d="M5 8.5c2.3.7 4.6 1 7 1s4.7-.3 7-1M12 9.5v5m0 0-3 6.5m3-6.5 3 6.5" /></svg><span>{event.accessibility}</span></li>}
+        </ul>}
+        {event.dropIn && <p className="sq-dropin-line">{event.dropIn.line}</p>}
+        {event.description && !/Sample data for the design review/.test(event.description) && <p className="sq-sticker-desc">{event.description}</p>}
+        <QuietHandoffs event={event} />
+      </div>
+      {/* H3 (Nov 26): the share box and Plan it travel together and stay in reach while the card is read. */}
+      {onPlan && <div className="sq-quiet-act">
+        <ShareGoing eventId={event.id} planned={event.planned} />
+        {event.planned
+          ? <div className="sq-quiet-planned">{onRemove && <RemovePlan event={event} onRemove={onRemove} disabled={planningBlocked} />}</div>
+          : <button className="sq-plan-button" type="button" disabled={planningBlocked} onClick={() => onPlan(event.id)}>Plan it</button>}
+      </div>}
+    </>
+  )
+}
+
+export function EventDetailContent({ selected, verified, onRetryDetail, onPlan, onRemove, planningBlocked, onClose, extras }: DetailProps) {
+  const quiet = useQuiet()
   if (!selected) {
     return (
       <div className="sq-sticker-placeholder">
@@ -86,8 +173,9 @@ export function EventDetailContent({ selected, verified, onRetryDetail, onPlan, 
   }
 
   return (
-    <div className="sq-sticker-card sq-ticket-scroll" key={selected.id}>
+    <div className="sq-sticker-card sq-ticket-scroll sq-carded" key={selected.id}>
       <button type="button" className="sq-sheet-close" aria-label="Close details" onClick={onClose}>×</button>
+      {!quiet && <div className="sq-card-face"><EventPicture title={selected.title} location={selected.location} /></div>}
       {verified?.status === 'loading' ? (
         <div className="sq-detail-verification" role="status">
           <h2 id="sq-detail-title">{selected.title}</h2>
@@ -107,7 +195,31 @@ export function EventDetailContent({ selected, verified, onRetryDetail, onPlan, 
           )}
         </div>
       ) : (
-        <VerifiedEventDetails event={selected} onPlan={onPlan} planningBlocked={planningBlocked} />
+        <VerifiedEventDetails event={selected} onPlan={onPlan} onRemove={onRemove} planningBlocked={planningBlocked} />
+      )}
+      {extras && <div className="sq-detail-extras">{extras}</div>}
+    </div>
+  )
+}
+
+/** Two ways onward that stay inside SideQuest (Nov 24: no links out to other sites from the card).
+ *  Nov 25 (Cyn's C8): they share the facts' icon column as filled beads joined by a dotted thread, the
+ *  arrow follows the word, and a second line says something the card does not already show. */
+function QuietHandoffs({ event }: { event: StubModel }) {
+  const place = event.location.trim()
+  const lines = useOnward(event.id)
+  return (
+    <div className="sq-handoffs sq-onward" role="group" aria-label="See it in SideQuest">
+      <a className="sq-handoff sq-onward-row sq-onward-day" href={`#day/${encodeURIComponent(event.id)}`}>
+        <span className="sq-onward-bead" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></svg></span>
+        {/* The link is named by what it shows, in order; the day is added for screen readers at the end. */}
+        <span className="sq-onward-words"><b>My day<i aria-hidden="true">→</i></b>{lines && <small>{lines.day}</small>}<span className="sq-visually-hidden">, {event.dow} {event.dayNumber}, see where it fits</span></span>
+      </a>
+      {place && (
+        <a className="sq-handoff sq-onward-row sq-onward-walk" href={`#walk/${encodeURIComponent(place)}`}>
+          <span className="sq-onward-bead" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="13" cy="4.5" r="2" /><path d="M10 21l2.5-6.5L15 17v4M8 12l2.5-4.5 4 1.5 2 3M12.5 14.5l1-6" /></svg></span>
+          <span className="sq-onward-words"><b>Walk there<i aria-hidden="true">→</i></b>{lines?.walk && <small>{lines.walk}</small>}<span className="sq-visually-hidden">, a route to {place} on the SideQuest map</span></span>
+        </a>
       )}
     </div>
   )

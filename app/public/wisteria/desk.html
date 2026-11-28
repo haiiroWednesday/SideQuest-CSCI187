@@ -1,0 +1,25 @@
+<!doctype html><meta charset="utf-8"><style>:root{--font-sans:Helvetica,Arial,sans-serif}body{margin:0;width:700px;background:#fff}.sr-only{display:none}</style>
+<style>
+.ww{background:#fffdf8;border:1px solid #e6dccd;border-radius:12px;padding:10px 10px 6px}
+.ww svg{width:100%;height:auto;display:block}
+.ww .ctl{display:flex;align-items:center;gap:10px;margin:6px 2px 2px;flex-wrap:wrap}
+.ww button{font:600 13px var(--font-sans);padding:6px 14px;border-radius:999px;border:1.5px solid #2a1c22;background:#fffdf8;color:#2a1c22;cursor:pointer}
+.ww .cap{font:13px var(--font-sans);color:#5b4e46;min-height:18px}
+</style>
+<div class="ww">
+<svg id="wv" viewBox="0 0 360 300"><defs>
+<filter id="wmk" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+<feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4" result="n"/>
+<feDisplacementMap in="SourceGraphic" in2="n" scale="1.6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+<feTurbulence type="fractalNoise" baseFrequency="0.06 0.5" numOctaves="2" seed="12" result="s"/>
+<feColorMatrix in="s" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.1 1.25" result="sa"/>
+<feComposite in="d" in2="sa" operator="in" result="t"/>
+<feMorphology in="d" operator="erode" radius="0.6" result="e"/>
+<feComposite in="d" in2="e" operator="out" result="edge"/>
+<feComponentTransfer in="edge" result="edge2"><feFuncA type="linear" slope="0.7"/></feComponentTransfer>
+<feMerge><feMergeNode in="t"/><feMergeNode in="edge2"/></feMerge></filter>
+<filter id="wpn" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.5" numOctaves="1" seed="6" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+</defs><g id="art"></g></svg>
+<div class="ctl"><button id="tg">Show a slow week</button><span class="cap" id="cap">Tap a cluster to see the event.</span></div>
+</div>
+<script src="wis_final.js"></script>

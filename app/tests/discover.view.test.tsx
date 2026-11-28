@@ -120,7 +120,8 @@ describe('Discover View: draws the Controller screen', () => {
   it('uses real navigation links only when routes exist: Discover, My Schedule and Post', () => {
     render(draw(events, { plannedIds: ['poetry-2'] }, { routes: { discover: '/discover', schedule: '/schedule', post: '/post' } }))
     const nav = screen.getByRole('navigation', { name: 'SideQuest primary' })
-    expect(within(nav).getAllByRole('link').map(link => link.textContent)).toEqual(['Discover', 'My Schedule1', 'Post an event'])
+    // The tab no longer counts plans (owner decision, Nov 25); it badges clashes only.
+    expect(within(nav).getAllByRole('link').map(link => link.textContent)).toEqual(['Discover', 'My Schedule', 'Post an event'])
     expect(within(nav).getByRole('link', { name: 'Discover' }).getAttribute('aria-current')).toBe('page')
     expect(within(nav).getByRole('link', { name: /My Schedule/ }).getAttribute('href')).toBe('/schedule')
     expect(within(nav).getByRole('link', { name: /Post an event/ }).getAttribute('href')).toBe('/post')
@@ -174,14 +175,17 @@ describe('Discover View: draws the Controller screen', () => {
   it('marks planned events, how long each runs, and what is happening right now', () => {
     render(draw(events, { plannedIds: ['poetry-2'] }, { onPlan: vi.fn() }, new Date('2030-11-07T14:40:00-08:00')))
     const poetry = screen.getByRole('button', { name: 'View details for Poetry Reading' })
-    expect(within(poetry).getByText('In My Schedule')).toBeTruthy()
+    // Planned events carry one stylised tick, named for screen readers.
+    expect(within(poetry).getByRole('img', { name: 'In My Schedule' })).toBeTruthy()
     expect(within(poetry).getByText('1 hr')).toBeTruthy()
     expect(within(poetry).getByText('Starts in 20 min')).toBeTruthy()
     const ceramics = screen.getByRole('button', { name: 'View details for Ceramics Workshop' })
-    expect(within(ceramics).queryByText('In My Schedule')).toBeNull()
+    expect(within(ceramics).queryByRole('img', { name: 'In My Schedule' })).toBeNull()
     expect(within(ceramics).getByText('2:30').textContent).toBe('2:30pm')
     expect(within(ceramics).getByText('to 3:30pm')).toBeTruthy()
-    expect(within(ceramics).getByText('Happening now · until 3:30pm')).toBeTruthy()
+    // Happening now: a painted NOW mark with the end time beside it.
+    // Live like a recording light: a pulsing dot, "Now", and when it ends.
+    expect(within(ceramics).getByText(/Now/).closest('.sq-live-now')?.textContent).toBe('Happening Now · until 3:30pm')
   })
 
   it('shows the free-time row only when wired, and shows only events that fully fit', () => {
@@ -195,7 +199,11 @@ describe('Discover View: draws the Controller screen', () => {
     expect((within(row).getByLabelText('Free on') as HTMLInputElement).value).toBe('2030-11-07')
     expect(within(row).getByRole('status').textContent).toBe('1 fit')
     const ceramics = screen.getByRole('button', { name: 'View details for Ceramics Workshop' })
-    expect(within(ceramics).getByText('Fits your window')).toBeTruthy()
+    // The fit mark replaced the "Fits your free time" line: one bar, a few words, said once.
+    expect(within(ceramics).queryByText('Fits your free time')).toBeNull()
+    const mark = within(ceramics).getByRole('img', { name: 'Fits your free time, 2–3:45pm, with 45 min spare.' })
+    expect(mark.textContent).toBe('45 min spare')
+    expect(ceramics.getAttribute('aria-describedby')).toBe(mark.id)
     expect(screen.queryByRole('button', { name: 'View details for Poetry Reading' })).toBeNull()
 
     fireEvent.change(within(row).getByLabelText('until'), { target: { value: '16:00' } })

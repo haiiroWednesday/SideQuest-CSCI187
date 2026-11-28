@@ -1,0 +1,55 @@
+/* The clash chooser (Nov 25): one time strip, the tickets under it, and only what differs under each ticket.
+   Loaded after clash.css by ClashSheet.tsx. Rules here are scoped to .sq-clash-chooser so they win by
+   being more specific, never by !important. */
+
+/* ---------- The shared time strip. Names on the left, each plan's span drawn to scale on the right. */
+.sq-clash-chooser .sq-clash-strip { margin: 14px 0 0; padding-top: 24px; }
+/* The right padding leaves room for the last hour mark, which sits centred under the strip's end. */
+.sq-clash-lanes { position: relative; display: grid; grid-template-columns: fit-content(36%) minmax(0, 1fr); column-gap: 16px; row-gap: 0; align-items: center; padding-right: 16px; }
+.sq-clash-name { grid-column: 1; padding: 6px 0; font: 600 13px/1.25 var(--font-sans); color: var(--sq-ink); }
+.sq-clash-chooser .sq-clash-row { grid-column: 2; align-self: stretch; height: auto; min-height: 28px; }
+/* A faint thread for each plan, so a short span still reads as a place in the day. */
+.sq-clash-chooser .sq-clash-row::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid rgba(60, 40, 30, .16); }
+.sq-clash-chooser .sq-clash-bar { top: 50%; bottom: auto; height: 10px; margin-top: -5px; padding: 0; box-shadow: none; }
+/* The overlap: one red hatched band across every plan's row. It fills the strip's right column.
+   Both ends of the column and the rows are named, because an open end would stretch to the strip's padding. */
+.sq-clash-bands { position: absolute; inset: 0; grid-column: 2 / 3; grid-row: 1 / calc(var(--lanes, 2) + 1); pointer-events: none; }
+.sq-clash-chooser .sq-clash-band { top: -2px; bottom: 0; }
+.sq-clash-chooser .sq-clash-band b { top: -21px; }
+/* Two overlaps can sit close together, so every second label steps up a line and none collide. */
+.sq-clash-chooser .sq-clash-strip-many { padding-top: 40px; }
+.sq-clash-chooser .sq-clash-strip-many .sq-clash-band:nth-child(even) b { top: -37px; }
+.sq-clash-chooser .sq-clash-ticks { grid-column: 2; margin-top: 0; }
+/* Every hour mark is centred on its hour, the first and last too, so two never lean into each other. */
+.sq-clash-chooser .sq-clash-ticks span:first-child, .sq-clash-chooser .sq-clash-ticks span:last-child { transform: translateX(-50%); }
+
+/* ---------- The choices. Two plans sit side by side. Three or more make a list of the same tickets.
+   --differ-label is the ticket's time stub plus the gap to its title, so the facts line up under the
+   title. The stub is 96px wide, 80px on a phone, and 66px in a column of 340px or less (card-fit.css). */
+.sq-clash-choices { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); column-gap: 16px; row-gap: 22px; --differ-label: 118px; }
+@media (min-width: 769px) { .sq-clash-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 900px) { .sq-clash-list { grid-template-columns: repeat(3, minmax(0, 1fr)); --differ-label: 88px; } }
+@media (max-width: 760px) { .sq-clash-choices { --differ-label: 98px; } }
+@media (max-width: 372px) { .sq-clash-choices { --differ-label: 84px; } }
+/* Each plan borrows the list's rows (ticket, one row per differing fact, the action), so the same fact
+   sits on the same line in every column and the eye can run across. */
+.sq-clash-chooser .sq-clash-plan { display: grid; grid-template-rows: subgrid; grid-row: span calc(var(--rows, 0) + 2); row-gap: 0; min-width: 0; }
+.sq-clash-chooser .sq-stubs.sq-clash-plans { grid-template-columns: minmax(0, 1fr); gap: 0; margin: 0; }
+/* Tickets in one row end at the same line. */
+.sq-clash-chooser .sq-clash-plans > li { display: grid; }
+
+.sq-clash-differs { display: grid; grid-template-rows: subgrid; grid-row: span var(--rows, 1); row-gap: 0; margin: 0; padding: 0; }
+.sq-clash-differ { display: grid; grid-template-columns: var(--differ-label) minmax(0, 1fr); align-items: baseline; padding: 7px 0; border-top: 1px solid rgba(60, 40, 30, .16); }
+.sq-clash-differ:first-child { border-top: 0; padding-top: 12px; }
+.sq-clash-differ dt { padding-left: 12px; color: var(--sq-muted); }
+.sq-clash-differ dd { margin: 0; padding-right: 8px; font: 650 15px/1.3 var(--font-sans); color: var(--sq-ink); }
+/* The one action, under the facts and in line with them. The wrapper sets the inset, because the ink
+   button's own side margin is fixed by the shared style. */
+.sq-clash-act { margin: 2px 0 0; padding-left: calc(var(--differ-label) - 10px); }
+.sq-clash-chooser .sq-clash-foot { margin-top: 12px; padding: 6px 0 0; border-top: 1px solid rgba(60, 40, 30, .16); }
+
+/* The outline wrapper stretches with its row, so two tickets side by side end on the same line. */
+.sq-clash-chooser .sq-clash-plans > li > .sq-edge { height: auto; }
+
+/* Each clash is drawn by the trail itself (Nov 26), on the sheet's paper, the way My Schedule draws a day. */
+.sq-clash-ruler.sq-clash-trail { background: none !important; border: 0 !important; padding: 6px 0 4px !important; margin: 10px 0 8px; }

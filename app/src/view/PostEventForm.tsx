@@ -1,10 +1,11 @@
 // VIEW: compose the post editor and catalog list without behavior flags.
 // Posting validation and storage operations remain behind Controller ports.
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import {
   postEvent, postingDraftErrors, initialCampusWindow,
   type CampusEvent, type CatalogFieldErrors, type ConnectedCatalog, type EventDraft,
 } from '../controller/postEvent'
+import { keepPostDraft, readPostDraft } from '../controller/postDrafts'
 import { PostedEventsList } from './PostedEventsList'
 import { PostEventFields } from './PostEventFields'
 
@@ -35,9 +36,25 @@ export function EmbeddedPostEventForm(props: Props) {
 
 function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props) {
   const { catalog, shared } = connection
+  const [restored] = useState(() => readPostDraft(connection))
   const [draft, setDraft] = useState<EventDraft>(() => ({
     title: '', hostName: '', description: '', location: '', ...initialCampusWindow(now()),
+    hostKind: 'student-org', organizer: '', contact: '', spaceConfirmed: false, ...(restored ?? {}),
   }))
+  // An unfinished post survives switching tabs (kept in memory by the controller).
+  useEffect(() => { keepPostDraft(connection, draft) }, [connection, draft])
+  // After a failed submit, move focus to the first field that needs fixing,
+  // so a keyboard user lands on it instead of on whatever comes next.
+  const formArea = useRef<HTMLDivElement>(null)
+  const [invalidSubmit, setInvalidSubmit] = useState(0)
+  useEffect(() => {
+    if (!invalidSubmit) return
+    const first = formArea.current?.querySelector<HTMLElement>('[aria-invalid="true"]')
+    if (!first) return
+    first.focus({ preventScroll: true })
+    const reduce = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    first.scrollIntoView?.({ block: 'center', behavior: reduce ? 'auto' : 'smooth' })
+  }, [invalidSubmit])
   const [fieldErrors, setFieldErrors] = useState<CatalogFieldErrors>({})
   const [validatedFields, setValidatedFields] = useState<Partial<Record<keyof EventDraft, boolean>>>({})
   const [formError, setFormError] = useState<string | null>(null)
@@ -57,6 +74,15 @@ function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props
     setFormError(null)
   }
 
+  const confirmSpace = (confirmed: boolean) => {
+    const nextDraft = { ...draft, spaceConfirmed: confirmed }
+    setDraft(nextDraft)
+    if (validatedFields.spaceConfirmed || fieldErrors.spaceConfirmed) {
+      setFieldErrors(previous => ({ ...previous, spaceConfirmed: postingDraftErrors(nextDraft, now()).spaceConfirmed }))
+    }
+    setFormError(null)
+  }
+
   const validateOnBlur = (field: keyof EventDraft) => {
     setValidatedFields(previous => ({ ...previous, [field]: true }))
     const errors = postingDraftErrors(draft, now())
@@ -73,8 +99,9 @@ function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props
     setSubmitting(false)
     if (result.status === 'invalid') {
       setFieldErrors(result.fieldErrors)
-      setValidatedFields({ title: true, hostName: true, description: true, location: true, date: true, start: true, end: true })
+      setValidatedFields({ title: true, hostName: true, description: true, location: true, date: true, start: true, end: true, organizer: true, contact: true, spaceConfirmed: true })
       setFormError(result.error)
+      setInvalidSubmit(count => count + 1)
       return
     }
     if (result.status === 'failed') {
@@ -85,16 +112,20 @@ function PostEventEditor({ connection, now = () => new Date(), onPosted }: Props
     setFieldErrors({})
     setValidatedFields({})
     setNotice(result.message)
-    // Keep host name, date and times to make posting a similar event quicker.
-    setDraft(current => ({ ...current, title: '', description: '', location: '' }))
+    // Keep host name, organizer, contact, date and times to make posting a similar event quicker.
+    // The room or space has to be confirmed again for the next event.
+    setDraft(current => ({ ...current, title: '', description: '', location: '', tags: [], spaceConfirmed: false }))
     onPosted?.(result.event)
   }
 
   return (
-    <>
-      <PostEventFields draft={draft} fieldErrors={fieldErrors} submitting={submitting} now={now} onSubmit={handleSubmit} onChange={update} onBlur={validateOnBlur} />
+    <div ref={formArea} className="sq-post-editor">
+      {restored && !notice && <p className="sq-draft-note" role="status">Your unfinished post is still here.</p>}
+      <PostEventFields draft={draft} fieldErrors={fieldErrors} submitting={submitting} now={now} onSubmit={handleSubmit} onChange={update} onBlur={validateOnBlur}
+        onConfirmSpace={confirmSpace}
+        onTags={tags => setDraft(current => ({ ...current, tags }))} />
       {formError && <p className="error" role="alert">{formError}</p>}
       {notice && <p className="success" role="status">{notice}</p>}
-    </>
+    </div>
   )
 }

@@ -22,15 +22,15 @@ async function seed(page: Page) {
 
 const stubFor = (page: Page, title: string) => page.getByRole('button', { name: `View details for ${title}` })
 
-test('long posts stay compact on the trail, and the details card shows everything within the screen', async ({ page }) => {
+test('long posts show in full on the trail without filling it, and the details card shows everything within the screen', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 })
   await seed(page)
   const long = stubFor(page, LONG_TITLE)
   await expect(long).toBeVisible()
 
-  // The trail card shortens the title and location instead of growing with them.
+  // The card grows with a long title; nothing is cut off with "…", and it never fills the screen.
   const longBox = (await long.boundingBox())!
-  expect(longBox.height).toBeLessThan(260)
+  expect(longBox.height).toBeLessThan(560)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 
   // The details card has the full title, and the Plan button stays on screen.

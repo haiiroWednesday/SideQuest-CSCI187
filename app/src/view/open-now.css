@@ -1,0 +1,11 @@
+/* "What's open" idea under a free stretch. Quiet: Urbanist, ink-muted, no pill, no italics.
+   The slip wraps so the line gets its own row instead of squeezing the times. */
+/* marks.css keeps free slips on one line with !important; a slip with an idea is the one that may wrap. */
+.sq-slip.sq-slip-free:has(.sq-open-now) { flex: 1 1 100%; max-width: 100%; box-sizing: border-box; flex-wrap: wrap !important; row-gap: 0; }
+.sq-open-now { flex: 1 0 100%; display: flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box;
+  padding: 4px 2px 0; color: #5f4e47; text-decoration: none; font: 600 14.5px/1.3 var(--font-sans); }
+.sq-open-now-sign { flex: none; width: 18px; height: 18px; fill: none; stroke: var(--sq-red-deep, #751728); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.sq-open-now-text { min-width: 0; flex: 1 1 auto; overflow-wrap: normal; }
+.sq-open-now:hover .sq-open-now-text, .sq-open-now:focus-visible .sq-open-now-text { color: var(--sq-red-deep, #751728); }
+.sq-open-now:focus-visible { outline: 2px solid var(--sq-focus, #751728); outline-offset: 2px; }
+@media (max-width: 700px) { .sq-open-now { min-height: 50px; } }

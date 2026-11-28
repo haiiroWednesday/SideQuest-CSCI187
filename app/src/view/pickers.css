@@ -1,0 +1,28 @@
+/* Our time and date pickers: a paper button that opens a small card of choices. */
+.sq-pick { position: relative; display: inline-block; }
+.sq-pick-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 46px; min-width: 120px; padding: 0 14px; border: 0; border-bottom: 1.6px solid #9b8b7e;
+  background: #fffaf2; color: var(--sq-ink, #302421); font: 400 21px var(--look-display, var(--font-display)); cursor: pointer; text-align: left; }
+.sq-pick-btn svg { width: 18px; height: 18px; flex: none; fill: none; stroke: #8a5a12; stroke-width: 1.5; stroke-linecap: round; }
+.sq-pick-empty span { color: var(--sq-muted, #6d6064); font: 500 15px var(--font-sans); }
+.sq-pick-btn[aria-expanded="true"] { border-bottom-color: var(--sq-red, #a32035); background: #fff4d6; }
+.sq-pick-btn[aria-invalid="true"] { border-bottom-color: var(--sq-red, #a32035); }
+.sq-pick-btn:focus-visible, .sq-pick-chip:focus-visible, .sq-cal-day:focus-visible, .sq-cal-nav:focus-visible { outline: 3px solid var(--sq-focus, #751728); outline-offset: 2px; }
+.sq-pick-pop { position: absolute; z-index: 40; left: 0; top: calc(100% + 8px); width: min(372px, calc(100vw - 24px)); padding: 12px 12px 10px; background: #fffaf2;
+  box-shadow: 0 12px 28px -10px rgba(48, 36, 33, .45), 0 0 0 1px rgba(48, 36, 33, .08); display: grid; gap: 8px; }
+.sq-pick-right { left: auto !important; right: 0; }
+.sq-pick-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.sq-pick-part { width: 74px; flex: none; font: 700 11.5px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #8a5a12; }
+.sq-pick-chip { min-width: 40px; min-height: 40px; padding: 0 6px; border: 0; background: #f3ebe0; color: var(--sq-ink, #302421); font: 650 15px var(--font-sans); cursor: pointer; border-radius: 2px; }
+.sq-pick-chip:hover { background: #fbe3b0; }
+.sq-pick-chip[aria-pressed="true"] { background: var(--sq-red, #a32035); color: #fff; }
+.sq-pick-mins { padding-top: 6px; border-top: 1.4px dashed rgba(60, 40, 30, .2); }
+.sq-cal-head { display: flex; align-items: center; justify-content: space-between; font: 400 20px var(--look-display, var(--font-display)); }
+.sq-cal-nav { min-width: 44px; min-height: 44px; border: 0; background: none; font: 400 28px/1 var(--font-sans); color: var(--sq-ink, #302421); cursor: pointer; }
+.sq-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.sq-cal-dow { text-align: center; font: 700 11px var(--font-sans); color: var(--sq-muted, #6d6064); padding: 4px 0; }
+.sq-cal-day { min-height: 40px; border: 0; background: none; font: 500 15px var(--font-sans); color: var(--sq-ink, #302421); cursor: pointer; border-radius: 2px; }
+.sq-cal-day:hover:not(:disabled) { background: #fbe3b0; }
+.sq-cal-day:disabled { color: #cdbfb4; cursor: default; }
+.sq-cal-day[aria-pressed="true"] { background: var(--sq-red, #a32035); color: #fff; }
+@media (prefers-reduced-motion: no-preference) { .sq-pick-pop { animation: sq-pick-in .16s ease-out; } @keyframes sq-pick-in { from { opacity: 0; transform: translateY(-4px); } } }
+.sq-pick-up { top: auto !important; bottom: calc(100% + 8px); }

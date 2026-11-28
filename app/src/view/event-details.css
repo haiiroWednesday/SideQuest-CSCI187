@@ -47,10 +47,10 @@
 }
 @media (prefers-reduced-motion: reduce) { .sq-sticker-card { transform: none; } }
 
-/* ---------- Long text: trail cards shorten, the details card shows everything ---------- */
+/* ---------- Long text: every card shows the whole title and place; the card grows taller (Nov 24) ---------- */
 /* break-word only splits a string that cannot fit on a line, so normal words like Workshop stay whole */
-.sq-stub-body strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; overflow-wrap: break-word; }
-.sq-by { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; overflow-wrap: break-word; }
+.sq-stub-body strong { display: block; overflow-wrap: break-word; }
+.sq-by { display: block; overflow-wrap: break-word; }
 .sq-sticker h2.sq-title-long { font-size: 38px; }
 .sq-sticker h2.sq-title-xlong { font-size: 30px; line-height: 1.08; }
 .sq-sticker-desc { overflow-wrap: anywhere; }

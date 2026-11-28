@@ -98,16 +98,19 @@ describe('opt-in group HTTP gateway and verified identity contract', () => {
     expect((await success.json()).participants[0]).not.toHaveProperty('privateCondition')
   })
 
-  it('never returns another participant\'s private notes or raw SQL columns', async () => {
+  it('shares If notes with the plan\'s members (owner decision, Nov 24) and never raw SQL columns', async () => {
     const gateway = mockGateway()
     const base = await listen(gateway)
     const orgResult = await (await send(base, '/api/groups/' + planId, orgToken)).json()
-    expect(orgResult.participants[0]).toEqual({ userId: memberId, response: 'if' })
+    // The upstream RPC on this branch still calls it privateCondition; the gateway sends ifCondition.
+    expect(orgResult.participants[0]).toEqual({ userId: memberId, response: 'if', ifCondition: 'Private exam schedule' })
     expect(orgResult).not.toHaveProperty('sourceSecret')
 
     const memberResult = await (await send(base, '/api/groups/' + planId, memberToken)).json()
-    expect(memberResult.participants[0].privateCondition).toBe('Private exam schedule')
-    expect(memberResult.participants[1]).not.toHaveProperty('privateCondition')
+    expect(memberResult.participants[0].ifCondition).toBe('Private exam schedule')
+    expect(memberResult.participants[0]).not.toHaveProperty('privateCondition')
+    // No If answer, no note.
+    expect(memberResult.participants[1]).not.toHaveProperty('ifCondition')
 
     // Simulate a faulty upstream RPC returning another group's raw record.
     // The Node gateway must still refuse to expose its event or participant list.

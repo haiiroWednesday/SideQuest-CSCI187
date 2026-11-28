@@ -22,11 +22,11 @@
 ## Agreed MVP scope
 
 - Anyone may post/browse events; **no account, login, or USER table**.
-- Every public Event has `id,title,hostName,description,location,date,start,end`. `hostName` is unverified display text, **not** a user ID.
+- Every public Event has `id,title,hostName,description,location,date,start,end`, plus optional `attend` (`'set'` by default, or `'dropin'`; added Nov 25, see `model/attend.ts`). `hostName` is unverified display text, **not** a user ID.
 - Use M1-compatible `date` (YYYY-MM-DD) and `start,end` (HH:mm) on the **same day**, with `start < end`. No overnight events in this MVP.
 - One **shared public EventCatalog**; the Supabase adapter, event-posting form and integrated catalog/Search/Schedule code are merged (#18–#20). **Live Supabase configuration and cross-browser read/write are not verified.** Without environment configuration, the app uses an explicitly labeled browser-only fallback.
 - **Schedule** stores planned Event IDs **on the current device**. Removing a plan does not delete the public Event.
-- Free-time matching requires the **entire** event to fit, inclusive boundaries. No partial matching or travel feasibility.
+- Free-time matching requires the **entire** event to fit, inclusive boundaries, for an event that starts at a set time. A drop-in event (`attend: 'dropin'`, chosen by the host on Post) fits when it shares at least 20 minutes (`MIN_DROP_IN_MINUTES`) with the free stretch. No other partial matching. Walking times are shown as estimates and never decide a fit.
 - Out of scope: user profiles, cost, registration enforcement, saved availability, cross-device schedules, and extra tables for anonymous users.
 
 ## Boundaries and ownership
@@ -65,3 +65,20 @@ Follow the [shared coding conventions](TEAM_SETUP_GUIDE.md#shared-coding-convent
 **Default:** If a prompt conflicts with the agreed implementation contract or another teammate's file ownership, stop and explain the conflict. Do not invent features.
 
 **The P4 diagram is accepted.** Keep it unchanged. Current M2 source diagrams are [CRC](docs/diagrams/M2_CRC.drawio) and [ER](docs/diagrams/M2_STORAGE_ER.drawio), with a [combined file](docs/diagrams/M2_IMPLEMENTATION.drawio). Use the current [README](README.md), [specifications](SPECIFICATIONS.md) and [M2 verification](docs/M2_INTEGRATION_VERIFICATION.md), not historical M1 walkthroughs. Do not reuse a local server when running Playwright: browser tests POST events and a developer server may have real Supabase credentials.
+
+## Approved designs: do not regress them
+
+Cynthia owns the UI design. Every look she has approved is listed in [DESIGN_DECISIONS.md](docs/DESIGN_DECISIONS.md) and pinned by the screenshot tests in `app/e2e-demo/visual-baselines.spec.ts`.
+
+1. Read DESIGN_DECISIONS.md before any UI change.
+2. If a change alters an approved screen or card, show her before and after at 390 px and 1280 px and wait for her yes. Only then run `npx playwright test -c playwright.demo.config.ts e2e-demo/visual-baselines.spec.ts --update-snapshots` and add a dated line to DESIGN_DECISIONS.md.
+3. A failing visual baseline is a regression until she says otherwise. Never update baselines to make CI green.
+4. Never report a design as done until it is visible in the running app and in the review artifact.
+
+## Keep the flow page and the extra-credit page current
+
+While the UI is still being finalized, two pages must follow every UI or feature change:
+
+1. **"SideQuest flow and demo"** (Claude artifact `59086d8a-926e-4464-aefd-9b324dcd8db1`, source in `docs/flow-demo/`). Each flow has one real screenshot per step, the repeats still to decide (C1, C2, …), and the Dec 2 demo order. After a UI change: rebuild the review build, retake the screenshots (`docs/flow-demo/update.sh` shows the steps), edit the flows and repeats at the bottom of `index.html` if a step was added, moved or cut, then republish. It is the demo script, so a screen missing here is a screen forgotten in the demo. Cynthia's picks, notes and Q&A facts on that page save by themselves into the page's own store: read them with `db_get` at `review/answers` on that artifact before asking her anything it already answers. The keys in `data.js` (C1…, w1…, the open-item keys) are saved with her answers, so never renumber or reuse one.
+2. **"SideQuest extra credit: five points, no shortcuts"** (artifact `5fb5c7be-5fed-400a-8c0d-20b3fbeed49d`). Check each item's status and wording (test counts, where Google time shows, what is built, tested or proven live). Never raise a status without the test or live proof behind it.
+3. The whole app is meant to be autism and ADHD friendly: one job per screen, little to read, pictures over words. New work is checked against the repeats list before it is added.

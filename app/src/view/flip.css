@@ -1,0 +1,70 @@
+/* Cards that turn over into their details (Discover, flip layouts). */
+.sq-flip { position: relative; perspective: 1400px; overflow: visible; }
+.sq-flip-turn { position: relative; transform-style: preserve-3d; }
+.sq-flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.sq-flip-front { position: absolute; left: 0; top: 0; z-index: 1; overflow: hidden; }
+.sq-flip-front .sq-stub { width: 100%; height: 100%; margin: 0; }
+.sq-flip[data-axis='Y'] .sq-flip-back { transform: rotateY(180deg); }
+.sq-flip[data-axis='X'] .sq-flip-back { transform: rotateX(180deg); }
+.sq-flip-back { position: relative; padding-top: 14px; }
+.sq-flip-back .sq-sticker-card { transform: none; animation: none; max-height: none; border: 1.5px solid var(--sq-rule-strong); border-radius: 24px; box-shadow: 0 3px 0 var(--sq-ticket-under), 6px 8px 0 var(--sq-red-deep); }
+.sq-flip:not(.sq-flip-lift) .sq-flip-back .sq-sticker-body { overflow: visible; -webkit-mask-image: none; mask-image: none; }
+.sq-flip-front { top: 14px; }
+@media (max-width: 760px) {
+  .sq-flip-back .sq-sticker-card { padding: 0 20px 24px; }
+  .sq-flip-back .sq-sticker-top { margin: 0 -20px; padding: 30px 20px 20px; border-radius: 22px 22px 0 0; }
+}
+.sq-flip-done .sq-flip-front { display: none; }
+.sq-flip-done .sq-flip-turn, .sq-flip-done .sq-flip-back { transform: none !important; }
+.sq-flip-turn, .sq-flip { will-change: transform; }
+.sq-flip-done, .sq-flip-done .sq-flip-turn { will-change: auto; }
+
+/* Lifted to the middle (laptop) or the whole screen (phone). */
+.sq-lift-layer { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 24px; }
+.sq-lift-scrim { position: absolute; inset: 0; background: rgba(48, 22, 26, .48); }
+.sq-flip-lift { width: min(560px, 100%); max-height: calc(100dvh - 48px); }
+.sq-flip-lift .sq-flip-back { padding-top: 0; }
+.sq-flip-lift .sq-flip-back .sq-sticker-card { max-height: calc(100dvh - 48px); }
+.sq-flip-lift .sq-flip-front { top: 0; }
+.sq-flip-lift.sq-flip-phone { width: 100%; }
+.sq-lift-layer:has(.sq-flip-phone) { padding: 0; }
+.sq-flip-lift.sq-flip-phone .sq-flip-back .sq-sticker-card { max-height: 100dvh; height: 100dvh; border-radius: 0; box-shadow: none; border: 0; overflow-y: auto; }
+.sq-flip-lift.sq-flip-phone .sq-sticker-card::before { display: none; }
+
+/* The list itself in flip layouts: no side panel, two columns on wide screens. */
+.sq-board.sq-flipmode { grid-template-columns: minmax(0, 1fr) !important; }
+@media (min-width: 1000px) {
+  .sq-flipmode .sq-stubs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 18px; align-items: start; }
+}
+.sq-flipmode .sq-stubs > li.sq-flip-hidden > .sq-edge > .sq-stub { visibility: hidden; }
+
+/* Demo-only switcher. */
+.sq-layout-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 16px; font: 600 13px var(--font-sans, 'Urbanist Variable', system-ui, sans-serif); color: #5b4b45; }
+.sq-layout-switch [role='group'] { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 3px; border-radius: 999px; background: #fffaf2; box-shadow: 0 0 0 1.5px #e3cdbf; }
+.sq-layout-switch button { all: unset; cursor: pointer; padding: 7px 12px; border-radius: 999px; font: 700 12.5px var(--font-sans, 'Urbanist Variable', system-ui, sans-serif); color: #3a2a26; min-height: 24px; }
+.sq-layout-switch button[aria-pressed='true'] { background: #8a1d2e; color: #fff9ec; }
+.sq-layout-switch button:focus-visible { outline: 3px solid #2f6fdb; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .sq-flip, .sq-flip-turn { will-change: auto; } }
+/* Narrow cards: the list already shows the day, so the round date stamp steps out. */
+.sq-flip-phone:not(.sq-flip-lift) .sq-sticker-day { display: none; }
+.sq-flip-back .sq-sticker-time { min-width: 0; }
+.sq-flip-phone .sq-sticker-time .sq-nx { white-space: normal; max-width: 100%; }
+/* Turned-over cards always offer a way back. */
+.sq-flip .sq-sheet-close { display: grid; place-items: center; position: absolute; z-index: 3; top: 8px; right: 10px; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(255, 250, 242, .85); font: 400 30px/1 var(--font-sans); color: var(--sq-muted); cursor: pointer; }
+.sq-flip .sq-sheet-close:hover { color: var(--sq-red); }
+.sq-flip .sq-sheet-close:focus-visible { outline: 3px solid #2f6fdb; outline-offset: 2px; }
+/* While a card turns in the list, nothing below it shows through. */
+.sq-flip-running { clip-path: inset(-60px -80px 0 -80px); }
+
+/* A hint that the card turns down: pointing at it tips its top edge back a little. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .sq-flipmode .sq-stubs > li > .sq-edge > .sq-stub { transition: transform .35s cubic-bezier(.3,1.4,.5,1), box-shadow .35s; transform-origin: 50% 100%; }
+  .sq-flipmode .sq-stubs > li > .sq-edge > .sq-stub:hover { transform: perspective(700px) rotateX(9deg); box-shadow: 0 8px 12px -8px rgba(48, 36, 33, .35); }
+}
+.sq-flip[data-axis='X'] { perspective: 3200px; }
+.sq-flip-running-x { clip-path: inset(-2px -80px 0 -80px); }
+
+/* Mid-turn, perspective makes the near edge of a wide card bulge past the page for a few frames
+   (CI caught 41px at 1280). Clip the sides only while the card is turning, so the page never gains
+   a sideways scroll. Top and bottom stay free, and once the card lands nothing is clipped. */
+.sq-flip.sq-flip-running { overflow-x: clip; overflow-y: visible; }

@@ -1,0 +1,66 @@
+/* Tags, food now, one pick per free stretch and leave-by notes (Nov 24).
+   Tap targets are 50px tall so they stay 44px+ under the phone's .88 page zoom.
+   Materials only: washi strips for tag chips, torn paper for notes. No pills, no italics for live. */
+
+.sq-tagfilters { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 14px 0 4px; }
+.sq-tagfilters-name { font: 800 12px var(--font-sans); letter-spacing: .14em; text-transform: uppercase; color: var(--sq-muted, #7a6a62); margin-right: 2px; }
+.sq-tagchip { position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: 7px; min-height: 50px; padding: 0 14px;
+  border: 0; background: none; border-radius: 0; font: 600 15px var(--font-sans); color: var(--sq-ink, #302421); cursor: pointer; white-space: nowrap; }
+.sq-tagchip::before { content: ""; position: absolute; inset: 8px 0; z-index: -1; background: #efe3d1; transform: rotate(-.8deg);
+  -webkit-mask: url('./assets/mat-washi.svg') 0 0 / 100% 100% no-repeat; mask: url('./assets/mat-washi.svg') 0 0 / 100% 100% no-repeat; }
+.sq-tagchip:nth-child(odd)::before { transform: rotate(.7deg); }
+.sq-tagchip.sq-on::before { background: rgba(232, 170, 36, .62); }
+.sq-tagchip-tick { font-style: normal; font-weight: 800; color: var(--sq-red-deep, #751728); }
+.sq-tagchip b { font: 700 13px var(--font-sans); color: var(--sq-muted, #7a6a62); }
+.sq-tagchip:disabled { opacity: .45; cursor: default; }
+.sq-tagchip:focus-visible { outline: 3px solid var(--sq-focus, #751728); outline-offset: 2px; }
+
+/* Food left, come now: a torn note with the live dot used for "Happening now". */
+.sq-foodnow-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--sq-red, #a32035); box-shadow: 0 0 0 4px rgba(163, 32, 53, .18); animation: sq-foodnow-pulse 1.6s ease-in-out infinite; }
+@keyframes sq-foodnow-pulse { 50% { box-shadow: 0 0 0 8px rgba(163, 32, 53, 0); } }
+.sq-foodleft { display: inline-flex; align-items: center; gap: 9px; padding-left: 4px; font: 800 12px/1.35 var(--font-sans); letter-spacing: .12em; text-transform: uppercase; color: var(--sq-red-deep, #751728); white-space: nowrap; }
+
+/* One pick per free stretch. */
+
+/* On cards: leave-by, tags and where tags came from. */
+.sq-leave { display: block; margin-top: 4px; font: 650 14.5px/1.35 var(--font-sans); color: #7a4c0c; }
+.sq-leave::before { content: ""; display: inline-block; width: 12px; height: 2px; margin: 0 6px 4px 0; border-top: 2px dotted var(--sq-path, #c4643f); vertical-align: middle; }
+.sq-leave-warn { color: var(--sq-red-deep, #751728); }
+.sq-stub-tags { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin-top: 5px; min-width: 0; max-width: 100%; }
+.sq-stub-tag { font: 800 11.5px/1.35 var(--font-sans); letter-spacing: .1em; text-transform: uppercase; color: #6c4a10; min-width: 0; }
+.sq-stub-tag::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 5px; background: var(--sq-gold, #e8aa24);
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); }
+.sq-stub-tagsrc { font: 500 12.5px var(--font-sans); color: var(--sq-muted, #7a6a62); }
+
+/* Host control on their own live event. */
+.sq-foodctl { display: grid; gap: 4px; margin: 12px 0 0; }
+.sq-foodctl .sq-foodctl-btn { position: relative; isolation: isolate; justify-self: start; min-height: 50px; padding: 0 16px; }
+.sq-foodctl .sq-foodctl-btn::before { content: ""; position: absolute; inset: 4px 0; z-index: -1; background: #f3e6d3;
+  -webkit-mask: url('./assets/mat-torn.svg') 0 0 / 100% 100% no-repeat; mask: url('./assets/mat-torn.svg') 0 0 / 100% 100% no-repeat; }
+.sq-foodctl small { font: 500 13px var(--font-sans); color: var(--sq-muted, #7a6a62); }
+
+/* Post: tag choices as washi strips. */
+.sq-post-tags { border: 0; margin: 0; padding: 0; min-width: 0; }
+.sq-post-tags legend { padding: 0; margin-bottom: 4px; }
+.sq-post-tags legend span { font: 700 13px/1 var(--font-sans); letter-spacing: .12em; color: var(--sq-red, #a32035); }
+.sq-post-tags-hint { margin: 2px 0 6px; font: 500 14px var(--font-sans); color: var(--sq-muted, #7a6a62); }
+.sq-post-tag-row { display: flex; flex-wrap: wrap; gap: 2px 8px; }
+.sq-post-tag { position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: 8px; min-height: 50px; padding: 0 14px; cursor: pointer; font: 600 15px var(--font-sans); white-space: nowrap; }
+.sq-post-tag::before { content: ""; position: absolute; inset: 8px 0; z-index: -1; background: #efe3d1;
+  -webkit-mask: url('./assets/mat-washi.svg') 0 0 / 100% 100% no-repeat; mask: url('./assets/mat-washi.svg') 0 0 / 100% 100% no-repeat; }
+.sq-post-tag.sq-on::before { background: rgba(232, 170, 36, .62); }
+.sq-post-tag input { width: 18px; height: 18px; margin: 0; accent-color: var(--sq-red-deep, #751728); }
+.sq-post-tag:focus-within { outline: 3px solid var(--sq-focus, #751728); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) { .sq-foodnow-dot { animation: none; } }
+
+/* Where the event came from, under the opened card. */
+.sq-source-line { margin: 10px 0 0; font: 500 13.5px var(--font-sans); color: var(--sq-muted, #7a6a62); }
+.sq-detail-extras { padding: 0 22px 18px; }
+.sq-detail-extras:empty { display: none; }
+/* The Post form styles every label and input; these keep the tag strips small and in one line. */
+.sq-post-panel .event-form .sq-post-tag, .event-form .sq-post-tag { display: inline-flex; flex-direction: row; flex: none; align-items: center; gap: 8px; }
+.sq-post-panel .event-form .sq-post-tag span, .event-form .sq-post-tag span { font: 600 15px/1.2 var(--font-sans); letter-spacing: 0; color: var(--sq-ink, #302421); }
+.sq-post-panel .event-form .sq-post-tag input[type="checkbox"], .event-form .sq-post-tag input[type="checkbox"] {
+  flex: none; width: 20px; height: 20px; min-height: 0; min-width: 0; padding: 0; margin: 0; border-radius: 0; box-shadow: none; accent-color: var(--sq-red-deep, #751728); }
+.sq-post-panel .event-form .sq-post-tags legend span { font: 700 13px/1 var(--font-sans); letter-spacing: .12em; color: var(--sq-red, #a32035); }

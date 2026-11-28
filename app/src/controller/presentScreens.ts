@@ -4,5 +4,5 @@ export { splitTime, spanText, describeDay, presentBrowseDetail } from './screenM
 export type { ScreenEvent, FreeWindow, TimeParts, StubModel, DayModel, FreeWindowModel, DiscoverScreen, CategoryFiltersModel } from './screenModels'
 export type { EventCategorySelection } from '../model/eventCategories'
 export { presentDiscover } from './presentDiscover'
-export { presentSchedule } from './presentSchedule'
+export { presentSchedule, withPreview } from './presentSchedule'
 export type { ScheduleInput, PlanStubModel, NextUpModel, ScheduleScreen } from './presentSchedule'

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { presentDiscover } from '../src/controller/presentDiscover'
+import { presentDiscover, toggleCategory } from '../src/controller/presentDiscover'
 import type { ScreenEvent } from '../src/controller/screenModels'
 
 const date = '2030-11-07'
@@ -45,3 +45,21 @@ describe('Suggested Discover categories and strict free-time intersection', () =
     expect(screen.categories.options.find(item => item.id === 'wellness')?.count).toBe(0)
   })
 })
+
+describe('several categories at once (Nov 25)', () => {
+  it('lists events from every chosen category, and none chosen means all', () => {
+    const both = presentDiscover({ events: upcoming, now, categories: ['arts', 'wellness'] })
+    const one = (c: 'arts' | 'wellness') => presentDiscover({ events: upcoming, now, categories: [c] }).count
+    expect(both.count).toBe(one('arts') + one('wellness'))
+    expect(both.categories.chosen).toEqual(['arts', 'wellness'])
+    expect(both.categories.selected).toBe('all')
+    expect(presentDiscover({ events: upcoming, now, categories: [] }).count).toBe(presentDiscover({ events: upcoming, now }).count)
+  })
+  it('a tap toggles one category; All activities clears', () => {
+    expect(toggleCategory([], 'arts')).toEqual(['arts'])
+    expect(toggleCategory(['arts'], 'wellness')).toEqual(['arts', 'wellness'])
+    expect(toggleCategory(['arts', 'wellness'], 'arts')).toEqual(['wellness'])
+    expect(toggleCategory(['arts', 'wellness'], 'all')).toEqual([])
+  })
+})
+

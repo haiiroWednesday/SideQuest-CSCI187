@@ -1,16 +1,9 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { loadEnv } from 'vite'
-import { createCatalogApi } from './server/api.ts'
 import type { CatalogPublisherPort } from './src/model/catalogChanged.ts'
 import { attachCatalogRealtime } from './server/catalogRealtime.ts'
-import { createAiDiscoverApi } from './server/aiDiscover.ts'
-import { createGroupApi } from './server/groupApi.ts'
-import { createEmailAuthApi } from './server/emailAuthApi.ts'
-import { createSupabaseEmailOtpGatewayFromEnv } from './server/supabaseEmailAuth.ts'
-import { createSupabaseGroupGatewayFromEnv } from './server/supabaseGroupAccess.ts'
-import { createSupabaseEventCatalogFromEnv } from './src/model/supabaseEventTable.ts'
-import { withScuCalendar } from './server/scuCalendar.ts'
+import { createServerCatalog, createServerHandlers, runHandlers } from './server/handlers.ts'
 
 // 🧪 Vite runs the React development app; Vitest reuses this config
 // to find unit and integration test files in the tests/ folder.
@@ -20,32 +13,21 @@ export default defineConfig(({ mode }) => ({
     name: 'sidequest-catalog-api',
     configureServer(server) {
       const env = {
-        ...loadEnv(mode, process.cwd(), 'SUPABASE_'),
-        ...loadEnv(mode, process.cwd(), 'SIDEQUEST_GROUPS_'),
-        ...loadEnv(mode, process.cwd(), 'SIDEQUEST_AUTH_'),
-        ...loadEnv(mode, process.cwd(), 'OPENAI_'),
-        ...loadEnv(mode, process.cwd(), 'SIDEQUEST_AI_'),
-        ...loadEnv(mode, process.cwd(), 'SIDEQUEST_SCU_'),
+        // Every server-side setting the production server reads, from .env.local.
+        ...loadEnv(mode, process.cwd(), ['SUPABASE_', 'SIDEQUEST_', 'OPENAI_', 'GOOGLE_']),
         ...process.env,
       }
-      const realtime = server.httpServer ? attachCatalogRealtime(server.httpServer) : null
+      // Vite's HMR socket shares this HTTP server, so other upgrades are left for it.
+      const realtime = server.httpServer ? attachCatalogRealtime(server.httpServer, { passThroughOtherUpgrades: true }) : null
       const notifications: CatalogPublisherPort = {
         publish(eventId) { realtime?.publish(eventId) },
       }
-      const { catalog, stop } = withScuCalendar(createSupabaseEventCatalogFromEnv(env), env.SIDEQUEST_SCU_FEED_ENABLED, notifications)
+      // The same handler list as server/index.ts, so dev and production answer the same routes.
+      const { catalog, stop } = createServerCatalog(env, notifications)
       if (stop) server.httpServer?.once('close', stop)
-      const api = createCatalogApi(catalog, Date.now, notifications)
-      const ai = createAiDiscoverApi(catalog, { apiKey: env.OPENAI_API_KEY, model: env.SIDEQUEST_AI_MODEL })
-      const groupApi = createGroupApi(createSupabaseGroupGatewayFromEnv(env))
-      const authApi = createEmailAuthApi(createSupabaseEmailOtpGatewayFromEnv(env))
+      const handlers = createServerHandlers(env, { catalog, publisher: notifications })
       server.middlewares.use((req, res, next) => {
-        void (async () => {
-          if (await authApi(req, res)) return
-          if (await groupApi(req, res)) return
-          if (await ai(req, res)) return
-          if (await api(req, res)) return
-          next()
-        })().catch(next)
+        void runHandlers(handlers, req, res).then(handled => { if (!handled) next() }).catch(next)
       })
     },
   }],

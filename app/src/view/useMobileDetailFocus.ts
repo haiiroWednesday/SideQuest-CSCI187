@@ -38,7 +38,7 @@ export function useMobileDetailFocus({
 
     const originalOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    panel.querySelector<HTMLElement>('button:not(:disabled), a[href]')?.focus()
+    ;(panel.querySelector<HTMLElement>('.sq-sheet-close') ?? panel.querySelector<HTMLElement>('button:not(:disabled), a[href]'))?.focus()
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
@@ -74,7 +74,7 @@ export function useMobileDetailFocus({
     if (!modal || !panel) return
     const active = document.activeElement
     if (!panel.contains(active) || (active instanceof HTMLButtonElement && active.disabled)) {
-      panel.querySelector<HTMLElement>('button:not(:disabled), a[href]')?.focus()
+      ;(panel.querySelector<HTMLElement>('.sq-sheet-close') ?? panel.querySelector<HTMLElement>('button:not(:disabled), a[href]'))?.focus()
     }
   }, [modal, panelRef, selectedId, selectedPlanned, planningBlocked])
 }

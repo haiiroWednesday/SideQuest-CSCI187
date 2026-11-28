@@ -1,6 +1,7 @@
 // Server-only AI-assisted discovery. EventCatalog remains authoritative.
 // The model proposes public event IDs; SideQuest validates every ID and time fit.
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { clientIp } from './clientIp'
 import { readCatalogWithDeadline } from '../src/controller/catalogReads'
 import { findEvents } from '../src/controller/findEvents'
 import { isValidDate } from '../src/model/events'
@@ -226,7 +227,7 @@ export function createAiDiscoverApi(catalog: EventCatalogPort | null, config: Ai
         values.query.trim().length < 3 || values.query.trim().length > AI_QUERY_MAX) {
       reply(res, 400, { error: `Enter 3–${AI_QUERY_MAX} characters describing an activity.` }); return true
     }
-    const now = config.clock?.() ?? new Date(), ip = req.socket.remoteAddress ?? 'unknown'
+    const now = config.clock?.() ?? new Date(), ip = clientIp(req)
     for (const [key, value] of limits) if (value.until <= now.getTime()) limits.delete(key)
     if (limits.size >= 5000 && !limits.has(ip)) {
       reply(res, 429, { error: 'Search is busy. Try again later.' }); return true

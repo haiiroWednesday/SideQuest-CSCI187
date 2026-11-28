@@ -1,0 +1,78 @@
+/* Open invites, find a time, inbox. Design review. Same paper, ink, maroon and gold as the rest;
+   flat beads like the day picker; serif for titles and times, Urbanist for facts. */
+
+/* Who's free: cards at the top of Groups. */
+.sq-oi { margin: 0 0 26px; }
+.sq-oi-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 12px; }
+.sq-oi-head h2 { margin: 0; font: 400 32px/1.1 var(--font-display); -webkit-text-stroke: .6px currentColor; paint-order: stroke fill; padding-bottom: .06em; }
+.sq-oi-start { width: auto; min-height: 46px; padding: 0 18px; white-space: nowrap; }
+.sq-oi-none { margin: 0; font: 550 15px/1.4 var(--font-sans); color: var(--sq-muted); }
+.sq-oi-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.sq-oi-in { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 4px; min-height: 26px; font: 700 14px/1.3 var(--font-sans); }
+.sq-oi-in em { font: 600 14px/1.3 var(--font-sans); font-style: normal; color: var(--sq-muted); }
+.sq-oi-faces { display: inline-flex; padding-left: 6px; }
+.sq-oi-faces i { width: 24px; height: 24px; margin-left: -6px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: 800 11.5px/1 var(--font-sans); font-style: normal; box-shadow: 0 0 0 2px var(--sq-ticket-bg, #fffdf8); }
+.sq-oi-card .sq-oi-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 10px; }
+.sq-oi-acts .sq-plan-button { width: auto; min-height: 46px; padding: 0 18px; }
+.sq-oi-acts .sq-dab-link { min-height: 44px; }
+.sq-oi-planned { opacity: .92; }
+
+/* The compose sheet. Bottom sheet on a phone, a card on a laptop. */
+.sq-discover-page.sq-oi-host { display: contents !important; }
+.sq-oi-scrim { position: fixed; inset: 0; z-index: 60; display: grid; align-items: end; justify-items: center; background: rgba(48, 36, 33, .38); }
+.sq-oi-sheet { width: min(560px, 100%); max-height: 92dvh; overflow: auto; background: var(--sq-paper, #f8f2e9); padding: 22px 22px calc(18px + env(safe-area-inset-bottom)); box-shadow: 0 -8px 30px rgba(48, 36, 33, .25); }
+@media (min-width: 761px) { .sq-oi-scrim { align-items: center; } .sq-oi-sheet { box-shadow: 0 18px 50px rgba(48, 36, 33, .3); } }
+.sq-oi-host .sq-oi-sheet h2 { margin: 0; font: 400 32px/1.1 var(--font-display); -webkit-text-stroke: .6px currentColor; paint-order: stroke fill; padding-bottom: .06em; }
+.sq-oi-host .sq-oi-when { margin: 4px 0 14px; font: 700 15px/1.3 var(--font-sans); letter-spacing: .04em; color: var(--sq-red-deep, #751728); }
+.sq-oi-field { display: grid; gap: 5px; margin: 0 0 12px; }
+.sq-oi-field > span { font: 750 13px/1.2 var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--sq-muted); }
+.sq-oi-field small { font: 600 12px var(--font-sans); letter-spacing: 0; text-transform: none; margin-left: 6px; }
+.sq-oi-field input { font: 500 17px/1.3 var(--font-sans); padding: 10px 12px; min-height: 46px; border: 1.5px solid #cdbfae; border-radius: 4px; background: #fff; color: var(--sq-ink); }
+.sq-oi-field input[aria-invalid="true"] { border-color: var(--sq-red, #a32035); }
+.sq-oi-err { margin: -6px 0 10px; font: 650 14px/1.35 var(--font-sans); color: var(--sq-red, #a32035); }
+.sq-oi-fits { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -2px 0 14px; }
+.sq-oi-fits > span { width: 100%; font: 650 13.5px var(--font-sans); color: var(--sq-muted); }
+.sq-oi-fits button { all: unset; cursor: pointer; min-height: 40px; padding: 6px 12px; box-sizing: border-box; display: inline-flex; align-items: center; font: 650 14.5px/1.25 var(--font-sans); background: #fffaf2; border: 1.5px dashed #cdbfae; }
+.sq-oi-fits button[aria-pressed="true"] { border-style: solid; border-color: var(--sq-red-deep, #751728); color: var(--sq-red-deep, #751728); }
+.sq-oi-fits button:focus-visible { outline: 3px solid #2f6fdb; outline-offset: 2px; }
+.sq-oi-times { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 14px; }
+.sq-oi-groups { border: 0; margin: 0 0 10px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.sq-oi-groups legend { width: 100%; margin-bottom: 6px; font: 750 13px/1.2 var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--sq-muted); }
+.sq-oi-groups label { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px 0 10px; background: #fffaf2; border: 1.5px solid #cdbfae; cursor: pointer; font: 650 15px var(--font-sans); }
+.sq-oi-groups label.sq-on { border-color: var(--sq-red-deep, #751728); background: #fbe9ea; }
+.sq-oi-groups input { width: 18px; height: 18px; margin: 0; accent-color: var(--sq-red-deep, #751728); }
+.sq-oi-reach { margin: 4px 0 14px; font: 550 14px/1.4 var(--font-sans); color: var(--sq-muted); }
+.sq-oi-sheet .sq-oi-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sq-oi-sheet .sq-oi-acts .sq-plan-button { min-width: 140px; }
+
+/* A second act on the free slips. Two acts never squeeze each other: each stays on one line and the slip
+   wraps them under the time when the row is narrow. */
+.sq-slip:has(.sq-slip-who) { flex-wrap: wrap; row-gap: 0; }
+.sq-slip .sq-slip-act { white-space: nowrap; flex: none; }
+.sq-slip .sq-slip-who { color: var(--sq-red-deep, #751728); text-decoration-color: rgba(117, 23, 40, .45); }
+
+/* Find a time. */
+.sq-ft { margin: 4px 0 26px; padding: 16px 0 4px; border-top: 1.5px dashed #d8c9b8; }
+.sq-ft h3 { margin: 0 0 8px; font: 400 26px/1.15 var(--font-display); -webkit-text-stroke: .6px currentColor; paint-order: stroke fill; padding-bottom: .06em; }
+.sq-ft-share { margin: 0 0 6px; }
+.sq-ft-who { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 10px; font: 600 14px/1.4 var(--font-sans); }
+.sq-ft-not { color: var(--sq-muted); }
+.sq-ft-days { margin-top: 6px; }
+.sq-ft-days .sq-dayleaf { min-height: 82px; }
+.sq-ft-count { font: 800 12px/1 var(--font-sans); color: var(--sq-red-deep, #751728); min-height: 14px; }
+.sq-ft-count.sq-ft-zero { color: #b9a99a; }
+.sq-ft-bar { position: relative; height: 22px; margin: 10px 0 26px; background: #efe5d6; }
+.sq-ft-bar i { position: absolute; top: 0; bottom: 0; background: var(--sq-gold, #e8aa24); }
+.sq-ft-bar span { position: absolute; top: 26px; transform: translateX(-50%); font: 600 12px var(--font-sans); color: var(--sq-muted); white-space: nowrap; }
+.sq-ft-bar span:first-of-type { transform: none; }
+.sq-ft-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 4px; }
+.sq-ft-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-height: 44px; }
+.sq-ft-list b { font: 400 22px/1.2 var(--font-display); -webkit-text-stroke: .6px currentColor; paint-order: stroke fill; white-space: nowrap; }
+.sq-ft-none { margin: 0 0 12px; font: 550 15px/1.4 var(--font-sans); color: var(--sq-muted); }
+.sq-ft-fit { width: auto; min-height: 46px; padding: 0 18px; margin-bottom: 8px; }
+
+/* Discover, while it shows what fits a group. */
+.sq-group-fit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0 0 12px; padding: 10px 14px; background: #fbefd9; border-left: 4px solid var(--sq-gold, #e8aa24); font: 600 15px/1.4 var(--font-sans); }
+
+/* Inbox count on the Groups tab, like the plan count on My Schedule. */
+.sq-badge.sq-badge-inbox { background: var(--sq-red, #a32035); color: #fff; }

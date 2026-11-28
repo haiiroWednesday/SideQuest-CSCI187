@@ -7,6 +7,7 @@ import {
   MAX_PLANNED_EVENTS, SCHEDULE_LIMIT_MESSAGE, isScheduleEvent,
   type PlannedIdsState, type PlanStorage, type ScheduleEvent,
 } from '../model/schedule'
+import { deviceStorage } from '../model/deviceStorage'
 
 export type ScheduleView = {
   ids: string[]
@@ -46,7 +47,7 @@ export async function loadPlannedEvents(catalog: EventCatalogPort, ids: readonly
 // present details and check overlaps; no event objects are persisted in plans.
 export function createScheduleController(
   catalog: readonly ScheduleEvent[],
-  getStorage: () => PlanStorage = () => window.localStorage,
+  getStorage: () => PlanStorage = deviceStorage,
 ) {
   function present(state: PlannedIdsState): ScheduleView {
     const { events, missingIds } = resolvePlannedEvents(state.ids, catalog)
@@ -86,22 +87,22 @@ export function createScheduleController(
       if (!event) return result(state, { error: 'This event is unavailable. Refresh the event list before adding it.' })
       const next = addPlannedId(state.ids, id)
       if (next.error) return result(state, { error: next.error })
-      if (!next.added) return result(state, { message: 'This event is already in your plans.' })
+      if (!next.added) return result(state, { message: 'This event is already in My Schedule.' })
       if (!savePlannedIds(storage, next.ids)) return result(state, { error: writeError })
       const updated = { ids: next.ids, blocked: false }
       const conflict = present(updated).entries.find(entry => entry.event.id === id)?.conflict
       return result(updated, {
-        message: `Added “${event.title}” to your plans.`,
-        warning: conflict ? `Schedule overlap: “${event.title}” overlaps “${conflict.title}”. Both remain in your plans; review their times.` : null,
+        message: `Added “${event.title}” to My Schedule.`,
+        warning: conflict ? `Schedule overlap: “${event.title}” overlaps “${conflict.title}”. Both stay in My Schedule. Check their times.` : null,
       })
     },
     remove(id: string): ScheduleResult {
       const { state, storage } = current()
       if (state.blocked || !storage) return result(state, { error: readError })
-      if (!state.ids.includes(id)) return result(state, { message: 'This event is no longer in your plans.' })
+      if (!state.ids.includes(id)) return result(state, { message: 'This event is no longer in My Schedule.' })
       const ids = removePlannedId(state.ids, id)
       if (!savePlannedIds(storage, ids)) return result(state, { error: writeError })
-      return result({ ids, blocked: false }, { message: 'Removed from your plans. The original event has not been deleted.' })
+      return result({ ids, blocked: false }, { message: 'Removed from My Schedule. The original event has not been deleted.' })
     },
     // Only called after the View obtains explicit recovery confirmation.
     recover(): ScheduleResult {

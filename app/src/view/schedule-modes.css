@@ -1,0 +1,125 @@
+/* My Schedule: Trail and Tickets. Uses the Campus Index tokens from discover.css. */
+.sqm-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 18px; margin: 4px 0 6px; }
+.sqm-toggle { display: inline-flex; border: 1.5px solid var(--sq-ink); border-radius: 999px; padding: 2px; background: var(--sq-ticket-bg); }
+.sqm-toggle button { all: unset; cursor: pointer; font: 700 15px/1 var(--font-sans); padding: 12px 20px; min-height: 18px; border-radius: 999px; color: var(--sq-ink); transition: background .3s, color .3s; }
+.sqm-toggle button[aria-pressed="true"] { background: var(--sq-ink); color: #fff; }
+.sqm-toggle button:focus-visible { outline: 3px solid var(--sq-focus); outline-offset: 2px; }
+.sqm-key { display: flex; flex-wrap: wrap; gap: 4px 14px; list-style: none; margin: 0; padding: 0; font: 600 13px var(--font-sans); color: var(--sq-muted); }
+.sqm-key li { display: inline-flex; align-items: center; gap: 6px; }
+.sqm-key i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.sqm-key .sqm-key-hatch { width: 18px; background: repeating-linear-gradient(-45deg, rgba(163,32,53,.45) 0 3px, rgba(163,32,53,.1) 3px 6px); }
+
+.sqm-days { display: grid; gap: 26px; }
+.sqm-days-trail { grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 22px 26px; }
+.sqm-dayhead { all: unset; display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 6px; }
+.sqm-dayhead .sq-bubble { margin: 0; }
+.sqm-dayhead h3 { margin: 0; font: 400 26px/1.05 var(--font-display); }
+.sqm-dayhead h3 span { display: block; font: 800 11px var(--font-sans); letter-spacing: .14em; color: var(--sq-red); }
+.sqm-dayhead:focus-visible { outline: 3px solid var(--sq-focus); outline-offset: 4px; border-radius: 8px; }
+
+.sqm-day { position: relative; transition: height .55s cubic-bezier(.3,.7,.2,1); }
+.sqm-day * { box-sizing: border-box; }
+.sqm-day > *, .sqm-day > div > * { position: absolute; transition: left .55s cubic-bezier(.3,.7,.2,1), top .55s cubic-bezier(.3,.7,.2,1), width .55s cubic-bezier(.3,.7,.2,1), height .55s cubic-bezier(.3,.7,.2,1), border-radius .55s, box-shadow .4s, background-color .4s, opacity .35s; }
+.sqm-day > div:not([class]) { position: static; }
+.sqm-hour { left: 2px; font: italic 400 15px/18px var(--font-display); color: var(--sq-muted); }
+.sqm-grid { right: 4px; border-top: 1px dashed #e3d6c6; }
+.sqm-fold { right: 4px; height: 24px; z-index: 8; display: flex; align-items: center; gap: 8px; }
+.sqm-fold span { font: italic 400 17px/22px var(--font-display); color: var(--sq-muted); white-space: nowrap; }
+.sqm-squiggle { flex: none; overflow: visible; }
+.sqm-squiggle path { fill: none; stroke: #a08672; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.sqm-fold a { color: var(--sq-red); }
+.sqm-hatch { border-radius: 8px; background: repeating-linear-gradient(-45deg, rgba(163,32,53,.22) 0 3px, rgba(163,32,53,.06) 3px 7px); }
+.sqm-bracket { left: 48px; width: 12px; fill: none; stroke: var(--sq-red); stroke-width: 2px; }
+.sqm-clash { left: 0; font: italic 400 19px/1 var(--font-display); color: var(--sq-red); transform: rotate(-6deg); }
+.sqm-plan { all: unset; position: absolute; box-sizing: border-box; border: 1.5px solid transparent; overflow: hidden; cursor: pointer; text-align: left; }
+.sqm-plan:focus-visible { outline: 3px solid var(--sq-focus); outline-offset: 2px; }
+.sqm-kc { position: absolute; inset: 0; transition: opacity .25s; }
+.sqm-tk { display: block; padding: 7px 10px 0 15px; color: var(--sq-ink); }
+.sqm-tk em { display: block; font: 700 12px var(--font-sans); font-style: normal; white-space: nowrap; }
+.sqm-tk strong { display: block; font: 400 19px/1.1 var(--font-display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sqm-tk small { display: block; margin-top: 3px; font: 600 12px var(--font-sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sqm-tk small i { display: inline-block; width: 7px; height: 7px; border: 2px solid var(--sq-red); border-radius: 50%; margin-right: 5px; }
+.sqm-small { display: flex; align-items: baseline; gap: 8px; padding-top: 6px; }
+.sqm-small strong { font-size: 17px; }
+.sqm-spine { position: absolute; left: 4px; top: 12px; writing-mode: vertical-rl; transform: rotate(180deg); font: 400 18px var(--font-display); white-space: nowrap; }
+.sqm-stack { display: block; padding: 7px 10px 0 15px; color: var(--sq-ink); }
+.sqm-stack b { display: block; font: 400 21px/1.1 var(--font-display); font-weight: 400; }
+.sqm-stack b i { color: var(--sq-red); }
+.sqm-row { display: flex; gap: 7px; align-items: baseline; margin-top: 4px; font: 500 13.5px var(--font-sans); white-space: nowrap; overflow: hidden; }
+.sqm-row i { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+.sqm-row em { font: 700 12px var(--font-sans); font-style: normal; }
+.sqm-ring { width: 10px; height: 10px; border: 2.5px solid; border-radius: 50%; background: var(--sq-paper); z-index: 4; }
+.sqm-label { position: absolute; pointer-events: none; z-index: 6; background: var(--sq-paper); padding: 0 4px; border-radius: 4px; white-space: nowrap; font: 400 17px/22px var(--font-display); color: var(--sq-ink); max-width: calc(100% - 100px); overflow: hidden; text-overflow: ellipsis; }
+.sqm-label em { font: 700 12px var(--font-sans); font-style: normal; }
+.sqm-now { right: 4px; border-top: 2px solid var(--sq-red); z-index: 4; }
+.sqm-trail .sqm-now { right: auto; }
+.sqm-tickets .sqm-now { z-index: 2; }
+.sqm-now::before { content: ""; position: absolute; left: -5px; top: -6px; width: 10px; height: 10px; border-radius: 50%; background: var(--sq-red); }
+.sqm-nowp { left: 0; z-index: 7; font: 800 10px var(--font-sans); letter-spacing: .12em; color: #fff; background: var(--sq-red); padding: 3px 7px 2px; border-radius: 9px; }
+
+/* mode switches */
+.sqm-trail .sqm-kc, .sqm-trail .sqm-bracket, .sqm-trail .sqm-clash { opacity: 0; }
+.sqm-tickets .sqm-kc { opacity: 1; transition-delay: .25s; }
+.sqm-tickets .sqm-hatch, .sqm-tickets .sqm-ring, .sqm-tickets .sqm-label { opacity: 0; pointer-events: none; }
+
+.sqm-open { margin-top: 14px; }
+.sqm-open .sq-stub { box-shadow: 0 10px 26px rgba(48,36,33,.14); }
+/* The picked ticket is one ticket, not a list on the day's rail: no rail gap, no bullet, full width. */
+.sqm-open .sq-stubs.sqm-open-ticket { margin: 0; padding: 0; list-style: none; }
+.sqm-open .sq-stubs.sqm-open-ticket > li { margin: 0; padding: 0; }
+/* The overlap line is a sentence. It wraps inside the body and never runs under the picture. */
+.sqm-open .sq-stub-body { min-width: 0; }
+.sqm-open .sq-pill-overlap { flex-shrink: 1; min-width: 0; max-width: 100%; white-space: normal; text-wrap: balance; line-height: 1.35; }
+.sqm-openhead { display: flex; justify-content: space-between; align-items: center; font: 800 11px var(--font-sans); letter-spacing: .14em; color: var(--sq-muted); margin-bottom: 6px; }
+.sqm-openhead button { all: unset; cursor: pointer; font: 700 13px var(--font-sans); letter-spacing: 0; color: var(--sq-red); }
+
+@media (prefers-reduced-motion: reduce) { .sqm-day, .sqm-day > *, .sqm-day > div > *, .sqm-kc { transition: none !important; } }
+
+/* Trail: one tap target for the whole day */
+.sqm-dayhit { all: unset; position: absolute; inset: 0; z-index: 7; cursor: zoom-in; border-radius: 10px; }
+.sqm-dayhit:hover { background: rgba(163,32,53,.04); }
+.sqm-dayhit:focus-visible { outline: 3px solid var(--sq-focus); outline-offset: 2px; }
+.sqm-fold a { position: relative; z-index: 9; }
+@media (max-width: 520px) {
+  .sqm-fold span { font-size: 15.5px; }
+}
+.sqm-day .sqm-fold > * { position: static; }
+/* the day bubble sits beside the day name (its Discover style is placed on the rail) */
+.sqm-dayhead .sq-bubble { position: relative; left: auto; top: auto; flex: none; width: 50px; height: 50px; box-shadow: none; }
+.sqm-dayhead .sq-bubble b { font-size: 26px; }
+.sqm-dayhead .sq-bubble small { font-size: 9px; letter-spacing: 1.2px; }
+.sqm-dayblock.sq-today .sq-bubble { background: var(--sq-red); color: var(--sq-on-red, #fff); }
+.sqm-rowt { min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sqm-row em { flex: none; }
+.sqm-fold a { display: inline-block; padding: 2px 0; min-height: 24px; line-height: 22px; }
+.sqm-dayhead .sqm-overlap-note { display: block; margin-top: 4px; font: 700 13px var(--font-sans); color: var(--sq-red); }
+@media (max-width: 340px) { .sqm-day .sqm-fold > span { font-size: 14px; } }
+/* While cards slide to a new width (rotating a phone), nothing may poke out sideways */
+.sqm-day { overflow-x: clip; overflow-y: visible; }
+
+/* X6 break: dotted line, one slanted curl, dotted line. */
+.sqm-break { position: absolute; overflow: visible; z-index: 2; }
+.sqm-break path { fill: none; stroke: #a08672; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.sqm-break .sqm-break-dots { stroke-width: 1.7; stroke-dasharray: 2 4; }
+.sqm-fold { right: auto; }
+.sqm-ring-end { width: 8px; height: 8px; border-width: 2px; }
+
+/* One line, always (Nov 24): shorter labels, tighter gaps; if a phone is very narrow it scrolls sideways. */
+.sqm-key { flex-wrap: nowrap !important; gap: 4px 10px !important; font-size: 12px !important; overflow-x: auto; scrollbar-width: none; white-space: nowrap; }
+.sqm-key::-webkit-scrollbar { display: none; }
+.sqm-key:focus-visible { outline: 3px solid var(--sq-focus); outline-offset: -3px; }
+.sqm-key li { flex: none; }
+
+/* Polish pass (Nov 24): names are fitted before they are drawn (see ScheduleModes.tsx), so nothing is
+   cut short with "…". A Trail label that needs two lines wraps under itself; the time never splits. */
+.sqm-label { overflow: visible; text-overflow: clip; }
+.sqm-label.sqm-wrap { white-space: normal; }
+.sqm-label em { white-space: nowrap; }
+.sqm-row.sqm-wrap { white-space: normal; align-items: flex-start; }
+.sqm-row.sqm-wrap .sqm-rowt { white-space: normal; line-height: 16px; }
+.sqm-row em { white-space: nowrap; }
+.sqm-tk strong[style*="normal"] { overflow: visible; }
+
+/* Busy or free time marked on Discover, under its day (Nov 25): the same time on both pages. */
+.sqm-owntime { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 2px 0 6px; font: 600 14px var(--font-sans); }
+.sqm-owntime a { color: #6e4a3c; text-decoration: underline; text-decoration-style: wavy; text-decoration-color: rgba(110, 74, 60, .45); text-underline-offset: 4px; }

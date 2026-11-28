@@ -1,0 +1,80 @@
+name: SideQuest design review browser tests
+on:
+  push:
+    paths:
+      - 'app/**'
+      - '.github/workflows/design-review-ci.yml'
+  pull_request:
+    paths:
+      - 'app/**'
+      - '.github/workflows/design-review-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  design-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Run design-review scenarios (local sample data only)
+        run: npm run test:ux
+      - name: Upload design-review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sidequest-design-review-evidence
+          path: app/test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  access-policy-fixture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Verify paused ADA posting policy in an isolated local fixture
+        env:
+          SIDEQUEST_ACCESS_POLICY_FIXTURE: '1'
+        run: |
+          set -eu
+          model=src/model/eventCatalog.ts
+          original=$(mktemp)
+          cp "$model" "$original"
+          trap 'cp "$original" "$model"; rm -f "$original"' EXIT
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs'
+          const path = 'src/model/eventCatalog.ts'
+          const source = readFileSync(path, 'utf8')
+          const marker = 'export const ACCESS_POLICY_ON = false'
+          if (source.split(marker).length !== 2) throw new Error('Expected paused policy flag')
+          writeFileSync(path, source.replace(marker, 'export const ACCESS_POLICY_ON = true'))
+          NODE
+          npx vitest run tests/event-access-contact.test.ts tests/post-access-fields.form.test.tsx
+          npx playwright test -c playwright.demo.config.ts e2e-demo/access-contact.spec.ts
+      - name: Upload policy fixture failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sidequest-access-policy-fixture
+          path: app/test-results/
+          if-no-files-found: ignore
+          retention-days: 14

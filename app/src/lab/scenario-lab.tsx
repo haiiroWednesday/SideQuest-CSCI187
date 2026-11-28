@@ -14,15 +14,18 @@ import {
 } from '../controller/presentScreens'
 import { DiscoverView } from '../view/DiscoverView'
 import { ScheduleTrailView } from '../view/ScheduleTrailView'
+import { MapView } from '../view/MapView'
+import type { ScheduleMode } from '../view/ScheduleModes'
+import type { CampusEvent } from '../controller/postEvent'
 import { scenarios, scheduleFixture, shiftDate, type Scenario } from './scenarios'
 import './lab.css'
 
-type Kind = 'discover' | 'schedule'
-type ToFrame = { kind: Kind; discover: DiscoverScreen; schedule: ScheduleScreen }
+type Kind = 'discover' | 'schedule' | 'map'
+type ToFrame = { kind: Kind; mode: ScheduleMode; now: number; events: CampusEvent[]; planned: string[]; discover: DiscoverScreen; schedule: ScheduleScreen }
 type FromFrame = { type: 'plan' | 'remove'; id: string } | { type: 'free'; window: FreeWindow }
 
 const params = new URLSearchParams(location.search)
-const ROUTES = { discover: '#discover', schedule: '#schedule', post: '#post' }
+const ROUTES = { discover: '#discover', map: '#map', schedule: '#schedule', post: '#post' }
 const FRAME_ORIGIN = window.location.origin
 
 function todayISO(): string { return campusNow().date }
@@ -42,14 +45,15 @@ function clockOf(s: Scenario, offset: number): Date {
 
 // ---------------------------------------------------------------- frame: renders one real view
 // Opened on its own (no lab around it), a frame computes its screen from the URL:
-// ?frame=1&s=busy&t=90&k=schedule&free=2026-11-04,14:00,16:00&seed=3
+// ?frame=1&s=busy&t=90&k=schedule&m=tickets&free=2026-11-04,14:00,16:00&seed=3  (k: discover | schedule | map)
 function standalone(): ToFrame {
   const all = scenarios(todayISO(), Number(params.get('seed') ?? 187))
   const s = all.find(x => x.id === params.get('s')) ?? all[0]
   const now = clockOf(s, Number(params.get('t') ?? 0))
   const [date = '', start = '', end = ''] = (params.get('free') ?? ',,').split(',')
   return {
-    kind: (params.get('k') as Kind) ?? 'discover',
+    kind: (params.get('k') as Kind) ?? 'discover', mode: params.get('m') === 'tickets' ? 'tickets' : 'trail', now: now.getTime(),
+    events: s.events.map(e => ({ ...e, hostName: e.hostName ?? '', description: e.description ?? '' })) as CampusEvent[], planned: s.planned,
     discover: presentDiscover({ events: s.events, error: s.error, loading: s.loading, plannedIds: s.planned, freeWindow: { date, start, end }, now }),
     schedule: presentSchedule(scheduleFixture(s.events, s.planned, s.missing), now),
   }
@@ -70,8 +74,10 @@ function Frame() {
   if (!state) return null
   return state.kind === 'discover' ? (
     <DiscoverView screen={state.discover} routes={ROUTES} onPlan={id => up({ type: 'plan', id })} onFreeWindowChange={window => up({ type: 'free', window })} />
+  ) : state.kind === 'map' ? (
+    <MapView routes={ROUTES} plannedCount={state.planned.length} events={state.events} plannedIds={state.planned} focus={null} now={new Date(state.now)} onOpenEvent={() => {}} />
   ) : (
-    <ScheduleTrailView screen={state.schedule} routes={ROUTES} onRemove={id => up({ type: 'remove', id })} />
+    <ScheduleTrailView screen={state.schedule} routes={ROUTES} now={new Date(state.now)} forcedMode={state.mode} onRemove={id => up({ type: 'remove', id })} />
   )
 }
 
@@ -133,6 +139,7 @@ function Lab() {
   const scenario = all.find(s => s.id === sid) ?? all[0]
   const [offset, setOffset] = useState(Number(params.get('t') ?? 0))
   const [kind, setKind] = useState<Kind>((params.get('k') as Kind) ?? 'discover')
+  const [mode, setMode] = useState<ScheduleMode>(params.get('m') === 'tickets' ? 'tickets' : 'trail')
   const [planned, setPlanned] = useState<string[]>(scenario.planned)
   const [missing, setMissing] = useState<string[]>(scenario.missing)
   const [free, setFree] = useState<FreeWindow>({ date: '', start: '', end: '' })
@@ -147,7 +154,7 @@ function Lab() {
 
   // Tell both frames what to draw whenever anything changes.
   const frames = [useRef<HTMLIFrameElement>(null), useRef<HTMLIFrameElement>(null)]
-  const payload: ToFrame = { kind, discover, schedule }
+  const payload: ToFrame = { kind, mode, now: now.getTime(), events: scenario.events.map(e => ({ ...e, hostName: e.hostName ?? '', description: e.description ?? '' })) as CampusEvent[], planned, discover, schedule }
   useEffect(() => { frames.forEach(f => f.current?.contentWindow?.postMessage(payload, FRAME_ORIGIN)) })
   useEffect(() => {
     const on = (event: MessageEvent<FromFrame | { type: 'ready' }>) => {
@@ -169,7 +176,7 @@ function Lab() {
   }, [playing, span])
 
   // Highlight lines that changed since the last clock position.
-  const json = lines(kind === 'discover' ? slimDiscover(discover) : slimSchedule(schedule))
+  const json = lines(kind === 'discover' ? slimDiscover(discover) : kind === 'map' ? { events: scenario.events.map(e => ({ id: e.id, location: e.location, planned: planned.includes(e.id) })) } : slimSchedule(schedule))
   const prev = useRef<string[]>([])
   // The first draw has nothing to compare with, so nothing lights up.
   const changed = new Set(prev.current.length ? json.filter(line => !prev.current.includes(line)) : [])
@@ -193,7 +200,9 @@ function Lab() {
           <input type="range" min={0} max={span} step={5} value={offset} onChange={e => { setPlaying(false); setOffset(Number(e.target.value)) }} aria-label="California clock" />
           <div className="lab-tabs" role="group" aria-label="Screen">
             <button className={kind === 'discover' ? 'on' : ''} onClick={() => setKind('discover')}>Discover</button>
-            <button className={kind === 'schedule' ? 'on' : ''} onClick={() => setKind('schedule')}>My Schedule</button>
+            <button className={kind === 'schedule' && mode === 'trail' ? 'on' : ''} onClick={() => { setKind('schedule'); setMode('trail') }}>Schedule · Trail</button>
+            <button className={kind === 'schedule' && mode === 'tickets' ? 'on' : ''} onClick={() => { setKind('schedule'); setMode('tickets') }}>Schedule · Tickets</button>
+            <button className={kind === 'map' ? 'on' : ''} onClick={() => setKind('map')}>Map</button>
           </div>
         </div>
       </header>
@@ -219,14 +228,14 @@ function Lab() {
         </section>
         <section className="lab-panel lab-json">
           <h2><i>2</i> The controller hands the view</h2>
-          <code className="lab-call">{kind === 'discover' ? 'presentDiscover({ events, plannedIds, freeWindow, now })' : 'presentSchedule(scheduleController.read(), now)'}</code>
+          <code className="lab-call">{kind === 'discover' ? 'presentDiscover({ events, plannedIds, freeWindow, now })' : kind === 'map' ? 'MapView → map/index.html (sq-events message)' : 'presentSchedule(scheduleController.read(), now)'}</code>
           <pre>{json.map((line, i) => <span key={i} className={changed.has(line) ? 'flash' : ''}>{line}{'\n'}</span>)}</pre>
         </section>
         <section className="lab-views">
           <h2><i>3</i> The view draws</h2>
           <div className="lab-frames">
-            <div className="frame desk"><iframe ref={frames[0]} src="/scenario-lab.html?frame=1" title="Desktop view" /></div>
-            <div className="frame phone"><iframe ref={frames[1]} src="/scenario-lab.html?frame=1" title="Phone view" /></div>
+            <div className="frame desk"><iframe ref={frames[0]} src={`${location.pathname}?frame=1`} title="Desktop view" /></div>
+            <div className="frame phone"><iframe ref={frames[1]} src={`${location.pathname}?frame=1`} title="Phone view" /></div>
           </div>
         </section>
       </div>

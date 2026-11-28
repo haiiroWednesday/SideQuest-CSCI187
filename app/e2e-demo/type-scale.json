@@ -1,0 +1,176 @@
+{
+ "laptop": {
+  "body": [
+   "sans 12 700",
+   "sans 12.5 500",
+   "sans 13 500",
+   "sans 13 600",
+   "sans 13.5 500",
+   "sans 14 500",
+   "sans 14 600",
+   "sans 15 500",
+   "sans 15 650",
+   "sans 15 700",
+   "sans 16 500",
+   "sans 16 600",
+   "sans 16 700",
+   "sans 18 700",
+   "sans 20 400",
+   "serif 16 400 italic",
+   "serif 22 400 italic",
+   "serif 22 400 s0.7",
+   "serif 76 400"
+  ],
+  "button": [
+   "sans 11 700 caps",
+   "sans 11 800 caps",
+   "sans 12 600",
+   "sans 12 700",
+   "sans 12 800 caps",
+   "sans 13 700",
+   "sans 14 650",
+   "sans 15 500",
+   "sans 15 600",
+   "sans 15 650",
+   "sans 16 400",
+   "sans 16 700",
+   "sans 17 650",
+   "sans 20 700",
+   "serif 18 400 italic",
+   "serif 21 400",
+   "serif 21 400 s0.7",
+   "serif 24 400",
+   "serif 27 400",
+   "serif 27 400 s0.7"
+  ],
+  "card title": [
+   "serif 24 400 s0.7"
+  ],
+  "day heading": [
+   "serif 26 400 s0.7"
+  ],
+  "eyebrow": [
+   "sans 12 800 caps"
+  ],
+  "input": [
+   "sans 16 500"
+  ],
+  "key heading": [
+   "serif 19 400 s0.7"
+  ],
+  "label": [
+   "sans 13 600",
+   "sans 13 700 caps",
+   "sans 14 500",
+   "sans 15 650"
+  ],
+  "link": [
+   "sans 12.5 500",
+   "sans 13 500",
+   "sans 15 650"
+  ],
+  "note": [
+   "sans 13 600",
+   "sans 14 500",
+   "sans 16 600"
+  ],
+  "page title": [
+   "serif 56 400 s0.7"
+  ],
+  "placeholder": [
+   "sans 16 500",
+   "serif 22 400"
+  ],
+  "section heading": [
+   "serif 32 400 s0.7"
+  ],
+  "sub heading": [
+   "serif 26 400 s0.7"
+  ]
+ },
+ "phone": {
+  "body": [
+   "sans 12 700",
+   "sans 12.5 500",
+   "sans 13 500",
+   "sans 13 600",
+   "sans 14 500",
+   "sans 14 600",
+   "sans 15 500",
+   "sans 15 650",
+   "sans 15 700",
+   "sans 16 500",
+   "sans 16 600",
+   "sans 16 700",
+   "sans 18 700",
+   "sans 20 400",
+   "serif 16 400 italic",
+   "serif 22 400 s0.7",
+   "serif 54 400"
+  ],
+  "button": [
+   "sans 11 700 caps",
+   "sans 11 800 caps",
+   "sans 12 600",
+   "sans 12 700",
+   "sans 12 800 caps",
+   "sans 13 700",
+   "sans 13.5 650",
+   "sans 14 650",
+   "sans 15 500",
+   "sans 15 600",
+   "sans 15 650",
+   "sans 16 400",
+   "sans 16 700",
+   "sans 17 650",
+   "sans 20 700",
+   "serif 18 400 italic",
+   "serif 21 400",
+   "serif 21 400 s0.7",
+   "serif 24 400",
+   "serif 25 400",
+   "serif 27 400 s0.7"
+  ],
+  "card title": [
+   "serif 24 400 s0.7"
+  ],
+  "day heading": [
+   "serif 26 400 s0.7"
+  ],
+  "eyebrow": [
+   "sans 12 800 caps"
+  ],
+  "input": [
+   "sans 16 500"
+  ],
+  "label": [
+   "sans 13 600",
+   "sans 13 700 caps",
+   "sans 14 500",
+   "sans 15 650"
+  ],
+  "link": [
+   "sans 12.5 500",
+   "sans 13 500",
+   "sans 15 650"
+  ],
+  "note": [
+   "sans 13 600",
+   "sans 14 500",
+   "sans 16 600"
+  ],
+  "page title": [
+   "serif 40 400 s0.7"
+  ],
+  "placeholder": [
+   "sans 16 500",
+   "serif 22 400"
+  ],
+  "section heading": [
+   "serif 28 400 s0.7"
+  ],
+  "sub heading": [
+   "serif 24 400 s0.7"
+  ]
+ }
+}

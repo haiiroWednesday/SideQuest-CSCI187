@@ -1,15 +1,18 @@
 // CONTROLLER: share typed presentation models and event/date formatters.
 // Clock-sensitive presenters accept injected time for deterministic tests.
-import type { LegacyCampusEvent } from '../model/events'
-import type { EventCategorySelection } from '../model/eventCategories'
+import { EVENT_SOURCE_TEXT, TAG_SOURCE_TEXT, isEventSource, isEventTag, isTagSource, tagLabel } from '../model/eventTags'
+import { clockText, toMinutes, type LegacyCampusEvent } from '../model/events'
+import { attendOf } from '../model/attend'
+import type { EventCategory, EventCategorySelection } from '../model/eventCategories'
 import { campusNow } from '../model/eventCatalog'
 import { calendarDay, eventDuration, eventPhase, minutesUntilStart } from '../model/eventTiming'
 import { isScuCalendarId, parseScuCalendarSource, scuCalendarId, SCU_CALENDAR_SOURCE_LABEL } from '../model/scuCalendarId'
 import { displayDate, displayTime } from './findEvents'
 import { googleCalendarDraftUrl } from './calendarExport'
+import type { FitMarkModel } from './presentFitMark'
 
 /** Keep archived M1 screen fixtures, which lack hostName, readable. */
-export type ScreenEvent = LegacyCampusEvent & { hostName?: string }
+export type ScreenEvent = LegacyCampusEvent & { hostName?: string; organizer?: string; contact?: string; accessibility?: string; tags?: readonly string[]; tagsBy?: string; source?: string }
 export type FreeWindow = { date: string; start: string; end: string }
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
@@ -25,21 +28,43 @@ export type StubModel = {
   host: string | null
   location: string
   description: string | null
+  /** SCU posting policy fields; null on events posted before the rule. */
+  organizer: string | null
+  contact: string | null
+  /** SCU's Access Policy Statement, shown word for word. */
+  accessibility: string | null
+  /** Host-set tags as words to show ("Free food"); left out when the event has none. */
+  tagLabels?: string[]
+  /** Who set the tags, said beside them: "set by the host" or "checked by a reviewer". */
+  tagSourceText?: string
+  /** Where the event came from, for the opened card: "Posted by the host", "From SCU's events calendar, checked". */
+  sourceText?: string
   sourceUrl?: string
   date: string
   dateText: string
+  /** The day said on a ticket that sits off the day list (Groups, Someday, the map): "Today", "Tomorrow", "Thu 26". */
+  dayLabel?: string
   dow: string
   dayNumber: number
   month: string
   start: TimeParts
   endText: string
   durationText: string
+  /** Only on a drop-in event (the host said "Drop in any time"). `label` stands where a set-time
+   *  ticket shows its length, `name` is added to the ticket's accessible name, and `line` is the
+   *  opened card's sentence: "Drop in any time between 11am and 3pm." */
+  dropIn?: { label: string; name: string; line: string }
   calendarUrl?: string | null
   planned: boolean
   /** null while no complete, valid free-time window is set */
   fit: 'fits' | 'outside' | null
   /** a clock-driven note: the event is under way, or starts within the hour */
   live: { kind: 'now' | 'soon'; text: string } | null
+  /** The event's own start and end as "HH:mm", for presenters that measure it against free time. */
+  clock?: { start: string; end: string }
+  /** The fit mark: the free stretch around the event and where the event sits in it.
+   *  Left out when nothing is known about the student's time that day. */
+  fitMark?: FitMarkModel
 }
 
 export type DayModel = {
@@ -73,10 +98,14 @@ export type NearMissModel = {
 }
 
 export type CategoryFiltersModel = {
+  /** The single choice, or 'all' when none or several are chosen. Kept for older callers. */
   selected: EventCategorySelection
+  /** Every chosen category. Empty means all. */
+  chosen: readonly EventCategory[]
   options: { id: EventCategorySelection; label: string; symbol: string; count: number }[]
 }
 
+export type TagFiltersModel = { selected: string[]; options: { id: string; label: string; count: number }[] }
 export type DiscoverScreen = {
   status: 'loading' | 'error' | 'empty' | 'ready'
   errorMessage: string | null
@@ -84,7 +113,11 @@ export type DiscoverScreen = {
   count: number
   headingText: string
   nearMisses: NearMissModel[]
+  /** One line under the day bar once free stretches filter the list: how many fit, or the nearest miss. */
+  fitLine?: string | null
   categories: CategoryFiltersModel
+  /** Host-set tag chips; optional so older screen fixtures stay valid. */
+  tagFilters?: TagFiltersModel
   plannedCount: number
   planningBlocked: boolean
   freeWindow: FreeWindowModel | null
@@ -142,6 +175,14 @@ function liveNote(event: ScreenEvent, now: Date): StubModel['live'] {
   return null
 }
 
+const capitalize = (word: string) => word.charAt(0) + word.slice(1).toLowerCase()
+/** Today, Tomorrow, or a short weekday and date ("Thu 26", "Tue 1 Dec" in another month). */
+export function dayLabelOf(day: DayModel): string {
+  if (day.tag === 'TODAY') return 'Today'
+  if (day.tag === 'TOMORROW') return 'Tomorrow'
+  return `${capitalize(day.dow)} ${day.dayNumber}${day.monthTag ? ` ${capitalize(day.monthTag)}` : ''}`
+}
+
 export function toStub(event: ScreenEvent, now: Date, planned: ReadonlySet<string>, fitting: ReadonlySet<string> | null): StubModel {
   const day = describeDay(event.date, now)
   const host = event.hostName?.trim() || null
@@ -156,14 +197,24 @@ export function toStub(event: ScreenEvent, now: Date, planned: ReadonlySet<strin
     location: event.location,
     description: (sourceUrl ? description.slice(0, sourceIndex).trim() : description) || null,
     ...(sourceUrl ? { sourceUrl } : {}),
+    organizer: event.organizer?.trim() || null,
+    contact: event.contact?.trim() || null,
+    accessibility: event.accessibility?.trim() || null,
+    ...(event.tags?.some(isEventTag) ? {
+      tagLabels: event.tags.filter(isEventTag).map(tagLabel),
+      tagSourceText: TAG_SOURCE_TEXT[isTagSource(event.tagsBy) ? event.tagsBy : 'host'],
+    } : {}),
+    sourceText: EVENT_SOURCE_TEXT[isEventSource(event.source) ? event.source : 'host'],
     date: event.date,
     dateText: displayDate(event.date),
+    dayLabel: dayLabelOf(day),
     dow: day.dow,
     dayNumber: day.dayNumber,
     month: MONTHS[partsOf(event.date).month - 1] ?? '',
     start: splitTime(event.start),
     endText: displayTime(event.end),
     durationText: spanText(eventDuration(event)),
+    ...dropInWords(event),
     calendarUrl: googleCalendarDraftUrl({
       id: event.id, title: event.title, description: event.description ?? '',
       location: event.location, date: event.date, start: event.start, end: event.end,
@@ -171,7 +222,18 @@ export function toStub(event: ScreenEvent, now: Date, planned: ReadonlySet<strin
     planned: planned.has(event.id),
     fit: fitting ? (fitting.has(event.id) ? 'fits' : 'outside') : null,
     live: liveNote(event, now),
+    clock: { start: event.start, end: event.end },
   }
+}
+
+/** The words a drop-in event carries. Nothing for an event that starts at a set time. */
+function dropInWords(event: ScreenEvent): Pick<StubModel, 'dropIn'> {
+  if (attendOf(event) !== 'dropin') return {}
+  const start = toMinutes(event.start), end = toMinutes(event.end)
+  return { dropIn: {
+    label: 'Drop in', name: 'drop in any time',
+    line: start === null || end === null ? 'Drop in any time.' : `Drop in any time between ${clockText(start)} and ${clockText(end)}.`,
+  } }
 }
 
 /** Present a freshly verified Event with the same display contract as Discover. */

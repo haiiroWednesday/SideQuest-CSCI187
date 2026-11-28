@@ -1,47 +1,38 @@
 // Production HTTP server: serves the built UI and same-origin catalog API.
-import { createServer } from 'node:http'
-import { readFile } from 'node:fs/promises'
-import { resolve, sep, extname } from 'node:path'
+// The API handlers come from server/handlers.ts, the same list the Vite dev server uses.
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
+import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { createCatalogApi } from './api'
 import type { CatalogPublisherPort } from '../src/model/catalogChanged'
 import { attachCatalogRealtime } from './catalogRealtime'
-import { createAiDiscoverApi } from './aiDiscover'
-import { createGroupApi } from './groupApi'
-import { createEmailAuthApi } from './emailAuthApi'
-import { createSupabaseEmailOtpGatewayFromEnv } from './supabaseEmailAuth'
-import { createSupabaseGroupGatewayFromEnv } from './supabaseGroupAccess'
-import { createSupabaseEventCatalogFromEnv } from '../src/model/supabaseEventTable'
-import { withScuCalendar } from './scuCalendar'
+import { createServerCatalog, createServerHandlers, runHandlers } from './handlers'
+import { loadStaticSite, refineCompression, serveStatic } from './staticFiles'
 
 let realtime: ReturnType<typeof attachCatalogRealtime> | null = null
 const notifications: CatalogPublisherPort = {
   publish(eventId) { realtime?.publish(eventId) },
 }
-const { catalog, stop } = withScuCalendar(createSupabaseEventCatalogFromEnv(process.env), process.env.SIDEQUEST_SCU_FEED_ENABLED, notifications)
-const api = createCatalogApi(catalog, Date.now, notifications)
-const ai = createAiDiscoverApi(catalog, { apiKey: process.env.OPENAI_API_KEY, model: process.env.SIDEQUEST_AI_MODEL })
-const groupApi = createGroupApi(createSupabaseGroupGatewayFromEnv(process.env))
-const authApi = createEmailAuthApi(createSupabaseEmailOtpGatewayFromEnv(process.env))
+const { catalog, stop } = createServerCatalog(process.env, notifications)
+const handlers = createServerHandlers(process.env, { catalog, publisher: notifications })
 const root = resolve(fileURLToPath(new URL('../dist/', import.meta.url)))
-const mime: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff': 'font/woff', '.woff2': 'font/woff2', '.png': 'image/png' }
+// Read and compressed once here; requests never touch the disk.
+const site = loadStaticSite(root)
 const port = Number(process.env.PORT ?? 3000)
-const server = createServer({ requestTimeout: 15_000, headersTimeout: 10_000 }, async (req, res) => {
-  if (await authApi(req, res)) return
-  if (await groupApi(req, res)) return
-  if (await ai(req, res)) return
-  if (await api(req, res)) return
-  if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); res.end(); return }
-  try {
-    const url = new URL(req.url ?? '/', 'http://sidequest.local')
-    const name = decodeURIComponent(url.pathname)
-    const path = resolve(root, name === '/' ? 'index.html' : `.${name}`)
-    if (path !== root && !path.startsWith(root + sep)) { res.writeHead(403); res.end(); return }
-    const body = await readFile(path)
-    res.writeHead(200, { 'Content-Type': mime[extname(path)] ?? 'application/octet-stream', 'X-Content-Type-Options': 'nosniff', 'Cache-Control': extname(path) === '.html' ? 'no-store' : 'public, max-age=3600' })
-    res.end(req.method === 'HEAD' ? undefined : body)
-  } catch { res.writeHead(404); res.end('Not found') }
+const server = createServer({ requestTimeout: 15_000, headersTimeout: 10_000 }, (req, res) => {
+  // One bad request must never stop the server for everyone: any handler that throws gets a 500.
+  handle(req, res).catch(() => {
+    if (!res.headersSent) res.writeHead(500)
+    res.end()
+  })
 })
+async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (await runHandlers(handlers, req, res)) return
+  if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); res.end(); return }
+  serveStatic(site, req, res)
+}
 realtime = attachCatalogRealtime(server)
 if (stop) server.once('close', stop)
-server.listen(port, '0.0.0.0', () => console.log(`SideQuest listening on port ${port}`))
+server.listen(port, '0.0.0.0', () => {
+  console.log(`SideQuest listening on port ${port}`)
+  void refineCompression(site).catch(() => { /* the quick brotli copies stay in use */ })
+})

@@ -9,3 +9,7 @@ playwright-report/
 test-results/
 
 dist-server/
+
+# demo and lab builds
+dist-demo/
+dist-lab/

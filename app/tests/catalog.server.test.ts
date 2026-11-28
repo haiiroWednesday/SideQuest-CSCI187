@@ -8,7 +8,7 @@ import { createHttpEventCatalog } from '../src/model/httpEventCatalog'
 import { campusDateFromToday } from './fixtures/campusDates'
 
 const servers: Server[] = []
-const draft = { title: 'Server workshop', hostName: 'Art Club', description: 'Paint together', location: 'Library', date: campusDateFromToday(30), start: '14:30', end: '15:30' }
+const draft = { title: 'Server workshop', hostName: 'Art Club', organizer: 'Ana Ruiz', contact: 'ana@scu.edu', spaceConfirmed: true, description: 'Paint together', location: 'Library', date: campusDateFromToday(30), start: '14:30', end: '15:30' }
 async function setup(configured = true) {
   const table = createInMemoryEventTable()
   const api = createCatalogApi(configured ? createEventCatalog(table) : null)

@@ -5,7 +5,7 @@ import { MAX_GROUP_INVITEES, type ResponseKind, type PlanStatus } from '../model
 import { isScuCalendarId } from '../model/scuCalendarId'
 import type { CampusEvent } from '../model/eventCatalog'
 
-export { MAX_GROUP_INVITEES, MAX_PRIVATE_CONDITION } from '../model/groupPlans'
+export { GROUP_SIZE_LIMIT, MAX_GROUP_INVITEES, MAX_IF_CONDITION } from '../model/groupPlans'
 export type GroupResponse = ResponseKind
 export type GroupStatus = PlanStatus
 export type GroupAction =
@@ -16,7 +16,8 @@ export type GroupAction =
 export type GroupMemberView = {
   userId: string
   response: GroupResponse | null
-  privateCondition?: string | null
+  /** The If note, shared with the plan's members (PR #89 name). */
+  ifCondition?: string | null
 }
 export type GroupSummary = {
   id: string
@@ -73,14 +74,14 @@ function detail(v: unknown): GroupDetail {
     participants: value.participants.map((item: unknown) => {
       const row = record(item)
       if (!row || typeof row.userId !== 'string' || !isResponse(row.response) ||
-        (row.privateCondition !== undefined && row.privateCondition !== null &&
-          typeof row.privateCondition !== 'string')) {
+        (row.ifCondition !== undefined && row.ifCondition !== null &&
+          typeof row.ifCondition !== 'string')) {
         throw new GroupClientError(503, 'The group service returned invalid participant data.')
       }
       return {
         userId: row.userId,
         response: row.response,
-        ...(row.privateCondition === undefined ? {} : { privateCondition: row.privateCondition }),
+        ...(row.ifCondition === undefined ? {} : { ifCondition: row.ifCondition }),
       }
     }),
   }
