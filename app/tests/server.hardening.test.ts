@@ -289,20 +289,23 @@ describe('one handler list for both servers', () => {
   })
 })
 
-describe('Supabase Auth is asked once per token per 30 s, within a per-IP budget', () => {
+describe('Private authorization is fresh, within a per-IP budget', () => {
   const user = '11111111-1111-4111-8111-111111111111'
   const token = 'live-session-token-for-tests-only'
 
   it('for /api/me', async () => {
     let checks = 0
+    let active = true
     const gateway: PersonalGateway = {
-      async userFor(t) { checks++; return t === token ? user : null },
+      async userFor(t) { checks++; return active && t === token ? user : null },
       storeFor() { return { load: async () => ({ profile: null, plans: [], ideas: [], busy: [] }) } as never },
     }
     const base = await listen(createPersonalApi(gateway))
     const me = (t: string) => fetch(base + '/api/me', { headers: { Authorization: `Bearer ${t}` } })
     for (let i = 0; i < 4; i++) expect((await me(token)).status).toBe(200)
-    expect(checks).toBe(1)
+    expect(checks).toBe(4)
+    active = false
+    expect((await me(token)).status).toBe(401)
     const codes: number[] = []
     for (let i = 0; i < AUTH_CHECKS_PER_IP_PER_MINUTE + 5; i++) codes.push((await me(`made-up-token-${String(i).padStart(8, '0')}`)).status)
     expect(codes).toContain(429)
@@ -316,7 +319,9 @@ describe('Supabase Auth is asked once per token per 30 s, within a per-IP budget
     store.userFor = async t => { checks++; return userFor(t) }
     const base = await listen(createSocialApi(store))
     for (let i = 0; i < 3; i++) expect((await fetch(base + '/api/social/invites', { headers: { Authorization: `Bearer ${token}` } })).status).toBe(200)
-    expect(checks).toBe(1)
+    expect(checks).toBe(3)
+    store.userFor = async () => null
+    expect((await fetch(base + '/api/social/invites', { headers: { Authorization: `Bearer ${token}` } })).status).toBe(401)
   })
 })
 
@@ -326,6 +331,9 @@ describe('the scu.edu rule on every Supabase session check', () => {
     vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
       const auth = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined)).get('authorization') ?? ''
       const email = emails[auth.replace('Bearer ', '')]
+      if (String(input instanceof Request ? input.url : input).includes('/rpc/sidequest_private_active_actor')) {
+        return new Response(JSON.stringify('22222222-2222-4222-8222-222222222222'), { status: 200, headers: { 'Content-Type': 'application/json' } })
+      }
       return new Response(JSON.stringify({ id: '22222222-2222-4222-8222-222222222222', aud: 'authenticated', email }), { status: 200, headers: { 'Content-Type': 'application/json' } })
     })
     const identity = supabaseIdentityFromEnv({ SUPABASE_URL: 'https://sq.supabase.test', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_fixture' })!
