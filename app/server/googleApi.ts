@@ -40,7 +40,9 @@ export function supabaseIdentityFromEnv(env: Env): SessionIdentity | null {
         const { data, error } = await auth.auth.getUser(token)
         if (error || !data.user?.id) return null
         // Same account rule as sign-in: a token for an address outside the policy is no session here.
-        return policy.allows(data.user.email) ? { userId: data.user.id } : null
+        if (!policy.allows(data.user.email) || data.user.is_anonymous === true) return null
+        const live = await client(token).rpc('sidequest_private_active_actor')
+        return !live.error && live.data === data.user.id ? { userId: data.user.id } : null
       } catch { return null }
     },
   }
@@ -71,8 +73,8 @@ export function supabaseCalendarBusyFromEnv(env: Env): CalendarBusyStore | null 
 
 export function createGoogleApi(calendar: GoogleCalendarService, routes: GoogleRoutesService, identity: SessionIdentity | null, clock: () => number = Date.now) {
   const calendarApi = createGoogleCalendarApi(calendar, identity)
-  // Supabase Auth is asked at most once per token per 30 s, within a per-IP budget.
-  const sessions = createVerifiedTokenGuard(clock)
+  // Fresh active-session verification even for status and routing; never cache admission.
+  const sessions = createVerifiedTokenGuard(clock, { ttlMs: 0 })
   const sessionOf = async (req: IncomingMessage) => {
     const token = bearer(req)
     if (!token || !identity) return null
