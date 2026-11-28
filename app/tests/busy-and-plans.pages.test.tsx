@@ -47,16 +47,16 @@ beforeEach(() => { localStorage.clear(); location.hash = '#discover' })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 describe('Discover: showing all events and clearing busy time are two different things', () => {
-  it('"Show all events" keeps busy time; "Clear busy time" says so and offers Undo', async () => {
+  it('turning "Fits my free time" off keeps busy time; "Clear busy time" says so and offers Undo', async () => {
     planned(ceramics.id, film.id)
     render(<App catalog={{ catalog: port(), shared: true }} quiet now={now} />)
     // Typed times and the list of busy times open from one line under the week.
     await busy3to6()
     const editBusy = () => fireEvent.click(screen.getByRole('button', { name: /Edit busy times/ }))
     expect(screen.getByRole('button', { name: 'Free again 3–6pm' })).toBeTruthy()
-    // "Show all events" sits with the count on the Events step (Nov 27).
+    // The free-time filter is a chip beside the kinds on the Events step (C5, Nov 27).
     await go('#discover/events')
-    fireEvent.click(screen.getByRole('button', { name: 'Show all events' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Fits my free time' }))
     await go('#discover')
     editBusy()
     expect(screen.getByRole('button', { name: 'Free again 3–6pm' })).toBeTruthy()

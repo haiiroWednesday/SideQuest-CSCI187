@@ -6,10 +6,14 @@ import type { TagFiltersModel } from '../controller/screenModels'
 import { LEAVE_NOTE_LABEL } from '../controller/presentAdvice'
 import './foodtime.css'
 
-export function TagFilters({ model, onChange }: { model: TagFiltersModel; onChange: (tags: string[]) => void }) {
+/** `fit` is the free-time filter (C5, Nov 27): a chip in the same row, visibly on or off, like the Map tab's. */
+export function TagFilters({ model, onChange, fit = null }: { model: TagFiltersModel; onChange: (tags: string[]) => void; fit?: { on: boolean; toggle: () => void } | null }) {
   return (
     <div className="sq-tagfilters" role="group" aria-label="Only show events with">
       <span className="sq-tagfilters-name" aria-hidden="true">Only</span>
+      {fit && <button type="button" className={`sq-tagchip sq-fitchip${fit.on ? ' sq-on' : ''}`} aria-pressed={fit.on} onClick={fit.toggle}>
+        {fit.on && <i className="sq-tagchip-tick" aria-hidden="true">✓</i>}<span>Fits my free time</span>
+      </button>}
       {model.options.map(tag => {
         const on = model.selected.includes(tag.id)
         return (

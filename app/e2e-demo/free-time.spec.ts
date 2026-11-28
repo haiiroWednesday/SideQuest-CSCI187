@@ -24,7 +24,7 @@ for (const width of [390, 1280]) {
     // Before she says anything, the gaps are what My Schedule leaves, and nothing is filtered.
     expect((await free(page)).length).toBeGreaterThan(0)
     await expect(page.locator('.sq-fit-note')).toHaveCount(0)
-    await expect(page.getByRole('button', { name: 'Show all events' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Fits my free time' })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Clear busy time' })).toHaveCount(0)
     // The week grid is for pointers; keyboards use the form and slips, so it hides from screen readers.
     await expect(page.locator('.sq-week-grid')).toHaveAttribute('aria-hidden', 'true')
@@ -39,7 +39,7 @@ for (const width of [390, 1280]) {
     // The count of what fits is on the Events step, with the list it counts.
     await toStep(page, 'events')
     const note = page.locator('.sq-step-head-events p')
-    await expect(note).toHaveText(/^(Nothing fits your free time|1 event fits your free time|\d+ events fit your free time) Show all events$/)
+    await expect(note).toHaveText(/^(Nothing fits your free time|1 event fits your free time|\d+ events fit your free time)$/)
     const n = Number(((await note.innerText()).match(/^\d+/) ?? ['0'])[0])
     await expect(page.locator('.sq-stub')).toHaveCount(n)
     await shot('fit-note', true)
@@ -48,10 +48,10 @@ for (const width of [390, 1280]) {
     await editBusy(page)
     await page.getByRole('button', { name: 'Free again 7–9pm' }).click()
     expect(await busy(page)).toEqual(['12–1pm'])
-    // "Show all events" only stops the filter: her busy time stays.
+    // Turning "Fits my free time" off only stops the filter: her busy time stays.
     await toStep(page, 'events')
-    await page.getByRole('button', { name: 'Show all events' }).click()
-    await expect(page.getByRole('button', { name: 'Show all events' })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Fits my free time' }).click()
+    await expect(page.getByRole('button', { name: 'Fits my free time' })).toHaveAttribute('aria-pressed', 'false')
     await toStep(page, 'when')
     expect(await busy(page)).toEqual(['12–1pm'])
     // "Clear busy time" wipes it, says so, and Undo puts it back.
@@ -237,7 +237,7 @@ test('one mode: busy before and after leaves 6:25 to 7:50pm free, to five minute
   expect(await free(page)).toEqual(['6:25–7:50pm'])
   await toStep(page, 'events')
   const note = page.locator('.sq-step-head-events p')
-  await expect(note).toHaveText(/^(Nothing fits\..+\.|Nothing fits your free time|1 event fits your free time|\d+ events fit your free time) Show all events$/)
+  await expect(note).toHaveText(/^(Nothing fits\..+\.|Nothing fits your free time|1 event fits your free time|\d+ events fit your free time)$/)
   const n = Number(((await note.innerText()).match(/^\d+/) ?? ['0'])[0])
   await expect(page.locator('.sq-stub')).toHaveCount(n)
   await shot('one-mode', true)

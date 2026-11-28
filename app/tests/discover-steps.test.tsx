@@ -55,9 +55,9 @@ describe('Discover in steps', () => {
     expect(filters).toBeTruthy()
     expect(filters.compareDocumentPosition(document.querySelector('.sq-board')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
-  it('keeps the count and "Show all events" off the When step', () => {
+  it('keeps the count and the free-time chip off the When step', () => {
     show()
-    expect(screen.queryByRole('button', { name: 'Show all events' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Fits my free time' })).toBeNull()
     expect(document.querySelector('.sq-fit-note')).toBeNull()
   })
   it('stays one page without the busy-time week', () => {

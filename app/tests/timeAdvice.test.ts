@@ -40,7 +40,7 @@ describe('leave by', () => {
     const event = ev('a', 'Nourish Nights', 'Benson', '16:00', '17:00')
     const next = ev('b', 'Chem lab', 'Forge Garden', '17:00', '18:00')
     const { notes } = leaveNotes(event, [next])
-    expect(notes[0]).toMatchObject({ kind: 'late-next', lateMinutes: walk, text: `Fits, but you'd be ${walk} min late to Chem lab` })
+    expect(notes[0]).toMatchObject({ kind: 'late-next', lateMinutes: walk, text: `${walk} min late to Chem lab` })
   })
   it('warns when the walk from the plan before makes you arrive late', () => {
     const before = ev('p', 'Garden shift', 'Forge Garden', '15:00', '16:00')

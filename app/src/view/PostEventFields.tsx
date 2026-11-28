@@ -1,4 +1,5 @@
 // VIEW: accessible posting inputs. Validation decisions are supplied by the controller-facing form.
+import { PlaceField } from './PlaceField'
 import type { FormEvent } from 'react'
 import { useQuiet } from './quietContext'
 import { DatePick, TimePick } from './Pickers'
@@ -110,8 +111,8 @@ export function PostEventFields({ draft, fieldErrors, submitting, now, onSubmit,
         </div>
         <div className="field">
           <label htmlFor="post-location"><span>LOCATION</span></label>
-          <input id="post-location" type="text" value={draft.location} required {...fieldProps('location')}
-            placeholder="Student Center" onChange={(e) => onChange('location', e.target.value)} onBlur={() => onBlur('location')} />
+          <PlaceField id="post-location" value={draft.location} inputProps={fieldProps('location')}
+            onChange={value => onChange('location', value)} onBlur={() => onBlur('location')} />
           {fieldCount('location')}
           {fieldError('location')}
           {fieldHint('location')}

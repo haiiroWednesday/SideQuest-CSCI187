@@ -63,7 +63,7 @@ for (const width of [390, 1280]) {
     // The "Our pick" card that repeated this mark was removed on Nov 27 (docs/removed/stretch-advice).
 
     // Every event again: the ones that miss say by how much, and the red sticks out past the gold.
-    await page.getByRole('button', { name: 'Show all events' }).click()
+    await page.getByRole('button', { name: 'Fits my free time' }).click()
     const stars = ticket(page, 'Stargazing at Ricard').locator('.sq-fitmark')
     await expect(words(stars)).toHaveText('45 min over')
     await expect(stars).toHaveAttribute('aria-label', 'Runs 45 min over your free time, 7–7:45pm.')

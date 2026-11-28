@@ -75,7 +75,7 @@ for (const width of [390, 1280]) {
     await shot('drop-in-fits')
 
     // With every event shown, the set-time one says how far it runs over, in red, as before.
-    await page.getByRole('button', { name: 'Show all events' }).click()
+    await page.getByRole('button', { name: 'Fits my free time' }).click()
     const stars = ticket(page, 'Stargazing at Ricard').locator('.sq-fitmark')
     await expect(stars.locator('.sq-fitmark-words')).toHaveText('45 min over')
     expect(await stars.locator('.sq-fitmark-out').evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgb(179, 32, 61)')
@@ -88,7 +88,7 @@ for (const width of [390, 1280]) {
     // 6:15 to 6:45pm shares 15 minutes with the studio (from 6:30).
     await onlyFree(page, '18:15', '18:45')
     await expect(ticket(page, 'Open Studio Evening')).toHaveCount(0)
-    await page.getByRole('button', { name: 'Show all events' }).click()
+    await page.getByRole('button', { name: 'Fits my free time' }).click()
     const mark = ticket(page, 'Open Studio Evening').locator('.sq-fitmark')
     await expect(mark.locator('.sq-fitmark-words')).toHaveText('Only 15 min')
     await expect(mark).toHaveAttribute('aria-label', 'You are free for only 15 min of it, 6:15–6:45pm. Dropping in takes at least 20 min.')

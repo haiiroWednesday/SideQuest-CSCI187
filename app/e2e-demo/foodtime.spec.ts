@@ -59,7 +59,7 @@ for (const width of [390, 1280]) {
     const card = page.locator('li', { has: page.locator('.sq-stub strong', { hasText: 'Nourish Nights' }) }).first()
     const note = card.locator('.sq-leave')
     await expect(note).toHaveClass(/sq-leave-warn/)
-    await expect(note).toContainText(/Fits, but you'd arrive \d+ min late, walking from Dinner with the Games Society/)
+    await expect(note).toContainText(/^\d+ min late from Dinner with the Games Society/)
     await expect(note).toHaveAttribute('title', 'Walking times are estimates.')
   })
 

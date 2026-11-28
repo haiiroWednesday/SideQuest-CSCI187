@@ -1,6 +1,6 @@
 // CONTROLLER: notes that help a student act on a fit. Strict full fit (findEvents) stays the
 // only rule for what fits; nothing here adds or removes a fitting event.
-//   leaveNotes  "Leave by 1:42pm for Chem lab", or "Fits, but you'd be 6 min late to Chem lab"
+//   leaveNotes  "Leave by 1:42pm for Chem lab", or "6 min late to Chem lab"
 //   onePick     one recommended event per free stretch, with a one-line reason
 //   planStretch two or more fitting events chained with walks between them, never overlapping
 // Walks come from the campus map's path graph and are always labelled an estimate.
@@ -46,7 +46,7 @@ export function leaveNotes(event: TimedPlace, plans: readonly TimedPlace[]): { n
     if (walk.status === 'ready' && walk.minutes > 0) {
       const late = toMin(before.end) + walk.minutes - toMin(event.start)
       if (late > 0) notes.push({ kind: 'late-start', lateMinutes: late, from: before.title, walkMinutes: walk.minutes,
-        text: `Fits, but you'd arrive ${late} min late, walking from ${before.title}` })
+        text: `${late} min late from ${before.title}` })
     }
   }
   if (after) {
@@ -62,7 +62,7 @@ export function leaveNotes(event: TimedPlace, plans: readonly TimedPlace[]): { n
       } else {
         const late = toMin(event.end) - leaveAt
         notes.push({ kind: 'late-next', lateMinutes: late, to: after.title, walkMinutes: walk.minutes,
-          text: `Fits, but you'd be ${late} min late to ${after.title}` })
+          text: `${late} min late to ${after.title}` })
       }
     }
   }

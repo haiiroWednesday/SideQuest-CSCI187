@@ -163,6 +163,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
     onUnbusy: r => setDrawn(paintMarks({ ...drawInput, date: markModel.date }, r.first, r.last, false)),
     // Filter only: every busy and free mark stays.
     onClear: hasTold(markInput) && !showAll ? () => { setShowAll(true); setMarkWhen('week') } : null,
+    fitFilter: hasTold(markInput) ? { on: !showAll, toggle: () => { setShowAll(v => !v); setMarkWhen('week') } } : null,
     // Wipes busy time, so the toast that follows offers Undo.
     onClearBusy: Object.keys(marks).length ? () => {
       const before = marks

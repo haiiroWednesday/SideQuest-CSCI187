@@ -178,6 +178,8 @@ export type MarkerProps = {
   onBringIn?: (blocks: { date: string; start: string; end: string }[]) => number
   /** "Show all events": stop filtering by free time, keep every mark. */
   onClear: (() => void) | null
+  /** The free-time filter as a chip beside the kinds. Null until there is busy or free time to filter by. */
+  fitFilter?: { on: boolean; toggle: () => void } | null
   /** "Clear busy time": remove all busy marks (with Undo). */
   onClearBusy?: (() => void) | null
   /** The Busy/Free switch on the day bar. */
@@ -490,11 +492,11 @@ export function DiscoverView({
         {stepped && step === 'events' && <div className="sq-step-head sq-step-head-events">
           <h1 id="sq-step-events">{someFit ? 'What fits your free time' : 'Events'}</h1>
           {ready && <p>{screen.fitLine ?? `${screen.count} ${screen.count === 1 ? 'event' : 'events'}`}
-            {marker?.onClear && <> <button type="button" className="sq-text-button sq-clear-marks" onClick={marker.onClear}>Show all events</button></>}</p>}
+</p>}
         </div>}
         {onCategoryChange && shows('events') && <div inert={modal || undefined} className={stepped ? 'sq-step-filters' : undefined}>
           <CategoryFilters categories={screen.categories} onChange={onCategoryChange} />
-          {screen.tagFilters && onTagsChange && <TagFilters model={screen.tagFilters} onChange={onTagsChange} />}
+          {screen.tagFilters && onTagsChange && <TagFilters model={screen.tagFilters} onChange={onTagsChange} fit={stepped ? marker?.fitFilter ?? null : null} />}
         </div>}
 
         {free && onFreeWindowChange && !marker && <FreeWindowForm free={free} ready={ready} onWindowChange={onFreeWindowChange} disabledByDialog={modal} />}
