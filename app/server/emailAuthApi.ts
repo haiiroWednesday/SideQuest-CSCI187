@@ -191,14 +191,15 @@ export function createEmailAuthApi(
       // Only addresses the policy allows get an email at all (Santa Clara accounts by default).
       if (policy && !policy.allows(email)) throw new AuthHttpError(403, policy.message)
       if (path === '/api/auth/request-code') {
+        if (!options.publicOrigin) throw new AuthHttpError(503, 'Sign-in email is not configured for this site.')
         limits(email, ip, 'request')
         // Regardless of whether account creation was permitted upstream, avoid
         // disclosing whether an email corresponds to an existing account.
-        // The link returns to the page that asked, already checked as same-origin above.
+        // The link returns only to the explicitly configured public origin.
         // A deployed origin must also be listed in Supabase Auth's Redirect URLs.
         // A send that failed for reasons unrelated to the account (the sender's hourly limit, an
         // outage) is reported, so nobody waits for an email that never left. Anything else stays generic.
-        try { await gateway.requestCode(email, options.publicOrigin ?? origin) }
+        try { await gateway.requestCode(email, options.publicOrigin) }
         catch (error) {
           if (error instanceof EmailSendError) {
             throw new AuthHttpError(error.reason === 'limit' ? 429 : 503, error.reason === 'limit'
