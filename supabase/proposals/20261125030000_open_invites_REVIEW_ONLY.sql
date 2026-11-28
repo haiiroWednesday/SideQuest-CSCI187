@@ -93,12 +93,37 @@ alter table public.free_windows enable row level security;
 revoke all on public.circles, public.circle_members, public.activities, public.activity_circles,
   public.activity_joins, public.free_shares, public.free_windows from public, anon;
 
+-- Requires 20261124010000_private_session_guard_REVIEW_ONLY.sql first.
+-- Existing membership and owner policies still apply, AND a current eligible session.
+create policy active_session_circles on public.circles as restrictive for all to authenticated
+  using ((select public.sidequest_private_active_actor()) is not null)
+  with check ((select public.sidequest_private_active_actor()) is not null);
+create policy active_session_circle_members on public.circle_members as restrictive for all to authenticated
+  using ((select public.sidequest_private_active_actor()) is not null)
+  with check ((select public.sidequest_private_active_actor()) is not null);
+create policy active_session_activities on public.activities as restrictive for all to authenticated
+  using ((select public.sidequest_private_active_actor()) is not null)
+  with check ((select public.sidequest_private_active_actor()) is not null);
+create policy active_session_activity_circles on public.activity_circles as restrictive for all to authenticated
+  using ((select public.sidequest_private_active_actor()) is not null)
+  with check ((select public.sidequest_private_active_actor()) is not null);
+create policy active_session_activity_joins on public.activity_joins as restrictive for all to authenticated
+  using ((select public.sidequest_private_active_actor()) is not null)
+  with check ((select public.sidequest_private_active_actor()) is not null);
+create policy active_session_free_shares on public.free_shares as restrictive for all to authenticated
+  using ((select public.sidequest_private_active_actor()) is not null)
+  with check ((select public.sidequest_private_active_actor()) is not null);
+create policy active_session_free_windows on public.free_windows as restrictive for all to authenticated
+  using ((select public.sidequest_private_active_actor()) is not null)
+  with check ((select public.sidequest_private_active_actor()) is not null);
+
 -- Membership test used by the policies. Security definer so a policy can read circle_members
 -- without granting that table to the caller; it answers only true or false.
-create or replace function public.sidequest_is_member(p_circle uuid, p_user uuid default auth.uid())
+create or replace function public.sidequest_is_member(p_circle uuid, p_user uuid default public.sidequest_private_active_actor())
 returns boolean language sql stable security definer set search_path = public as $$
   select exists (select 1 from public.circle_members m
-                 where m.circle_id = p_circle and m.user_id = p_user and m.status = 'member')
+                 where m.circle_id = p_circle and m.user_id = p_user and m.status = 'member'
+                   and p_user = public.sidequest_private_active_actor())
 $$;
 revoke all on function public.sidequest_is_member(uuid, uuid) from public, anon;
 grant execute on function public.sidequest_is_member(uuid, uuid) to authenticated;
@@ -108,7 +133,7 @@ grant select on public.circles, public.circle_members to authenticated;
 create policy circles_members_read on public.circles for select to authenticated
   using (public.sidequest_is_member(id));
 create policy circle_members_read on public.circle_members for select to authenticated
-  using (user_id = auth.uid() or public.sidequest_is_member(circle_id));
+  using (user_id = public.sidequest_private_active_actor() or public.sidequest_is_member(circle_id));
 
 -- Activities: the sender, and full members of any circle it was sent to, while it is not called off.
 -- The checks live in security-definer helpers so the policies do not query each other's tables
@@ -117,19 +142,19 @@ create or replace function public.sidequest_reaches_me(p_activity uuid)
 returns boolean language sql stable security definer set search_path = public as $$
   select exists (select 1 from public.activity_circles ac
                  join public.circle_members m on m.circle_id = ac.circle_id
-                 where ac.activity_id = p_activity and m.user_id = auth.uid() and m.status = 'member')
+                 where ac.activity_id = p_activity and m.user_id = public.sidequest_private_active_actor() and m.status = 'member')
 $$;
 create or replace function public.sidequest_can_see_activity(p_activity uuid)
 returns boolean language sql stable security definer set search_path = public as $$
   select exists (select 1 from public.activities a where a.id = p_activity
-                 and (a.created_by = auth.uid() or (a.status <> 'called_off' and public.sidequest_reaches_me(a.id))))
+                 and (a.created_by = public.sidequest_private_active_actor() or (a.status <> 'called_off' and public.sidequest_reaches_me(a.id))))
 $$;
 revoke all on function public.sidequest_reaches_me(uuid), public.sidequest_can_see_activity(uuid) from public, anon;
 grant execute on function public.sidequest_reaches_me(uuid), public.sidequest_can_see_activity(uuid) to authenticated;
 
 grant select on public.activities, public.activity_circles, public.activity_joins to authenticated;
 create policy activities_read on public.activities for select to authenticated
-  using (created_by = auth.uid() or (status <> 'called_off' and public.sidequest_reaches_me(id)));
+  using (created_by = public.sidequest_private_active_actor() or (status <> 'called_off' and public.sidequest_reaches_me(id)));
 create policy activity_circles_read on public.activity_circles for select to authenticated
   using (public.sidequest_can_see_activity(activity_id));
 create policy activity_joins_read on public.activity_joins for select to authenticated
@@ -138,9 +163,9 @@ create policy activity_joins_read on public.activity_joins for select to authent
 -- Free time: owner-only, every operation.
 grant select, insert, delete on public.free_windows, public.free_shares to authenticated;
 create policy free_windows_owner on public.free_windows for all to authenticated
-  using (user_id = auth.uid()) with check (user_id = auth.uid() and starts_at > now() - interval '1 day' and ends_at < now() + interval '8 days');
+  using (user_id = public.sidequest_private_active_actor()) with check (user_id = public.sidequest_private_active_actor() and starts_at > now() - interval '1 day' and ends_at < now() + interval '8 days');
 create policy free_shares_owner on public.free_shares for all to authenticated
-  using (user_id = auth.uid()) with check (user_id = auth.uid() and public.sidequest_is_member(circle_id));
+  using (user_id = public.sidequest_private_active_actor()) with check (user_id = public.sidequest_private_active_actor() and public.sidequest_is_member(circle_id));
 
 -- ---------- Writes go through these functions only.
 
@@ -149,7 +174,7 @@ create or replace function public.sidequest_send_invite(
 returns uuid language plpgsql security definer set search_path = public as $$
 declare v_id uuid; v_c uuid;
 begin
-  if auth.uid() is null then raise exception 'sign in first'; end if;
+  if public.sidequest_private_active_actor() is null then raise exception 'sign in first' using errcode = '42501'; end if;
   if p_circles is null or cardinality(p_circles) = 0 then raise exception 'pick at least one circle'; end if;
   foreach v_c in array p_circles loop
     if not public.sidequest_is_member(v_c) then raise exception 'not a member of every circle'; end if;
@@ -157,7 +182,7 @@ begin
   if p_ends <= now() then raise exception 'that time is over'; end if;
   if p_starts > now() + interval '7 days' then raise exception 'a week ahead at most'; end if;
   insert into public.activities (created_by, title, place, event_id, starts_at, ends_at)
-    values (auth.uid(), btrim(p_title), nullif(btrim(coalesce(p_place, '')), ''), p_event, p_starts, p_ends)
+    values (public.sidequest_private_active_actor(), btrim(p_title), nullif(btrim(coalesce(p_place, '')), ''), p_event, p_starts, p_ends)
     returning id into v_id;
   insert into public.activity_circles (activity_id, circle_id) select v_id, unnest(p_circles);
   return v_id;
@@ -167,24 +192,26 @@ create or replace function public.sidequest_join_invite(p_activity uuid)
 returns void language plpgsql security definer set search_path = public as $$
 declare v public.activities;
 begin
+  if public.sidequest_private_active_actor() is null then raise exception 'sign in first' using errcode = '42501'; end if;
   select * into v from public.activities where id = p_activity for update;
   if not found or v.status <> 'open' or v.ends_at <= now() then raise exception 'not open'; end if;
-  if v.created_by = auth.uid() then raise exception 'it is yours'; end if;
+  if v.created_by = public.sidequest_private_active_actor() then raise exception 'it is yours'; end if;
   if not exists (select 1 from public.activity_circles ac where ac.activity_id = p_activity and public.sidequest_is_member(ac.circle_id))
     then raise exception 'not in these circles'; end if;
   if (select count(*) from public.activity_joins where activity_id = p_activity) >= 11 then raise exception 'full'; end if;
-  insert into public.activity_joins (activity_id, user_id) values (p_activity, auth.uid()) on conflict do nothing;
+  insert into public.activity_joins (activity_id, user_id) values (p_activity, public.sidequest_private_active_actor()) on conflict do nothing;
 end $$;
 
 create or replace function public.sidequest_leave_invite(p_activity uuid)
 returns void language sql security definer set search_path = public as $$
   delete from public.activity_joins j using public.activities a
-  where j.activity_id = p_activity and j.user_id = auth.uid() and a.id = j.activity_id and a.status = 'open'
+  where j.activity_id = p_activity and j.user_id = public.sidequest_private_active_actor() and a.id = j.activity_id and a.status = 'open'
 $$;
 
 create or replace function public.sidequest_close_invite(p_activity uuid, p_status text, p_circle uuid default null)
 returns void language plpgsql security definer set search_path = public as $$
 begin
+  if public.sidequest_private_active_actor() is null then raise exception 'sign in first' using errcode = '42501'; end if;
   if p_status not in ('planned', 'called_off') then raise exception 'bad status'; end if;
   if p_status = 'planned' and (p_circle is null or not exists (
       select 1 from public.activity_circles where activity_id = p_activity and circle_id = p_circle)
@@ -192,7 +219,7 @@ begin
     raise exception 'needs someone in, in one of its circles';
   end if;
   update public.activities set status = p_status, plan_circle_id = case when p_status = 'planned' then p_circle end
-  where id = p_activity and created_by = auth.uid() and status = 'open' and ends_at > now();
+  where id = p_activity and created_by = public.sidequest_private_active_actor() and status = 'open' and ends_at > now();
   if not found then raise exception 'not yours or not open'; end if;
 end $$;
 
@@ -204,7 +231,7 @@ language plpgsql stable security definer set search_path = public as $$
 declare v_shared int;
 begin
   if not public.sidequest_is_member(p_circle)
-     or not exists (select 1 from public.free_shares where user_id = auth.uid() and circle_id = p_circle) then
+     or not exists (select 1 from public.free_shares where user_id = public.sidequest_private_active_actor() and circle_id = p_circle) then
     return;
   end if;
   select count(*) into v_shared from public.free_shares s
