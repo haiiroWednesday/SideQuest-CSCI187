@@ -2,6 +2,7 @@
 import { readFile, mkdir, writeFile, rename, rm } from 'node:fs/promises'
 import { resolve, dirname } from 'node:path'
 import { collectEngineeringNewsletters, collectOrganizerFeed } from './campus-intake/independentSources.mjs'
+import { collectPublicGoogleCalendar } from './campus-intake/googlePublicCalendar.mjs'
 
 const registry = JSON.parse(await readFile(new URL('../data/campus-event-sources.json', import.meta.url), 'utf8'))
 const args = process.argv.slice(2)
@@ -17,8 +18,9 @@ async function main() {
   const entries = Object.entries(config)
   if (!entries.length || entries.length > 20) throw new Error('No approved independent sources or too many configured sources')
   for (const [id, value] of entries) {
-    if (!registry.sources.some(s => s.id === id) || id === 'scu-livewhale' ||
-        !value || value.approved !== true || (id !== 'scu-engineering-newsletter' && typeof value.url !== 'string')) {
+    const source = registry.sources.find(s => s.id === id)
+    if (!source || id === 'scu-livewhale' || !value || value.approved !== true ||
+        (source.adapter !== 'google-public-calendar' && id !== 'scu-engineering-newsletter' && typeof value.url !== 'string')) {
       throw new Error('Unknown or unapproved independent source: ' + id)
     }
   }
@@ -26,9 +28,12 @@ async function main() {
   const results = await Promise.all(entries.map(async ([id, value]) => {
     const source = registry.sources.find(s => s.id === id)
     try {
-      const snapshot = id === 'scu-engineering-newsletter'
-        ? await collectEngineeringNewsletters({approvedRead:true, now})
-        : await collectOrganizerFeed(source,value.url,{approvedRead:true, now})
+      let snapshot
+      if (id === 'scu-engineering-newsletter') snapshot = await collectEngineeringNewsletters({approvedRead:true, now})
+      else if (source.adapter === 'google-public-calendar') snapshot = await collectPublicGoogleCalendar(source, {
+        approvedRead:true, now, apiKey:process.env.SIDEQUEST_GOOGLE_PUBLIC_CALENDAR_API_KEY,
+      })
+      else snapshot = await collectOrganizerFeed(source,value.url,{approvedRead:true, now})
       return { id, status: snapshot.failures?.length ? 'partial' : 'received', snapshot }
     } catch {
       // Failure is explicit; do not leak URLs or credentials in logs, or imply cancellation.
