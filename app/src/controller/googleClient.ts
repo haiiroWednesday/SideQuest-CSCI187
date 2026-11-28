@@ -21,6 +21,17 @@ export class GoogleClientError extends Error {
   constructor(readonly status: number, message: string, readonly code: string) { super(message) }
 }
 
+/** Both initial consent and write-scope upgrades must lead to Google's OAuth endpoint. */
+function consentAddress(value: unknown): string {
+  try {
+    if (typeof value !== 'string') throw Error('Invalid URL')
+    const url = new URL(value)
+    if (url.origin !== 'https://accounts.google.com' || url.pathname !== '/o/oauth2/v2/auth' ||
+        url.username || url.password) throw Error('Invalid URL')
+    return url.href
+  } catch { throw new GoogleClientError(502, 'Unexpected reply.', 'error') }
+}
+
 export const GOOGLE_OFF: GoogleStatus = {
   calendar: { enabled: false, connected: false, exportEnabled: false },
   routes: { enabled: false },
@@ -60,21 +71,24 @@ export function createGoogleClient(session: SessionTokenProvider, fetchImpl: Fet
     call<T>(path, { method: 'POST', body: JSON.stringify(body) }, needsSession)
 
   return {
-    async status(): Promise<GoogleStatus> {
+    async status(requireSession = false): Promise<GoogleStatus> {
+      // The public feature probe may fall back to OFF. A signed-in Calendar
+      // panel must distinguish a failed or expired session from disconnected.
+      if (requireSession) return call<GoogleStatus>('/api/google/status?session=required', { cache: 'no-store' })
       try { return await call<GoogleStatus>('/api/google/status', {}, false) }
       catch { return GOOGLE_OFF }
     },
     /** Returns Google's consent address. The caller sends the page there. */
     async connectUrl(withExport: boolean): Promise<string> {
       const { authorizeUrl } = await post<{ authorizeUrl: string }>('/api/google/calendar/connect', { export: withExport })
-      if (!/^https:\/\/accounts\.google\.com\//.test(authorizeUrl)) throw new GoogleClientError(502, 'Unexpected reply.', 'error')
-      return authorizeUrl
+      return consentAddress(authorizeUrl)
     },
     async importBusy(from: string, to: string): Promise<BusyBlock[]> {
       return (await post<{ blocks: BusyBlock[] }>('/api/google/calendar/import', { from, to })).blocks
     },
     async setExport(enabled: boolean): Promise<{ exportEnabled: boolean; authorizeUrl?: string }> {
-      return post('/api/google/calendar/export', { enabled })
+      const result = await post<{ exportEnabled: boolean; authorizeUrl?: string }>('/api/google/calendar/export', { enabled })
+      return result.authorizeUrl === undefined ? result : { ...result, authorizeUrl: consentAddress(result.authorizeUrl) }
     },
     async syncPlan(change: { action: 'upsert'; planId: string; event: { title: string; date: string; start: string; end: string; location?: string } } | { action: 'remove'; planId: string }) {
       return post<{ synced: boolean; googleEventId: string | null }>('/api/google/calendar/plans', change)

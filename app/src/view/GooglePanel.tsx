@@ -3,7 +3,7 @@
 // It never shows or stores a Google token; the server keeps those.
 import { useEffect, useState } from 'react'
 import {
-  GOOGLE_OFF, googleReturnMessage, type BusyBlock, type GoogleClient, type GoogleStatus,
+  type BusyBlock, type GoogleClient, type GoogleStatus,
 } from '../controller/googleClient'
 import './google.css'
 
@@ -12,20 +12,28 @@ type Props = {
   /** The days shown on the day bar, YYYY-MM-DD, at most two weeks. */
   week: { from: string; to: string }
   onImported?: (blocks: BusyBlock[]) => void
-  /** Sends the page to Google's consent screen. Replaceable in tests. */
-  go?: (url: string) => void
 }
 
-export function GooglePanel({ client, week, onImported, go = url => window.location.assign(url) }: Props) {
+type ConsentAttempt = { url: string; write: boolean }
+
+export function GooglePanel({ client, week, onImported }: Props) {
   const [status, setStatus] = useState<GoogleStatus | null>(null)
   const [withPlans, setWithPlans] = useState(false)
-  const [note, setNote] = useState<string | null>(() => googleReturnMessage(window.location.hash))
+  const [note, setNote] = useState<string | null>(null)
+  const [attempt, setAttempt] = useState<ConsentAttempt | null>(null)
+  const [checking, setChecking] = useState(true)
   const [busy, setBusy] = useState(false)
   const [confirmLeave, setConfirmLeave] = useState(false)
 
   useEffect(() => {
     let live = true
-    client.status().then(s => { if (live) setStatus(s) }, () => { if (live) setStatus(GOOGLE_OFF) })
+    setChecking(true)
+    setStatus(null)
+    setAttempt(null)
+    setNote(null)
+    client.status(true).then(s => { if (live) setStatus(s) }, error => {
+      if (live) setNote(error instanceof Error ? error.message : 'Could not check your Google connection.')
+    }).finally(() => { if (live) setChecking(false) })
     return () => { live = false }
   }, [client])
 
@@ -36,7 +44,34 @@ export function GooglePanel({ client, week, onImported, go = url => window.locat
     finally { setBusy(false) }
   }
 
-  if (!status) return <section className="sq-google" aria-busy="true"><h2>Google Calendar</h2></section>
+  async function checkConnection() {
+    // Never trust the callback hash or a message from another tab. Only the
+    // server's account-scoped status can enable Calendar actions.
+    try {
+      const next = await client.status(true)
+      setStatus(next)
+      if (attempt) {
+        if (next.calendar.connected && (!attempt.write || next.calendar.exportEnabled)) {
+          setAttempt(null)
+          setNote('Google Calendar is connected.')
+        } else {
+          setNote('The requested Google access is not confirmed yet. Finish consent or cancel and try again.')
+        }
+      } else setNote(next.calendar.connected ? 'Google Calendar is connected.' : null)
+    } catch (error) {
+      setStatus(null)
+      throw error
+    }
+  }
+
+  if (!status) return (
+    <section className="sq-google" aria-busy={checking || busy} aria-labelledby="sq-google-title">
+      <h2 id="sq-google-title">Google Calendar</h2>
+      {note && <p className="sq-google-note" role="status">{note}</p>}
+      {!checking && <button type="button" className="sq-google-go" disabled={busy}
+        onClick={() => run(checkConnection)}>Check Google connection</button>}
+    </section>
+  )
   const cal = status.calendar
 
   return (
@@ -54,20 +89,43 @@ export function GooglePanel({ client, week, onImported, go = url => window.locat
         </ul>
       )}
 
-      {cal.enabled && !cal.connected && (
+      {attempt && (
+        <div className="sq-google-row" role="group" aria-label="Google authorization">
+          <p>Keep this SideQuest tab open. Continue in a new tab, then return here to check your connection.</p>
+          <a className="sq-google-go sq-google-consent" href={attempt.url} target="_blank"
+            rel="noopener noreferrer">Continue to Google (new tab)</a>
+          <button type="button" className="sq-google-go" disabled={busy}
+            onClick={() => run(checkConnection)}>Check Google connection</button>
+          <button type="button" className="sq-google-quiet" disabled={busy}
+            onClick={() => { setAttempt(null); setNote('Connection check cancelled. If you already approved access, check your connection again.') }}>
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {cal.enabled && !attempt && (
+        <button type="button" className="sq-google-quiet" disabled={busy}
+          onClick={() => run(checkConnection)}>Check Google connection</button>
+      )}
+
+      {cal.enabled && !cal.connected && !attempt && (
         <div className="sq-google-row">
           <label className="sq-google-check">
             <input type="checkbox" checked={withPlans} onChange={e => setWithPlans(e.target.checked)} />
             Also add my plans to Google
           </label>
           <button type="button" className="sq-google-go" disabled={busy}
-            onClick={() => run(async () => go(await client.connectUrl(withPlans)))}>
+            onClick={() => run(async () => {
+              const url = await client.connectUrl(withPlans)
+              setAttempt({ url, write: withPlans })
+              setNote(null)
+            })}>
             Connect Google
           </button>
         </div>
       )}
 
-      {cal.enabled && cal.connected && (
+      {cal.enabled && cal.connected && !attempt && (
         <>
           <div className="sq-google-row">
             <button type="button" className="sq-google-go" disabled={busy}
@@ -85,7 +143,11 @@ export function GooglePanel({ client, week, onImported, go = url => window.locat
                 const on = e.target.checked
                 void run(async () => {
                   const result = await client.setExport(on)
-                  if (result.authorizeUrl) { go(result.authorizeUrl); return }
+                  if (result.authorizeUrl) {
+                    setAttempt({ url: result.authorizeUrl, write: true })
+                    setNote(null)
+                    return
+                  }
                   setStatus({ ...status, calendar: { ...cal, exportEnabled: result.exportEnabled } })
                 })
               }} />
