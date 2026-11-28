@@ -44,14 +44,15 @@ function memoryBusy(): CalendarBusyStore & { rows: Map<string, unknown> } {
 function setup(routes: Record<string, (call: Call) => Response> = {}) {
   const google = fakeGoogle({ 'https://oauth2.googleapis.com/token': () => tokenReply(SCOPE_FREEBUSY + ' ' + SCOPE_EVENTS), ...routes })
   const connections = memoryConnectionStore(), links = memoryPlanLinkStore(), busy = memoryBusy()
+  let active = true
   let now = Date.parse('2026-11-24T20:00:00Z')
   const service = createGoogleCalendarService({
-    config, identity: null, connections, links, busy, fetch: google.fetch, clock: () => now,
+    config, identity: { async verify(token) { return active && token === session ? { userId: user } : null } }, connections, links, busy, fetch: google.fetch, clock: () => now,
   })
-  return { service, google, connections, links, busy, tick: (ms: number) => { now += ms } }
+  return { service, google, connections, links, busy, revoke: () => { active = false }, tick: (ms: number) => { now += ms } }
 }
 async function connect(s: ReturnType<typeof setup>, withExport = true) {
-  const url = new URL(s.service.begin(user, withExport))
+  const url = new URL(s.service.begin(user, withExport, session))
   return s.service.finish(new URLSearchParams({ state: url.searchParams.get('state')!, code: 'auth-code-from-google' }))
 }
 
@@ -69,29 +70,38 @@ describe('Google Calendar connection (OAuth web flow with state and PKCE)', () =
 
   it('asks only for free/busy unless plans should go to Google, with PKCE S256', () => {
     const { service } = setup()
-    const plain = new URL(service.begin(user, false))
+    const plain = new URL(service.begin(user, false, session))
     expect(plain.origin + plain.pathname).toBe('https://accounts.google.com/o/oauth2/v2/auth')
     expect(plain.searchParams.get('scope')).toBe(SCOPE_FREEBUSY)
     expect(plain.searchParams.get('code_challenge_method')).toBe('S256')
     expect(plain.searchParams.get('code_challenge')).toMatch(/^[A-Za-z0-9_-]{43}$/)
     expect(plain.searchParams.get('state')).toMatch(/^[A-Za-z0-9_-]{43}$/)
-    expect(new URL(service.begin(user, true)).searchParams.get('scope')).toBe(`${SCOPE_FREEBUSY} ${SCOPE_EVENTS}`)
+    expect(new URL(service.begin(user, true, session)).searchParams.get('scope')).toBe(`${SCOPE_FREEBUSY} ${SCOPE_EVENTS}`)
   })
 
   it('rejects a state it did not issue and never exchanges the code', async () => {
     const s = setup()
-    s.service.begin(user, false)
+    s.service.begin(user, false, session)
     expect(await s.service.finish(new URLSearchParams({ state: 'forged-state', code: 'stolen-code' }))).toBe('google/failed')
+    expect(s.google.calls).toHaveLength(0)
+    expect(s.connections.rows.size).toBe(0)
+  })
+
+  it('rejects consent after the initiating SideQuest session is revoked', async () => {
+    const s = setup()
+    const state = new URL(s.service.begin(user, false, session)).searchParams.get('state')!
+    s.revoke()
+    expect(await s.service.finish(new URLSearchParams({ state, code: 'c' }))).toBe('google/failed')
     expect(s.google.calls).toHaveLength(0)
     expect(s.connections.rows.size).toBe(0)
   })
 
   it('uses each state once and lets it expire after ten minutes', async () => {
     const s = setup()
-    const state = new URL(s.service.begin(user, false)).searchParams.get('state')!
+    const state = new URL(s.service.begin(user, false, session)).searchParams.get('state')!
     expect(await s.service.finish(new URLSearchParams({ state, code: 'c' }))).toBe('google/connected')
     expect(await s.service.finish(new URLSearchParams({ state, code: 'c' }))).toBe('google/failed')
-    const late = new URL(s.service.begin(user, false)).searchParams.get('state')!
+    const late = new URL(s.service.begin(user, false, session)).searchParams.get('state')!
     s.tick(11 * 60_000)
     expect(await s.service.finish(new URLSearchParams({ state: late, code: 'c' }))).toBe('google/failed')
   })
@@ -110,7 +120,7 @@ describe('Google Calendar connection (OAuth web flow with state and PKCE)', () =
 
   it('treats a declined consent as declined, with nothing stored', async () => {
     const s = setup()
-    const state = new URL(s.service.begin(user, false)).searchParams.get('state')!
+    const state = new URL(s.service.begin(user, false, session)).searchParams.get('state')!
     expect(await s.service.finish(new URLSearchParams({ state, error: 'access_denied' }))).toBe('google/declined')
     expect(s.connections.rows.size).toBe(0)
   })
