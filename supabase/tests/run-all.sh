@@ -25,6 +25,7 @@ SKIP_TESTS=" accounts_personal_tables_live_check.sql "
 
 # proposal test -> proposals it needs, in order (applied on top of the live template)
 declare -A PROPOSAL_TESTS=(
+  [private_session_guard_review.sql]="$root/proposals/20261124010000_private_session_guard_REVIEW_ONLY.sql"
   [group_plan_storage_review.sql]="$root/proposals/20261120000000_group_plan_storage_REVIEW_ONLY.sql"
   [group_plan_rpc_review.sql]="$root/proposals/20261120000000_group_plan_storage_REVIEW_ONLY.sql $root/proposals/20261120010000_group_plan_rpcs_REVIEW_ONLY.sql"
   [open_invites_review.sql]="$OPEN_INVITES_SQL"
