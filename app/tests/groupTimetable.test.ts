@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { MIN_COLUMN_SHARERS, commonTime, personColumns, type CommonTime, type FreeShare, type Slot, type SocialGroup } from '../src/controller/socialPlans'
 import { MAX_PERSON_COLUMNS, eventsInWindow, groupTimetable } from '../src/controller/groupsPreview'
 import { findEvents } from '../src/controller/findEvents'
-import { DAY_END, DAY_START } from '../src/controller/freeMarks'
+import { DAY_END, FREE_FROM as DAY_START } from '../src/controller/freeMarks'
 
 // The group timetable on Groups: one column per person who shares, time down the page.
 // Privacy rules kept here: nothing until you share, a pair sees the common band only (security review
@@ -101,11 +101,11 @@ describe('group timetable: who gets a column', () => {
     expect(theo).toEqual({ key: 'Theo', people: ['Theo'], shared: false, free: [] })
   })
 
-  it('keeps blocks inside the hours drawn (8am to 11pm)', () => {
+  it('keeps blocks inside the hours drawn (7am to midnight)', () => {
     const early = [share('You', [day('06:00', '09:00')]), share('Maya', [day('07:00', '09:30'), day('22:00', '23:30')]), share('Jun', [day('06:30', '10:00')])]
     const t = groupTimetable(commonTime(g, early, 'You', NOW), TODAY)!
-    expect(t.columns!.find(c => c.key === 'Maya')!.free).toEqual([{ from: DAY_START, to: 9 * 60 + 30 }, { from: 22 * 60, to: DAY_END }])
-    // the band keeps its real time in words, and is drawn from 8am
+    expect(t.columns!.find(c => c.key === 'Maya')!.free).toEqual([{ from: DAY_START, to: 9 * 60 + 30 }, { from: 22 * 60, to: 23 * 60 + 30 }])
+    // the band keeps its real time in words, and is drawn from 7am
     expect(t.bands).toEqual([{ date: TODAY, start: '07:00', end: '09:00', from: DAY_START, to: 9 * 60, label: '7–9am' }])
   })
 

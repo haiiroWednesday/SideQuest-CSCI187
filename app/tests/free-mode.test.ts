@@ -14,7 +14,7 @@ const climbing = ev('climb', 'Climbing Club Intro', '13:30', '14:30')
 const talk = ev('talk', 'Quick talk', '13:15', '13:45')
 const lunch = ev('lunch', 'Long lunch', '12:00', '14:00')
 const class11 = ev('class', 'Class', '11:00', '12:00')
-const cell = (hhmm: string) => { const [h, m] = hhmm.split(':').map(Number); return (h * 60 + m - 480) / CELL }
+const cell = (hhmm: string) => { const [h, m] = hhmm.split(':').map(Number); return (h * 60 + m) / CELL }
 
 function freeFrom(events: CampusEvent[], start: string, end: string): MarkInput {
   const input: MarkInput = { events, plannedIds: [], now: NOW, marks: {}, open: {}, mode: 'free' }
@@ -66,17 +66,17 @@ describe('switching between Busy and Free', () => {
 
 describe('five-minute steps', () => {
   it('a drag lands on whole five-minute steps at both edges', () => {
-    // A 900px bar for 8am–11pm: one five-minute step is 5px wide.
-    const width = 900, left = 100
-    const x = (hhmm: string, into = 2.4) => left + cell(hhmm) * (width / ((23 - 8) * 60 / CELL)) + into
+    // A bar for the whole day: one five-minute step is 5px wide.
+    const width = 24 * 60, left = 100
+    const x = (hhmm: string, into = 2.4) => left + cell(hhmm) * (width / (24 * 60 / CELL)) + into
     expect(cellAtX(x('13:10'), left, width)).toBe(cell('13:10'))
     expect(cellAtX(x('13:50', 4.9), left, width)).toBe(cell('13:50'))
     const input: MarkInput = { events: [], plannedIds: [], now: NOW, marks: {}, mode: 'free' }
     const open = reshapeBusy({ ...input, date: DAY }, null, cellAtX(x('13:10'), left, width), cellAtX(x('13:50', 4.9), left, width))
     expect(presentMarks({ ...input, open }).mine.map(r => r.label)).toEqual(['1:10–1:55pm'])
   })
-  it('a drag past either end of the bar stops at 8am and 11pm', () => {
+  it('a drag past either end of the bar stops at the ends of the day', () => {
     expect(cellAtX(-50, 0, 900)).toBe(0)
-    expect(cellAtX(2000, 0, 900)).toBe((23 - 8) * 60 / CELL - 1)
+    expect(cellAtX(2000, 0, 900)).toBe(24 * 60 / CELL - 1)
   })
 })

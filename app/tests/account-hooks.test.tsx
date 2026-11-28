@@ -46,7 +46,7 @@ describe('hooks with an account', () => {
     const store = createMemoryPersonalTables().forUser(A)
     await store.addBusy({ date: '2030-11-08', start: '09:00', end: '10:00', source: 'typed' })
     const { result } = renderHook(() => useBusyMarks(store))
-    await waitFor(() => expect(result.current.marks).toEqual({ '2030-11-08': Array.from({ length: 12 }, (_, i) => 12 + i) }))
+    await waitFor(() => expect(result.current.marks).toEqual({ '2030-11-08': Array.from({ length: 12 }, (_, i) => 108 + i) }))
     act(() => { result.current.setMarks({}) })
     await waitFor(async () => expect(await store.listBusy()).toEqual([]))
   })

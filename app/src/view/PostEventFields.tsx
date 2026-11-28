@@ -129,14 +129,14 @@ export function PostEventFields({ draft, fieldErrors, submitting, now, onSubmit,
           <div className="field">
             <label htmlFor="post-start"><span>START</span></label>
             {quiet
-              ? <TimePick id="post-start" label="Start" step={15} firstHour={6} lastHour={23} value={draft.start} {...pickProps('start')} onChange={v => { onChange('start', v); onBlur('start') }} />
+              ? <TimePick id="post-start" label="Start" step={15} firstHour={0} lastHour={23} value={draft.start} {...pickProps('start')} onChange={v => { onChange('start', v); onBlur('start') }} />
               : <input id="post-start" type="time" value={draft.start} required {...fieldProps('start')} onChange={(e) => onChange('start', e.target.value)} onBlur={() => onBlur('start')} />}
             {fieldError('start')}
           </div>
           <div className="field">
             <label htmlFor="post-end"><span>END</span></label>
             {quiet
-              ? <TimePick id="post-end" label="End" step={15} firstHour={6} lastHour={23} value={draft.end} {...pickProps('end')} onChange={v => { onChange('end', v); onBlur('end') }} />
+              ? <TimePick id="post-end" label="End" step={15} firstHour={0} lastHour={23} value={draft.end} {...pickProps('end')} onChange={v => { onChange('end', v); onBlur('end') }} />
               : <input id="post-end" type="time" value={draft.end} required {...fieldProps('end')} onChange={(e) => onChange('end', e.target.value)} onBlur={() => onBlur('end')} />}
             {fieldError('end')}
           </div>

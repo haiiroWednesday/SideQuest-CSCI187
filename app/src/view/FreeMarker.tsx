@@ -87,9 +87,9 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onUnbusy, onResh
           listed with times you can change by tapping them. Drag still works on the bar above. */}
       <form className="sq-busy-form sq-busy-row" onSubmit={submit} aria-label={`Add ${markName.toLowerCase()} time, ${dayName}`}>
         <span className="sq-busy-form-name" aria-hidden="true">Busy</span>
-        <TimePick label={`${markName} from`} placeholder="From" value={from} onChange={v => { setFrom(v); setTypedError(false) }} step={5} firstHour={8} lastHour={22} />
+        <TimePick label={`${markName} from`} placeholder="From" value={from} onChange={v => { setFrom(v); setTypedError(false) }} step={5} firstHour={0} lastHour={23} />
         <span aria-hidden="true">–</span>
-        <TimePick label="until" placeholder="Until" value={until} onChange={v => { setUntil(v); setTypedError(false) }} step={5} firstHour={8} lastHour={23} />
+        <TimePick label="until" placeholder="Until" value={until} onChange={v => { setUntil(v); setTypedError(false) }} step={5} firstHour={0} lastHour={23} />
         <button type="submit" className="sq-text-button sq-ink-act sq-busy-add sq-busy-add-small">{!freeMode && model.mine.length > 0 ? 'Add another' : 'Add'}</button>
       </form>
       {typedError && <p className="sq-busy-error" role="alert">{from && until ? 'End after start' : 'Pick both times'}</p>}
@@ -138,9 +138,9 @@ function BusyTime({ run, google = false, onEdit, onRemove }: { run: MarkRun; goo
       {google ? <span className="sq-busy-tag sq-google-tag">Google</span> : <span className="sq-busy-tag">Yours</span>}
       {onEdit
         ? <>
-            <TimePick label={`Busy ${run.label}, starts`} placeholder="From" value={run.start} onChange={v => change(v, run.end)} step={5} firstHour={8} lastHour={22} />
+            <TimePick label={`Busy ${run.label}, starts`} placeholder="From" value={run.start} onChange={v => change(v, run.end)} step={5} firstHour={0} lastHour={23} />
             <span aria-hidden="true">–</span>
-            <TimePick label={`Busy ${run.label}, ends`} placeholder="Until" value={run.end} onChange={v => change(run.start, v)} step={5} firstHour={8} lastHour={23} />
+            <TimePick label={`Busy ${run.label}, ends`} placeholder="Until" value={run.end} onChange={v => change(run.start, v)} step={5} firstHour={0} lastHour={23} />
           </>
         : <span className="sq-busy-time-label">{run.label}</span>}
       <button type="button" className="sq-slip-x" aria-label={`Free again ${run.label}`} onClick={onRemove}>×</button>

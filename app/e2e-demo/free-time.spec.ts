@@ -130,7 +130,7 @@ test('Monday with nothing planned is one long free gap until you say otherwise',
   await open(page, 'discover/when')
   await page.getByRole('button', { name: /^Mon\s*30/ }).click()
   await typeBusy(page, '08:00', '17:00')
-  expect(await free(page)).toEqual(['5–11pm'])
+  expect(await free(page)).toEqual(['7–8am', '5pm–12am'])
   await expect(page.getByRole('button', { name: /^Mon\s*30\s*Nov, has busy time/ })).toBeVisible()
   await shot('monday')
 })
@@ -160,13 +160,13 @@ test('the time picker: two taps, Escape or a tap outside closes it, focus comes 
   await shot('one-time')
 })
 
-// Drag helpers: the open day runs 8am to 11pm, top to bottom, in 180 five-minute steps.
+// Drag helpers: the open day shows 7am to midnight until the night is opened, top to bottom, in 204 five-minute steps.
 // cellY is the middle of the step that starts at hhmm.
-const STEPS = 180
+const STEPS = 204
 const openDay = (page: import('@playwright/test').Page) => page.locator('.sq-wk-open')
 const cellY = async (page: import('@playwright/test').Page, hhmm: string) => {
   const box = (await openDay(page).boundingBox())!
-  const [h, m] = hhmm.split(':').map(Number), i = (h * 60 + m - 480) / 5
+  const [h, m] = hhmm.split(':').map(Number), i = (h * 60 + m - 420) / 5
   return { x: box.x + box.width / 2, y: box.y + ((i + .5) / STEPS) * box.height }
 }
 const dragDay = async (page: import('@playwright/test').Page, from: { x: number; y: number }, to: { x: number; y: number }) => {

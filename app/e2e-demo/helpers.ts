@@ -65,7 +65,7 @@ export async function pickDate(page: Page, label: string, ymd: string, scope?: i
 }
 
 /** Says "I am only free from → until today" the way a student does now that there is one mode: Busy from
- *  8am up to `from`, and Busy from `until` to 11pm, typed into the Busy row under the day bar. */
+ *  7am up to `from`, and Busy from `until` to the end of the day, typed into the Busy row under the day bar. */
 export async function onlyFree(page: Page, from: string, until: string) {
   // Busy time is typed on the When step. From another step, go there and come back afterwards.
   const back = await page.evaluate(() => location.hash)
@@ -77,8 +77,8 @@ export async function onlyFree(page: Page, from: string, until: string) {
     await page.getByRole('button', { name: /^Add( another)?$/ }).click()
     await page.waitForTimeout(150)
   }
-  if (from > '08:00') await add('08:00', from)
-  if (until < '23:00') await add(until, '23:00')
+  if (from > '07:00') await add('07:00', from)
+  if (until < '23:55') await add(until, '23:55')
   if (away) { await page.evaluate(h => { location.hash = h }, back); await page.waitForTimeout(150) }
 }
 

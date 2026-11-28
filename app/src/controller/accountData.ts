@@ -165,10 +165,10 @@ export function marksToRanges(marks: FreeMarks): Omit<BusyDraft, 'source'>[] {
     let first = -1, last = -2
     for (const cell of [...cells].sort((a, b) => a - b)) {
       if (cell === last + 1) { last = cell; continue }
-      if (first >= 0) out.push({ date, start: hhmm(DAY_START + first * CELL), end: hhmm(DAY_START + (last + 1) * CELL) })
+      if (first >= 0) out.push({ date, start: hhmm(DAY_START + first * CELL), end: hhmm(Math.min(DAY_START + (last + 1) * CELL, 24 * 60 - 1)) })
       first = last = cell
     }
-    if (first >= 0) out.push({ date, start: hhmm(DAY_START + first * CELL), end: hhmm(DAY_START + (last + 1) * CELL) })
+    if (first >= 0) out.push({ date, start: hhmm(DAY_START + first * CELL), end: hhmm(Math.min(DAY_START + (last + 1) * CELL, 24 * 60 - 1)) })
   }
   return out
 }

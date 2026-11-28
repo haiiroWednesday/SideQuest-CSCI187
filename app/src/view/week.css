@@ -49,3 +49,7 @@
   .sq-wk-plan b { font-size: 12.5px; }
 }
 @media (prefers-reduced-motion: no-preference) { .sq-wk-col { transition: background-color .15s; } }
+
+/* The night before 7am: drawn when asked for, never offered as free time. */
+.sq-wk-night { position: absolute; left: 0; right: 0; top: 0; pointer-events: none; background: #efe6d8; border-bottom: 1.5px dashed rgba(117, 23, 40, .35); }
+.sq-week-nightbtn { justify-self: start; min-height: 44px; margin-top: 4px; }

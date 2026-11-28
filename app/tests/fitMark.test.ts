@@ -199,7 +199,7 @@ describe('the week the day bar hands to the mark', () => {
     const marked = { ...base, marks: addBusy({ ...base, date: DAY }, '19:00', '21:00')! }
     expect(presentMarks(marked).fitDays.flatMap(day => day.windows)).toEqual(freeWindows(marked))
     // 10:40 now, a seminar at noon and a shift from 7 to 9.
-    expect(dayOf(marked, DAY).windows).toEqual([free('10:40', '12:00'), free('13:00', '19:00'), free('21:00', '23:00')])
+    expect(dayOf(marked, DAY).windows).toEqual([free('10:40', '12:00'), free('13:00', '19:00'), free('21:00', '23:59')])
   })
   it('in Free mode knows a day only once free time is marked on it', () => {
     const freeMode: MarkInput = { ...base, mode: 'free' }

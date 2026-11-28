@@ -57,7 +57,7 @@ export function TimePick({ id, label, value, onChange, step = 30, firstHour = 7,
   const [h, m] = value ? value.split(':').map(Number) : [NaN, 0]
   const minutes = Array.from({ length: 60 / step }, (_, i) => i * step)
   const hours = Array.from({ length: lastHour - firstHour + 1 }, (_, i) => firstHour + i)
-  const parts: [string, number[]][] = [['Morning', hours.filter(x => x < 12)], ['Afternoon', hours.filter(x => x >= 12 && x < 17)], ['Evening', hours.filter(x => x >= 17)]]
+  const parts = ([['Night', hours.filter(x => x < 6)], ['Morning', hours.filter(x => x >= 6 && x < 12)], ['Afternoon', hours.filter(x => x >= 12 && x < 17)], ['Evening', hours.filter(x => x >= 17)]] as [string, number[]][]).filter(part => part[1].length)
   const setHour = (hour: number) => onChange(`${pad(hour)}:${pad(Number.isNaN(h) ? 0 : m)}`)
   const setMin = (min: number) => { onChange(`${pad(Number.isNaN(h) ? 12 : h)}:${pad(min)}`); setOpen(false); btn.current?.focus() }
   useEffect(() => { if (open) box.current?.querySelector<HTMLButtonElement>('[aria-pressed="true"], .sq-pick-chip')?.focus() }, [open])

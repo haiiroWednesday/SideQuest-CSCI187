@@ -7,7 +7,7 @@
 // The grid is pointer-only and hidden from screen readers; the typed times and lists beside it do the
 // same jobs by keyboard. The controller owns the five-minute steps; this view only reports cells.
 import { useRef, useState } from 'react'
-import { CELL, CELLS, DAY_START, TAP_CELLS, span, type MarkModel, type MarkRun, type WeekDay } from '../controller/freeMarks'
+import { CELL, CELLS, DAY_START, NIGHT_CELLS, TAP_CELLS, span, type MarkModel, type MarkRun, type WeekDay } from '../controller/freeMarks'
 import { usePhoneViewport } from './useMobileDetailFocus'
 import './week.css'
 
@@ -15,9 +15,14 @@ type Reshape = (from: { first: number; last: number } | null, first: number, las
 type Drag = { kind: 'new' | 'move' | 'start' | 'end'; from: MarkRun | null; anchor: number; grab: number; first: number; last: number; lo: number; hi: number; moved: boolean }
 
 const EDGE_PX = 9
-const HOURS = (CELLS * CELL) / 60
-const pct = (i: number) => (i / CELLS) * 100
-const hourLabel = (h: number) => (h === 12 ? '12pm' : h < 12 ? `${h}am` : `${h - 12}pm`)
+// The rows on screen. The day is all 24 hours, and the night before 7am is folded away until it is asked for
+// or something sits in it, so a phone still shows a whole waking day without scrolling. One week is drawn at a
+// time, so the fold is kept here and set as the week renders.
+const view = { first: NIGHT_CELLS }
+const rows = () => CELLS - view.first
+const shownHours = () => (rows() * CELL) / 60
+const pct = (i: number) => ((i - view.first) / rows()) * 100
+const hourLabel = (h: number) => (h % 24 === 0 ? '12am' : h === 12 ? '12pm' : h < 12 ? `${h}am` : `${h - 12}pm`)
 const duration = (cells: number) => {
   const m = cells * CELL, h = Math.floor(m / 60), r = m % 60
   return `${h ? `${h} hr` : ''}${h && r ? ' ' : ''}${r ? `${r} min` : ''}`
@@ -31,13 +36,17 @@ export function WeekBusy({ model, onDate, onReshape, freeMode }: {
 }) {
   const phone = usePhoneViewport()
   const open = model.week.findIndex(d => d.selected)
+  // Anything before 7am (a plan, busy time, a Google event) opens the night by itself.
+  const [night, setNight] = useState(false)
+  const early = model.week.some(d => [...d.mine, ...d.google, ...d.plans].some(r => r.first < NIGHT_CELLS))
+  view.first = night || early ? 0 : NIGHT_CELLS
   // On a phone every closed day keeps a 50px leaf (44px or more on screen under the phone zoom, an easy tap)
   // and the open day takes the rest. The hours move inside the open day there, so it keeps its width.
   const columns = phone
     ? model.week.map((_, i) => (i === open ? 'minmax(0, 1fr)' : '50px')).join(' ')
     : `34px repeat(${model.week.length}, minmax(0, 1fr))`
   return (
-    <div className={'sq-week' + (freeMode ? ' sq-week-freemode' : '') + (phone ? ' sq-week-phone' : '')} style={{ '--sq-week-cols': columns, '--sq-week-hours': HOURS } as React.CSSProperties}>
+    <div className={'sq-week' + (freeMode ? ' sq-week-freemode' : '') + (phone ? ' sq-week-phone' : '')} style={{ '--sq-week-cols': columns, '--sq-week-hours': shownHours() } as React.CSSProperties}>
       <div className="sq-days sq-week-leaves" role="group" aria-label="Day">
         {model.days.map(d => (
           <button key={d.date} type="button" className="sq-dayleaf" aria-pressed={d.selected} data-today={d.today || undefined}
@@ -55,22 +64,26 @@ export function WeekBusy({ model, onDate, onReshape, freeMode }: {
           ? <OpenDay key={day.date} day={day} model={model} onReshape={onReshape} freeMode={freeMode} wide hours={phone} />
           : <ClosedDay key={day.date} day={day} onOpen={() => onDate(day.date)} freeMode={freeMode} labels={!phone} />)}
       </div>
+      {!early && <button type="button" className="sq-text-button sq-week-nightbtn" aria-pressed={night} onClick={() => setNight(on => !on)}>
+        {night ? 'Hide 12am to 7am' : 'Show 12am to 7am'}
+      </button>}
     </div>
   )
 }
 
 function Hours() {
-  const firstHour = DAY_START / 60
+  const firstHour = (DAY_START + view.first * CELL) / 60, hours = shownHours()
   return (
     <div className="sq-week-hours">
-      {Array.from({ length: HOURS / 2 + 1 }, (_, k) => firstHour + 2 * k).filter(h => h < firstHour + HOURS)
-        .map(h => <span key={h} style={{ top: ((h - firstHour) / HOURS) * 100 + '%' }}>{hourLabel(h)}</span>)}
+      {Array.from({ length: 13 }, (_, k) => 2 * k).filter(h => h > firstHour && h < firstHour + hours)
+        .map(h => <span key={h} style={{ top: ((h - firstHour) / hours) * 100 + '%' }}>{hourLabel(h)}</span>)}
     </div>
   )
 }
 
 function Lines() {
-  return <>{Array.from({ length: HOURS - 1 }, (_, k) => <i key={k} className="sq-wk-line" style={{ top: ((k + 1) / HOURS) * 100 + '%' }} />)}</>
+  const hours = shownHours()
+  return <>{Array.from({ length: hours - 1 }, (_, k) => <i key={k} className="sq-wk-line" style={{ top: ((k + 1) / hours) * 100 + '%' }} />)}</>
 }
 const at = (first: number, last: number): React.CSSProperties => ({ top: pct(first) + '%', height: `calc(${pct(last + 1) - pct(first)}% - 2px)` })
 
@@ -95,7 +108,8 @@ function lanes(plans: WeekDay['plans']) {
 
 function Blocks({ day, hidden, freeMode, labels, front = null }: { day: WeekDay; hidden: number; freeMode: boolean; labels: boolean; front?: string | null }) {
   return <>
-    {day.past > 0 && <i className="sq-wk-past" style={{ height: pct(day.past) + '%' }} />}
+    {view.first === 0 && <i className="sq-wk-night" style={{ height: pct(NIGHT_CELLS) + '%' }} />}
+    {day.past > view.first && <i className="sq-wk-past" style={{ height: pct(day.past) + '%' }} />}
     {lanes(day.plans).map(({ plan: p, lane, of }) => (
       <span key={p.id} data-plan={p.id} className={'sq-wk-plan' + (front === p.id ? ' sq-wk-front' : '')}
         style={{ ...at(p.first, p.last), left: front === p.id ? 'calc(var(--wk-inset, 0px) + 1px)' : `calc(var(--wk-inset, 0px) + ${Math.min(lane, 3) * (of > 2 ? 18 : 26)}% + 1px)`, zIndex: front === p.id ? 6 : 1 + lane }}>
@@ -131,8 +145,8 @@ function OpenDay({ day, model, onReshape, freeMode, wide, hours = false }: { day
   const col = useRef<HTMLDivElement>(null)
   const [drag, setDrag] = useState<Drag | null>(null)
   const [front, setFront] = useState<string | null>(null)
-  const cellAt = (y: number) => { const r = col.current!.getBoundingClientRect(); return Math.max(0, Math.min(CELLS - 1, Math.floor(((y - r.top) / r.height) * CELLS))) }
-  const yOf = (i: number) => { const r = col.current!.getBoundingClientRect(); return r.top + (i / CELLS) * r.height }
+  const cellAt = (y: number) => { const r = col.current!.getBoundingClientRect(); return Math.max(view.first, Math.min(CELLS - 1, view.first + Math.floor(((y - r.top) / r.height) * rows()))) }
+  const yOf = (i: number) => { const r = col.current!.getBoundingClientRect(); return r.top + ((i - view.first) / rows()) * r.height }
 
   const down = (e: React.PointerEvent) => {
     if (e.button !== 0) return

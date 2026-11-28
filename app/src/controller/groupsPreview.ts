@@ -14,7 +14,7 @@ import { YOU, personColor } from './groupPeople'
 import { MIN_COLUMN_SHARERS, bestPlanGroup, callOff as callOffInvite, canMakePlan, join, leaveInvite, makeInvite, markPlanned, personColumns,
   type CommonTime, type InviteDraft, type OpenInvite, type Slot, type SocialGroup } from './socialPlans'
 import { findEvents } from './findEvents'
-import { DAY_END, DAY_START, span } from './freeMarks'
+import { DAY_END, FREE_FROM as DAY_START, span } from './freeMarks'
 import { readSocial, sampleJoiners, unreadCount, writeSocial, type Notice, type SocialState } from './socialStore'
 
 export { GROUP_SIZE_LIMIT, MAX_IF_CONDITION }

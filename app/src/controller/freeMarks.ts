@@ -11,9 +11,14 @@ import { campusNow } from '../model/eventCatalog'
 
 /** Minutes in one step of the bar. Drags and typed times land on these. */
 export const CELL = 5
-export const DAY_START = 8 * 60
-export const DAY_END = 23 * 60
+// The day is all 24 hours (Nov 28). It used to stop at 8am and 11pm so a day fit a phone screen, which left
+// no room for a 7am practice or a midnight study session.
+export const DAY_START = 0
+export const DAY_END = 24 * 60
+/** Free time is counted from 7am. Before that is the night: drawn, plannable, but not offered as free time. */
+export const FREE_FROM = 7 * 60
 export const CELLS = (DAY_END - DAY_START) / CELL
+export const NIGHT_CELLS = (FREE_FROM - DAY_START) / CELL
 const HOUR = 60 / CELL
 const WEEK = 7
 /** A free gap is what is left over between busy times and plans. It counts once it could hold a short
@@ -29,7 +34,7 @@ export type MarkMode = 'busy' | 'free'
 export type Shortcut = 'now' | 'afternoon' | 'tonight'
 export type When = 'week' | Shortcut
 /** 'unset' is a step nobody marked in Free mode: not known to be free. */
-export type CellState = 'past' | 'busy' | 'mine' | 'free' | 'unset'
+export type CellState = 'past' | 'busy' | 'mine' | 'free' | 'unset' | 'night'
 
 export type MarkDay = { date: string; dow: string; day: number; month: string; today: boolean; marked: number; selected: boolean }
 export type MarkWindow = { date: string; start: string; end: string; label: string; dayLabel: string; first: number; last: number }
@@ -87,7 +92,9 @@ const pct = (i: number) => Math.round((i / CELLS) * 10000) / 100
 
 /** Kept for callers that already import these names; both are the model's one 12-hour clock. */
 export const clock = clockText
-export const span = clockSpan
+// A stretch that runs to midnight reads "11pm–12am" and is saved as ending 23:59, the last time of that day.
+export const span = (from: number, to: number) => (to >= 24 * 60 ? `${clockText(from)}–12am` : clockSpan(from, to))
+const endOf = (minutes: number) => hhmmOf(Math.min(minutes, 24 * 60 - 1))
 
 function addDays(date: string, n: number): string {
   const [y, m, d] = date.split('-').map(Number)
@@ -145,7 +152,7 @@ function freeCells(input: MarkInput, date: string): Set<number> {
   const free = modeOf(input) === 'free'
   const marked = new Set((free ? input.open?.[date] : input.marks[date]) ?? [])
   const out = new Set<number>()
-  for (let i = 0; i < CELLS; i++) if (!past.has(i) && !sched.has(i) && marked.has(i) === free) out.add(i)
+  for (let i = free ? 0 : NIGHT_CELLS; i < CELLS; i++) if (!past.has(i) && !sched.has(i) && marked.has(i) === free) out.add(i)
   return out
 }
 function gapsOf(input: MarkInput, date: string): [number, number][] {
@@ -173,10 +180,10 @@ function todayFor(input: MarkInput, when: Shortcut): { runs: [number, number][];
 export function freeWindows(input: MarkInput): { date: string; start: string; end: string }[] {
   const today = campusNow(input.now).date
   const when = input.when ?? 'week'
-  if (when !== 'week') return todayFor(input, when).runs.map(([a, b]) => ({ date: today, start: hhmmOf(cellStart(a)), end: hhmmOf(cellStart(b + 1)) }))
+  if (when !== 'week') return todayFor(input, when).runs.map(([a, b]) => ({ date: today, start: hhmmOf(cellStart(a)), end: endOf(cellStart(b + 1)) }))
   return [...Array(WEEK).keys()].flatMap(k => {
     const date = addDays(today, k)
-    return gapsOf(input, date).map(([a, b]) => ({ date, start: hhmmOf(cellStart(a)), end: hhmmOf(cellStart(b + 1)) }))
+    return gapsOf(input, date).map(([a, b]) => ({ date, start: hhmmOf(cellStart(a)), end: endOf(cellStart(b + 1)) }))
   })
 }
 
@@ -186,7 +193,7 @@ export function freeWindows(input: MarkInput): { date: string; start: string; en
 function fitDay(input: MarkInput, date: string): MarkModel['fitDays'][number] {
   const marked = (drawnMarks(input)[date] ?? []).length > 0
   const known = marked || (modeOf(input) === 'busy' && scheduleCells(input, date).size > 0)
-  return { date, known, windows: gapsOf(input, date).map(([a, b]) => ({ date, start: hhmmOf(cellStart(a)), end: hhmmOf(cellStart(b + 1)) })) }
+  return { date, known, windows: gapsOf(input, date).map(([a, b]) => ({ date, start: hhmmOf(cellStart(a)), end: endOf(cellStart(b + 1)) })) }
 }
 
 /** True once the student has said anything about their time in the current mode. */
@@ -232,13 +239,13 @@ export function presentMarks(input: MarkInput): MarkModel {
   const past = pastCells(date, input.now), sched = scheduleCells(input, date), mine = new Set(drawn[date] ?? [])
   const said = mode === 'free' ? 'you said free' : 'you said busy'
   const cells: MarkCell[] = [...Array(CELLS).keys()].map(i => {
-    const state: CellState = past.has(i) ? 'past' : sched.has(i) ? 'busy' : mine.has(i) ? 'mine' : mode === 'free' ? 'unset' : 'free'
-    const what = state === 'past' ? 'already over' : state === 'busy' ? 'in My Schedule' : state === 'mine' ? said : state === 'unset' ? 'not marked' : 'free'
+    const state: CellState = past.has(i) ? 'past' : sched.has(i) ? 'busy' : mine.has(i) ? 'mine' : mode === 'free' ? 'unset' : i < NIGHT_CELLS ? 'night' : 'free'
+    const what = state === 'past' ? 'already over' : state === 'busy' ? 'in My Schedule' : state === 'mine' ? said : state === 'unset' ? 'not marked' : state === 'night' ? 'night' : 'free'
     return { i, state, label: `${span(cellStart(i), cellStart(i) + CELL)}, ${what}` }
   })
-  const toRun = ([a, b]: [number, number]): MarkRun => ({ first: a, last: b, left: pct(a), width: pct(b + 1) - pct(a), label: span(cellStart(a), cellStart(b + 1)), start: hhmmOf(cellStart(a)), end: hhmmOf(cellStart(b + 1)) })
+  const toRun = ([a, b]: [number, number]): MarkRun => ({ first: a, last: b, left: pct(a), width: pct(b + 1) - pct(a), label: span(cellStart(a), cellStart(b + 1)), start: hhmmOf(cellStart(a)), end: endOf(cellStart(b + 1)) })
   const d = days.find(x => x.selected)!
-  const windows = gapsOf(input, date).map(([a, b]) => ({ date, first: a, last: b, start: hhmmOf(cellStart(a)), end: hhmmOf(cellStart(b + 1)), label: span(cellStart(a), cellStart(b + 1)), dayLabel: d.today ? 'Today' : `${d.dow} ${d.day}` }))
+  const windows = gapsOf(input, date).map(([a, b]) => ({ date, first: a, last: b, start: hhmmOf(cellStart(a)), end: endOf(cellStart(b + 1)), label: span(cellStart(a), cellStart(b + 1)), dayLabel: d.today ? 'Today' : `${d.dow} ${d.day}` }))
   const p = parts(today), when = input.when ?? 'week'
   const shortcuts = (['week', 'now', 'afternoon', 'tonight'] as When[]).map(key => ({
     key, on: key === when,
