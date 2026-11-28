@@ -23,23 +23,42 @@ function links(html) {
 
 /** "4:00-5:30 p.m.", "1-3 p.m.", "10:00 a.m. to 3:00 p.m.", "10:45 a.m.-12:15 p.m.", "8:00 p.m." (no end). */
 export function parseTimeRange(text) {
-  const m = /(\d{1,2})(?::(\d\d))?\s*(a\.?m\.?|p\.?m\.?)?\s*(?:-|–|—|to)\s*(\d{1,2})(?::(\d\d))?\s*(a\.?m\.?|p\.?m\.?)/i.exec(text)
-  const hm = (h, min, mer) => {
-    let hour = Number(h) % 12
-    if (/p/i.test(mer)) hour += 12
-    return String(hour).padStart(2, '0') + ':' + (min ?? '00')
+  // Match complete clock tokens, not substrings of malformed clocks. "Noon"
+  // is explicit; midnight without a date boundary is held by the interval rules.
+  const token = '(?<![\\d:])(?:noon|midnight|\\d{1,2}(?::\\d{2})?\\s*(?:a\\.?m\\.?|p\\.?m\\.?)?)(?![\\d:])'
+  const range = new RegExp('(' + token + ')\\s*(?:-|–|—|\\bto\\b)\\s*(' + token + ')', 'i')
+  const single = new RegExp('(?<![\\d:])(?:noon|midnight|\\d{1,2}(?::\\d{2})?\\s*(?:a\\.?m\\.?|p\\.?m\\.?))(?![\\d:])', 'i')
+  function clock(raw) {
+    const t = raw.trim().toLowerCase()
+    if (t === 'noon') return { hour: 12, minute: 0, mer: 'p' }
+    if (t === 'midnight') return { hour: 12, minute: 0, mer: 'a' }
+    const m = /^(\d{1,2})(?::(\d{2}))?\s*(?:([ap])\.?m\.?)?$/.exec(t)
+    if (!m || +m[1] < 1 || +m[1] > 12 || +(m[2] ?? 0) > 59) return null
+    return { hour: +m[1], minute: +(m[2] ?? 0), mer: m[3] ?? null }
   }
-  const validClock = (hour, minute) => Number(hour) >= 1 && Number(hour) <= 12 && (minute === undefined || Number(minute) <= 59)
+  const minutes = (c, mer) => c.hour % 12 * 60 + c.minute + (mer === 'p' ? 720 : 0)
+  const format = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0')
+  const m = range.exec(text)
   if (m) {
-    if (!validClock(m[1], m[2]) || !validClock(m[4], m[5])) return null
-    const endMer = m[6]
-    let startMer = m[3] ?? endMer
-    // "11-1 p.m." means 11 a.m. to 1 p.m.: a start hour above the end hour flips to morning.
-    if (!m[3] && Number(m[1]) % 12 > Number(m[4]) % 12) startMer = 'a.m.'
-    return { start: hm(m[1], m[2], startMer), end: hm(m[4], m[5], endMer), passage: m[0] }
+    const a = clock(m[1]), b = clock(m[2])
+    // A bare range (e.g. date 11-13) is not a clock. Fall through to an
+    // explicitly marked range or start elsewhere in the sentence.
+    if (a && b && (a.mer || b.mer)) {
+      const options = []
+      for (const am of a.mer ? [a.mer] : ['a','p']) for (const bm of b.mer ? [b.mer] : ['a','p']) {
+        const x = minutes(a, am), y = minutes(b, bm)
+        if (y > x) options.push([x,y])
+      }
+      options.sort((x,y) => (x[1]-x[0]) - (y[1]-y[0]))
+      if (options.length) return { start: format(options[0][0]), end: format(options[0][1]), passage: m[0].trim() }
+      return null
+    }
+    // An explicitly marked but invalid range must never fall back to its end.
+    if (/[ap]\.?m\.?|noon|midnight/i.test(m[0])) return null
   }
-  const single = /(\d{1,2})(?::(\d\d))?\s*(a\.?m\.?|p\.?m\.?)/i.exec(text)
-  return single && validClock(single[1], single[2]) ? { start: hm(single[1], single[2], single[3]), end: null, passage: single[0] } : null
+  const s = single.exec(text)
+  const c = s ? clock(s[0]) : null
+  return c?.mer ? { start: format(minutes(c,c.mer)), end: null, passage: s[0].trim() } : null
 }
 
 function isoDate(monthName, day, issueDate) {
@@ -107,9 +126,13 @@ function calendarRows(html, issue) {
     if (!paragraphs.length) continue
     const [title, info, ...rest] = paragraphs
     const time = info ? parseTimeRange(info.text) : null
-    const location = info && time ? (info.text.includes('|')
-      ? info.text.split('|').slice(1).join('|').trim() || null
-      : info.text.slice(info.text.indexOf(time.passage) + time.passage.length).match(/^\s*,\s*(.+)$/)?.[1]?.trim() || null) : null
+    const location = info && time ? (() => {
+      const at = info.text.indexOf(time.passage)
+      if (at < 0) return null
+      const before = info.text.slice(0,at).match(/^(.*?)\s*[,|]\s*$/)?.[1]?.trim()
+      const after = info.text.slice(at + time.passage.length).match(/^\s*[,|]\s*(.+)$/)?.[1]?.trim()
+      return before || after || null
+    })() : null
     // Per paragraph, so a sentence never runs into the next line's link text.
     const speaker = rest.map(p => speakerFrom(p.text)).find(Boolean) ?? null
     const access = rest.map(p => accessFrom(p.text)).find(Boolean) ?? null
