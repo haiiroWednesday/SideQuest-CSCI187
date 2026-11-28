@@ -40,6 +40,7 @@ const server = spawn(process.execPath, ['dist-server/index.js'], {
     SIDEQUEST_GROUPS_ENABLED: 'true', SIDEQUEST_AUTH_EMAIL_ENABLED: 'true',
     SIDEQUEST_AUTH_ALLOW_SIGNUP: 'false', SIDEQUEST_PUBLIC_GROUP_LOGIN: 'true',
     SIDEQUEST_AUTH_ALLOWED_DOMAINS: 'scu.edu', SIDEQUEST_PUBLIC_ORIGIN: base,
+    SIDEQUEST_ACCOUNTS_ENABLED: 'true',
   },
   stdio: 'ignore',
 })
@@ -244,6 +245,9 @@ try {
   pass('Twelve-person limit including organizer and cancellation enforced by real SQL')
   // Supabase logout revokes session/refresh credentials, but the old signed
   // access token can still be within its expiry. RPC session guard must deny.
+  // Warm the personal API and create a private row before logging out.
+  await expectStatus(await app('/api/me', b.token), 200, 'Active personal API before logout')
+  await expectStatus(await app('/api/me/busy', b.token, { date, start: '10:00', end: '11:00', source: 'typed' }), 201, 'Create personal busy fixture')
   const revoked = b.page.waitForResponse(r =>
     new URL(r.url()).pathname === '/api/auth/sign-out' && r.request().method() === 'POST')
   await b.page.getByRole('button', { name: 'Sign out', exact: true }).click()
@@ -260,6 +264,15 @@ try {
   await denied(await app(path, b.token), 'Logged-out token app gateway')
   await denied(await rpc('sidequest_group_list', b.token, {}), 'Logged-out token direct list')
   pass('UI sign-out revokes the actual provider session and blocks its still-unexpired signed token')
+  await denied(await app('/api/me', b.token), 'Revoked personal API read')
+  await denied(await app('/api/me/busy', b.token, { date, start: '12:00', end: '13:00', source: 'typed' }), 'Revoked personal API write')
+  for (const table of ['profiles', 'my_plans', 'someday_ideas', 'busy_times']) {
+    const rows = await json(await request(supabase + '/rest/v1/' + table, { key: anon, token: b.token }), 200, 'Revoked direct personal table read')
+    check(Array.isArray(rows) && rows.length === 0, 'Revoked token exposed personal rows.')
+  }
+  await denied(await request(supabase + '/rest/v1/busy_times', { key: anon, token: b.token, body: { busy_date: date, start_time: '12:00', end_time: '13:00', source: 'typed' } }), 'Revoked direct busy insert')
+  await expectStatus(await app('/api/me', c.token), 200, 'Unrelated personal session still works')
+  pass('Still-valid revoked JWT cannot read or write personal data via Node or PostgREST')
   const deletion = await admin.auth.admin.deleteUser(b.id)
   check(!deletion.error, 'Disposable account deletion failed.')
   const after = await json(await app(path, a.token), 200, 'Plan after member deletion')
