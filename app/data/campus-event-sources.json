@@ -16,43 +16,47 @@
       "page": "https://events.scu.edu/campus-calendar/all",
       "adapter": null,
       "access": "covered-by-parent-unverified",
-      "coverage": "Confirm against university feed before adding a second poll"
+      "coverage": "Same LiveWhale platform; site-wide feed may exclude individual groups. Compare IDs before adding separate polling; public group access and reuse must be confirmed."
     },
     {
       "id": "scu-global",
       "name": "Global Engagement",
       "page": "https://events.scu.edu/global-engagement/all",
       "adapter": null,
-      "access": "covered-by-parent-unverified"
+      "access": "covered-by-parent-unverified",
+      "coverage": "Same LiveWhale platform; site-wide feed may exclude individual groups. Compare IDs before adding separate polling; public group access and reuse must be confirmed."
     },
     {
       "id": "scu-sustainability",
       "name": "Sustainability",
       "page": "https://events.scu.edu/Sustainability/all",
       "adapter": null,
-      "access": "covered-by-parent-unverified"
+      "access": "covered-by-parent-unverified",
+      "coverage": "Same LiveWhale platform; site-wide feed may exclude individual groups. Compare IDs before adding separate polling; public group access and reuse must be confirmed."
     },
     {
       "id": "scu-oml",
       "name": "Office for Multicultural Learning",
       "page": "https://events.scu.edu/office-for-multicultural-learning/",
       "adapter": null,
-      "access": "covered-by-parent-unverified"
+      "access": "covered-by-parent-unverified",
+      "coverage": "Same LiveWhale platform; site-wide feed may exclude individual groups. Compare IDs before adding separate polling; public group access and reuse must be confirmed."
     },
     {
       "id": "scu-arts",
       "name": "Arts and Sciences",
       "page": "https://events.scu.edu/arts-and-sciences/all",
       "adapter": null,
-      "access": "covered-by-parent-unverified"
+      "access": "covered-by-parent-unverified",
+      "coverage": "Same LiveWhale platform; site-wide feed may exclude individual groups. Compare IDs before adding separate polling; public group access and reuse must be confirmed."
     },
     {
       "id": "scu-library",
       "name": "University Library",
       "page": "https://www.scu.edu/library/news/calendar/",
       "adapter": null,
-      "access": "research-only",
-      "coverage": "Observed library and Archives and Special Collections records in central feed; distinguish opening hours, closures, and actual events."
+      "access": "central-calendar-linked-coverage-unverified",
+      "coverage": "Library calendar full-calendar link redirects to central SCU calendar. Compare occurrence IDs before adding separate polling."
     },
     {
       "id": "scu-museum",
@@ -126,17 +130,21 @@
       "id": "scu-engineering-clubs-calendar",
       "name": "Engineering RSO Events Calendar",
       "page": "https://calendar.google.com/calendar/embed?ctz=America%2FLos_Angeles&src=c_5ec131520d2017819f002b564c8d93508b150f6e89002ccd86726536fdf4d6a3%40group.calendar.google.com",
-      "adapter": null,
-      "access": "public-link-verified-export-unverified",
-      "coverage": "Official Engineering student organizations page links this calendar. Candidate public iCalendar path only after owner confirms publication scope."
+      "adapter": "google-public-calendar",
+      "access": "official-public-link-verified-api-access-pending",
+      "coverage": "Public calendar linked by SCU; API reader implemented. Provider access, attendee eligibility and reuse need verification.",
+      "calendarId": "c_5ec131520d2017819f002b564c8d93508b150f6e89002ccd86726536fdf4d6a3@group.calendar.google.com",
+      "calendarUrl": "https://calendar.google.com/calendar/embed?ctz=America%2FLos_Angeles&src=c_5ec131520d2017819f002b564c8d93508b150f6e89002ccd86726536fdf4d6a3%40group.calendar.google.com"
     },
     {
       "id": "scu-ecp-clubs-calendar",
       "name": "Education and Counseling Psychology student clubs",
       "page": "https://www.scu.edu/ecp/studentclubs/",
-      "adapter": null,
-      "access": "public-link-verified-export-unverified",
-      "coverage": "Official school page links a separate Google Calendar. Confirm intended audience and owner-approved public iCalendar URL."
+      "adapter": "google-public-calendar",
+      "access": "official-public-link-verified-api-access-pending",
+      "coverage": "Public calendar linked by SCU; API reader implemented. Provider access, attendee eligibility and reuse need verification.",
+      "calendarId": "c_e251566a475a8ce6b66bf3b1b5d584ac9c38c0ab036c0b5ece30cad862daa25e@group.calendar.google.com",
+      "calendarUrl": "https://calendar.google.com/calendar/embed?ctz=America%2FLos_Angeles&src=c_e251566a475a8ce6b66bf3b1b5d584ac9c38c0ab036c0b5ece30cad862daa25e%40group.calendar.google.com"
     },
     {
       "id": "scu-apb",
@@ -177,6 +185,16 @@
       "adapter": null,
       "access": "research-only",
       "coverage": "Official event promotion and submission channels; compare central feed and request approved export."
+    },
+    {
+      "id": "scu-recreation-mpr",
+      "name": "Malley Center Multipurpose Room calendar",
+      "page": "https://www.scu.edu/recreation/calendars/mpr/",
+      "adapter": "google-public-calendar",
+      "calendarId": "c_188fcrbnmllk0ihrkovmh5b7t82vq@resource.calendar.google.com",
+      "calendarUrl": "https://calendar.google.com/calendar/embed?ctz=America%2FLos_Angeles&src=c_188fcrbnmllk0ihrkovmh5b7t82vq%40resource.calendar.google.com",
+      "access": "official-public-link-verified-api-access-pending",
+      "coverage": "Public calendar linked by SCU; API reader implemented. Provider access, attendee eligibility and reuse need verification."
     }
   ]
 }
