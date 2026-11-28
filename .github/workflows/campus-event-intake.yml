@@ -4,6 +4,7 @@ on:
     paths:
       - 'app/scripts/campus-intake/**'
       - 'app/scripts/refresh-campus-events.mjs'
+      - 'app/scripts/refresh-independent-events.mjs'
       - 'app/data/campus-event-sources.json'
       - 'app/src/controller/prepareReviewedPublication.ts'
       - 'app/tests/reviewed-campus-publication.test.ts'
@@ -34,6 +35,8 @@ jobs:
           node-version: '22'
       - run: node --test app/scripts/campus-intake/intake.test.mjs
       - run: node --test app/scripts/campus-intake/knownAnswers.test.mjs
+      - run: node --test app/scripts/campus-intake/independentSources.test.mjs
+      - run: node app/scripts/refresh-independent-events.mjs
       - run: node app/scripts/refresh-campus-events.mjs
   collect:
     needs: offline-tests
@@ -54,6 +57,28 @@ jobs:
           name: scu-event-review-snapshot
           path: intake-output/scu-events.json
           if-no-files-found: error
+          retention-days: 7
+
+  collect-independent:
+    needs: offline-tests
+    if: (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.collect)) && vars.SIDEQUEST_INDEPENDENT_FEEDS != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Collect approved independent sources
+        env:
+          SIDEQUEST_INDEPENDENT_FEEDS: ${{ vars.SIDEQUEST_INDEPENDENT_FEEDS }}
+        run: node app/scripts/refresh-independent-events.mjs --approved-read --output intake-output/independent-events.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: independent-campus-event-review
+          path: intake-output/independent-events.json
+          if-no-files-found: ignore
           retention-days: 7
 
   isolated-publication:
