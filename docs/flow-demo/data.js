@@ -3,6 +3,8 @@
 const DECIDED = [
   'Built Nov 28: opening the app shows events. Discover is one page with the kinds and the "Fits my free time" chip on top and the list under them. No steps.',
   'Built Nov 28: the week of busy, free and Google time is on top of My Schedule, with busy-time editing and "Clear busy time".',
+  'Built Nov 28: the week picks the day and the timeline under it shows that day, so no plan is listed twice. Plans after this week stay listed. No card opens by itself.',
+  'Removed Nov 28: the line under a free slip ("Marketplace is open until 7pm"). Backed up.',
   'Built Nov 28: setup is asked once, on the first open with no busy time and no Google Calendar. "Add busy time" or "Not now", and it never asks again.',
   'No "Our pick", no Picks step, no separate What step.',
   'The calendar-file upload goes. People want one tap to connect. Off the screen since Nov 27.',
@@ -16,11 +18,11 @@ const DECIDED = [
 ]
 // Open item: [key, text]. Keys are saved with her answers.
 const OPEN = [
-  ['week-trail-merge', 'The week is now on top of My Schedule, and the timeline under it shows the same plans. My suggestion: the week picks the day and the timeline shows only that day. Options come as a design round, phone and laptop.'],
-  ['slip-hint', 'The line under a free slip, like "Marketplace is open until 7pm, 1 min walk". It names a place to eat that is open in that free stretch, and a tap opens it on the map. You found it confusing. My suggestion: remove it. Say yes and it goes, with a backup.'],
-  ['week-names', 'Plan blocks in the week carry no names now. A tap brings one forward with its name and time, and every plan is named in the timeline under the week. Say if you want the names back.'],
-  ['pin-field', 'Posting: dropping a pin needs a new shared event field (the pin\'s spot). The team has to agree first. Ask them?'],
-  ['discover-free-strip', 'Discover now says what it filters by with the "Fits my free time" chip. Say if it needs more than that.'],
+  ['iphone-edge', 'Tickets on your iPhone: the outer edge was being cut off by Safari, so they sank into the page. The fix is in. I cannot run Safari here, so tell me if the tickets look like paper again.'],
+  ['week-names', 'Plan blocks in the week carry no names. A tap brings one forward with its name and time, and the timeline under the week names every plan of that day. Say if you want the names back.'],
+  ['pin-field', 'Posting: dropping a pin needs a new column in the events table. That is Daven\'s area (event creation and database), so it is in the note to him.'],
+  ['google-setup', 'The Google button in setup waits on sign-in (pull requests 94 and 102). Until a student can sign in, the button could do nothing.'],
+  ['discover-free-strip', 'Discover says what it filters by with the "Fits my free time" chip. Say if it needs more than that.'],
   ['bold-look', 'A bolder, organic look with stars in the pages. Its own design round.'],
 ]
 const TALK = [
@@ -50,7 +52,7 @@ const FLOWS = [
     ['map-fits', 'The map can show only what fits.', 'stays', '', ['C3']],
   ]],
   ['D', 'My Schedule', '1:00', [
-    ['schedule', 'Today first. The day is drawn as a trail, with free time beside it.', 'change', 'The week above it shows the same plans. To decide: the week picks the day, the timeline shows that day', ['C1', 'C9']],
+    ['schedule', 'Today first. The day is drawn as a trail, with free time beside it.', 'stays', 'Shows the day opened in the week. No card opens by itself', ['C1', 'C9']],
     ['step-when', 'Your week of busy, free and Google time.', 'stays', 'On top of My Schedule. 7am to midnight, one tap opens the night', ['C1', 'C3']],
     ['schedule-clash', 'Two plans at once: the clash sheet asks which to keep.', 'stays', '', []],
     ['schedule-tickets', 'The same plans as tickets.', 'stays', '', ['C9']],
@@ -69,7 +71,7 @@ const FLOWS = [
 ]
 // Repeat: [code, title, what, proposal, screenshots, decided (text) or undefined]
 const CUL = [
-  ['C1', 'One week, three places', 'Discover, My Schedule and Groups each draw your time.', '', ['step-when', 'schedule', 'groups-share'], 'One week, in My Schedule. Discover only lists events. How the week and the Trail merge is a design round.'],
+  ['C1', 'One week, three places', 'Discover, My Schedule and Groups each draw your time.', '', ['step-when', 'schedule', 'groups-share'], 'Built Nov 28. One week, in My Schedule. Discover only lists events.'],
   ['C12', 'Steps for a one-page job', 'Discover had a step bar, a "See what fits" button and a tab.', '', ['step-when', 'step-events'], 'Discover is one page again. The steps go.'],
   ['C2', 'Five ways to add busy time', 'Drag on the week, From and Until, "Mark busy" on a free slip, a sentence or the mic, a calendar file, and Google.', '', ['step-when', 'step-when-edit', 'discover-bringin'], 'Done Nov 27. "Mark busy" is off the free slips and the calendar-file button is off the screen. Four ways are left: drag on the week, From and Until, a sentence or the mic, and Google.'],
   ['C3', 'Free time said four times', 'Gold columns in the week, a list of free slips beside them, "13 events fit", and the fit mark on every ticket.', '', ['step-events', 'x-c3'], 'The fit mark stays on every ticket. The note under it is shorter now: "8 min late from Dinner with the Games Society" (w19, w20).'],
@@ -78,7 +80,7 @@ const CUL = [
   ['C6', 'Who\'s in, three entrances', 'On each free slip, Groups\' "I\'m free, who\'s in?", and sharing your free time.', '', ['step-when', 'groups'], 'Done Nov 27. "Who\'s in?" starts in Groups only. The free slips on Discover have no buttons.'],
   ['C7', 'Leftover food shows in two places', 'It had a block of its own on the first page, "Food left, come now", on top of the "Free food" filter. The app only knows food is left when the host taps "Share leftover food" on their own live event.', '', ['x-c7', 'card-now'], 'Done Nov 27. The block is gone from the first page. The event\'s own ticket says "Food left · 24 min" and leads today\'s list until the 30 minutes run out.'],
   ['C8', 'What you can tap on an opened ticket', '1 the place (opens the map), 2 My day, 3 Walk there, 4 "Let my groups see I\'m going", 5 Plan it. I listed this as a repeat. Looking again, each does its own job and Plan it is clearly the main one.', '', ['x-c8', 'card-now'], '~Keep the ticket as it is. Add a note if you see something to cut.'],
-  ['C9', 'My Schedule drawn twice', 'Trail and Tickets are two views of the same plans, with a switch. The week will be a third.', 'Settle this in the same design round as C1: one view of your plans.', ['schedule', 'schedule-tickets', 'step-when']],
+  ['C9', 'My Schedule drawn twice', 'Trail and Tickets are two views of the same plans, with a switch. The week will be a third.', '', ['schedule', 'schedule-tickets', 'step-when'], 'Built Nov 28. The week picks the day and the timeline under it shows that day. The "next up" card that opened by itself is gone.'],
   ['C10', 'Stars only in the header', 'Constellation stars sit on the header while the pages stay plain.', '', ['step-events'], 'Yes. A bolder, organic interface with stars in the pages, as its own design round after the cuts.'],
   ['C11', 'Google connect has no screen', 'The import passes 41 tests against a stand-in for Google. The connect button is on no page, and the server has no Google credentials.', '', ['google-today'], 'Yes. "Connect Google Calendar" goes first in setup and in My Schedule. It comes with the setup design round. You add the credentials on the server (docs/GOOGLE_SETUP.md).'],
   ['C13', 'The microphone', 'It uses the browser\'s speech recognition. It has only been tested with a stand-in, never on a real phone, and it cannot run inside these review pages at all.', '', ['discover-bringin'], 'Yes. You test it on a real iPhone or Android phone on the live site. If it fails there, the mic is hidden and typing stays.'],
