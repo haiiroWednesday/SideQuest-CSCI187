@@ -35,7 +35,7 @@ jobs:
           node-version: '22'
       - run: node --test app/scripts/campus-intake/intake.test.mjs
       - run: node --test app/scripts/campus-intake/knownAnswers.test.mjs
-      - run: node --test app/scripts/campus-intake/independentSources.test.mjs
+      - run: node --test app/scripts/campus-intake/independentSources.test.mjs app/scripts/campus-intake/googlePublicCalendar.test.mjs
       - run: node app/scripts/refresh-independent-events.mjs
       - run: node app/scripts/refresh-campus-events.mjs
   collect:
@@ -72,6 +72,7 @@ jobs:
       - name: Collect approved independent sources
         env:
           SIDEQUEST_INDEPENDENT_FEEDS: ${{ vars.SIDEQUEST_INDEPENDENT_FEEDS }}
+          SIDEQUEST_GOOGLE_PUBLIC_CALENDAR_API_KEY: ${{ secrets.SIDEQUEST_GOOGLE_PUBLIC_CALENDAR_API_KEY }}
         run: node app/scripts/refresh-independent-events.mjs --approved-read --output intake-output/independent-events.json
       - uses: actions/upload-artifact@v4
         if: always()
