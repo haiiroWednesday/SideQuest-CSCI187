@@ -28,7 +28,7 @@ test('asks LiveWhale for the fields its default JSON leaves out', async () => {
       { status: 200, headers: { 'content-type': 'application/json' } })
   }
   await collectLiveWhale(F.SOURCE, { approvedRead: true, fetchImpl, now: new Date('2026-11-24T19:00:00Z'), horizonDays: 14 })
-  assert.match(seen[0], new RegExp('/response_fields/' + RESPONSE_FIELDS.join(',') + '/'))
+  assert.ok(new URL(seen[0]).pathname.endsWith('/response_fields/' + RESPONSE_FIELDS.join(',')))
   assert.deepEqual(RESPONSE_FIELDS, ['location', 'group_title', 'event_types', 'summary', 'last_modified', 'registration', 'status'])
 })
 

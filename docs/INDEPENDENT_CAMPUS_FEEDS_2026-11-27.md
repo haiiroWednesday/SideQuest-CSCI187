@@ -81,3 +81,34 @@ The user requires ignoring events without explicit start times. The internal org
 ### Verification
 
 The original PR #103 head 72fc47447f0445a1dccc44049310727b9a0210e8 passed Campus event intake, CI and SideQuest React CI. The subsequent Google and time-rule changes require new exact-head CI, a real approved API response, and end-to-end publication acceptance. No source approval variable, secret, production flag, migration, or live publication was changed.
+
+## One-time live acceptance, November 27, 2026 (Pacific)
+
+These observations supersede the DNS and synthetic-only results above for the sources tested. Commands ran locally with source-specific reads for this investigation. Scheduled reuse, publication and hosted deployment still need owner review. The repository's v5.1 visual audit (pages 2, 6 and 12) governs source evidence, mandatory ends and canonical identity. Daven owns ingestion decisions. These organizer calendar reads use no personal Google account.
+
+| Source and path exercised | Actual result | Decision |
+| --- | --- | --- |
+| [Qlusion](https://www.qlusion.com/) | The cloud browser reached an empty /lander page. The previously indexed SCU calendar and categories do not establish current service or operator control. | No event or authorized export verified. Reconfirm the operator and feed origin before accepting an export. |
+| [CSA](https://linktr.ee/SCU_CSA) and [ASG](https://www.scu.edu/csi/organizations/resources/advertising/) | CSA links its own Google embed. The corresponding public basic.ics returned 404. ASG describes reviewed submissions to its weekly student email. | Neither yielded a readable organizer event export. |
+| Engineering and ECP club calendars | Registered public exports returned HTTP 200 with 12 and 43 VEVENT components respectively. The one-off UTC reader retained 0 and 1 upcoming candidates. ECP omitted 11 series/duplicate-UID components, 4 unverified starts, and 27 outside the window. | Source UID and original calendar link retained. Candidate awaits host, attendance and identity review. |
+| [Campus Recreation](https://www.scu.edu/recreation/fitness/fitnessclassschedule/) | The registered MP Room export returned 99 components. Seven future one-offs reached review, 86 series/duplicate-UID components were omitted, and six fell outside the window. The class page lists explicit exceptions including November 27 and 29. | A room reservation supplies no evidence of public admission. Do not publish reservations or infer a class from its regular hour. |
+| [Graduate Engineering Circuit](https://www.scu.edu/email/engineering/graduate-programs/weekly-newsletters/f26w8/) | The previous parser read zero cards from Week 8. The fix recovered all five visible cards, including WAVE's event link (518254). The full index-to-file command read weeks 8, 7, 6 and 5, returning four issue-specific mentions of the December 1 Warriors event at 20:00. | Four evidence records for the same advertised game. All lack an end. No canonical merge or publication. |
+| [SCU Presents Dance](https://scupresents.scu.edu/section/test-3-1h2q) | All ten linked ticket pages read successfully. Three scheduled showtimes fell in the 45-day window. Choreographers’ Gallery starts December 3 at 20:00 and December 4 at 19:00 and 21:00. The ticket pages give 23:00 for all three ends. LiveWhale occurrences 507179, 507180 and 507181 have matching starts but no ends. | Preserve three ticket URLs. The two December 4 intervals overlap at the same venue. Confirm the meaning of the ticketing end and the identity mapping before applying any correction. |
+| [Men's basketball](https://santaclarabroncos.com/sports/mbball/schedule) and [women's basketball](https://santaclarabroncos.com/sports/wbball/schedule) | All 35 men's and 32 women's structured games returned identical starts and ends. The men's page shows Utah Tech, home, November 28 at 16:00 (game 11097). LiveWhale 525213 independently lists 16:00–18:00. The women's game against Texas Tech is at a neutral venue in the U.S. Virgin Islands. | Athletics verifies the home game's start, not the 18:00 end. Do not synthesize two-hour games or publish neutral/away games as campus opportunities. No dedicated athletics importer activated. |
+| #86 and merged #92 | #86's canonical URL fixed a 301. Its CLI validated six pages, 546 rows, excluded 190 untimed/all-day rows and retained 356 (246 held, 110 awaiting review). Separately, the built #92 server with a local empty catalog fixture and live upstream returned 196 events from /api/events; a detail lookup returned the same UUID and Chromium displayed the live listing. Two initial #92 starts timed out on upstream refresh before later successful starts. | The two readers use different queries and admission rules. Local HTTP and browser acceptance do not establish deployed reachability, freshness or successful publication. |
+
+### Running the new review readers
+
+After source-specific approval, the existing independent collector accepts the following per-source entries. The public ICS transport is explicit. Omitting the transport on a Google source continues to select the existing API-key reader. The dance source reads only the linked event pages in the registered dance section.
+
+```json
+{
+  "scu-engineering-newsletter": {"approved": true},
+  "scu-engineering-clubs-calendar": {"approved": true, "transport": "public-ics"},
+  "scu-ecp-clubs-calendar": {"approved": true, "transport": "public-ics"},
+  "scu-recreation-mpr": {"approved": true, "transport": "public-ics"},
+  "scu-presents-dance": {"approved": true}
+}
+```
+
+Run npm ci in app before using the ICS reader. It parses the public calendar with ical.js and retains only future, confirmed one-offs with explicit UTC starts. Date-only and floating/local starts, private entries, repeated UIDs and recurrence families stay out. The receipt includes omission counts. Source UIDs in the ICS namespace require review before association with Google API instances or catalog UUIDs. The reader never exports attendee lists or infers ends from DURATION. The Google events.list path for expanded recurring instances still needs a real authorized API-key test. Independent reads produce review artifacts only. The durable cross-source mapping, reviewed publication and production acceptance remain open.

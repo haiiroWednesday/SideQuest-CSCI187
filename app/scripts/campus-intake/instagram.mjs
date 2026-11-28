@@ -4,7 +4,7 @@
 //
 // What a lead can become (Cyn, Nov 24, 2026):
 // - the organizer's own post (or the organizer confirming) gives date, start, end and venue → can reach Discover;
-// - date known, time missing → organizer review queue; may be listed in Browse as "Time TBA", never in free-time matches;
+// - date known, time missing → organizer review queue; excluded from Browse and free-time matches;
 // - date unclear → held until the organizer confirms it.
 import { parseTimeRange, liveWhaleIdFromLink, accessFrom } from './newsletter.mjs'
 

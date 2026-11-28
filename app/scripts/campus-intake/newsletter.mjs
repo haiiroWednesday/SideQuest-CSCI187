@@ -2,10 +2,7 @@
 // Every value keeps the passage it came from, so a reviewer can check it against the email.
 // Rows become review candidates. They never become public events by themselves.
 //
-// Shape (checked Nov 24, 2026 on f26w7 and f26w9): an "Upcoming Student Events" h3, then per event a
-// small table with the month and day, followed by plain paragraphs: title, "time | location" line,
-// description, and a last "Register" / "More info" link. Earlier "Extra Bytes" announcements are
-// two-column tables: an image cell and a cell with a bold title, a <br> and a paragraph.
+// Current issues use nested event cards. Older samples use date tables and paragraphs.
 
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 const MAX_BYTES = 1_000_000
@@ -110,18 +107,39 @@ function speakerFrom(text) {
   return m ? { value: m[1].replace(/[.,]$/, '').trim(), passage: m[0].trim() } : null
 }
 
-/** Calendar block: "Upcoming Student Events". */
-function calendarRows(html, issue) {
-  const at = html.search(/<h3[^>]*>\s*Upcoming Student Events\s*<\/h3>/i)
-  if (at < 0) return []
-  const section = html.slice(at)
-  const out = []
-  const blocks = section.split(/(?=<table\b)/i).slice(1)
-  for (const block of blocks) {
+// Published issues put date and event fields in a nested presentation table.
+// Limit links and evidence to the event cell, even in the final card before the footer.
+function* calendarBlocks(section) {
+  const cards = section.split(/<table\b[^>]*\bclass=["']cal-table["'][^>]*>/i)
+  if (cards.length > 1) {
+    for (const card of cards.slice(1)) {
+      const eventCell = /<td\b[^>]*\bclass=["']cal-event-block["'][^>]*>([\s\S]*?)<\/td>/i.exec(card)?.[1]
+      if (!eventCell) continue
+      const month = /<div class="cal-date-month">([^<]+)<\/div>/i.exec(card)?.[1]?.trim()
+      const day = /<div class="cal-date-day">(\d{1,2})<\/div>/i.exec(card)?.[1]
+      const title = /<div class="cal-event-title">([\s\S]*?)<\/div>/i.exec(eventCell)
+      if (!month || !day || !title || !clean(title[1])) continue
+      const summaries = [...eventCell.matchAll(/<div class="cal-event-summary">([\s\S]*?)<\/div>/gi)]
+      yield { cells: [month, day], paragraphs: [title, ...summaries].map(m => ({ text: clean(m[1]) })), after: eventCell }
+    }
+    return
+  }
+  for (const block of section.split(/(?=<table\b)/i).slice(1)) {
     const cells = [...block.matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi)].map(c => clean(c[1])).filter(Boolean)
     if (cells.length < 2 || !/^[A-Za-z]{3,9}\.?$/.test(cells[0]) || !/^\d{1,2}$/.test(cells[1])) continue
     const after = block.slice(block.search(/<\/table>/i) + 8)
-    const paragraphs = [...after.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].map(p => ({ html: p[1], text: clean(p[1]) })).filter(p => p.text)
+    const paragraphs = [...after.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].map(p => ({ text: clean(p[1]) })).filter(p => p.text)
+    yield { cells, after, paragraphs }
+  }
+}
+
+const EVENT_HEADING = /<h3\b[^>]*>\s*(?:<strong>\s*)?Upcoming Student Events\s*(?:<\/strong>\s*)?<\/h3>/i
+
+function calendarRows(html, issue) {
+  const at = html.search(EVENT_HEADING)
+  if (at < 0) return []
+  const out = []
+  for (const { cells, after, paragraphs } of calendarBlocks(html.slice(at))) {
     if (!paragraphs.length) continue
     const [title, info, ...rest] = paragraphs
     const time = info ? parseTimeRange(info.text) : null
@@ -152,7 +170,7 @@ function calendarRows(html, issue) {
 
 /** Announcement tables: bold title, then a paragraph with the date, time, place and speaker in prose. */
 function announcementRows(html, issue) {
-  const end = html.search(/<h3[^>]*>\s*Upcoming Student Events/i)
+  const end = html.search(EVENT_HEADING)
   const body = end < 0 ? html : html.slice(0, end)
   const out = []
   for (const cell of body.matchAll(/<td[^>]*>\s*<(?:strong|b)>([\s\S]*?)<\/(?:strong|b)>\s*(?:<br\s*\/?>)?([\s\S]*?)<\/td>/gi)) {

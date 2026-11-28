@@ -2,6 +2,7 @@
 import { readFile, mkdir, writeFile, rename, rm } from 'node:fs/promises'
 import { resolve, dirname } from 'node:path'
 import { collectEngineeringNewsletters, collectOrganizerFeed } from './campus-intake/independentSources.mjs'
+import { collectScuPresents } from './campus-intake/scuPresents.mjs'
 import { collectPublicGoogleCalendar } from './campus-intake/googlePublicCalendar.mjs'
 
 const registry = JSON.parse(await readFile(new URL('../data/campus-event-sources.json', import.meta.url), 'utf8'))
@@ -19,8 +20,9 @@ async function main() {
   if (!entries.length || entries.length > 20) throw new Error('No approved independent sources or too many configured sources')
   for (const [id, value] of entries) {
     const source = registry.sources.find(s => s.id === id)
+    if (value?.transport !== undefined && (source?.adapter !== 'google-public-calendar' || value.transport !== 'public-ics')) throw new Error('Unsupported transport for ' + id)
     if (!source || id === 'scu-livewhale' || !value || value.approved !== true ||
-        (source.adapter !== 'google-public-calendar' && id !== 'scu-engineering-newsletter' && typeof value.url !== 'string')) {
+        (!['google-public-calendar','scu-presents-dance','engineering-newsletter'].includes(source.adapter) && typeof value.url !== 'string')) {
       throw new Error('Unknown or unapproved independent source: ' + id)
     }
   }
@@ -30,7 +32,11 @@ async function main() {
     try {
       let snapshot
       if (id === 'scu-engineering-newsletter') snapshot = await collectEngineeringNewsletters({approvedRead:true, now})
-      else if (source.adapter === 'google-public-calendar') snapshot = await collectPublicGoogleCalendar(source, {
+      else if (id === 'scu-presents-dance') snapshot = await collectScuPresents({approvedRead:true,now})
+      else if (value.transport === 'public-ics') {
+        const { collectPublicIcs } = await import('./campus-intake/publicIcs.mjs')
+        snapshot = await collectPublicIcs(source, { approvedRead: true, now })
+      } else if (source.adapter === 'google-public-calendar') snapshot = await collectPublicGoogleCalendar(source, {
         approvedRead:true, now, apiKey:process.env.SIDEQUEST_GOOGLE_PUBLIC_CALENDAR_API_KEY,
       })
       else snapshot = await collectOrganizerFeed(source,value.url,{approvedRead:true, now})

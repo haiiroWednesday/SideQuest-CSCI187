@@ -74,6 +74,13 @@
       "access": "research-only"
     },
     {
+      "id": "scu-presents-dance",
+      "name": "SCU Presents dance performances",
+      "page": "https://scupresents.scu.edu/section/test-3-1h2q",
+      "adapter": "scu-presents-dance",
+      "access": "public-ticket-pages-verified-recurring-reuse-pending"
+    },
+    {
       "id": "scu-mission",
       "name": "Mission and Ministry",
       "page": "https://www.scu.edu/mission-and-ministry/",

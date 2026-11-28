@@ -95,6 +95,7 @@ test('reads fresh time windows and traverses bounded pagination', async () => {
     },
   })
   assert.match(calls[0], /start_date\/2026-11-24\/end_date\/2027-01-08\//)
+  assert.ok(!new URL(calls[0]).pathname.endsWith('/')) // SCU redirects the trailing slash.
   assert.equal(calls[1], next)
   assert.equal(result.pages, 2)
   assert.equal(result.received, 101)
@@ -297,4 +298,12 @@ test('byte-folded Unicode locations survive calendar unfolding', () => {
   ])
   const result = compareScuCaptures(payload([captureRow]), changed, source, checkedAt)
   assert.equal(result.records[0].location, '’, Room 2')
+})
+
+test('complete pages may include all-day placeholders or an explicitly unknown start', async () => {
+  const data = [row, { ...row, id: 2, is_all_day: true }, { ...row, id: 3, date_ts: null, ts_start: row.date_ts }]
+  const snapshot = await collectLiveWhale(source, { approvedRead: true, now, fetchImpl: async () => response(payload(data)) })
+  assert.equal(snapshot.received, 3)
+  assert.equal(snapshot.excludedUntimed, 2)
+  assert.deepEqual(snapshot.records.map(record => record.providerId), ['123456'])
 })

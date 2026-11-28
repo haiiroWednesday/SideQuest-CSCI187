@@ -68,3 +68,41 @@ test('real newsletter clock styles and ambiguous afternoon', () => {
   assert.equal(parseTimeRange('This afternoon'),null)
   assert.equal(parseTimeRange('Time TBA'),null)
 })
+
+// Minimal Week 8 ticket card structure observed in the published HTML.
+test('reads nested newsletter cards and confines links to their own event', async () => {
+  const card = (day,title,summary,link) => `<table class="cal-table"><tr><td><table><tr><td><div class="cal-date-month">Dec</div></td></tr>
+    <tr><td><div class="cal-date-day">${day}</div></td></tr></table></td><td class="cal-event-block">
+    <div class="cal-event-title">${title}</div><div class="cal-event-summary">${summary}</div>
+    <div class="cal-event-link">${link}</div></td></tr></table>`
+  const issue = '<h3><strong>Upcoming Student Events</strong></h3>' +
+    card(1,'SCU Night w/ Golden State Warriors','8:00 p.m., Chase Center','') +
+    card(2,'Unscheduled','Time TBA','') + '<a href="https://events.scu.edu/event/123-footer">Footer</a>'
+  let first = true
+  const result = await collectEngineeringNewsletters({approvedRead:true,now,fetchImpl:async () => {
+    if (!first) return response(issue)
+    first = false
+    return response('<a href="' + path + 'f26w8/">Issue</a>')
+  }})
+  assert.equal(result.records.length,1)
+  const [record] = result.records
+  assert.deepEqual([record.start,record.end,record.location,record.linkedProviderId],['20:00',null,'Chase Center',null])
+  assert.deepEqual(record.links,[])
+})
+
+test('ticket evidence keeps showtimes separate and omits date-only starts',async () => {
+  const { collectScuPresents } = await import('./scuPresents.mjs')
+  const links = ['early','late','tba']
+  const result = await collectScuPresents({approvedRead:true,now,fetchImpl:async url => {
+    if (url.includes('/section/')) return response(links.map(id => '<a class="other-event-box-link" href="/event/' + id + '">Gallery</a>').join(''))
+    const startDate = url.endsWith('tba') ? '2026-12-05' : url.endsWith('late') ? '2026-12-05T05:00:00Z' : '2026-12-05T03:00:00Z'
+    const data = {'@type':'Event',url,name:'Gallery',startDate,eventStatus:'https://schema.org/EventScheduled',
+      eventAttendanceMode:'https://schema.org/OfflineEventAttendanceMode'}
+    return response('<script type="application/ld+json">' + JSON.stringify(data) + '</script>')
+  }})
+  assert.equal(result.complete,true)
+  assert.equal(result.excludedMissingStart,1)
+  assert.deepEqual(result.records.map(r=>[r.date,r.start,r.end,r.reviewState]),[
+    ['2026-12-04','19:00',null,'held'],['2026-12-04','21:00',null,'held']])
+  assert.notEqual(result.records[0].sourceUrl,result.records[1].sourceUrl)
+})

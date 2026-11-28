@@ -34,7 +34,8 @@ async function readJson(response) {
   }
 }
 
-function eventUrl(source) {
+export function registeredCalendarUrl(source) {
+  if (source?.adapter !== 'google-public-calendar' || !CALENDAR_ID.test(source.calendarId ?? '')) throw new Error('Unknown public calendar')
   // This is a verified source calendar link, not an invented per-event URL.
   const url = new URL(source.calendarUrl)
   if (url.origin !== 'https://calendar.google.com' || url.pathname !== '/calendar/embed' ||
@@ -46,10 +47,9 @@ export async function collectPublicGoogleCalendar(source, {
   approvedRead = false, apiKey, now = new Date(), horizonDays = 45, fetchImpl = globalThis.fetch,
 } = {}) {
   if (!approvedRead) throw new Error('Public calendar approval required')
-  if (!source || source.adapter !== 'google-public-calendar' || !CALENDAR_ID.test(source.calendarId ?? '')) throw new Error('Unknown public calendar')
+  const sourceUrl = registeredCalendarUrl(source)
   if (typeof apiKey !== 'string' || !apiKey.trim()) throw new Error('Server-side public calendar API key required')
   if (!Number.isInteger(horizonDays) || horizonDays < 1 || horizonDays > 90) throw new Error('Invalid horizon')
-  const sourceUrl = eventUrl(source)
   const end = new Date(now.getTime() + horizonDays * 86400000)
   const url = new URL(ORIGIN + '/calendar/v3/calendars/' + encodeURIComponent(source.calendarId) + '/events')
   url.search = new URLSearchParams({

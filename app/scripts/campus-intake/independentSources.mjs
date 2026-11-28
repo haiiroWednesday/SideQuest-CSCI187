@@ -14,7 +14,7 @@ function publicUrl(value, origin) {
   return url.href
 }
 
-async function readPublic(url, mime, fetchImpl) {
+export async function readPublic(url, mime, fetchImpl) {
   const response = await fetchImpl(url, { redirect: 'error', signal: AbortSignal.timeout(12_000),
     headers: { Accept: mime } })
   if (!response.ok || !(response.headers.get('content-type') ?? '').toLowerCase().includes(mime) ||

@@ -33,9 +33,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: npm ci --prefix app --omit=dev --ignore-scripts --no-audit --no-fund
       - run: node --test app/scripts/campus-intake/intake.test.mjs
       - run: node --test app/scripts/campus-intake/knownAnswers.test.mjs
-      - run: node --test app/scripts/campus-intake/independentSources.test.mjs app/scripts/campus-intake/googlePublicCalendar.test.mjs
+      - run: node --test app/scripts/campus-intake/independentSources.test.mjs app/scripts/campus-intake/googlePublicCalendar.test.mjs app/scripts/campus-intake/publicIcs.test.mjs
       - run: node app/scripts/refresh-independent-events.mjs
       - run: node app/scripts/refresh-campus-events.mjs
   collect:
@@ -69,6 +70,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: npm ci --prefix app --omit=dev --ignore-scripts --no-audit --no-fund
       - name: Collect approved independent sources
         env:
           SIDEQUEST_INDEPENDENT_FEEDS: ${{ vars.SIDEQUEST_INDEPENDENT_FEEDS }}

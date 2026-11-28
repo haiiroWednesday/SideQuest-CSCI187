@@ -84,7 +84,7 @@ export function normalizeLiveWhale(record, source, checkedAt) {
   if (!/^\d{1,20}$/.test(providerId)) throw new Error('Missing or invalid provider event ID')
   const title = text(record.title)
   const link = sourceLink(record.url ?? record.href, source)
-  const start = unixSeconds(record.date_ts ?? record.ts_start)
+  const start = unixSeconds(Object.hasOwn(record, 'date_ts') ? record.date_ts : record.ts_start)
   // An explicit null in SCU JSON means no published end, even if another field exists.
   const end = unixSeconds(Object.hasOwn(record, 'date2_ts') ? record.date2_ts : record.ts_end)
   const startLocal = start === null ? null : campusParts(new Date(start * 1000))
