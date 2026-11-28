@@ -4,7 +4,7 @@ import { chromium } from '/home/claude/sq-master/app/node_modules/@playwright/te
 const byName = (role, name) => p => p.getByRole(role, { name }).first()
 const css = sel => p => p.locator(sel).first()
 const FOCUS = [
-  ['x-c5', 'step-events-picked', [byName('button', 'Show all events'), byName('button', /All activities/)]],
+  ['x-c5', 'step-events-picked', [byName('button', 'Fits my free time'), byName('button', /All activities/)]],
   ['x-c5b', 'step-when', [null, null, byName('button', 'Clear busy time')]],
   ['x-c7', 'step-events-all', [css('li:has(.sq-foodleft)')]],
   ['x-c8', 'card-later', [css('.sq-sticker-card a[href^="#map/"]'), byName('link', /My day/), byName('link', /Walk there/), css('.sq-share-going'), byName('button', 'Plan it')], '.sq-sticker-card'],

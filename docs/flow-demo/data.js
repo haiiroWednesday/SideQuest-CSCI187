@@ -1,27 +1,27 @@
 // Content of "SideQuest flow and demo". Edit here when the UI changes, then retake the screenshots.
 // Step: [case id, what happens, state (stays | change | build | cut), note, repeat codes]
 const DECIDED = [
-  'Opening the app shows events. Discover is one page: interests on top, the list under them.',
-  'The week of busy and free time moves to My Schedule. That is where you edit busy time and open or remove a plan.',
-  'Setup appears only when we know nothing about your time: no busy time added and Google not connected. It is a pop-up, not a page you can switch back to.',
+  'Built Nov 28: opening the app shows events. Discover is one page with the kinds and the "Fits my free time" chip on top and the list under them. No steps.',
+  'Built Nov 28: the week of busy, free and Google time is on top of My Schedule, with busy-time editing and "Clear busy time".',
+  'Built Nov 28: setup is asked once, on the first open with no busy time and no Google Calendar. "Add busy time" or "Not now", and it never asks again.',
   'No "Our pick", no Picks step, no separate What step.',
   'The calendar-file upload goes. People want one tap to connect. Off the screen since Nov 27.',
   'Done Nov 27: 16 messages reworded from your picks, "Mark busy" and "Who\'s in?" off the free slips, Someday inside My Schedule on a laptop too.',
-  'Next to build: Google connect on a screen, the bolder look with stars. The mic gets a real-phone test.',
-  'The day runs all 24 hours, not 8am to 11pm. Not built yet. Posting gets the same fix (today it allows 6am to 11pm).',
-  'Posting: the host picks a building from the map\'s places and adds a room, or drops a pin for anywhere else. Not built yet: today it is one text box. The pin needs a new shared event field, so the team is asked first.',
+  'Next to build: the Google button inside setup (it needs the sign-in work in pull requests 94 and 102), the bolder look with stars. The mic gets a real-phone test.',
+  'Built Nov 28: the day is all 24 hours. The week shows 7am to midnight and one tap opens the night. Free time is counted from 7am. Posting and busy time take any hour.',
+  'Built Nov 28: posting suggests the 68 campus places from the map, then asks for a room or floor. Any other place can still be typed. Dropping a pin is not built: it needs a new shared event field, so the team is asked first.',
   'Someday: the "Someday ideas" link and the page itself both need a redesign. Later.',
   'Header clock: the first engraved dial, solid gold diamonds, small round moon. Gears wait until there are settings.',
   'The whole app must be autism and ADHD friendly: one job per screen, little to read, pictures over words.',
 ]
 // Open item: [key, text]. Keys are saved with her answers.
 const OPEN = [
-  ['setup-frequency', 'How often setup returns: only once, weekly, or whenever the coming week is empty.'],
-  ['week-trail-merge', 'How the week and the Trail merge in My Schedule. Each has strengths, so this needs a design round.'],
-  ['discover-free-strip', 'How Discover shows what it is filtering by when there are several free stretches. Words alone will not do.'],
-  ['words', 'Two new ticket notes to pick (w19 and w20 in Words to fix).'],
-  ['repeats', 'C5 has a new proposal after your note: keep both filters, make free time a chip.'],
-  ['bold-look', 'A bolder, organic look with stars in the pages. Its own design round, after the cuts.'],
+  ['week-trail-merge', 'The week is now on top of My Schedule, and the timeline under it shows the same plans. My suggestion: the week picks the day and the timeline shows only that day. Options come as a design round, phone and laptop.'],
+  ['slip-hint', 'The line under a free slip, like "Marketplace is open until 7pm, 1 min walk". It names a place to eat that is open in that free stretch, and a tap opens it on the map. You found it confusing. My suggestion: remove it. Say yes and it goes, with a backup.'],
+  ['week-names', 'Plan blocks in the week carry no names now. A tap brings one forward with its name and time, and every plan is named in the timeline under the week. Say if you want the names back.'],
+  ['pin-field', 'Posting: dropping a pin needs a new shared event field (the pin\'s spot). The team has to agree first. Ask them?'],
+  ['discover-free-strip', 'Discover now says what it filters by with the "Fits my free time" chip. Say if it needs more than that.'],
+  ['bold-look', 'A bolder, organic look with stars in the pages. Its own design round.'],
 ]
 const TALK = [
   ['1–2 min', 'Problem and user', ['Students have gaps between classes and miss what is on campus', 'Who: an SCU student with a full week and a few free stretches', 'From the interviews: plans start from time and friends, then interest']],
@@ -31,14 +31,14 @@ const TALK = [
 ]
 const FLOWS = [
   ['A', 'First visit: tell us when you are busy', '1:00', [
-    ['new-discover', 'A new student opens SideQuest.', 'build', 'Becomes the setup pop-up', ['C1']],
+    ['setup-once', 'A new student opens SideQuest and is asked once: when are you busy?', 'stays', 'Setup is asked once, then never again', ['C1']],
     ['google-today', 'Connect Google Calendar. Its busy time comes in, in Google blue.', 'build', 'The connect button is not on a screen yet', ['C11']],
     ['discover-bringin-read', 'Or say it in a sentence: "Class MWF 10 to 11". Tick what it found.', 'change', 'Mic needs a real-phone test', ['C2']],
-    ['step-when-edit', 'Or add a busy time by hand.', 'change', 'Moves into setup and My Schedule', ['C2', 'C5']],
+    ['step-when-edit', 'Or add a busy time by hand.', 'stays', 'In My Schedule, under the week', ['C2', 'C5']],
     ['step-events', 'Done. Discover opens.', 'stays', '', []],
   ]],
   ['B', 'Find something and plan it', '1:30', [
-    ['step-events', 'Discover: events that fit your free time, each with a fit mark.', 'change', 'Loses the step bar. This is what opens first', ['C3', 'C12']],
+    ['step-events', 'Discover: events that fit your free time, each with a fit mark.', 'stays', 'This is what opens first', ['C3', 'C12']],
     ['step-events-picked', 'Narrow by interest. The list changes right under the filters.', 'stays', '', ['C7']],
     ['card-later', 'Open a ticket: time, place, photo, Plan it.', 'stays', '', ['C8']],
     ['card-plan', 'Plan it. It goes to My Schedule, with Undo.', 'stays', '', []],
@@ -50,8 +50,8 @@ const FLOWS = [
     ['map-fits', 'The map can show only what fits.', 'stays', '', ['C3']],
   ]],
   ['D', 'My Schedule', '1:00', [
-    ['schedule', 'Today first. The day is drawn as a trail, with free time beside it.', 'change', 'Merges with the week', ['C1', 'C9']],
-    ['step-when', 'Your week of busy, free and Google time.', 'change', 'Moves here from Discover. Grows to 24 hours', ['C1', 'C3']],
+    ['schedule', 'Today first. The day is drawn as a trail, with free time beside it.', 'change', 'The week above it shows the same plans. To decide: the week picks the day, the timeline shows that day', ['C1', 'C9']],
+    ['step-when', 'Your week of busy, free and Google time.', 'stays', 'On top of My Schedule. 7am to midnight, one tap opens the night', ['C1', 'C3']],
     ['schedule-clash', 'Two plans at once: the clash sheet asks which to keep.', 'stays', '', []],
     ['schedule-tickets', 'The same plans as tickets.', 'stays', '', ['C9']],
     ['someday', 'Someday: ideas with no date yet.', 'stays', '', ['C4']],
@@ -62,7 +62,7 @@ const FLOWS = [
     ['groups-invite', 'A group invites you to an event.', 'stays', '', []],
   ]],
   ['F', 'Host an event', '0:40', [
-    ['post', 'Post an event: name, host, place, time, set time or drop in.', 'build', 'Place becomes pick a building plus a room, or drop a pin. Times cover all 24 hours', []],
+    ['post', 'Post an event: name, host, place, time, set time or drop in.', 'stays', 'Pick a campus place, add a room. Any hour. Drop a pin is not built', []],
     ['post-errors', 'Anything missing is said next to its field.', 'stays', '', []],
     ['card-now', 'At your own live event you can share leftover food. The ticket then says "Food left" and leads today\'s list.', 'stays', '', ['C7']],
   ]],
@@ -72,9 +72,9 @@ const CUL = [
   ['C1', 'One week, three places', 'Discover, My Schedule and Groups each draw your time.', '', ['step-when', 'schedule', 'groups-share'], 'One week, in My Schedule. Discover only lists events. How the week and the Trail merge is a design round.'],
   ['C12', 'Steps for a one-page job', 'Discover had a step bar, a "See what fits" button and a tab.', '', ['step-when', 'step-events'], 'Discover is one page again. The steps go.'],
   ['C2', 'Five ways to add busy time', 'Drag on the week, From and Until, "Mark busy" on a free slip, a sentence or the mic, a calendar file, and Google.', '', ['step-when', 'step-when-edit', 'discover-bringin'], 'Done Nov 27. "Mark busy" is off the free slips and the calendar-file button is off the screen. Four ways are left: drag on the week, From and Until, a sentence or the mic, and Google.'],
-  ['C3', 'Free time said four times', 'Gold columns in the week, a list of free slips beside them, "13 events fit", and the fit mark on every ticket.', '', ['step-events', 'x-c3'], 'The fit mark stays on every ticket. The note under it gets shorter and keeps its facts: pick the wording at w19 and w20 in Words to fix. The slip list and the count are part of the Discover design round.'],
+  ['C3', 'Free time said four times', 'Gold columns in the week, a list of free slips beside them, "13 events fit", and the fit mark on every ticket.', '', ['step-events', 'x-c3'], 'The fit mark stays on every ticket. The note under it is shorter now: "8 min late from Dinner with the Games Society" (w19, w20).'],
   ['C4', 'Someday in two places', 'A tab of its own on a laptop, a link inside My Schedule on a phone.', '', ['schedule', 'someday'], 'Done Nov 27. No Someday tab on a laptop either. On every screen it opens from "Someday ideas" at the top of My Schedule.'],
-  ['C5', 'Three buttons that undo a filter', 'Discover hides events two ways: by your free time, and by kind (food, sports, arts). 1 "Show all events" turns off the first. 2 "All activities" turns off the second. They look like two buttons for one job, and neither says what it turns off. 3 "Clear busy time" looks like them but erases the busy time you typed.', 'Keep both filters. Each answers a different question: "what fits between my classes?" and "show me every food event, maybe I\'ll move something". Free time becomes a chip in the same row as the kinds, named "Fits my free time", visibly on or off, like the one the Map tab already has. "Clear busy time" moves to My Schedule (your call, Nov 27).', ['x-c5', 'x-c5b']],
+  ['C5', 'Three buttons that undo a filter', 'Discover hid events two ways, by free time and by kind, with two look-alike off buttons, and a third that erased busy time.', '', ['x-c5', 'x-c5b'], 'Built Nov 28. Free time is a chip, "Fits my free time", first in the Only row, on or off. Kinds keep "All activities". "Clear busy time" moved to My Schedule with the week.'],
   ['C6', 'Who\'s in, three entrances', 'On each free slip, Groups\' "I\'m free, who\'s in?", and sharing your free time.', '', ['step-when', 'groups'], 'Done Nov 27. "Who\'s in?" starts in Groups only. The free slips on Discover have no buttons.'],
   ['C7', 'Leftover food shows in two places', 'It had a block of its own on the first page, "Food left, come now", on top of the "Free food" filter. The app only knows food is left when the host taps "Share leftover food" on their own live event.', '', ['x-c7', 'card-now'], 'Done Nov 27. The block is gone from the first page. The event\'s own ticket says "Food left · 24 min" and leads today\'s list until the 30 minutes run out.'],
   ['C8', 'What you can tap on an opened ticket', '1 the place (opens the map), 2 My day, 3 Walk there, 4 "Let my groups see I\'m going", 5 Plan it. I listed this as a repeat. Looking again, each does its own job and Plan it is clearly the main one.', '', ['x-c8', 'card-now'], '~Keep the ticket as it is. Add a note if you see something to cut.'],
@@ -103,8 +103,8 @@ const WORDS = [
   ['w16', 'Host, food shared', 'On Discover for 30 minutes. No alerts sent.', 'Showing on Discover for 30 minutes', 'Showing on Discover for 30 minutes'],
   ['w17', 'AI search', 'Describe what you feel like doing. Your search and public event details are sent to an external AI service.', 'What do you feel like doing? (Uses AI)', 'What do you feel like doing? (Uses AI)'],
   ['w18', 'Foot of every page', 'Posts are saved in this browser only. Dates and times use California time. Personal plans stay on this device.', 'Saved on this device · Pacific Time', 'Saved on this device · Pacific Time'],
-  ['w19', 'Ticket note, when you would arrive late', 'Fits, but you\'d arrive 8 min late, walking from Dinner with the Games Society', '8 min late from Dinner with the Games Society'],
-  ['w20', 'Ticket note, when you would be late to your next plan', 'Fits, but you\'d be 6 min late to Ceramics Workshop', '6 min late to Ceramics Workshop'],
+  ['w19', 'Ticket note, when you would arrive late', 'Fits, but you\'d arrive 8 min late, walking from Dinner with the Games Society', '8 min late from Dinner with the Games Society', '8 min late from Dinner with the Games Society'],
+  ['w20', 'Ticket note, when you would be late to your next plan', 'Fits, but you\'d be 6 min late to Ceramics Workshop', '6 min late to Ceramics Workshop', '6 min late to Ceramics Workshop'],
 ]
 const EDGES = [
   ['tue-night', 'The day is over'], ['mon-early', 'Nothing has started'], ['sat-noon', 'The weekend'], ['nostore', 'A browser that will not save'],
