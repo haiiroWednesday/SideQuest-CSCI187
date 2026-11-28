@@ -44,7 +44,7 @@ export function createVerifiedTokenGuard(clock: () => number = Date.now, options
       if (hit) remembered.delete(key)
       spend(clientIp(req), now)
       const value = await verify(token)
-      if (value !== null && value !== undefined) {
+      if (ttl > 0 && value !== null && value !== undefined) {
         if (remembered.size >= MAX_REMEMBERED) {
           for (const [id, row] of remembered) if (row.until <= now) remembered.delete(id)
           if (remembered.size >= MAX_REMEMBERED) remembered.delete(remembered.keys().next().value as string)
