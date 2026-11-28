@@ -134,3 +134,37 @@ test('a disabled origin and invalid configuration have separate failure receipts
     await rm(directory, { recursive: true, force: true })
   }
 })
+
+
+test('malformed intervals and unrelated deadlines never supply an event start', () => {
+  for (const text of [
+    '1:0-2 p.m.', '1:000-2 p.m.', '1: - 2 p.m.',
+    'Register by 5 p.m.', 'Time TBA; registration closes 5 p.m.',
+    'Doors open at 6 p.m.', '6 p.m. or 7 p.m.',
+    'Show starts at 7 p.m. or 8 p.m.',
+  ]) assert.equal(parseTimeRange(text), null, text)
+  assert.deepEqual(parseTimeRange('Doors open at 6 p.m.; show starts at 7 p.m.'),
+    {start:'19:00', end:null, passage:'7 p.m.'})
+})
+
+test('independent newsletter collection excludes false starts but retains explicitly labelled starts for review', async () => {
+  const card = (day, title, info) => '<table><tr><td>Dec</td><td>' + day +
+    '</td></tr></table><p>' + title + '</p><p>' + info + '</p>'
+  const issue = '<h3>Upcoming Student Events</h3>' +
+    card(1, 'Malformed interval', '1:0-2 p.m.') +
+    card(2, 'Unscheduled workshop', 'Time TBA; registration closes 5 p.m.') +
+    card(3, 'Door time only', 'Doors open at 6 p.m.') +
+    card(4, 'Performance', 'Doors open at 6 p.m.; show starts at 7 p.m.') +
+    card(5, 'Workshop', '1:00-3:00 p.m., Benson')
+  let first = true
+  const result = await collectEngineeringNewsletters({approvedRead:true, now, fetchImpl:async () => {
+    if (!first) return response(issue)
+    first = false
+    return response('<a href="' + path + 'f26w8/">Issue</a>')
+  }})
+  assert.equal(result.complete, true)
+  assert.deepEqual(result.records.map(r => [r.title, r.start, r.end, r.reviewState]), [
+    ['Performance', '19:00', null, 'awaiting-review'],
+    ['Workshop', '13:00', '15:00', 'awaiting-review'],
+  ])
+})
