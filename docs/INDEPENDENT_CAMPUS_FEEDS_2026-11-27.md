@@ -112,3 +112,18 @@ After source-specific approval, the existing independent collector accepts the f
 ```
 
 Run npm ci in app before using the ICS reader. It parses the public calendar with ical.js and retains only future, confirmed one-offs with explicit UTC starts. Date-only and floating/local starts, private entries, repeated UIDs and recurrence families stay out. The receipt includes omission counts. Source UIDs in the ICS namespace require review before association with Google API instances or catalog UUIDs. The reader never exports attendee lists or infers ends from DURATION. The Google events.list path for expanded recurring instances still needs a real authorized API-key test. Independent reads produce review artifacts only. The durable cross-source mapping, reviewed publication and production acceptance remain open.
+
+### November 28 independent verification
+
+One local collection started at 2026-11-28T19:01:11.210Z against the five registered readers in the configuration above and the disabled Qlusion origin. The process exited 1 and still wrote all six receipts. No external credentials were needed. Source-specific configuration failures now leave the other reads running. The cloud browser showed a GoDaddy Auctions listing on Qlusion's /lander. An approval for the historical origin can no longer enable that reader. Daven should obtain the operator's current URL and explicit reuse terms from CSI before restoring it.
+
+| Independent source | Input | Excluded missing start | Other exclusions | Review candidates | Candidates missing end |
+|---|---:|---:|---|---:|---:|
+| Engineering RSO public ICS | 12 VEVENTs | 2 | 10 outside window | 0 | 0 |
+| ECP club public ICS | 43 VEVENTs | 4 | 11 recurrence or repeated UID, 27 outside window | 1 | 0 |
+| Malley room public ICS | 99 VEVENTs | 0 | 86 recurrence or repeated UID, 6 outside window | 7 | 0 |
+| Engineering newsletter HTML | 4 issues | unverified | unverified | 4 repeated mentions | 4 |
+| SCU Presents Dance HTML with JSON-LD | 10 ticket pages | 0 | 7 outside window or status/attendance filter | 3 showtimes | 0 |
+| Qlusion | parked domain, read disabled | unverified | unverified | unverified | unverified |
+
+Zero records were published. ICS start exclusions count UTC-reader rejections, including unsupported timestamp forms. An explicit end in the performance data still needs organizer verification. Resource calendar rows require evidence of open attendance. No source passed hosted acceptance or demonstrated recurring collection in this run. The previously merged #92 server and the reviewed publication path still require an approved durable identity mapping for shared plans. Daven owns this contract and source approvals, Sembiyan reviews material interval changes, Devonny verifies attribution, and Cynthia verifies two-client staging refresh on the chosen release SHA. EventSeries remains deferred under v5.2.1.

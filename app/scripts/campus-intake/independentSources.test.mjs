@@ -106,3 +106,31 @@ test('ticket evidence keeps showtimes separate and omits date-only starts',async
     ['2026-12-04','19:00',null,'held'],['2026-12-04','21:00',null,'held']])
   assert.notEqual(result.records[0].sourceUrl,result.records[1].sourceUrl)
 })
+
+test('a disabled origin and invalid configuration have separate failure receipts', async () => {
+  const { spawnSync } = await import('node:child_process')
+  const { mkdtemp, readFile, rm } = await import('node:fs/promises')
+  const { tmpdir } = await import('node:os')
+  const { join } = await import('node:path')
+  const { fileURLToPath } = await import('node:url')
+  const directory = await mkdtemp(join(tmpdir(), 'sidequest-intake-'))
+  try {
+    const output = join(directory, 'receipt.json')
+    const script = fileURLToPath(new URL('../refresh-independent-events.mjs', import.meta.url))
+    const config = { qlusion: { approved: true, url: 'https://www.qlusion.com/' },
+      unknown: {}, 'scu-ecp-clubs-calendar': { approved: true } }
+    const result = spawnSync(process.execPath, [script, '--approved-read', '--output', output], {
+      env: { ...process.env, SIDEQUEST_INDEPENDENT_FEEDS: JSON.stringify(config), SIDEQUEST_GOOGLE_PUBLIC_CALENDAR_API_KEY: '' },
+      timeout: 5000,
+    })
+    assert.equal(result.status, 1)
+    const receipt = JSON.parse(await readFile(output, 'utf8'))
+    assert.deepEqual(receipt.results.map(r => [r.id, r.status, r.reason]), [
+      ['qlusion', 'failed', 'invalid-or-unapproved-source'], ['unknown', 'failed', 'invalid-or-unapproved-source'],
+      ['scu-ecp-clubs-calendar', 'failed', undefined],
+    ])
+    assert.equal(receipt.published, 0)
+  } finally {
+    await rm(directory, { recursive: true, force: true })
+  }
+})
