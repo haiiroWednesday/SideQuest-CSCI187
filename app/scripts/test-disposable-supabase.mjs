@@ -119,13 +119,18 @@ async function signIn(identity) {
   await page.getByLabel('Verification code', { exact: true }).fill(await readCode(identity.email))
   // This response is intercepted only in the test harness; never log its body.
   const verified = page.waitForResponse(r => new URL(r.url()).pathname === '/api/auth/verify-code')
-  const groupRequest = page.waitForRequest(r => new URL(r.url()).pathname === '/api/groups' && r.method() === 'GET')
   await page.getByRole('button', { name: 'Sign in', exact: true }).click()
   const response = await verified
   check(response.status() === 200, 'Real OTP verification failed.')
   const session = await response.json()
   check(session.userId === identity.id && typeof session.accessToken === 'string', 'Auth returned the wrong identity.')
-  const req = await groupRequest
+  // Accounts-enabled login lands on My Schedule, not Groups.
+  // Exercise the real navigation before asserting the browser's authenticated group request.
+  await page.waitForURL(/#schedule$/)
+  const [req] = await Promise.all([
+    page.waitForRequest(r => new URL(r.url()).pathname === '/api/groups' && r.method() === 'GET'),
+    page.getByRole('navigation', { name: 'SideQuest primary' }).getByRole('link', { name: 'Groups', exact: true }).click(),
+  ])
   check((await req.allHeaders()).authorization === 'Bearer ' + session.accessToken, 'Browser failed to forward its own issued JWT.')
   await page.getByRole('heading', { name: 'Your group outings' }).waitFor()
   const persisted = await page.evaluate(token => [...Object.values(localStorage), ...Object.values(sessionStorage)].some(v => v.includes(token)), session.accessToken)
