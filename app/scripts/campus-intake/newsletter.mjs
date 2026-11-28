@@ -29,7 +29,9 @@ export function parseTimeRange(text) {
     if (/p/i.test(mer)) hour += 12
     return String(hour).padStart(2, '0') + ':' + (min ?? '00')
   }
+  const validClock = (hour, minute) => Number(hour) >= 1 && Number(hour) <= 12 && (minute === undefined || Number(minute) <= 59)
   if (m) {
+    if (!validClock(m[1], m[2]) || !validClock(m[4], m[5])) return null
     const endMer = m[6]
     let startMer = m[3] ?? endMer
     // "11-1 p.m." means 11 a.m. to 1 p.m.: a start hour above the end hour flips to morning.
@@ -37,7 +39,7 @@ export function parseTimeRange(text) {
     return { start: hm(m[1], m[2], startMer), end: hm(m[4], m[5], endMer), passage: m[0] }
   }
   const single = /(\d{1,2})(?::(\d\d))?\s*(a\.?m\.?|p\.?m\.?)/i.exec(text)
-  return single ? { start: hm(single[1], single[2], single[3]), end: null, passage: single[0] } : null
+  return single && validClock(single[1], single[2]) ? { start: hm(single[1], single[2], single[3]), end: null, passage: single[0] } : null
 }
 
 function isoDate(monthName, day, issueDate) {
@@ -105,7 +107,9 @@ function calendarRows(html, issue) {
     if (!paragraphs.length) continue
     const [title, info, ...rest] = paragraphs
     const time = info ? parseTimeRange(info.text) : null
-    const location = info && info.text.includes('|') ? info.text.split('|').slice(1).join('|').trim() || null : null
+    const location = info && time ? (info.text.includes('|')
+      ? info.text.split('|').slice(1).join('|').trim() || null
+      : info.text.slice(info.text.indexOf(time.passage) + time.passage.length).match(/^\s*,\s*(.+)$/)?.[1]?.trim() || null) : null
     // Per paragraph, so a sentence never runs into the next line's link text.
     const speaker = rest.map(p => speakerFrom(p.text)).find(Boolean) ?? null
     const access = rest.map(p => accessFrom(p.text)).find(Boolean) ?? null
