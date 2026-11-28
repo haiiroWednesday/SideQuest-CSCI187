@@ -29,7 +29,7 @@ function requestUrl(source, now, horizonDays) {
   const last = new Date(today + 'T12:00:00Z')
   last.setUTCDate(last.getUTCDate() + horizonDays)
   return checkedFeedUrl(source.feed + 'start_date/' + today + '/end_date/' +
-    last.toISOString().slice(0, 10) + '/paginate/100/response_fields/' + RESPONSE_FIELDS.join(',') + '/', source)
+    last.toISOString().slice(0, 10) + '/paginate/100/response_fields/' + RESPONSE_FIELDS.join(','), source)
 }
 
 async function readBoundedJson(response) {
@@ -112,7 +112,10 @@ export async function collectLiveWhale(source, {
     }
   }
   if (rows.length !== expectedTotal) throw new Error('Incomplete provider snapshot')
-  const records = reconcileRecords(rows)
+  // Check pagination against all upstream rows before excluding untimed evidence.
+  // Reconcile first so an excluded row can still flag a conflicting occurrence.
+  const records = reconcileRecords(rows).filter(row => row.start !== null && !row.reasons.includes('all-day'))
+  const excludedUntimed = rows.filter(row => row.start === null || row.reasons.includes('all-day')).length
   return { version: 1, provider: source.id, checkedAt, horizonDays, complete: true,
-    pages: seen.size, received: rows.length, records }
+    pages: seen.size, received: rows.length, excludedUntimed, records }
 }

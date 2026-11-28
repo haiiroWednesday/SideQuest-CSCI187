@@ -28,7 +28,7 @@ test('asks LiveWhale for the fields its default JSON leaves out', async () => {
       { status: 200, headers: { 'content-type': 'application/json' } })
   }
   await collectLiveWhale(F.SOURCE, { approvedRead: true, fetchImpl, now: new Date('2026-11-24T19:00:00Z'), horizonDays: 14 })
-  assert.match(seen[0], new RegExp('/response_fields/' + RESPONSE_FIELDS.join(',') + '/'))
+  assert.ok(new URL(seen[0]).pathname.endsWith('/response_fields/' + RESPONSE_FIELDS.join(',')))
   assert.deepEqual(RESPONSE_FIELDS, ['location', 'group_title', 'event_types', 'summary', 'last_modified', 'registration', 'status'])
 })
 
@@ -239,12 +239,12 @@ test('Instagram: the organizer\'s own post with date, start, end, venue and the 
   assert.deepEqual(browseListing(c), { date: '2026-12-04', start: '19:00', end: '21:00', label: null, freeTime: true })
 })
 
-test('Instagram: date known but no time goes to the organizer queue and Browse as "Time TBA", never free-time', () => {
+test('Instagram: date known but no time stays in the organizer queue, excluded from Browse and free-time', () => {
   const c = instagramCandidate('noTime')
   assert.equal(c.fields.date.values[0].value, '2026-12-03')
   assert.equal(status(c), 'time-tba')
   assert.equal(eligibleForFreeTime(c), false)
-  assert.deepEqual(browseListing(c), { date: '2026-12-03', start: null, end: null, label: 'Time TBA', freeTime: false })
+  assert.equal(browseListing(c), null)
   const timed = confirmByOrganizer(c, { handle: 'scu.boba.society', values: { start: '18:00', end: '20:00' } })
   assert.equal(status(timed), 'needs-ada-contact', 'a student club still owes SCU\'s ADA/504 statement')
   const done = confirmByOrganizer(c, { handle: '@scu.boba.society', name: 'Mai Tran', contact: 'mtran@scu.edu', values: { start: '18:00', end: '20:00' } })
@@ -276,4 +276,14 @@ test('Instagram: a full repost from a non-organizer account still needs the orga
   assert.equal(instagramPostUrl('https://www.instagram.com/p/DxWinter01/?igsh=abc'), 'https://www.instagram.com/p/DxWinter01/')
   assert.equal(instagramPostUrl('https://instagram.evil.com/p/DxWinter01/'), null)
   assert.throws(() => parseInstagramLead({ ...F.INSTAGRAM.complete, caption: '' }, F.ORGANIZERS), /caption/)
+})
+
+test('Instagram: invalid reviewed clock or reversed interval cannot become a public event', () => {
+  const c = instagramCandidate('noTime')
+  for (const values of [{ start:'25:00', end:'26:00' }, { start:'18:00', end:'17:00' }, { start:'18:00', end:'18:00' }]) {
+    const confirmed = confirmByOrganizer(c, { handle:'scu.boba.society', name:'Fixture organizer', contact:'fixture@example.com', values })
+    assert.equal(status(confirmed),'invalid-interval')
+    assert.equal(browseListing(confirmed),null)
+    assert.equal(eligibleForFreeTime(confirmed),false)
+  }
 })

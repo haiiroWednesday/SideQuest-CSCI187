@@ -188,6 +188,11 @@ export function applyReviews(candidate, reviews = [], threshold = DEFAULT_REVIEW
   return { ...candidate, hostKind, review: { reviewers, threshold, settled, flagged: [...flagged] } }
 }
 
+function validInterval(start, end) {
+  const clock = /^(?:[01]\d|2[0-3]):[0-5]\d$/
+  return typeof start === 'string' && typeof end === 'string' && clock.test(start) && clock.test(end) && start < end
+}
+
 /** Where a candidate stands. Only 'ready' may go to the catalog, through the existing reviewed-publication path. */
 export function status(candidate) {
   const f = candidate.fields
@@ -205,6 +210,7 @@ export function status(candidate) {
   if (!endValue || endValue === 'all day') return 'held-no-verified-end'
   if (candidate.review?.flagged?.length) return 'flagged-missing'
   if (!REQUIRED_FIELDS.every(verified)) return 'needs-review'
+  if (!validInterval(s.start ?? f.start.values[0]?.value, endValue)) return 'invalid-interval'
   if (needsAdaContact(candidate)) return 'needs-ada-contact'
   if ((candidate.review?.reviewers ?? 0) < (candidate.review?.threshold ?? DEFAULT_REVIEWERS)) return 'needs-more-reviewers'
   return 'ready'
@@ -266,6 +272,7 @@ function instagramStatus(c) {
   if (REVIEW_FIELDS.some(x => f[x].state === 'disputed' && !(x in s))) return 'disputed'
   if (!known('date')) return 'held-date-unclear'
   if (!known('start') || !known('end')) return 'time-tba'
+  if (!validInterval(s.start ?? f.start.values[0]?.value, s.end ?? f.end.values[0]?.value)) return 'invalid-interval'
   if (!c.instagram.organizerPost && !confirmed) return 'needs-organizer-confirmation'
   if (!known('location')) return 'needs-organizer-confirmation'
   if (needsAdaContact(c)) return 'needs-ada-contact'
@@ -295,11 +302,10 @@ export function confirmByOrganizer(candidate, { handle, name, contact, values = 
 export const FREE_TIME_STATUSES = new Set(['ready', 'ready-organizer-verified', 'served-by-live-feed'])
 export function eligibleForFreeTime(c) { return FREE_TIME_STATUSES.has(status(c)) }
 
-/** What Browse may list. A dated event with no confirmed time shows as "Time TBA" and stays out of free-time matches. */
+/** Public Browse requires a verified interval; missing starts and ends stay internal. */
 export function browseListing(c) {
   const st = status(c)
   const value = field => c.review?.settled?.[field] ?? c.fields[field].values[0]?.value ?? null
   if (FREE_TIME_STATUSES.has(st)) return { date: value('date'), start: value('start'), end: value('end'), label: null, freeTime: true }
-  if (st === 'time-tba') return { date: value('date'), start: null, end: null, label: 'Time TBA', freeTime: false }
   return null
 }
