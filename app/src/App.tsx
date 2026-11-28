@@ -220,6 +220,9 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   const schedule = useScheduleScreen(withPreview({
     ...plans.schedule, loading: plans.loading, unresolvedIds: plans.unresolvedIds, ownTime,
   }, previewEvent), now?.())
+  // "My day" opens My Schedule on one plan: the week opens that plan's day, so the timeline under it shows it.
+  const focusDay = dayFocus ? schedule.days.find(d => d.events.some(e => e.id === dayFocus))?.date ?? null : null
+  useEffect(() => { if (focusDay) setMarkDate(focusDay) }, [focusDay])
   // The My Schedule tab's badge: clashes among real plans on upcoming days. A "My day" preview is not a plan, so it never counts.
   const clashCount = previewEvent ? presentSchedule({ ...plans.schedule }, now?.()).clashCount : schedule.clashCount
   const [postedIds, setPostedIds] = useState(() => readPostedIds())
@@ -324,7 +327,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
             openFromMap(id)
           }} />
       ) : page === 'schedule' ? (
-        <ScheduleTrailView screen={schedule} routes={routes} week={look ? <FreeMarker {...marker} onClear={null} fitText={null} /> : null} accountStorage={Boolean(personalStore)} now={now?.() ?? new Date()} focusId={dayFocus}
+        <ScheduleTrailView screen={schedule} routes={routes} week={look ? <FreeMarker {...marker} onClear={null} fitText={null} /> : null} day={look ? marker.model.week.find(d => d.selected)?.date ?? null : null} weekDates={look ? marker.model.week.map(d => d.date) : undefined} accountStorage={Boolean(personalStore)} now={now?.() ?? new Date()} focusId={dayFocus}
           onPlan={id => { void plans.add(id) }}
           onRemove={id => { void plans.remove(id) }} onRemoveMany={ids => { void plans.removeMany(ids) }} onRecover={plans.recover}
           onRetry={() => { void plans.refresh() }} />

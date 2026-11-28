@@ -85,6 +85,8 @@ describe('My Schedule reads the busy time marked on its own week', () => {
     planned(brunch.id, hike.id)
     render(<App catalog={{ catalog: port(), shared: true }} quiet now={now} />)
     await go('#schedule')
+    // The timeline shows the day opened in the week (Nov 28): open Saturday there first.
+    fireEvent.click(await screen.findByRole('button', { name: /^Sat\s*9/ }))
     const link = await screen.findByText('6 hr free →')
     expect(link.getAttribute('href')).toBe('#discover/2030-11-09')
     // Discover is the events list now: the link lands there, and the week keeps that day open in My Schedule.

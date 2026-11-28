@@ -110,7 +110,8 @@ for (const width of [390, 1280]) {
     // Gone from the page itself; the toast names it and offers Undo.
     await expect(page.locator('main').getByText('Choir open rehearsal')).toHaveCount(0)
     await expect(page.locator('.sq-toast', { hasText: 'Removed “Choir open rehearsal” from My Schedule.' }).getByRole('button', { name: 'Undo', includeHidden: true })).toBeAttached()
-    await expect(page.getByText('Climbing club intro').first()).toBeVisible()
+    // The kept plan is still in the day's timeline. (No card opens by itself since Nov 28.)
+    await expect(page.locator('.sqm-plan[aria-label^="Climbing club intro,"]').first()).toBeAttached()
     await shot('kept-climbing')
   })
 }
@@ -183,7 +184,7 @@ test('three plans in a chain show as one list of tickets, compared against the g
   await expect(page.getByRole('button', { name: /clash/ })).toHaveCount(0)
   // One toast names both plans removed, with one Undo.
   await expect(page.locator('.sq-toast', { hasText: 'Removed “Hackathon kickoff” and “Boba run” from My Schedule.' }).getByRole('button', { name: 'Undo', includeHidden: true })).toBeAttached()
-  await expect(page.getByText('Office hours').first()).toBeVisible()
+  await expect(page.locator('.sqm-plan[aria-label^="Office hours,"]').first()).toBeAttached()
   await shot('kept-office-hours')
 })
 

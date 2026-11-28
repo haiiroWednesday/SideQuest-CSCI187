@@ -80,7 +80,11 @@ for (const c of CASES) for (const width of [390, 1280]) {
       await expect(toggle).toHaveAttribute('aria-pressed', 'true')
       if (mode === 'Trail') await expect(page.locator('.sqm-trail').first()).toBeVisible()
       // Every plan is drawn once in the day view.
-      for (const e of c.events) await expect(page.locator(`.sqm-plan[aria-label^="${e[3]},"]`).first()).toBeAttached()
+      // The timeline shows the day opened in the week (Nov 28), so each plan is looked for on its own day.
+      for (const e of c.events) {
+        if (e[0] >= 0 && e[0] < 7) await page.locator('.sq-dayleaf').nth(e[0]).click()
+        await expect(page.locator(`.sqm-plan[aria-label^="${e[3]},"]`).first()).toBeAttached()
+      }
       if (mode === 'Trail') {
         // Stations stand out: each ring is wider than the line it sits on.
         const sizes = await page.locator('.sqm-trail').first().evaluate(el => ({

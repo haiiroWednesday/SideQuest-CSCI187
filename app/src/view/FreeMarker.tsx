@@ -8,7 +8,6 @@ import { useState } from 'react'
 import type { MarkMode, MarkModel, MarkRun, MarkWindow, When } from '../controller/freeMarks'
 import { WeekBusy } from './WeekBusy'
 import { TimePick } from './Pickers'
-import { OpenNowLine } from './OpenNow'
 import './gaps.css'
 import './marks.css'
 
@@ -110,7 +109,6 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onUnbusy, onResh
               {/* Nov 27, Cyn's picks: "Who's in?" has one entrance, in Groups (C6), and "Mark busy" is gone (C2).
                   Busy time is added on the week or under "Edit busy times". */}
               {freeMode && <button type="button" className="sq-slip-x" aria-label={`Not free ${w.label}`} onClick={() => onUnbusy(w)}>×</button>}
-              <OpenNowLine slot={{ date: w.date, start: w.start, end: w.end }} />
             </li>
           ))}
         </ul>

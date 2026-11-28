@@ -66,6 +66,10 @@ function ScheduleEventDetails({ event }: { event: PlanStubModel }) {
 export type ScheduleTrailViewProps = {
   /** The week of busy, free and Google time, with busy-time editing (moved here from Discover on Nov 28). */
   week?: React.ReactNode
+  /** The day opened in the week. The timeline shows that day only, so a plan is not listed twice (Nov 28). */
+  day?: string | null
+  /** The dates the week shows. Plans after them stay listed under the opened day, so none is out of reach. */
+  weekDates?: readonly string[]
   screen: ScheduleScreen
   accountStorage?: boolean
   onRemove?: (eventId: string) => void
@@ -86,7 +90,7 @@ export type ScheduleTrailViewProps = {
   onRemoveMany?: (eventIds: readonly string[]) => void
 }
 
-export function ScheduleTrailView({ screen, week = null, accountStorage = false, onRemove, onRecover, onRetry, routes, message = null, error = null, now, forcedMode, focusId = null, onPlan, onRemoveMany }: ScheduleTrailViewProps) {
+export function ScheduleTrailView({ screen, week = null, day = null, weekDates = [], accountStorage = false, onRemove, onRecover, onRetry, routes, message = null, error = null, now, forcedMode, focusId = null, onPlan, onRemoveMany }: ScheduleTrailViewProps) {
   const quiet = useQuiet()
   const next = screen.nextUp
   const [chosen, setModeState] = useState<ScheduleMode>(() => readScheduleMode())
@@ -104,6 +108,7 @@ export function ScheduleTrailView({ screen, week = null, accountStorage = false,
   const dayClashes = clashDay?.clashes ?? []
   const setMode = (m: ScheduleMode) => { setModeState(m); saveScheduleMode(m) }
   const allStubs = screen.days.flatMap(day => day.events)
+  const shownDays = day ? screen.days.filter(d => d.date === day || !weekDates.includes(d.date)) : screen.days
   const openDay = (date: string) => { setMode('tickets'); requestAnimationFrame(() => document.getElementById(`sqm-day-${date}`)?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })) }
   // "My day": show the tickets for that event's day, with the event picked and in view.
   const focusDate = focusId ? screen.days.find(day => day.events.some(stub => stub.id === focusId))?.date ?? null : null
@@ -157,8 +162,9 @@ export function ScheduleTrailView({ screen, week = null, accountStorage = false,
         ) : screen.status === 'blocked' ? (
           <div className="sq-message sq-message-error" role="alert"><h3>Your saved plans could not be read.</h3>{onRecover && <button type="button" onClick={onRecover}>Recover valid plans</button>}</div>
         ) : (
-          <div className="sq-board sq-board-schedule">
-            {next ? (
+          <div className={`sq-board sq-board-schedule${quiet ? ' sq-board-solo' : ''}`}>
+            {/* The designed look opens no card by itself (Nov 28): a plan opens when it is tapped. */}
+            {quiet ? null : next ? (
               <aside className="sq-sticker sq-sticker-static" aria-labelledby="sq-next-title">
                 <div className="sq-sticker-card sq-carded">
                   {quiet ? <QuietTop event={next.stub} live={next.stub.live?.kind === 'now' ? <NowMark /> : <span className="sq-soon">Next · {next.when}</span>} /> : <>
@@ -204,7 +210,8 @@ export function ScheduleTrailView({ screen, week = null, accountStorage = false,
               </div>
               {mode === 'wisteria' ? <div className="sqm-wisteria"><iframe title="Wisteria week" src="wisteria/phone.html" /></div> :
               <div className={`sqm-days${mode === 'trail' ? ' sqm-days-trail' : ''}`}>
-                {screen.days.map(day => {
+                {day && !shownDays.some(d => d.date === day) && <p className="sq-trail-none">Nothing planned this day.{routes?.discover && <> <a href={`${routes.discover}/${day}`}>See what fits</a></>}</p>}
+                {shownDays.map(day => {
                   const open = day.events.find(stub => stub.id === openId)
                   return (
                     <section key={day.date} id={`sqm-day-${day.date}`} aria-label={day.long} className={`sqm-dayblock${day.isToday ? ' sq-today' : ''}`}>
@@ -228,7 +235,7 @@ export function ScheduleTrailView({ screen, week = null, accountStorage = false,
                         <ScheduleDayModes events={day.events} timeline={day.timeline} mode={mode} now={now} isToday={day.isToday}
                           date={day.date} freeBetween={day.ownTime?.freeBetween}
                           selectedId={openId} onOpen={id => setOpenId(current => current === id ? null : id)} onOpenTickets={() => openDay(day.date)}
-                          compact={mode === 'trail' && screen.days.length > 1} />
+                          compact={mode === 'trail' && shownDays.length > 1} />
                       ) : (
                         <ol className="sq-stubs">
                           {day.events.map(stub => (

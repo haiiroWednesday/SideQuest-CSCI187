@@ -62,3 +62,9 @@
 @media (min-width: 761px) { .sq-marks .sq-gaps-head h2 { font-size: 32px; } }
 /* A 320px phone: closed days narrow so the open day keeps room for its name and number. */
 @media (max-width: 350px) { .sq-week-phone { --sq-week-closed: 36px; } }
+
+/* My Schedule without the opened "next up" card: the timeline takes the full width. */
+.sq-board-schedule.sq-board-solo { grid-template-columns: minmax(0, 1fr); }
+.sq-board-schedule.sq-board-solo > .sq-trail { grid-column: 1; }
+.sq-trail-none { margin: 8px 0 0; font: 500 17px/1.4 var(--font-sans); color: var(--sq-ink, #302421); }
+.sq-trail-none a { color: var(--sq-red-deep, #751728); font-weight: 650; }
