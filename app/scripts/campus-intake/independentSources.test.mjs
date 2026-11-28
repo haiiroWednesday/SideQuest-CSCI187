@@ -60,3 +60,11 @@ test('unapproved and wrong-origin reads fail before networking', async () => {
   await assert.rejects(collectOrganizerFeed(source,'https://example.org/a',{approvedRead:true,fetchImpl}),/Unsafe/)
   await assert.rejects(collectOrganizerFeed(source,'https://www.qlusion.com/a?token=secret',{approvedRead:true,fetchImpl}),/Unsafe/)
 })
+
+test('real newsletter clock styles and ambiguous afternoon', () => {
+  assert.deepEqual(parseTimeRange('Market Street, 11 AM-1 PM'),{start:'11:00',end:'13:00',passage:'11 AM-1 PM'})
+  assert.deepEqual(parseTimeRange('noon - 1 p.m.'),{start:'12:00',end:'13:00',passage:'noon - 1 p.m.'})
+  assert.deepEqual(parseTimeRange('December 3-4, 1-3 p.m.'),{start:'13:00',end:'15:00',passage:'1-3 p.m.'})
+  assert.equal(parseTimeRange('This afternoon'),null)
+  assert.equal(parseTimeRange('Time TBA'),null)
+})
