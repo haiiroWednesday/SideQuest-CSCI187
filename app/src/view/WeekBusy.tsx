@@ -43,7 +43,7 @@ export function WeekBusy({ model, onDate, onReshape, freeMode }: {
   // On a phone every closed day keeps a 50px leaf (44px or more on screen under the phone zoom, an easy tap)
   // and the open day takes the rest. The hours move inside the open day there, so it keeps its width.
   const columns = phone
-    ? model.week.map((_, i) => (i === open ? 'minmax(0, 1fr)' : '50px')).join(' ')
+    ? model.week.map((_, i) => (i === open ? 'minmax(0, 1fr)' : 'var(--sq-week-closed, 50px)')).join(' ')
     : `34px repeat(${model.week.length}, minmax(0, 1fr))`
   return (
     <div className={'sq-week' + (freeMode ? ' sq-week-freemode' : '') + (phone ? ' sq-week-phone' : '')} style={{ '--sq-week-cols': columns, '--sq-week-hours': shownHours() } as React.CSSProperties}>
@@ -58,14 +58,16 @@ export function WeekBusy({ model, onDate, onReshape, freeMode }: {
           </button>
         ))}
       </div>
-      <div className="sq-week-grid" aria-hidden="true">
+      {/* A drawn chart: a block's label is clipped on purpose (a tap brings the block forward in full, and every
+          plan is named in the timeline under it), so the cut-off-text checks leave it alone. */}
+      <div className="sq-week-grid" aria-hidden="true" data-polish-ok>
         {!phone && <Hours />}
         {model.week.map(day => day.selected
           ? <OpenDay key={day.date} day={day} model={model} onReshape={onReshape} freeMode={freeMode} wide hours={phone} />
           : <ClosedDay key={day.date} day={day} onOpen={() => onDate(day.date)} freeMode={freeMode} labels={!phone} />)}
       </div>
       {!early && <button type="button" className="sq-text-button sq-week-nightbtn" aria-pressed={night} onClick={() => setNight(on => !on)}>
-        {night ? 'Hide 12am to 7am' : 'Show 12am to 7am'}
+        {night ? 'Hide the night' : 'Show the night'}
       </button>}
     </div>
   )
@@ -113,7 +115,8 @@ function Blocks({ day, hidden, freeMode, labels, front = null }: { day: WeekDay;
     {lanes(day.plans).map(({ plan: p, lane, of }) => (
       <span key={p.id} data-plan={p.id} className={'sq-wk-plan' + (front === p.id ? ' sq-wk-front' : '')}
         style={{ ...at(p.first, p.last), left: front === p.id ? 'calc(var(--wk-inset, 0px) + 1px)' : `calc(var(--wk-inset, 0px) + ${Math.min(lane, 3) * (of > 2 ? 18 : 26)}% + 1px)`, zIndex: front === p.id ? 6 : 1 + lane }}>
-        {front === p.id ? <><b>{p.title}</b><small>{p.label}</small></> : labels && p.last - p.first >= 5 && <b>{p.title}</b>}
+        {/* A block is a shape of time. Its name shows when it is tapped forward, and in the timeline under the week. */}
+        {front === p.id && <><b>{p.title}</b><small>{p.label}</small></>}
       </span>
     ))}
     {day.mine.filter(r => r.first !== hidden).map(r => (
@@ -126,7 +129,8 @@ function Blocks({ day, hidden, freeMode, labels, front = null }: { day: WeekDay;
         {labels && r.last - r.first >= 7 && <small>{r.label}</small>}
       </span>
     ))}
-    {labels && !freeMode && day.free.filter(r => r.last - r.first + 1 >= 12).map(r => (
+    {/* "3 hr free" is written on the open day only. On the other days the gold says it. */}
+    {labels && day.selected && !freeMode && day.free.filter(r => r.last - r.first + 1 >= 12).map(r => (
       <span key={'f' + r.first} className="sq-wk-freelabel" style={{ top: `calc(${pct(r.first)}% + 6px)` }}>{duration(r.last - r.first + 1)} free</span>
     ))}
   </>

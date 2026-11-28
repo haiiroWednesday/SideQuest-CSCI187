@@ -66,11 +66,14 @@ for (const width of [390, 1280]) {
   })
 }
 
-test('plans in the week are My Schedule, and the key takes you there to change them', async ({ page }) => {
+test('the week sits in My Schedule: plans are in its key, and the timeline to change them is right under it', async ({ page }) => {
   await open(page, 'discover/when')
-  await expect(page.locator('.sq-wk-plan').first()).toBeAttached()
-  await page.getByRole('link', { name: /^My Schedule, change your plans there$/ }).click()
   await expect(page.getByRole('heading', { name: 'My Schedule', level: 1 })).toBeVisible()
+  await expect(page.locator('.sq-wk-plan').first()).toBeAttached()
+  await expect(page.locator('.sq-mbar-key')).toContainText('plans')
+  // A block carries no name until it is tapped forward; the timeline under the week names every plan.
+  await expect(page.locator('.sq-wk-plan b')).toHaveCount(0)
+  await expect(page.locator('.sq-schedule-week ~ * .sq-ticket, .sq-schedule-week ~ * [class*=trail]').first()).toBeAttached()
 })
 
 // Owner decision, Nov 25: the luggage time tags (This week / Now / This afternoon / Tonight) and the

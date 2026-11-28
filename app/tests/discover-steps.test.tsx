@@ -2,7 +2,7 @@
 // Discover in two steps (Nov 27): When, then Events. Each step has its own address, older links still land
 // on When, and only one step's content shows at a time.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
 import { DISCOVER_STEPS, discoverStepFromHash, discoverStepRoute } from '../src/controller/discoverSteps'
 import { DiscoverView, type DiscoverEvent, type MarkerProps } from '../src/view/DiscoverView'
 import { presentDiscover } from '../src/controller/presentScreens'
@@ -38,27 +38,22 @@ describe('the step addresses', () => {
   })
 })
 
-describe('Discover in steps', () => {
-  it('shows one step at a time: the week, then the list with its filters', async () => {
+describe('Discover is the events list (Nov 28)', () => {
+  it('opens on the list with its filters: no step bar, no week, no Next button', () => {
     show()
-    expect(screen.getByRole('link', { name: /When/, current: 'step' })).toBeTruthy()
-    expect(document.querySelector('.sq-week')).toBeTruthy()
-    expect(document.querySelector('.sq-board')).toBeNull()
-    expect(document.querySelector('.sq-step-filters')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'See what fits' }))
-    await go(location.hash)
-    expect(location.hash).toBe('#discover/events')
+    expect(document.querySelector('.sq-steps')).toBeNull()
     expect(document.querySelector('.sq-week')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'See what fits' })).toBeNull()
+    expect(screen.getByRole('heading', { level: 1 })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'View details for Quick talk' })).toBeTruthy()
     // Interests sit right above the list they change.
     const filters = document.querySelector('.sq-step-filters')!
-    expect(filters).toBeTruthy()
     expect(filters.compareDocumentPosition(document.querySelector('.sq-board')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
-  it('keeps the count and the free-time chip off the When step', () => {
+  it('the older step addresses still open the list', async () => {
     show()
-    expect(screen.queryByRole('button', { name: 'Fits my free time' })).toBeNull()
-    expect(document.querySelector('.sq-fit-note')).toBeNull()
+    await go('#discover/events')
+    expect(screen.getByRole('button', { name: 'View details for Quick talk' })).toBeTruthy()
   })
   it('stays one page without the busy-time week', () => {
     show(false)

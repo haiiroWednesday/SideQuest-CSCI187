@@ -12,7 +12,7 @@ import { NOW, editBusy, noSidewaysScroll, shooter } from './helpers'
 async function openWithGoogle(page: Page, width: number) {
   await page.setViewportSize({ width, height: width < 700 ? 844 : 900 })
   await page.clock.install({ time: NOW })
-  await page.goto('/demo.html?google#discover')
+  await page.goto('/demo.html?google#schedule')
   await page.addStyleTag({ content: '[class*=toast]{visibility:hidden!important}' })
 }
 

@@ -1,0 +1,9 @@
+/* Setup, shown once. It borrows the sheet from "Who's in?" so the two sheets are one family. */
+.sq-setup { display: grid; gap: 10px; }
+.sq-setup h2 { margin: 0; font: 400 34px/1.1 var(--font-display); -webkit-text-stroke: .6px currentColor; paint-order: stroke fill; color: var(--sq-ink, #302421); padding-bottom: .08em; }
+.sq-setup-why { margin: 0; font: 500 17px/1.4 var(--font-sans); color: var(--sq-ink, #302421); }
+.sq-setup-answers { display: grid; gap: 10px; justify-items: start; margin-top: 8px; }
+.sq-setup-add { min-height: 50px; padding: 0 22px; border: 0; background: var(--sq-red, #a32035); color: #fff; font: 700 17px var(--font-sans); cursor: pointer; }
+.sq-setup-add:focus-visible, .sq-setup-skip:focus-visible { outline: 3px solid var(--sq-focus, #751728); outline-offset: 3px; }
+.sq-setup-skip { min-height: 44px; }
+.sq-setup-later { margin: 4px 0 0; font: 500 15px/1.4 var(--font-sans); color: #5c4a42; }

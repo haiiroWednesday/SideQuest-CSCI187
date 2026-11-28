@@ -50,14 +50,15 @@ describe('Discover: showing all events and clearing busy time are two different 
   it('turning "Fits my free time" off keeps busy time; "Clear busy time" says so and offers Undo', async () => {
     planned(ceramics.id, film.id)
     render(<App catalog={{ catalog: port(), shared: true }} quiet now={now} />)
-    // Typed times and the list of busy times open from one line under the week.
+    // Typed times and the list of busy times open from one line under the week, in My Schedule (Nov 28).
+    await go('#schedule')
     await busy3to6()
     const editBusy = () => fireEvent.click(screen.getByRole('button', { name: /Edit busy times/ }))
     expect(screen.getByRole('button', { name: 'Free again 3–6pm' })).toBeTruthy()
     // The free-time filter is a chip beside the kinds on the Events step (C5, Nov 27).
     await go('#discover/events')
     fireEvent.click(screen.getByRole('button', { name: 'Fits my free time' }))
-    await go('#discover')
+    await go('#schedule')
     editBusy()
     expect(screen.getByRole('button', { name: 'Free again 3–6pm' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Clear busy time' }))
@@ -69,15 +70,13 @@ describe('Discover: showing all events and clearing busy time are two different 
   })
 })
 
-describe('My Schedule reads the busy time marked on Discover', () => {
+describe('My Schedule reads the busy time marked on its own week', () => {
   it('shows it under its day and never offers "free" over it', async () => {
     planned(ceramics.id, film.id)
     render(<App catalog={{ catalog: port(), shared: true }} quiet now={now} />)
     await go('#schedule')
     expect(await screen.findByText('3 hr free →')).toBeTruthy()
-    await go('#discover')
     await busy3to6()
-    await go('#schedule')
     expect(await screen.findByText('Busy 3–6pm')).toBeTruthy()
     expect(screen.queryByText(/hr free →/)).toBeNull()
   })
@@ -88,9 +87,11 @@ describe('My Schedule reads the busy time marked on Discover', () => {
     await go('#schedule')
     const link = await screen.findByText('6 hr free →')
     expect(link.getAttribute('href')).toBe('#discover/2030-11-09')
+    // Discover is the events list now: the link lands there, and the week keeps that day open in My Schedule.
     await go('#discover/2030-11-09')
-    const picked = await screen.findByRole('button', { pressed: true, name: /^Sat\s*9/ })
-    expect(picked).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Events|What fits your free time/ })).toBeTruthy()
+    await go('#schedule')
+    expect(await screen.findByRole('button', { pressed: true, name: /^Sat\s*9/ })).toBeTruthy()
   })
 })
 

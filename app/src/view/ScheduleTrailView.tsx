@@ -64,6 +64,8 @@ function ScheduleEventDetails({ event }: { event: PlanStubModel }) {
 }
 
 export type ScheduleTrailViewProps = {
+  /** The week of busy, free and Google time, with busy-time editing (moved here from Discover on Nov 28). */
+  week?: React.ReactNode
   screen: ScheduleScreen
   accountStorage?: boolean
   onRemove?: (eventId: string) => void
@@ -84,7 +86,7 @@ export type ScheduleTrailViewProps = {
   onRemoveMany?: (eventIds: readonly string[]) => void
 }
 
-export function ScheduleTrailView({ screen, accountStorage = false, onRemove, onRecover, onRetry, routes, message = null, error = null, now, forcedMode, focusId = null, onPlan, onRemoveMany }: ScheduleTrailViewProps) {
+export function ScheduleTrailView({ screen, week = null, accountStorage = false, onRemove, onRecover, onRetry, routes, message = null, error = null, now, forcedMode, focusId = null, onPlan, onRemoveMany }: ScheduleTrailViewProps) {
   const quiet = useQuiet()
   const next = screen.nextUp
   const [chosen, setModeState] = useState<ScheduleMode>(() => readScheduleMode())
@@ -136,6 +138,8 @@ export function ScheduleTrailView({ screen, accountStorage = false, onRemove, on
             </dl>
           )}
         </section>
+
+        {week && <section className="sq-schedule-week" aria-label="Your week">{week}</section>}
 
         {message && <p className="sq-feedback" role="status">{message}</p>}
         {error && <p className="sq-feedback sq-feedback-error" role="alert">{error}</p>}

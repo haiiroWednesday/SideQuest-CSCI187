@@ -35,6 +35,9 @@ import { presentOnward } from './controller/presentOnward'
 import { addBusy, editBusy, addBusyBlocks, dayTime, freeMinutesBetween, freeWindows, hasTold, paintMarks, presentMarks, reshapeBusy, type FreeMarks, type When } from './controller/freeMarks'
 import { BUSY_CLEARED_TEXT, storageNotice } from './controller/planFeedback'
 import type { MarkerProps } from './view/DiscoverView'
+import { FreeMarker } from './view/FreeMarker'
+import { SetupOnce } from './view/SetupOnce'
+import { markSetupSeen, setupSeen } from './controller/setupOnce'
 import { addPostedId, readPostedIds } from './controller/myPosts'
 // Last stylesheet in: the one type scale for every page in design mode.
 import './view/type-scale.css'
@@ -126,6 +129,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   const [markWhen, setMarkWhen] = useState<When>('week')
   // "Show all events" stops filtering by free time and changes no marks. Marking again filters again.
   const [showAll, setShowAll] = useState(false)
+  const [setupDone, setSetupDone] = useState(setupSeen)
   // One toast for a change the page made itself (busy time cleared), with Undo.
   const [notice, setNotice] = useState<{ key: string; text: string; undo: () => void } | null>(null)
   const events = useEventCatalog(connection.catalog)
@@ -320,7 +324,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
             openFromMap(id)
           }} />
       ) : page === 'schedule' ? (
-        <ScheduleTrailView screen={schedule} routes={routes} accountStorage={Boolean(personalStore)} now={now?.() ?? new Date()} focusId={dayFocus}
+        <ScheduleTrailView screen={schedule} routes={routes} week={look ? <FreeMarker {...marker} onClear={null} fitText={null} /> : null} accountStorage={Boolean(personalStore)} now={now?.() ?? new Date()} focusId={dayFocus}
           onPlan={id => { void plans.add(id) }}
           onRemove={id => { void plans.remove(id) }} onRemoveMany={ids => { void plans.removeMany(ids) }} onRecover={plans.recover}
           onRetry={() => { void plans.refresh() }} />
@@ -375,6 +379,11 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
     <QuietContext.Provider value={look}>
       <ClashCountContext.Provider value={clashCount}>
       <OnwardContext.Provider value={onwardFor}>
+      {/* Setup, once: the first open with no busy time and no Google Calendar. Any answer ends it for good. */}
+      {look && !setupDone && page === 'discover' && !events.loading && busyMarks.ready && !hasTold({ ...markInput, when: 'week' }) && !Object.keys(busyMarks.calendar ?? {}).length && (
+        <SetupOnce onSkip={() => { markSetupSeen(); setSetupDone(true) }}
+          onAddBusy={() => { markSetupSeen(); setSetupDone(true); window.location.hash = '#schedule' }} />
+      )}
       {designReview && designKit
         ? <designKit.Providers events={events.events} plannedIds={plans.schedule.ids} now={nowFn} myFree={myFree} groupFit={groupFit} onGroupFit={setGroupFit}>{content}</designKit.Providers>
         : content}

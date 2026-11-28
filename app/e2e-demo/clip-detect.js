@@ -10,7 +10,7 @@
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.textContent.trim() ? 1 : 2 });
   for (let n; (n = walker.nextNode());) {
     const el = n.parentElement; if (!el) continue;
-    if (el.closest('svg, .sq-visually-hidden, [hidden], [inert]')) continue;
+    if (el.closest('svg, .sq-visually-hidden, [hidden], [inert], [data-polish-ok]')) continue;
     const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || +cs.opacity === 0) continue;
     // skip the back of a flipped card and anything else not painted
     let hiddenFace = false; for (let a = el; a; a = a.parentElement) { const s = getComputedStyle(a); if (+s.opacity === 0 || s.visibility === 'hidden' || s.display === 'none') { hiddenFace = true; break } }

@@ -52,9 +52,4 @@ describe("Discover's link to the one campus map", () => {
     expect(document.querySelector('.sq-viewswitch, .sq-disc-map, iframe')).toBeNull()
     expect(document.querySelector('.sq-board')!.hasAttribute('hidden')).toBe(false)
   })
-  it('the free-time header link, in the look that shows it, goes to the same place', () => {
-    location.hash = '#discover'
-    render(<DiscoverView screen={presentDiscover({ events: [talk, late], freeWindows: freeWindows(input), now: NOW })} marker={marker} routes={routes} />)
-    expect(document.querySelector('.sq-look-link-map')?.getAttribute('href')).toBe(MAP_FITS_ROUTE)
-  })
 })

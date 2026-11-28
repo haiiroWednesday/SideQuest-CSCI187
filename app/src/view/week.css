@@ -53,3 +53,12 @@
 /* The night before 7am: drawn when asked for, never offered as free time. */
 .sq-wk-night { position: absolute; left: 0; right: 0; top: 0; pointer-events: none; background: #efe6d8; border-bottom: 1.5px dashed rgba(117, 23, 40, .35); }
 .sq-week-nightbtn { justify-self: start; min-height: 44px; margin-top: 4px; }
+
+/* In My Schedule (Nov 28): the section title on the page's type scale, and both text buttons a full tap target
+   under the phone layout's zoom. */
+.sq-marks .sq-gaps-head h2 { margin: 0; font: 400 28px/1.15 var(--font-display); -webkit-text-stroke: .7px currentColor; paint-order: stroke fill; color: var(--sq-ink, #302421); padding-bottom: .08em; }
+.sq-week-nightbtn, .sq-edit-busy { min-height: 50px; }
+.sq-schedule-week { margin: 6px 0 22px; }
+@media (min-width: 761px) { .sq-marks .sq-gaps-head h2 { font-size: 32px; } }
+/* A 320px phone: closed days narrow so the open day keeps room for its name and number. */
+@media (max-width: 350px) { .sq-week-phone { --sq-week-closed: 36px; } }

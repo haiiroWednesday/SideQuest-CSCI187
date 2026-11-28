@@ -1,8 +1,7 @@
 // VIEW: draw the Discover screen the Controller prepared. No storage, matching,
 // clock reads, date or time comparisons, or Model imports belong here.
 import { TagFilters, FoodLeftNote, LeaveNote, StubTags, FoodNowControl } from './TimeAdvice'
-import { DiscoverStepper, StepNext } from './DiscoverSteps'
-import { discoverStepFromHash, discoverStepRoute, type DiscoverStep } from '../controller/discoverSteps'
+import { discoverStepRoute, type DiscoverStep } from '../controller/discoverSteps'
 import { foodFirst, type FoodNoticeModel } from '../controller/presentAdvice'
 import { categoryStyle } from './categoryColors'
 import { categoryOfPlan } from '../controller/eventCategory'
@@ -22,7 +21,6 @@ import logoUrl from './assets/sidequest-logo-red.svg'
 import drawingUrl from './assets/mission-arcade-trail.svg'
 import { EventDetailContent, type SelectedDetailState } from './EventDetailContent'
 import { FreeWindowForm } from './FreeWindowForm'
-import { FreeMarker } from './FreeMarker'
 import { Bookmark, NowMark } from './Marks'
 import { shownHost } from './shownHost'
 import { shortDay, useQuiet } from './quietContext'
@@ -41,7 +39,7 @@ import { useMobileDetailFocus, usePhoneViewport } from './useMobileDetailFocus'
 import { FlipCard, boxOf, slideOthers, snapCards, type Box } from './FlipCard'
 import { readDiscoverLayout, saveDiscoverLayout, type DiscoverLayout } from '../controller/viewPreferences'
 import { MAP_FITS_ROUTE } from '../controller/presentMap'
-import { useInboxCount } from './Social'
+import { GroupFitNote, useInboxCount } from './Social'
 import './fit-map-link.css'
 import { GoingFaces, useGoing } from './FriendsGoing'
 import { FitMark } from './FitMark'
@@ -320,13 +318,9 @@ export function DiscoverView({
   // Nov 27 (D6): with the busy-time week, Discover is two steps (When, then Events), each at its own address. Without it
   // (no designed look) everything stays on one page, as before.
   const stepped = Boolean(marker)
-  const [step, setStep] = useState<DiscoverStep>(() => (openId ? 'events' : discoverStepFromHash(window.location.hash)))
+  // Discover is the list of events (Nov 28). The week lives in My Schedule, so there is one step and no step bar.
+  const step: DiscoverStep = 'events'
   const [pendingOpen, setPendingOpen] = useState<string | null>(null)
-  useEffect(() => {
-    const onHash = () => setStep(discoverStepFromHash(window.location.hash))
-    window.addEventListener('hashchange', onHash)
-    return () => window.removeEventListener('hashchange', onHash)
-  }, [])
   const shows = (s: DiscoverStep) => !stepped || step === s
   const goStep = (s: DiscoverStep) => { window.location.hash = discoverStepRoute(s) }
   // A new step starts at its top, with focus on its heading, like a new page does.
@@ -477,22 +471,17 @@ export function DiscoverView({
     <div className="sq-discover-page">
       <div inert={modal || undefined}><SideQuestHeader routes={routes} plannedCount={screen.plannedCount} /></div>
       <main className="sq-main" id="content">
-        {stepped && <div inert={modal || undefined}><DiscoverStepper step={step} /></div>}
-        {marker ? shows('when') && <div inert={modal || undefined}>
-          {/* The count and "Show all events" moved to the Events step (Nov 27): When is your week and one Next. */}
-          <FreeMarker {...marker} onClear={null} fitText={null} />
-        </div> : <section inert={modal || undefined} className="sq-hero" aria-labelledby="sq-discover-title">
+        {marker ? null : <section inert={modal || undefined} className="sq-hero" aria-labelledby="sq-discover-title">
           <h1 id="sq-discover-title">More to do. <em>Right here.</em></h1>
           {/* Original drawing, not an SCU mark. The red trail ending in an X is the side quest. */}
           <img className="sq-campus-drawing" src={drawingUrl} alt="" aria-hidden="true" />
         </section>}
 
-        {stepped && step === 'when' && <StepNext label="See what fits" onNext={() => goStep('events')} />}
-
         {stepped && step === 'events' && <div className="sq-step-head sq-step-head-events">
           <h1 id="sq-step-events">{someFit ? 'What fits your free time' : 'Events'}</h1>
-          {ready && <p>{screen.fitLine ?? `${screen.count} ${screen.count === 1 ? 'event' : 'events'}`}
-</p>}
+          {ready && <p>{screen.fitLine ?? `${screen.count} ${screen.count === 1 ? 'event' : 'events'}`}</p>}
+          {/* "Fits everyone who shared in …", with the way back, when Groups sent you here. */}
+          {marker?.social && <GroupFitNote />}
         </div>}
         {onCategoryChange && shows('events') && <div inert={modal || undefined} className={stepped ? 'sq-step-filters' : undefined}>
           <CategoryFilters categories={screen.categories} onChange={onCategoryChange} />

@@ -17,14 +17,16 @@ export function useBusyMarks(store?: PersonalStorePort | null, seed?: readonly B
   const [open, setOpen] = useState<FreeMarks>({})
   const [mode, setMode] = useState<MarkMode>('busy')
   const [error, setError] = useState<string | null>(null)
+  // False while an account's saved busy time is still on its way, so nothing asks "no busy time yet?" too early.
+  const [ready, setReady] = useState(!store)
   // The account these marks belong to. A save that settles after sign-out (or after another
   // student signs in) belongs to an account that is gone, so it writes nothing.
   const live = useRef(account)
   live.current = account
   useEffect(() => {
-    if (!account) { if (!seed) { setLocal({}); setCalendar({}) } setError(null); return }
-    setLocal({}); setCalendar({}); setError(null)
-    void account.load().then(result => { if (live.current !== account) return; setLocal(result.marks); setCalendar(result.calendar); setError(result.error) })
+    if (!account) { if (!seed) { setLocal({}); setCalendar({}) } setError(null); setReady(true); return }
+    setLocal({}); setCalendar({}); setError(null); setReady(false)
+    void account.load().then(result => { if (live.current !== account) return; setLocal(result.marks); setCalendar(result.calendar); setError(result.error); setReady(true) })
   }, [account])
   const setMarks = useCallback((next: FreeMarks) => {
     setLocal(next)
@@ -38,5 +40,5 @@ export function useBusyMarks(store?: PersonalStorePort | null, seed?: readonly B
       else if (!result.stale) { setLocal(result.marks); setCalendar(result.calendar) }
     })
   }, [account])
-  return { marks, calendar, setMarks, open, setOpen, mode, setMode, error }
+  return { marks, calendar, setMarks, open, setOpen, mode, setMode, error, ready }
 }

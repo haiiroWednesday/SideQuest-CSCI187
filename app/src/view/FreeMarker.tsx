@@ -8,9 +8,7 @@ import { useState } from 'react'
 import type { MarkMode, MarkModel, MarkRun, MarkWindow, When } from '../controller/freeMarks'
 import { WeekBusy } from './WeekBusy'
 import { TimePick } from './Pickers'
-import { GroupFitNote } from './Social'
 import { OpenNowLine } from './OpenNow'
-import { MAP_FITS_ROUTE } from '../controller/presentMap'
 import './gaps.css'
 import './marks.css'
 
@@ -53,11 +51,11 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onUnbusy, onResh
   }
 
   return (
-    <section className="sq-gaps sq-marks" aria-labelledby="sq-discover-title">
+    <section className="sq-gaps sq-marks" aria-labelledby="sq-week-title">
+      {/* Lives in My Schedule since Nov 28: a section of that page, so its title is an h2. */}
       <div className="sq-gaps-head">
         <div>
-          <h1 id="sq-discover-title">What fits your free time?</h1>
-          <nav className="sq-look-links" aria-label="Also on Discover"><a className="sq-look-link sq-look-link-map" href={MAP_FITS_ROUTE}>See it on the map</a></nav>
+          <h2 id="sq-week-title">Your week</h2>
         </div>
       </div>
 
@@ -73,7 +71,7 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onUnbusy, onResh
           </div>
         )}
         <WeekBusy model={model} onDate={onDate} onReshape={onReshape} freeMode={freeMode} />
-        <p className="sq-mbar-key"><a href="#schedule" aria-label="My Schedule, change your plans there"><i className="sq-key-busy" aria-hidden="true" />My Schedule</a> {freeMode
+        <p className="sq-mbar-key"><span><i className="sq-key-busy" aria-hidden="true" />plans</span> {freeMode
           ? <span><i className="sq-key-free" aria-hidden="true" />free, drag to add</span>
           : <><span><i className="sq-key-mine" aria-hidden="true" />busy, drag to add</span>{model.google.length > 0 && <> <span><i className="sq-key-google" aria-hidden="true" />Google Calendar</span></>} <span><i className="sq-key-free" aria-hidden="true" />free</span></>}</p>
 
@@ -118,7 +116,6 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onUnbusy, onResh
         </ul>
       )}
 
-      {social && <GroupFitNote />}
       <div className="sq-marks-foot">
         {fitText && <p className="sq-fit-note" role="status">{fitText}</p>}
         {onClear && <button type="button" className="sq-text-button sq-clear-marks" onClick={onClear}>Show all events</button>}

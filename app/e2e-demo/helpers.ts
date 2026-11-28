@@ -5,11 +5,14 @@ export const NOW = new Date('2026-11-24T18:40:00Z')
 export const TODAY = '2026-11-24'
 
 /** Discover is two steps, When then Events (Nov 27). Most specs check the list, so plain 'discover' opens the Events step.
- *  Specs about busy time open 'discover/when' (the week), and can move with `toStep`. Two steps since Nov 27. */
+ *  Specs about busy time open 'discover/when' (the week), and can move with `toStep`. Two pages since Nov 28: the week is in My Schedule ('when'), Discover is the events. */
 export async function open(page: Page, route: string, width = 390) {
   await page.setViewportSize({ width, height: width < 700 ? 844 : 900 })
   await page.clock.install({ time: NOW })
-  await page.goto('/demo.html#' + (route === 'discover' ? 'discover/events' : route))
+  // First-run setup is its own spec (setup-once.spec.ts): everywhere else it has been answered already.
+  if (route !== 'setup') await page.addInitScript(() => { try { localStorage.setItem('sidequest.setup.v1', 'done') } catch { /* no storage */ } })
+  // The week of busy and free time lives in My Schedule since Nov 28: 'discover/when' is kept as its name here.
+  await page.goto('/demo.html#' + (route === 'discover/when' ? 'schedule' : route === 'discover/events' ? 'discover' : route))
   await page.addStyleTag({ content: '[class*=toast]{visibility:hidden!important}' })
 }
 
@@ -67,9 +70,9 @@ export async function pickDate(page: Page, label: string, ymd: string, scope?: i
 /** Says "I am only free from → until today" the way a student does now that there is one mode: Busy from
  *  7am up to `from`, and Busy from `until` to the end of the day, typed into the Busy row under the day bar. */
 export async function onlyFree(page: Page, from: string, until: string) {
-  // Busy time is typed on the When step. From another step, go there and come back afterwards.
+  // Busy time is typed under the week in My Schedule. From Discover, go there and come back afterwards.
   const back = await page.evaluate(() => location.hash)
-  const away = /^#discover\/events$/.test(back)
+  const away = /^#discover/.test(back)
   if (away) await toStep(page, 'when')
   await editBusy(page)
   const add = async (a: string, b: string) => {
@@ -84,7 +87,7 @@ export async function onlyFree(page: Page, from: string, until: string) {
 
 /** Moves between Discover's steps the way the step bar does. */
 export async function toStep(page: Page, step: 'when' | 'events') {
-  await page.evaluate(s => { location.hash = s === 'when' ? '#discover' : `#discover/${s}` }, step)
+  await page.evaluate(s => { location.hash = s === 'when' ? '#schedule' : '#discover' }, step)
   await page.waitForTimeout(100)
 }
 
