@@ -35,6 +35,10 @@ export type MarkDay = { date: string; dow: string; day: number; month: string; t
 export type MarkWindow = { date: string; start: string; end: string; label: string; dayLabel: string; first: number; last: number }
 export type MarkCell = { i: number; state: CellState; label: string }
 export type MarkRun = { first: number; last: number; left: number; width: number; label: string; start: string; end: string }
+/** One day of the week view: what is drawn in its column. Runs are five-minute steps from DAY_START. */
+export type WeekPlan = { id: string; title: string; first: number; last: number; label: string }
+export type WeekDay = { date: string; dow: string; day: number; today: boolean; selected: boolean; past: number;
+  mine: MarkRun[]; google: MarkRun[]; plans: WeekPlan[]; free: MarkRun[] }
 export type MarkModel = {
   mode: MarkMode
   days: MarkDay[]
@@ -43,6 +47,10 @@ export type MarkModel = {
   busy: MarkRun[]
   /** The stretches the student drew in the current mode: busy blocks, or free blocks in Free mode. */
   mine: MarkRun[]
+  /** The busy stretches that came from Google Calendar (Busy mode only). They sit inside `mine`. */
+  google: MarkRun[]
+  /** All seven days for the week view, the selected one included. */
+  week: WeekDay[]
   free: MarkRun[]
   windows: MarkWindow[]
   ticks: { left: number; label: string }[]
@@ -60,6 +68,8 @@ export type MarkInput = {
   now: Date
   /** Busy time the student marked. */
   marks: FreeMarks
+  /** The part of `marks` that came from Google Calendar, drawn in Google's blue. */
+  calendar?: FreeMarks
   /** Free time the student marked in Free mode. */
   open?: FreeMarks
   mode?: MarkMode
@@ -238,11 +248,32 @@ export function presentMarks(input: MarkInput): MarkModel {
   return {
     mode, days, date, cells, windows, shortcuts, whenNote,
     fitDays: days.map(day => fitDay(input, day.date)),
+    week: days.map(day => weekDay(input, day, mode, drawn, toRun)),
     busy: runsOf([...sched].filter(i => !past.has(i))).map(toRun),
     mine: runsOf([...mine].filter(i => !past.has(i) && !sched.has(i))).map(toRun),
+    google: mode === 'free' ? [] : runsOf((input.calendar?.[date] ?? []).filter(i => mine.has(i) && !past.has(i) && !sched.has(i))).map(toRun),
     free: gapsOf(input, date).map(toRun),
     ticks: [9, 12, 15, 18, 21].map(h => ({ left: pct((h * 60 - DAY_START) / CELL), label: h === 12 ? 'noon' : h < 12 ? `${h}am` : `${h - 12}pm` })),
     stamp: { dow: DOW_LONG[p.w], day: p.d, month: MON[p.m - 1].toUpperCase(), year: p.y },
+  }
+}
+
+function weekDay(input: MarkInput, day: MarkDay, mode: MarkMode, drawn: FreeMarks,
+  toRun: (r: [number, number]) => MarkRun): WeekDay {
+  const past = pastCells(day.date, input.now), sched = scheduleCells(input, day.date), mine = new Set(drawn[day.date] ?? [])
+  const planned = new Set(input.plannedIds)
+  const plans: WeekPlan[] = input.events
+    .filter(e => planned.has(e.id) && e.date === day.date && e.start && e.end)
+    .flatMap(e => {
+      const cells = cellsTouching(toMin(e.start!), toMin(e.end!))
+      return cells.length ? [{ id: e.id, title: e.title, first: cells[0], last: cells[cells.length - 1], label: span(toMin(e.start!), toMin(e.end!)) }] : []
+    })
+  const pastCount = [...past].length
+  return {
+    date: day.date, dow: day.dow, day: day.day, today: day.today, selected: day.selected, past: pastCount, plans,
+    mine: runsOf([...mine].filter(i => !past.has(i) && !sched.has(i))).map(toRun),
+    google: mode === 'free' ? [] : runsOf((input.calendar?.[day.date] ?? []).filter(i => mine.has(i) && !past.has(i) && !sched.has(i))).map(toRun),
+    free: gapsOf(input, day.date).map(toRun),
   }
 }
 

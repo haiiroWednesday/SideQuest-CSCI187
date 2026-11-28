@@ -104,6 +104,8 @@ export function QuietTop({ event, live }: { event: StubModel; live: React.ReactN
   const year = Number(event.dateText.slice(-4)) || undefined
   return (
     <div className="sq-sticker-top sq-quiet-top">
+      {/* Planned hangs from the card's top left, where it hangs on the ticket before it flips (Cyn, Nov 26). */}
+      {event.planned && <span className="sq-planned-mark sq-card-planned"><Bookmark label="In My Schedule" big /></span>}
       <div className="sq-sticker-time">
         {live}
         <span className="sq-quiet-time"><b>{event.start.time}</b><i>{event.start.ampm}</i></span>
@@ -152,7 +154,7 @@ function QuietDetails({ event, onPlan, onRemove, planningBlocked }: { event: Stu
       {onPlan && <div className="sq-quiet-act">
         <ShareGoing eventId={event.id} planned={event.planned} />
         {event.planned
-          ? <div className="sq-quiet-planned"><Bookmark label="In My Schedule" big /><span aria-hidden="true">Planned</span>{onRemove && <RemovePlan event={event} onRemove={onRemove} disabled={planningBlocked} />}</div>
+          ? <div className="sq-quiet-planned">{onRemove && <RemovePlan event={event} onRemove={onRemove} disabled={planningBlocked} />}</div>
           : <button className="sq-plan-button" type="button" disabled={planningBlocked} onClick={() => onPlan(event.id)}>Plan it</button>}
       </div>}
     </>

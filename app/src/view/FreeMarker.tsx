@@ -1,20 +1,20 @@
 // VIEW: tell SideQuest when you're busy; it works out the free gaps.
-// Busy time can be dragged straight onto the day bar, moved, or stretched by its ends.
-// The first drag version (Nov 24 morning) painted cells and could not move anything, and
-// My Schedule's blue blocks looked editable. Now a busy block is an object you pick up,
-// and a tap on a blue block says where to change it. The typed form stays for keyboards.
-// The controller owns the half-hour math; this view reports cells.
+// Nov 27 (D7): the week view replaced the one-day bar. Busy time is dragged on the open day of the week,
+// moved, or stretched by its ends (WeekBusy). My Schedule plans are walls and say where to change them.
+// Typing a time, the list of busy times and Bring in a week sit under "Edit busy times" for keyboards.
+// The controller owns the five-minute math; this view reports cells.
 import { BringInBusy } from './BringInBusy'
-import { useEffect, useRef, useState } from 'react'
-import { CELL, DAY_START, TAP_CELLS, cellAtX, span, type MarkMode, type MarkModel, type MarkRun, type MarkWindow, type When } from '../controller/freeMarks'
+import { useState } from 'react'
+import type { MarkMode, MarkModel, MarkRun, MarkWindow, When } from '../controller/freeMarks'
+import { WeekBusy } from './WeekBusy'
 import { TimePick } from './Pickers'
-import { GroupFitNote, WhosInButton } from './Social'
+import { GroupFitNote } from './Social'
 import { OpenNowLine } from './OpenNow'
 import { MAP_FITS_ROUTE } from '../controller/presentMap'
 import './gaps.css'
 import './marks.css'
 
-export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnbusy, onReshape, onEditBusy, onBringIn, onClear, onClearBusy = null, onMode, social = false }: {
+export function FreeMarker({ model, fitText, onDate, onAddBusy, onUnbusy, onReshape, onEditBusy, onBringIn, onClear, onClearBusy = null, onMode, social = false }: {
   model: MarkModel
   fitText: string | null
   onDate: (date: string) => void
@@ -22,7 +22,6 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnb
   onWhen?: (key: When) => void
   /** Returns false when the times make no sense. */
   onAddBusy: (start: string, end: string) => boolean
-  onFillGap: (w: MarkWindow) => void
   onUnbusy: (run: Pick<MarkRun, 'first' | 'last'>) => void
   onReshape: (from: { first: number; last: number } | null, first: number, last: number) => void
   /** New typed times for a busy time you already have. Returns false when they make no sense. */
@@ -40,9 +39,9 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnb
   const [from, setFrom] = useState('')
   const [until, setUntil] = useState('')
   const [typedError, setTypedError] = useState(false)
+  const [editing, setEditing] = useState(false)
   const day = model.days.find(d => d.selected)!
   const dayName = day.today ? 'today' : `${day.dow} ${day.day}`
-  const past = model.cells.filter(c => c.state === 'past').length
   const freeMode = model.mode === 'free'
   const markName = freeMode ? 'Free' : 'Busy'
 
@@ -58,7 +57,6 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnb
       <div className="sq-gaps-head">
         <div>
           <h1 id="sq-discover-title">What fits your free time?</h1>
-          <p>Mark when you're busy. Gold is your free time.</p>
           <nav className="sq-look-links" aria-label="Also on Discover"><a className="sq-look-link sq-look-link-map" href={MAP_FITS_ROUTE}>See it on the map</a></nav>
         </div>
       </div>
@@ -67,36 +65,24 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnb
       <div className="sq-marks-left">
       {/* The day leaves are the only day control. The luggage time tags (This week / Now / This afternoon /
           Tonight) and the date stamp were taken off by owner decision on Nov 25; the controller still knows them. */}
-      <div className="sq-days" role="group" aria-label="Day">
-        {model.days.map(d => (
-          <button key={d.date} type="button" className="sq-dayleaf" aria-pressed={d.selected} data-today={d.today || undefined}
-            onClick={() => onDate(d.date)}>
-            <span className="sq-dayleaf-dow">{d.dow}</span>
-            <span className="sq-dayleaf-num">{d.day}</span>
-            <span className="sq-visually-hidden">{d.month}{d.marked ? (freeMode ? ', has free time' : ', has busy time') : ''}</span>
-            {d.marked > 0 && <i className="sq-dayleaf-dab" aria-hidden="true" />}
-          </button>
-        ))}
-      </div>
-
       <div className="sq-mbar-wrap">
         {onMode && (
-          <div className="sq-markmode" role="group" aria-label="What you mark on the bar">
+          <div className="sq-markmode" role="group" aria-label="What you mark on the week">
             <button type="button" aria-pressed={!freeMode} onClick={() => onMode('busy')}>Busy</button>
             <button type="button" aria-pressed={freeMode} onClick={() => onMode('free')}>Free</button>
           </div>
         )}
-        <div className="sq-mbar-labels" aria-hidden="true">
-          {model.free.map(r => <span key={r.first} className="sq-mbar-label" style={{ left: r.left + '%', width: r.width + '%' }}>{r.label}</span>)}
-        </div>
-        <DayBar model={model} past={past} onReshape={onReshape} />
-        <div className="sq-mbar-ticks" aria-hidden="true">
-          {model.ticks.map(t => <span key={t.label} style={{ left: t.left + '%' }}>{t.label}</span>)}
-        </div>
+        <WeekBusy model={model} onDate={onDate} onReshape={onReshape} freeMode={freeMode} />
         <p className="sq-mbar-key"><a href="#schedule" aria-label="My Schedule, change your plans there"><i className="sq-key-busy" aria-hidden="true" />My Schedule</a> {freeMode
           ? <span><i className="sq-key-free" aria-hidden="true" />free, drag to add</span>
-          : <><span><i className="sq-key-mine" aria-hidden="true" />busy, drag to add</span> <span><i className="sq-key-free" aria-hidden="true" />free</span></>}</p>
+          : <><span><i className="sq-key-mine" aria-hidden="true" />busy, drag to add</span>{model.google.length > 0 && <> <span><i className="sq-key-google" aria-hidden="true" />Google Calendar</span></>} <span><i className="sq-key-free" aria-hidden="true" />free</span></>}</p>
 
+      {/* Nov 27 (D6): typing a time, the list of busy times and Bring in a week open from one line, so the
+          week itself is what you see first. */}
+      <button type="button" className="sq-text-button sq-edit-busy" aria-expanded={editing} aria-controls="sq-edit-busy" onClick={() => setEditing(v => !v)}>
+        {freeMode ? 'Type free times' : 'Edit busy times'}<span aria-hidden="true">{editing ? ' ▴' : ' ▾'}</span>
+      </button>
+      {editing && <div id="sq-edit-busy" className="sq-edit-busy-panel">
       {/* Nov 25, Cyn: typing a time sits right under the bar it adds to, and every busy time you have is
           listed with times you can change by tapping them. Drag still works on the bar above. */}
       <form className="sq-busy-form sq-busy-row" onSubmit={submit} aria-label={`Add ${markName.toLowerCase()} time, ${dayName}`}>
@@ -109,10 +95,11 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnb
       {typedError && <p className="sq-busy-error" role="alert">{from && until ? 'End after start' : 'Pick both times'}</p>}
       {!freeMode && model.mine.length > 0 && (
         <ul className="sq-busy-list" aria-label={`Your busy times, ${dayName}`}>
-          {model.mine.map(r => <BusyTime key={r.first} run={r} onEdit={onEditBusy} onRemove={() => onUnbusy(r)} />)}
+          {model.mine.map(r => <BusyTime key={r.first} run={r} google={model.google.some(g => g.first <= r.first && g.last >= r.last)} onEdit={onEditBusy} onRemove={() => onUnbusy(r)} />)}
         </ul>
       )}
       {!freeMode && onBringIn && model.days[0] && <BringInBusy today={model.days[0].date} onAdd={onBringIn} />}
+      </div>}
       </div>
 
       </div>
@@ -120,12 +107,11 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnb
       {model.windows.length > 0 && (
         <ul className="sq-slips" aria-label={`Free time, ${dayName}`}>
           {model.windows.map(w => (
-            <li key={'f' + w.first} className="sq-slip sq-slip-free">
+            <li key={'f' + w.first} className="sq-slip sq-slip-free" data-start={w.start} data-end={w.end}>
               <span className="sq-slip-when"><i className="sq-key-free" aria-hidden="true" /><b>Free</b> {w.label}</span>
-              {social && <WhosInButton slot={{ date: w.date, start: w.start, end: w.end, label: `${w.dayLabel} ${w.label}` }} />}
-              {freeMode
-                ? <button type="button" className="sq-slip-x" aria-label={`Not free ${w.label}`} onClick={() => onUnbusy(w)}>×</button>
-                : <button type="button" className="sq-slip-act" aria-label={`Mark busy, ${w.dayLabel} ${w.label}`} onClick={() => onFillGap(w)}>Mark busy</button>}
+              {/* Nov 27, Cyn's picks: "Who's in?" has one entrance, in Groups (C6), and "Mark busy" is gone (C2).
+                  Busy time is added on the week or under "Edit busy times". */}
+              {freeMode && <button type="button" className="sq-slip-x" aria-label={`Not free ${w.label}`} onClick={() => onUnbusy(w)}>×</button>}
               <OpenNowLine slot={{ date: w.date, start: w.start, end: w.end }} />
             </li>
           ))}
@@ -144,94 +130,12 @@ export function FreeMarker({ model, fitText, onDate, onAddBusy, onFillGap, onUnb
   )
 }
 
-type Drag = { kind: 'new' | 'move' | 'start' | 'end'; from: MarkRun | null; anchor: number; grab: number; first: number; last: number; lo: number; hi: number; moved: boolean }
-const EDGE_PX = 14
-
-/** The day as a strip you can draw on. Pointer only; the form and slips beside it do the same jobs by keyboard. */
-function DayBar({ model, past, onReshape }: { model: MarkModel; past: number; onReshape: (from: { first: number; last: number } | null, first: number, last: number) => void }) {
-  const n = model.cells.length
-  const bar = useRef<HTMLDivElement>(null)
-  const [drag, setDrag] = useState<Drag | null>(null)
-  const [blueNote, setBlueNote] = useState<number | null>(null)
-  const pct = (i: number) => (i / n) * 100
-  useEffect(() => { if (blueNote === null) return; const t = setTimeout(() => setBlueNote(null), 4000); return () => clearTimeout(t) }, [blueNote])
-  const geom = () => bar.current!.getBoundingClientRect()
-  // Five-minute steps: the controller says which step a pointer is over.
-  const cellAt = (x: number) => { const r = geom(); return cellAtX(x, r.left, r.width) }
-  const minOf = (i: number) => DAY_START + i * CELL
-
-  const down = (e: React.PointerEvent) => {
-    if (e.button !== 0) return
-    const c = cellAt(e.clientX), state = model.cells[c]?.state
-    const run = model.mine.find(r => c >= r.first && c <= r.last)
-    setBlueNote(null)
-    // My Schedule blocks and the past are walls: a busy block stops at them and never slides under.
-    const open = (i: number) => i >= 0 && i < n && model.cells[i].state !== 'busy' && model.cells[i].state !== 'past'
-    let lo = c, hi = c
-    while (open(lo - 1)) lo--
-    while (open(hi + 1)) hi++
-    let d: Drag | null = null
-    if (run) {
-      const r = geom(), lx = r.left + (pct(run.first) / 100) * r.width, rx = r.left + (pct(run.last + 1) / 100) * r.width
-      const kind = e.clientX - lx < EDGE_PX ? 'start' : rx - e.clientX < EDGE_PX ? 'end' : 'move'
-      d = { kind, from: run, anchor: c, grab: c - run.first, first: run.first, last: run.last, lo, hi, moved: false }
-    } else if (state === 'busy') { setBlueNote(c); return }
-    else if (state === 'past') return
-    else d = { kind: 'new', from: null, anchor: c, grab: 0, first: c, last: c, lo, hi, moved: false }
-    e.currentTarget.setPointerCapture(e.pointerId)
-    setDrag(d)
-  }
-  const move = (e: React.PointerEvent) => {
-    if (!drag) return
-    const c = Math.max(drag.lo, Math.min(drag.hi, cellAt(e.clientX)))
-    let { first, last } = drag
-    if (drag.kind === 'new') { first = Math.min(drag.anchor, c); last = Math.max(drag.anchor, c) }
-    else if (drag.kind === 'move' && drag.from) { const len = drag.from.last - drag.from.first; first = Math.max(drag.lo, Math.min(drag.hi - len, c - drag.grab)); last = first + len }
-    else if (drag.kind === 'start' && drag.from) { first = Math.min(c, drag.from.last); last = drag.from.last }
-    else if (drag.kind === 'end' && drag.from) { first = drag.from.first; last = Math.max(c, drag.from.first) }
-    if (first !== drag.first || last !== drag.last || c !== drag.anchor) setDrag({ ...drag, first, last, moved: drag.moved || c !== drag.anchor })
-  }
-  const up = () => {
-    if (!drag) return
-    const d = drag; setDrag(null)
-    if (d.kind === 'new') {
-      // A tap with no drag marks one hour from that step.
-      const last = d.moved ? d.last : Math.min(d.hi, d.first + TAP_CELLS - 1)
-      onReshape(null, d.first, last)
-    } else if (d.moved && d.from) onReshape({ first: d.from.first, last: d.from.last }, d.first, d.last)
-  }
-
-  const hidden = drag?.from ? drag.from.first : -1
-  // In Free mode the blocks you draw are your free time, so they look free (gold), not busy.
-  const freeBlocks = model.mode === 'free' ? ' sq-mbar-mine-free' : ''
-  return (
-    <div className={'sq-mbar' + (drag ? ' sq-mbar-dragging sq-mbar-' + drag.kind : '')} ref={bar} aria-hidden="true"
-      onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={() => setDrag(null)}>
-      <div className="sq-mbar-paper">
-        {past > 0 && <i className="sq-mbar-past" style={{ width: pct(past) + '%' }} />}
-        {model.free.map(r => <i key={'f' + r.first} className="sq-mbar-free" style={{ left: r.left + '%', width: r.width + '%' }} />)}
-        {model.busy.map(r => <i key={'b' + r.first} className="sq-mbar-busy" style={{ left: r.left + '%', width: r.width + '%' }} />)}
-        {model.mine.filter(r => r.first !== hidden).map(r => <i key={'m' + r.first} className={`sq-mbar-mine sq-mbar-grab${freeBlocks}`} style={{ left: r.left + '%', width: r.width + '%' }} />)}
-        {drag && <i className={`sq-mbar-mine sq-mbar-ghost${freeBlocks}`} style={{ left: pct(drag.first) + '%', width: pct(drag.last + 1) - pct(drag.first) + '%' }} />}
-      </div>
-      {drag && <span className="sq-mbar-drag-time" style={{ left: pct((drag.first + drag.last + 1) / 2) + '%' }}>{span(minOf(drag.first), minOf(drag.last + 1))}</span>}
-      {blueNote !== null && (
-        <span className="sq-mbar-blue-note" style={{ left: Math.max(14, Math.min(86, pct(blueNote))) + '%' }} onPointerDown={e => e.stopPropagation()}>
-          From My Schedule. <a href="#schedule" tabIndex={-1}>Change it there</a>
-        </span>
-      )}
-    </div>
-  )
-}
-
-/** One busy time under the bar: its start and end open the same time pickers as Add, so a dragged block
- *  can be set to the exact minute. × frees it again. */
-function BusyTime({ run, onEdit, onRemove }: { run: MarkRun; onEdit?: (r: MarkRun, start: string, end: string) => boolean; onRemove: () => void }) {
+function BusyTime({ run, google = false, onEdit, onRemove }: { run: MarkRun; google?: boolean; onEdit?: (r: MarkRun, start: string, end: string) => boolean; onRemove: () => void }) {
   const [error, setError] = useState(false)
   const change = (start: string, end: string) => { const ok = onEdit ? onEdit(run, start, end) : false; setError(!ok) }
   return (
-    <li className="sq-busy-time">
-      <i className="sq-key-mine" aria-hidden="true" />
+    <li className={'sq-busy-time' + (google ? ' sq-busy-time-google' : '')}>
+      {google ? <span className="sq-busy-tag sq-google-tag">Google</span> : <span className="sq-busy-tag">Yours</span>}
       {onEdit
         ? <>
             <TimePick label={`Busy ${run.label}, starts`} placeholder="From" value={run.start} onChange={v => change(v, run.end)} step={5} firstHour={8} lastHour={22} />

@@ -176,6 +176,13 @@
 .sq-pic-wide .sq-greet { width: min(340px, 72vw); }
 .sq-pic-square .sq-greet { width: min(250px, 60vw); }
 .sq-pic-flyer .sq-greet { width: min(220px, 52vw); }
+/* A host's photo: plain, cropped to its stamp. Full screen shows the whole photo at its own shape. */
+.sq-photo { object-fit: cover; }
+.sq-pic-wide .sq-photo { aspect-ratio: 126 / 88; }
+.sq-pic-square .sq-photo { aspect-ratio: 1; }
+.sq-pic-flyer .sq-photo { aspect-ratio: 3 / 4; }
+.sq-pic-plate .sq-photo { aspect-ratio: 300 / 170; }
+.sq-pic-full .sq-pic-paper .sq-photo { width: auto !important; height: auto; max-width: 92vw; max-height: 78vh; aspect-ratio: auto; object-fit: contain; }
 .sq-pic:focus-visible { outline: 3px solid var(--sq-focus, #751728); outline-offset: 4px; }
 .sq-pic-full { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; gap: 14px; align-content: center; background: rgba(30,22,20,.82); cursor: zoom-out; }
 .sq-pic-full .sq-greet { width: min(88vw, 70vh * var(--ar, 1.4)); }

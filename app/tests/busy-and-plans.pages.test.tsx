@@ -29,6 +29,20 @@ const planned = (...ids: string[]) => localStorage.setItem(PLANNED_IDS_KEY, JSON
 const go = async (hash: string) => { await act(async () => { location.hash = hash; window.dispatchEvent(new HashChangeEvent('hashchange')) }) }
 const plannedIds = () => JSON.parse(localStorage.getItem(PLANNED_IDS_KEY) ?? '[]') as string[]
 
+/** Types a busy time under "Edit busy times" (the "Mark busy" shortcut on free slips was cut on Nov 27). */
+const busy3to6 = async () => {
+  const edit = await screen.findByRole('button', { name: /Edit busy times/ })
+  if (edit.getAttribute('aria-expanded') !== 'true') fireEvent.click(edit)
+  const pick = (label: RegExp, hour: string) => {
+    fireEvent.click(screen.getByRole('button', { name: label }))
+    const pop = screen.getAllByRole('dialog').at(-1)!
+    fireEvent.click(within(pop).getByRole('button', { name: hour }))
+    fireEvent.click(within(pop).getByRole('button', { name: ':00' }))
+  }
+  pick(/^Busy from, /, '3pm'); pick(/^until, /, '6pm')
+  fireEvent.click(screen.getByRole('button', { name: /^Add( another)?$/ }))
+}
+
 beforeEach(() => { localStorage.clear(); location.hash = '#discover' })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
@@ -36,14 +50,21 @@ describe('Discover: showing all events and clearing busy time are two different 
   it('"Show all events" keeps busy time; "Clear busy time" says so and offers Undo', async () => {
     planned(ceramics.id, film.id)
     render(<App catalog={{ catalog: port(), shared: true }} quiet now={now} />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Mark busy, Today 3–6pm' }))
+    // Typed times and the list of busy times open from one line under the week.
+    await busy3to6()
+    const editBusy = () => fireEvent.click(screen.getByRole('button', { name: /Edit busy times/ }))
     expect(screen.getByRole('button', { name: 'Free again 3–6pm' })).toBeTruthy()
+    // "Show all events" sits with the count on the Events step (Nov 27).
+    await go('#discover/events')
     fireEvent.click(screen.getByRole('button', { name: 'Show all events' }))
+    await go('#discover')
+    editBusy()
     expect(screen.getByRole('button', { name: 'Free again 3–6pm' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Clear busy time' }))
     expect(screen.queryByRole('button', { name: 'Free again 3–6pm' })).toBeNull()
     const toast = screen.getByText('Busy time cleared.').closest('.sq-toast') as HTMLElement
     fireEvent.click(within(toast).getByRole('button', { name: 'Undo' }))
+    if (!screen.queryByRole('button', { name: 'Free again 3–6pm' })) editBusy()
     expect(screen.getByRole('button', { name: 'Free again 3–6pm' })).toBeTruthy()
   })
 })
@@ -55,7 +76,7 @@ describe('My Schedule reads the busy time marked on Discover', () => {
     await go('#schedule')
     expect(await screen.findByText('3 hr free →')).toBeTruthy()
     await go('#discover')
-    fireEvent.click(await screen.findByRole('button', { name: 'Mark busy, Today 3–6pm' }))
+    await busy3to6()
     await go('#schedule')
     expect(await screen.findByText('Busy 3–6pm')).toBeTruthy()
     expect(screen.queryByText(/hr free →/)).toBeNull()

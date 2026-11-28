@@ -47,9 +47,12 @@ for (const width of [390, 1280]) {
     const sheet = page.getByRole('dialog', { name: /Clash/ })
     await expect(sheet).toBeVisible()
     await expect(sheet.getByRole('button', { name: 'Close' })).toBeFocused()
-    // Both plans on one strip, the overlap marked once, with its time.
-    await expect(sheet.locator('.sq-clash-bar')).toHaveCount(2)
-    await expect(sheet.locator('.sq-clash-band')).toHaveText('4–5pm')
+    // Both plans drawn as My Schedule's trail draws them (Nov 26): one line each, the overlap shaded once,
+    // and the overlap's time read out for screen readers.
+    const trail = sheet.locator('.sq-clash-trail')
+    await expect(trail.locator('.sqm-plan')).toHaveCount(2)
+    await expect(trail.locator('.sqm-hatch')).toHaveCount(1)
+    await expect(trail).toHaveAttribute('aria-label', /Overlap 4–5pm/)
     // Each side is the shared ticket: when, where and who.
     const choir = planOf(sheet, 'Choir open rehearsal')
     // each plan is the same ticket as Discover now (Nov 24), so its time reads the same way
@@ -93,11 +96,11 @@ for (const width of [390, 1280]) {
     await expect(climb.getByRole('button')).toHaveCount(1)
     await expect(sheet.getByRole('button', { name: /^Remove/ })).toHaveCount(0)
     await expect(sheet.getByRole('button', { name: 'Keep both' })).toBeVisible()
-    // The band sits where the bars overlap.
-    const band = (await sheet.locator('.sq-clash-band').boundingBox())!
-    const bars = await sheet.locator('.sq-clash-bar').evaluateAll(els => els.map(e => e.getBoundingClientRect()).map(r => [r.left, r.right]))
-    expect(band.x).toBeGreaterThanOrEqual(Math.max(bars[0][0], bars[1][0]) - 2)
-    expect(band.x + band.width).toBeLessThanOrEqual(Math.min(bars[0][1], bars[1][1]) + 2)
+    // The shade sits where the two lines run side by side: from the later start to the earlier end.
+    const shade = (await trail.locator('.sqm-hatch').boundingBox())!
+    const lines = await trail.locator('.sqm-plan').evaluateAll(els => els.map(e => e.getBoundingClientRect()).map(r => [r.top, r.bottom]))
+    expect(shade.y).toBeGreaterThanOrEqual(Math.min(lines[0][0], lines[1][0]) - 2)
+    expect(shade.y + shade.height).toBeLessThanOrEqual(Math.max(lines[0][1], lines[1][1]) + 2)
     await noSidewaysScroll(page)
     await shot('sheet')
 
@@ -160,8 +163,9 @@ test('three plans in a chain show as one list of tickets, compared against the g
   ], 1280)
   await page.getByRole('button', { name: /^1 clash/ }).click()
   const sheet = page.getByRole('dialog')
-  await expect(sheet.locator('.sq-clash-bar')).toHaveCount(3)
-  await expect(sheet.locator('.sq-clash-band')).toHaveText(['2:30–3pm', '3:15–3:30pm'])
+  const trail = sheet.locator('.sq-clash-trail')
+  await expect(trail.locator('.sqm-plan')).toHaveCount(3)
+  await expect(trail).toHaveAttribute('aria-label', /Overlap 2:30–3pm and 3:15–3:30pm/)
   await expect(sheet.getByRole('button', { name: 'Keep all' })).toBeVisible()
   const plan = (title: string) => planOf(sheet, title)
   await expect(sheet.locator('.sq-clash-plan .sq-stub')).toHaveCount(3)

@@ -114,3 +114,65 @@ test('Discover has no date stamp beside its heading', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   await expect(page.locator('.sq-gaps-head .sq-stamp')).toHaveCount(0)
 })
+
+// A saved plan whose event has left the catalog (cancelled, moved, or an old ID). The ticket says so
+// without guessing, can be removed, and is drawn on opaque paper: .sq-edge outlines tickets with
+// drop-shadows, which would also outline the words on a see-through card (seen Nov 26).
+for (const width of [390, 1280]) test(`schedule: a saved event that is gone (${width}px)`, async ({ page }, info) => {
+  const shot = shooter(page, info)
+  const gone = '9b2f0d4e-1c3a-4e5b-8f60-7a1b2c3d4e5f'
+  await page.setViewportSize({ width, height: width < 700 ? 844 : 900 })
+  await page.clock.install({ time: NOW })
+  const row = { id: id(0), title: 'Figure drawing', host_name: 'Art Club', description: 'Sample.', location: 'Dowd', event_date: D(0), start_time: '13:00:00', end_time: '14:00:00' }
+  await page.addInitScript(([row, gone, today]) => {
+    if (sessionStorage.getItem('seeded')) return
+    sessionStorage.setItem('seeded', '1')
+    localStorage.clear()
+    localStorage.setItem('sidequest.local-catalog.v1', JSON.stringify([row]))
+    localStorage.setItem('sidequest.planned-event-ids.v1', JSON.stringify([row.id, gone]))
+    localStorage.setItem('sidequest.demo-seed.v7', today)
+  }, [row, gone, D(0)] as const)
+  await page.goto('/demo.html#schedule')
+  await page.addStyleTag({ content: '[class*=toast],.sq-look{visibility:hidden!important}' })
+  const section = page.getByRole('region', { name: 'No longer listed' })
+  await expect(section.getByRole('heading', { name: 'No longer listed' })).toBeVisible()
+  await expect(section.getByText('It may have been cancelled or moved.')).toBeVisible()
+  // A confirmed missing record is never reported as a connection problem.
+  await expect(page.getByText(/could not be loaded/)).toHaveCount(0)
+  const paper = await section.locator('.sq-stub-missing').evaluate(el => getComputedStyle(el).backgroundColor)
+  expect(paper).not.toBe('rgba(0, 0, 0, 0)')
+  await noSidewaysScroll(page)
+  await section.scrollIntoViewIfNeeded()
+  await shot('gone', false)
+  await section.getByRole('button', { name: `Remove unavailable event ${gone} from plans` }).click()
+  await expect(section).toHaveCount(0)
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sidequest.planned-event-ids.v1') ?? '[]'))).toEqual([id(0)])
+})
+
+// Cyn, Nov 26: the picked ticket's picture had dropped under the time stub on a laptop and sat on the
+// overlap sentence on a phone. The picture keeps its own column on the right and nothing runs under it.
+for (const width of [390, 820, 1280]) test(`schedule: a picked ticket keeps its picture beside the text (${width}px)`, async ({ page }, info) => {
+  await seed(page, [
+    [0, '10:00', '11:00', 'Ceramics Workshop', 'Ceramics Club', 'Dowd 104'],
+    [0, '10:00', '12:00', 'Study Jam', 'Learning Commons', 'Library, 2nd floor'],
+    [0, '10:30', '11:30', 'Poetry Reading', 'Poetry Club', 'Library'],
+  ], width)
+  await page.getByRole('group', { name: 'Schedule view' }).getByRole('button', { name: 'Tickets', exact: true }).click()
+  await page.locator('.sqm-dayblock').getByText('Poetry Reading').first().click()
+  const open = page.locator('.sqm-open')
+  await expect(open.locator('.sqm-openhead')).toContainText('PICKED')
+  await open.scrollIntoViewIfNeeded()
+  const box = async (sel: string) => (await open.locator(sel).first().boundingBox())!
+  const [stub, time, body, pic, line] = [await box('.sq-stub'), await box('.sq-stub-time'), await box('.sq-stub-body'), await box('.sq-greet'), await box('.sq-pill-overlap')]
+  // The picture sits to the right of the words, inside the ticket, level with them: never below the time stub.
+  expect(pic.x, 'picture is right of the body text').toBeGreaterThanOrEqual(body.x + body.width - 1)
+  expect(pic.y, 'picture starts inside the ticket row').toBeLessThan(time.y + time.height)
+  expect(pic.x + pic.width, 'picture stays inside the ticket').toBeLessThanOrEqual(stub.x + stub.width + 1)
+  // The time stub's tint runs the whole height of the ticket (it stopped halfway when the picture wrapped under it).
+  expect(Math.abs(time.height - stub.height), 'time stub is as tall as the ticket').toBeLessThanOrEqual(2)
+  // The overlap sentence ends before the picture begins.
+  expect(line.x + line.width, 'overlap sentence stops before the picture').toBeLessThanOrEqual(pic.x + 1)
+  expect(await open.locator('.sq-pill-overlap').evaluate(e => e.scrollWidth <= e.clientWidth + 1), 'overlap sentence is not cut off').toBe(true)
+  await noSidewaysScroll(page)
+  await shooter(page, info)('picked-ticket', true)
+})

@@ -248,3 +248,15 @@
 :root[data-quiet] .sq-trail .sq-bubble small { font: 800 9px/1 var(--font-sans) !important; letter-spacing: .1em; }
 :root[data-quiet] .sq-trail .sq-bubble b { font: 400 22px/1 var(--font-display) !important; }
 @media (min-width: 761px) { :root[data-quiet] .sq-trail .sq-bubble small { font-size: 11px !important; } :root[data-quiet] .sq-trail .sq-bubble b { font-size: 30px !important; } }
+
+/* Nov 27, Cyn: P2, plain and quiet. Busy time you add is plain stone; busy time from Google Calendar is
+   Google's logo blue with white text; My Schedule plans read as ticket paper, so blue only ever means Google. */
+.sq-mbar-mine { background: #cdc2b5; border-left: 1.4px solid #8f8375; border-right: 1.4px solid #8f8375; }
+.sq-key-mine { background: #cdc2b5; border-left: 1.4px solid #8f8375; border-right: 1.4px solid #8f8375; }
+.sq-mbar-google { position: absolute; top: 9px; bottom: 9px; background: #4285f4; border-left: 1.4px solid #2a66cc; border-right: 1.4px solid #2a66cc; pointer-events: none; }
+.sq-key-google { background: #4285f4; border-left: 1.4px solid #2a66cc; border-right: 1.4px solid #2a66cc; }
+.sq-mbar-busy, .sq-key-busy { background: #fffaf2; border: 1.3px solid #9b8b7e; box-sizing: border-box; }
+.sq-mbar-busy { box-shadow: inset 0 4px 0 #b9a99a; }
+.sq-busy-tag { flex: none; box-sizing: border-box; width: 62px; margin-right: 6px; padding: 3px 0; border-radius: 3px; text-align: center;
+  background: #cdc2b5; color: #2b2622; font: 700 12px/1.2 var(--font-sans); letter-spacing: .02em; }
+.sq-busy-tag.sq-google-tag { background: #4285f4; color: #fff; }

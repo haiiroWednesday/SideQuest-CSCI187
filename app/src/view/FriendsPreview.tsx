@@ -86,7 +86,7 @@ export function FriendsPreview({ events, routes, plannedCount, plannedIds = [], 
           <div className="sq-fr-open"><OpenInvites onMakePlan={planFromInvite} /></div>
           <nav className="sq-fr-groups" aria-label="Your groups">
             <h1>Groups</h1>
-            <p className="sq-fr-preview-note">Preview only. Nothing is sent.</p>
+            <p className="sq-fr-preview-note">Preview only</p>
             <ul>{groups.map(x => (
               <li key={x.id}><button type="button" aria-current={x.id === g?.id ? 'true' : undefined} onClick={() => setActive(x.id)}>
                 {/* Faces first: a row of the people in it is what makes this read as a group, not a filter. */}

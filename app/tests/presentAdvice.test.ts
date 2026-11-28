@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { presentDiscover } from '../src/controller/presentDiscover'
-import { presentFoodNotices, presentLeaveNotes, presentStretchAdvice } from '../src/controller/presentAdvice'
+import { foodFirst, presentFoodNotices, presentLeaveNotes, presentStretchAdvice } from '../src/controller/presentAdvice'
 import { toStub, type ScreenEvent } from '../src/controller/screenModels'
 
 const D = '2026-11-24'
@@ -66,5 +66,16 @@ describe('food notices on Discover', () => {
       { eventId: 's', postedAt: at - 40 * 60_000, expiresAt: at - 10 * 60_000 },
     ] })
     expect(models).toEqual([{ eventId: 's', title: 'Study Jam', location: 'Library', minutesLeft: 24 }])
+  })
+  it('puts a ticket with leftover food first in its own day and leaves every other ticket where it was', () => {
+    const days = [
+      { date: D, events: [{ id: 'a' }, { id: 's' }, { id: 'b' }, { id: 'c' }] },
+      { date: '2026-11-25', events: [{ id: 'x' }, { id: 'y' }] },
+    ]
+    const notice = (eventId: string) => ({ eventId, title: '', location: '', minutesLeft: 20 })
+    expect(foodFirst(days, [notice('c'), notice('s')]).map(d => d.events.map(e => e.id))).toEqual([['c', 's', 'a', 'b'], ['x', 'y']])
+    expect(foodFirst(days, [])).toEqual(days)
+    // A notice for an event the list does not show (filtered out) moves nothing.
+    expect(foodFirst(days, [notice('gone')])).toEqual(days)
   })
 })

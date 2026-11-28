@@ -1,7 +1,9 @@
 // VIEW: draw the Discover screen the Controller prepared. No storage, matching,
 // clock reads, date or time comparisons, or Model imports belong here.
-import { TagFilters, FoodNowBoard, StretchAdviceList, LeaveNote, StubTags, FoodNowControl } from './TimeAdvice'
-import type { StretchAdvice, FoodNoticeModel } from '../controller/presentAdvice'
+import { TagFilters, FoodLeftNote, LeaveNote, StubTags, FoodNowControl } from './TimeAdvice'
+import { DiscoverStepper, StepNext } from './DiscoverSteps'
+import { discoverStepFromHash, discoverStepRoute, type DiscoverStep } from '../controller/discoverSteps'
+import { foodFirst, type FoodNoticeModel } from '../controller/presentAdvice'
 import { categoryStyle } from './categoryColors'
 import { categoryOfPlan } from '../controller/eventCategory'
 import { Icon } from './Icon'
@@ -24,10 +26,12 @@ import { FreeMarker } from './FreeMarker'
 import { Bookmark, NowMark } from './Marks'
 import { shownHost } from './shownHost'
 import { shortDay, useQuiet } from './quietContext'
-import type { MarkMode, MarkModel, MarkRun, MarkWindow, When } from '../controller/freeMarks'
+import type { MarkMode, MarkModel, MarkRun, When } from '../controller/freeMarks'
 import { useClashCount } from './clashCount'
 import { Greetings, stampFormatFor } from './Greetings'
+import { eventPhoto } from '../controller/eventPhotos'
 import './materials.css'
+import './headfuse.css'
 import './card-fit.css'
 import { CategoryFilters } from './CategoryFilters'
 import { AiDiscoverPanel } from './AiDiscoverPanel'
@@ -146,16 +150,17 @@ export function SideQuestHeader({
 }
 
 /** A closed card in the Discover list. Redraws only when what it shows changes. */
-const ListStub = memo(function ListStub({ stub, selected, onOpen, note }: { stub: StubModel; selected: boolean; onOpen: (id: string) => void; note?: { text: string; warn: boolean } }) {
+const ListStub = memo(function ListStub({ stub, selected, onOpen, note, foodLeft }: { stub: StubModel; selected: boolean; onOpen: (id: string) => void; note?: { text: string; warn: boolean }; foodLeft?: number }) {
   const going = useGoing()?.going(stub.id)
   return (
     <EventStub face stub={stub} selected={selected} dim={stub.fit === 'outside'} onSelect={() => onOpen(stub.id)} extraLabel={going?.label}>
       {stub.planned && <span className="sq-planned-mark"><Bookmark label="In My Schedule" /></span>}
       <GoingFaces eventId={stub.id} />
+      <FoodLeftNote minutes={foodLeft} />
       <LeaveNote note={note} />
     </EventStub>
   )
-}, (a, b) => a.selected === b.selected && a.onOpen === b.onOpen && a.note?.text === b.note?.text && JSON.stringify(a.stub) === JSON.stringify(b.stub))
+}, (a, b) => a.selected === b.selected && a.onOpen === b.onOpen && a.note?.text === b.note?.text && a.foodLeft === b.foodLeft && JSON.stringify(a.stub) === JSON.stringify(b.stub))
 
 export type MarkerProps = {
   model: MarkModel
@@ -164,7 +169,6 @@ export type MarkerProps = {
   onDate: (date: string) => void
   onWhen: (key: When) => void
   onAddBusy: (start: string, end: string) => boolean
-  onFillGap: (w: MarkWindow) => void
   onUnbusy: (run: Pick<MarkRun, 'first' | 'last'>) => void
   /** A drag on the day bar. `from` is the busy stretch that was picked up, or null for a new one. */
   onReshape: (from: { first: number; last: number } | null, first: number, last: number) => void
@@ -208,6 +212,7 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
   const BodyTag = onSelect ? 'span' : 'div'
   // The ticket's name stays its title. The fit mark is read after it, as its description.
   const fitId = useId()
+  const photo = eventPhoto(stub.title)
   const body = (
     <>
       <span className="sq-stub-time">
@@ -233,7 +238,7 @@ export function EventStub({ stub, selected = false, dim = false, onSelect, child
         <StubTags labels={stub.tagLabels} source={stub.tagSourceText} />
         {children}
       </BodyTag>
-      {face && !compact && <span className={`sq-stub-stamp sq-stamp-${stampFormatFor(stub.title)}`} aria-hidden="true"><span className="sq-stamp-paper"><Greetings location={stub.location} format={stampFormatFor(stub.title)} /></span></span>}
+      {face && !compact && <span className={`sq-stub-stamp sq-stamp-${photo?.shape ?? stampFormatFor(stub.title)}`} aria-hidden="true"><span className="sq-stamp-paper">{photo ? <img className="sq-greet sq-photo" src={photo.src} alt="" /> : <Greetings location={stub.location} format={stampFormatFor(stub.title)} />}</span></span>}
     </>
   )
   // The grey outline is a filter on this wrapper. It traces only the ticket, never text placed beside it.
@@ -279,9 +284,6 @@ export type DiscoverViewProps = {
   onTagsChange?: (tags: string[]) => void
   /** Live "food left, come now" notices from hosts. */
   foodNotices?: readonly FoodNoticeModel[]
-  /** One pick, and a short plan, for each free stretch. */
-  stretchAdvice?: readonly StretchAdvice[]
-  onPlanMany?: (ids: string[]) => void
   /** "Leave by 1:42pm for Chem lab" on fitting cards, keyed by event ID. */
   leaveNotes?: ReadonlyMap<string, { text: string; warn: boolean }>
   /** The host's "food left" control on their own live event; null where it doesn't apply. */
@@ -294,7 +296,7 @@ const LAYOUT_NAMES: [DiscoverLayout, string][] = [['panel', 'Side panel'], ['fli
 export function DiscoverView({
   screen: listed, onRetry, onPlan, onRemove, onFreeWindowChange, onCategoryChange, routes, sourceNote, aiSearchEnabled = false,
   detail, onSelectEvent, onRetryDetail, openId = null, layoutSwitcher = false, marker,
-  onTagsChange, foodNotices = [], stretchAdvice = [], onPlanMany, leaveNotes, foodControlFor, onShareFood,
+  onTagsChange, foodNotices = [], leaveNotes, foodControlFor, onShareFood,
 }: DiscoverViewProps) {
   const quiet = useQuiet()
   // With the day bar, every ticket on a day the student has told us about carries its fit mark.
@@ -313,7 +315,32 @@ export function DiscoverView({
   const list = useRef<HTMLDivElement>(null)
   const before = useRef<Map<string, Box> | null>(null)
   const closeSheet = useCallback(() => setSheetOpen(false), [])
-  const stubs = screen.days.flatMap(day => day.events)
+  // Nov 27 (D6): with the busy-time week, Discover is two steps (When, then Events), each at its own address. Without it
+  // (no designed look) everything stays on one page, as before.
+  const stepped = Boolean(marker)
+  const [step, setStep] = useState<DiscoverStep>(() => (openId ? 'events' : discoverStepFromHash(window.location.hash)))
+  const [pendingOpen, setPendingOpen] = useState<string | null>(null)
+  useEffect(() => {
+    const onHash = () => setStep(discoverStepFromHash(window.location.hash))
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+  const shows = (s: DiscoverStep) => !stepped || step === s
+  const goStep = (s: DiscoverStep) => { window.location.hash = discoverStepRoute(s) }
+  // A new step starts at its top, with focus on its heading, like a new page does.
+  const firstStep = useRef(true)
+  useEffect(() => {
+    if (firstStep.current) { firstStep.current = false; return }
+    try { window.scrollTo(0, 0) } catch { /* not available (tests) */ }
+    const heading = document.querySelector<HTMLElement>('main h1')
+    if (!heading) return
+    if (!heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1')
+    heading.focus({ preventScroll: true })
+  }, [step])
+  // Leftover food: the notice rides on the event's own ticket, and that ticket leads its day.
+  const days = foodFirst(screen.days, foodNotices)
+  const foodLeft = new Map(foodNotices.map(n => [n.eventId, n.minutesLeft]))
+  const stubs = days.flatMap(day => day.events)
   const requested = stubs.find(stub => stub.id === requestedId)
   const showSheet = sheetOpen && ((!phone && !flip) || requested !== undefined)
   const modal = flip ? layout === 'lift' && showSheet : phone && showSheet
@@ -415,17 +442,27 @@ export function DiscoverView({
   const pills = (stub: StubModel) => <>
     {stub.planned && <span className="sq-planned-mark"><Bookmark label="In My Schedule" /></span>}
     <GoingFaces eventId={stub.id} />
+    <FoodLeftNote minutes={foodLeft.get(stub.id)} />
     <LeaveNote note={stub.fit === 'fits' ? leaveNotes?.get(stub.id) : undefined} />
   </>
   // A pick or a food notice opens its card in the list, like a tap on the map does.
   const openListed = (id: string) => {
     if (!stubs.some(s => s.id === id)) return
+    // From another step, the ticket opens in the full list.
+    if (stepped && step !== 'events') { setPendingOpen(id); goStep('events'); return }
     openRef.current(id, null)
     requestAnimationFrame(() => document.querySelector(`[data-flip-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'center' }))
   }
   // There is one campus map, on the Map tab (owner decision, Nov 25). Discover used to carry a List/Map
   // switch with its own copy. Now a link takes the events that fit there, with "Fits my free time" on.
   const someFit = stubs.some(stub => stub.fit === 'fits')
+  useEffect(() => {
+    if (step !== 'events' || !pendingOpen) return
+    const id = pendingOpen
+    setPendingOpen(null)
+    openListed(id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, pendingOpen])
   // Arriving with a pick (from the map): bring its card into view on wide screens.
   useEffect(() => {
     if (!openId || phone) return
@@ -438,40 +475,42 @@ export function DiscoverView({
     <div className="sq-discover-page">
       <div inert={modal || undefined}><SideQuestHeader routes={routes} plannedCount={screen.plannedCount} /></div>
       <main className="sq-main" id="content">
-        {marker ? <div inert={modal || undefined}>
-          <FreeMarker {...marker}
-            fitText={marker.onClear && ready ? screen.fitLine ?? null : null} />
+        {stepped && <div inert={modal || undefined}><DiscoverStepper step={step} /></div>}
+        {marker ? shows('when') && <div inert={modal || undefined}>
+          {/* The count and "Show all events" moved to the Events step (Nov 27): When is your week and one Next. */}
+          <FreeMarker {...marker} onClear={null} fitText={null} />
         </div> : <section inert={modal || undefined} className="sq-hero" aria-labelledby="sq-discover-title">
           <h1 id="sq-discover-title">More to do. <em>Right here.</em></h1>
           {/* Original drawing, not an SCU mark. The red trail ending in an X is the side quest. */}
           <img className="sq-campus-drawing" src={drawingUrl} alt="" aria-hidden="true" />
         </section>}
 
-        {/* The pick for your free time comes first; filters sit just above the list they filter. */}
-        {ready && <div inert={modal || undefined}>
-          <FoodNowBoard notices={foodNotices} onOpen={openListed} />
-          {marker && onPlanMany && <StretchAdviceList items={stretchAdvice} onOpen={openListed} onPlanAll={onPlanMany} blocked={screen.planningBlocked}
-            fitMarks={new Map(stubs.flatMap(stub => stub.fitMark ? [[stub.id, stub.fitMark] as const] : []))} />}
+        {stepped && step === 'when' && <StepNext label="See what fits" onNext={() => goStep('events')} />}
+
+        {stepped && step === 'events' && <div className="sq-step-head sq-step-head-events">
+          <h1 id="sq-step-events">{someFit ? 'What fits your free time' : 'Events'}</h1>
+          {ready && <p>{screen.fitLine ?? `${screen.count} ${screen.count === 1 ? 'event' : 'events'}`}
+            {marker?.onClear && <> <button type="button" className="sq-text-button sq-clear-marks" onClick={marker.onClear}>Show all events</button></>}</p>}
         </div>}
-        {onCategoryChange && <div inert={modal || undefined}>
+        {onCategoryChange && shows('events') && <div inert={modal || undefined} className={stepped ? 'sq-step-filters' : undefined}>
           <CategoryFilters categories={screen.categories} onChange={onCategoryChange} />
           {screen.tagFilters && onTagsChange && <TagFilters model={screen.tagFilters} onChange={onTagsChange} />}
         </div>}
 
         {free && onFreeWindowChange && !marker && <FreeWindowForm free={free} ready={ready} onWindowChange={onFreeWindowChange} disabledByDialog={modal} />}
-        {aiSearchEnabled && <div inert={modal || undefined}>
+        {aiSearchEnabled && shows('events') && <div inert={modal || undefined}>
           <AiDiscoverPanel visibleEventIds={stubs.map(item => item.id)} onChoose={id => {
             if (!stubs.some(item => item.id === id)) return
-            openStub(id, null)
+            if (stepped) openListed(id); else openStub(id, null)
           }} />
         </div>}
-
-        {marker && ready && someFit && routes?.map && (
+        {marker && ready && someFit && routes?.map && shows('events') && (
           <p className="sq-look-links sq-fit-map-links" inert={modal || undefined}>
             <a className="sq-look-link sq-fit-map-link" href={MAP_FITS_ROUTE}>See these on the map</a>
           </p>
         )}
 
+        {shows('events') && <>
         <div className={`sq-board${flip ? ' sq-flipmode' : ''}`}>
           <section inert={modal || undefined} className="sq-results" aria-labelledby="sq-events-heading">
             <h2 id="sq-events-heading" ref={resultsHeading} tabIndex={-1} className="sq-visually-hidden">{screen.headingText}</h2>
@@ -506,7 +545,7 @@ export function DiscoverView({
               </div>
             ) : (
               <div className="sq-trail" ref={list}>
-                {screen.days.map(day => (
+                {days.map(day => (
                   <section key={day.date} aria-label={day.long} className={`sq-trail-day${day.isToday ? ' sq-today' : ''}`}>
                     <DayBubble dow={day.dow} dayNumber={day.dayNumber} monthTag={day.monthTag} />
                     <h3 className="sq-day" id={`sq-day-${day.date}`}>{quiet ? <QuietDayName tag={day.tag} long={day.long} /> : <><span>{day.tag}</span>{day.long}</>}</h3>
@@ -524,7 +563,7 @@ export function DiscoverView({
                         return (
                           <li key={stub.id} data-flip-id={stub.id} className={isOpen ? 'sq-flip-hidden' : undefined}>
                             <ListStub stub={stub} selected={!flip && selected?.id === stub.id} onOpen={openStable}
-                              note={stub.fit === 'fits' ? leaveNotes?.get(stub.id) : undefined} />
+                              note={stub.fit === 'fits' ? leaveNotes?.get(stub.id) : undefined} foodLeft={foodLeft.get(stub.id)} />
                           </li>
                         )
                       })}
@@ -556,6 +595,7 @@ export function DiscoverView({
             </ul>
           </section>
         )}
+        </>}
         {!flip && <div className={`sq-scrim${showSheet && selected && ready ? ' sq-open' : ''}`} aria-hidden="true" onClick={closeSheet} />}
         {layout === 'lift' && openFlipId && selected && (
           <FlipCard key={openFlipId} mode="lift" from={flipFrom} phone={phone} closing={closing} onClosed={finishClose}

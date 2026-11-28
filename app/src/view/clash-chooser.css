@@ -50,3 +50,6 @@
 
 /* The outline wrapper stretches with its row, so two tickets side by side end on the same line. */
 .sq-clash-chooser .sq-clash-plans > li > .sq-edge { height: auto; }
+
+/* Each clash is drawn by the trail itself (Nov 26), on the sheet's paper, the way My Schedule draws a day. */
+.sq-clash-ruler.sq-clash-trail { background: none !important; border: 0 !important; padding: 6px 0 4px !important; margin: 10px 0 8px; }

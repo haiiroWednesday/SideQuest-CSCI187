@@ -1,5 +1,5 @@
 // VIEW: compose the shared catalog, posting form and device-local Schedule.
-import { postFoodNotice, presentFoodNotices, presentLeaveNotes, presentStretchAdvice, type FoodNotice } from './controller/presentAdvice'
+import { postFoodNotice, presentFoodNotices, presentLeaveNotes, type FoodNotice } from './controller/presentAdvice'
 import { isEventTag, type EventTag } from './controller/tags'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MapView } from './view/MapView'
@@ -15,6 +15,7 @@ import { useCatalogLiveUpdates } from './view/useCatalogLiveUpdates'
 import { useBrowseDetail } from './view/useBrowseDetail'
 import { useSharedSchedule } from './view/useSharedSchedule'
 import { useSomeday } from './view/useSomeday'
+import type { BusyRange } from './controller/personalClient'
 import { useBusyMarks } from './view/useBusyMarks'
 import type { PersonalStorePort } from './controller/personalClient'
 import { SomedayView } from './view/SomedayView'
@@ -31,7 +32,7 @@ import { QuietContext } from './view/quietContext'
 import { trackInputModality } from './view/inputModality'
 import { OnwardContext } from './view/onwardContext'
 import { presentOnward } from './controller/presentOnward'
-import { addBusy, editBusy, addBusyBlocks, dayTime, fillGap, freeMinutesBetween, freeWindows, hasTold, paintMarks, presentMarks, reshapeBusy, type FreeMarks, type When } from './controller/freeMarks'
+import { addBusy, editBusy, addBusyBlocks, dayTime, freeMinutesBetween, freeWindows, hasTold, paintMarks, presentMarks, reshapeBusy, type FreeMarks, type When } from './controller/freeMarks'
 import { BUSY_CLEARED_TEXT, storageNotice } from './controller/planFeedback'
 import type { MarkerProps } from './view/DiscoverView'
 import { addPostedId, readPostedIds } from './controller/myPosts'
@@ -83,7 +84,7 @@ const pageFromHash = () => {
   return ['#post', '#create-heading'].includes(window.location.hash) ? 'post' : 'discover'
 }
 
-export default function App({ catalog, now, groupSession, emailAuth, realtimeEnabled = false, designReview = false, designKit, quiet = false, signedIn = false, personalStore = null, initialFoodNotices = [] }: {
+export default function App({ catalog, now, groupSession, emailAuth, realtimeEnabled = false, designReview = false, designKit, quiet = false, signedIn = false, personalStore = null, initialFoodNotices = [], seedBusy }: {
   catalog?: ConnectedCatalog
   /** Design review: "food left, come now" notices already shared by hosts. */
   initialFoodNotices?: FoodNotice[]
@@ -93,6 +94,8 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   signedIn?: boolean
   /** Signed in with accounts on: where My Schedule, Someday and busy time are kept. Never built from storage. */
   personalStore?: PersonalStorePort | null
+  /** Design review only: sample busy time, some of it from Google Calendar, for a signed-out page. Never saved. */
+  seedBusy?: readonly BusyRange[]
   /** Design review build: shows the switch between Discover layouts. */
   designReview?: boolean
   /** Design review build only: the groups preview, loaded by demo.tsx with a dynamic import. */
@@ -116,7 +119,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
     [groupSession])
   const [freeWindow, setFreeWindow] = useState<FreeWindow>({ date: '', start: '', end: '' })
   const [categories, setCategories] = useState<EventCategory[]>([])
-  const busyMarks = useBusyMarks(personalStore)
+  const busyMarks = useBusyMarks(personalStore, seedBusy)
   const marks: FreeMarks = busyMarks.marks
   const setMarks = busyMarks.setMarks
   const [markDate, setMarkDate] = useState(() => discoverDayFromHash() ?? '')
@@ -140,7 +143,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   useEffect(() => {
     if (page === 'schedule') void plans.refresh()
   }, [page, plans.refresh])
-  const markInput = { events: events.events, plannedIds: plans.schedule.ids, now: now?.() ?? new Date(), marks, open: busyMarks.open, mode: busyMarks.mode, when: markWhen }
+  const markInput = { events: events.events, plannedIds: plans.schedule.ids, now: now?.() ?? new Date(), marks, calendar: busyMarks.calendar, open: busyMarks.open, mode: busyMarks.mode, when: markWhen }
   // The bar draws busy time in Busy mode and free time in Free mode; each keeps its own marks.
   const freeMode = busyMarks.mode === 'free'
   const drawn = freeMode ? busyMarks.open : marks
@@ -156,7 +159,6 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
     onDate: setMarkDate,
     onWhen: key => { if (key !== 'week') setMarkDate(''); setShowAll(false); setMarkWhen(key) },
     onAddBusy: (start, end) => { const next = addBusy({ ...drawInput, date: markModel.date }, start, end); if (next) setDrawn(next); return next !== null },
-    onFillGap: w => { setShowAll(false); setMarks(fillGap(markInput, w)) },
     onReshape: (from, first, last) => setDrawn(reshapeBusy({ ...drawInput, date: markModel.date }, from, first, last)),
     onUnbusy: r => setDrawn(paintMarks({ ...drawInput, date: markModel.date }, r.first, r.last, false)),
     // Filter only: every busy and free mark stays.
@@ -219,8 +221,6 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   const nowDate = now?.() ?? new Date()
   const fittingIds = discover.days.flatMap(day => day.events.filter(stub => stub.fit === 'fits').map(stub => stub.id))
   const leaveNotes = look ? presentLeaveNotes({ events: events.events, fittingIds, plannedIds: plans.schedule.ids }) : undefined
-  const stretchAdvice = look && discover.status === 'ready'
-    ? presentStretchAdvice({ events: events.events, windows: markModel.windows, plannedIds: plans.schedule.ids, now: nowDate }) : []
   const foodModels = presentFoodNotices({ notices: foodNotices, events: events.events, now: nowDate })
   const foodControlFor = (id: string) => {
     if (!designReview || !postedIds.includes(id)) return null
@@ -263,7 +263,8 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   const [mapPick, setMapPick] = useState<string | null>(null)
   const openFromMap = useCallback((id: string) => {
     setMapPick(id)
-    window.location.hash = '#discover'
+    // The ticket opens in the full list, the See all step.
+    window.location.hash = '#discover/events'
     details.open(id)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [details.open])
@@ -271,7 +272,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
     ? 'Public campus events. Your plans, ideas and busy time are saved to your account. Times are in California time.'
     : connection.shared
     ? 'Public campus events. Personal plans stay on this device. Times are in California time.'
-    : 'Posts are saved in this browser only. Dates and times use California time. Personal plans stay on this device.'
+    : 'Saved on this device · Pacific Time'
 
   // Action feedback is temporary: it appears as a toast and leaves on its own.
   // My Schedule already shows its own lasting states (unreadable plans, details
@@ -289,7 +290,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
   // A toast that reports a plan change offers Undo, which makes the opposite change.
   const change = plans.change && plans.change.revision === feedbackRevision ? plans.change : null
   const undo = change ? () => { void (change.kind === 'added' ? plans.removeMany(change.ids) : plans.addMany(change.ids)) } : undefined
-  if (plans.message && !showWarning) toasts.push({ key: `message-${feedbackRevision}`, tone: 'success', text: plans.message, action: added ? toSchedule : undefined, undo })
+  if (plans.message && !showWarning) toasts.push({ key: `message-${feedbackRevision}`, tone: 'success', text: look ? plans.message.replace(/^(Removed from My Schedule)\. The original event has not been deleted\.$/, '$1') : plans.message, action: added ? toSchedule : undefined, undo })
   if (showWarning && plans.warning) toasts.push({ key: `warning-${feedbackRevision}`, tone: 'warning', text: plans.warning, action: { label: 'Check My Schedule', href: routes.schedule }, undo })
   if (notice) toasts.push({ key: notice.key, tone: 'success', text: notice.text, undo: notice.undo })
   if (plans.error && !(page === 'schedule' && plans.schedule.blocked)) toasts.push({ key: `error-${feedbackRevision}`, tone: 'error', text: plans.error,
@@ -366,8 +367,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
             onPlan={id => { void plans.add(id) }} onRemove={id => { void plans.remove(id) }} onFreeWindowChange={setFreeWindow}
             onCategoryChange={id => setCategories(c => toggleCategory(c, id))} marker={look ? marker : undefined} openId={mapPick} key={mapPick ?? 'list'} layoutSwitcher={false}
             onTagsChange={tags => setEventTags(tags.filter(isEventTag))} foodNotices={foodModels}
-            stretchAdvice={stretchAdvice} leaveNotes={leaveNotes}
-            onPlanMany={ids => { void plans.addMany(ids) }}
+            leaveNotes={leaveNotes}
             foodControlFor={foodControlFor} onShareFood={shareFood} />
       )
   return (

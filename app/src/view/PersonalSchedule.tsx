@@ -110,7 +110,7 @@ export function SchedulePage({ plans }: { plans: PersonalSchedule }) {
           disabled={plans.schedule.blocked} onClick={() => plans.remove(event.id)}>Remove from plans</button>
       </li>)}
       {missingIds.map(id => <li key={id}>
-        <div><h2>Event unavailable</h2><span>Event ID: {id}</span><span>This plan's event is no longer available in the current catalog.</span></div>
+        <div><h2>Event unavailable</h2><span>Event ID: {id}</span><span>It may have been cancelled or moved.</span></div>
         <button type="button" className="remove-button" aria-label={`Remove unavailable event ${id} from plans`}
           disabled={plans.schedule.blocked} onClick={() => plans.remove(id)}>Remove from plans</button>
       </li>)}

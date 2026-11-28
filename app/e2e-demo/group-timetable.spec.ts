@@ -33,7 +33,7 @@ for (const width of [390, 1280]) {
     await open(page, 'groups', width)
     const table = page.getByTestId('group-timetable')
     // Nothing is drawn until you share your own free time.
-    await expect(page.locator('.sq-ft')).toContainText('You see when everyone is free once you share yours.')
+    await expect(page.locator('.sq-ft')).toContainText("Share your free time to see everyone's.")
     await expect(table).toHaveCount(0)
 
     await share(page, 'Swig 7th floor')

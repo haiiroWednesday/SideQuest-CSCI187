@@ -5,7 +5,7 @@ import { WALK_METRES, WALK_PLACES } from './campusWalkTable'
 
 /** An easy walk, the same pace the map page uses. */
 export const WALK_METRES_PER_MINUTE = 80
-export const WALK_ESTIMATE_LABEL = 'Estimate. Paths not checked on foot.'
+export const WALK_ESTIMATE_LABEL = 'Walking times are estimates.'
 
 export type WalkEstimate =
   | { status: 'ready'; from: string; to: string; metres: number; minutes: number }

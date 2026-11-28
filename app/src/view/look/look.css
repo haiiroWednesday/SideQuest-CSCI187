@@ -51,3 +51,8 @@
 :root[data-look-title]:not([data-look-title="instrument"]) .sq-dayleaf-num { font-size: 22px; }
 .sq-stub-body strong { overflow-wrap: normal !important; word-break: normal !important; }
 :root[data-look-title] { --sq-sans: var(--look-sans); }
+
+/* Nov 27, Cyn (C4): Someday lives in one place on every screen, inside My Schedule. The laptop used to keep
+   a tab of its own while the phone had the link, so the two drifted apart. */
+:root[data-look-nav="someday-in-schedule"] .sq-tab-someday { display: none !important; }
+:root[data-look-nav="someday-in-schedule"] .sq-look-link-someday { display: inline-flex; }

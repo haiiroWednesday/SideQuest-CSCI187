@@ -14,7 +14,7 @@
 }
 
 /* Page title: one per page. */
-:root[data-quiet] :is(#sq-discover-title, #schedule-heading, #post-heading, #sq-login-heading, #sq-group-page-title, .sq-hero h1, .sq-fr-groups h1, .sq-someday-hero h1, .sq-post-panel h1) {
+:root[data-quiet] :is(#sq-discover-title, .sq-step-head h1, #schedule-heading, #post-heading, #sq-login-heading, #sq-group-page-title, .sq-hero h1, .sq-fr-groups h1, .sq-someday-hero h1, .sq-post-panel h1) {
   font: 400 var(--ts-title)/1 var(--font-display);
   letter-spacing: -.01em;
   -webkit-text-stroke: .7px currentColor;
@@ -56,7 +56,7 @@
 :root[data-quiet] .sq-oi-field small { color: var(--sq-muted); letter-spacing: 0; text-transform: none; }
 
 /* Eyebrows: the small caps line above a thing. */
-:root[data-quiet] :is(.sq-fr-eyebrow, .sq-clash-tag, .sq-clash-when, .sq-clash-plan dt, .sq-onepick-plan-h) {
+:root[data-quiet] :is(.sq-fr-eyebrow, .sq-clash-tag, .sq-clash-when, .sq-clash-plan dt) {
   font: 800 12px/1.3 var(--font-sans);
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -69,7 +69,7 @@
 :root[data-quiet] .sq-post-panel .event-form textarea::placeholder { font-weight: 500; }
 
 /* Small print: hints under a field or a block. */
-:root[data-quiet] :is(.sq-source-note, .sq-post-tags-hint, .sq-onepick-est, .sq-fr-limit) {
+:root[data-quiet] :is(.sq-source-note, .sq-post-tags-hint, .sq-fr-limit) {
   font: 500 14px/1.5 var(--font-sans);
 }
 /* Character counters. */

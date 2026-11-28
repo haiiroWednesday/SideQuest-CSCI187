@@ -112,5 +112,17 @@ export function presentFoodNotices(input: { notices: readonly FoodNotice[]; even
     .map(item => item.model)
 }
 
+/** Leftover food shows on the event's own ticket (Nov 27, C7). While a notice lasts, that ticket leads its day,
+ *  newest notice first. Every other ticket keeps its place. */
+export function foodFirst<D extends { events: readonly { id: string }[] }>(days: readonly D[], notices: readonly FoodNoticeModel[]): D[] {
+  if (!notices.length) return [...days]
+  const rank = new Map(notices.map((n, i) => [n.eventId, i]))
+  return days.map(day => {
+    if (!day.events.some(e => rank.has(e.id))) return day
+    const lead = day.events.filter(e => rank.has(e.id)).sort((a, b) => rank.get(a.id)! - rank.get(b.id)!)
+    return { ...day, events: [...lead, ...day.events.filter(e => !rank.has(e.id))] }
+  })
+}
+
 // For the App (a View): the food-notice rule and its type, without importing the Model directly.
 export { postFoodNotice, type FoodNotice } from '../model/foodNow'

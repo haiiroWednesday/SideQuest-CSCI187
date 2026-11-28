@@ -60,15 +60,7 @@ for (const width of [390, 1280]) {
     await reception.scrollIntoViewIfNeeded()
     await shot('fits-exactly')
 
-    // "Our pick" carries the same mark as the pick's own ticket. Since Nov 25 the drop-in Open Studio
-    // Evening (6:30–8pm) also fits these 45 minutes, and it is the shorter walk from dinner at Benson.
-    const pick = page.locator('.sq-onepick').first()
-    await expect(pick.locator('strong')).toHaveText('Open Studio Evening')
-    await expect(words(pick.locator('.sq-fitmark'))).toHaveText('Drop in 45 min')
-    await expect(words(pick.locator('.sq-fitmark'))).toHaveText(await words(ticket(page, 'Open Studio Evening').locator('.sq-fitmark')).innerText())
-    await expectFlatGlyph(pick.locator('.sq-fitmark'))
-    await pick.scrollIntoViewIfNeeded()
-    await shot('our-pick')
+    // The "Our pick" card that repeated this mark was removed on Nov 27 (docs/removed/stretch-advice).
 
     // Every event again: the ones that miss say by how much, and the red sticks out past the gold.
     await page.getByRole('button', { name: 'Show all events' }).click()

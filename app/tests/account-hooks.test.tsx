@@ -62,6 +62,7 @@ describe('the app signed in', () => {
   it('says things are saved to the account, offers sign out, and shows no sample groups', async () => {
     const store = createMemoryPersonalTables().forUser(A)
     const signOut = vi.fn()
+    location.hash = '#discover/events'
     render(<App catalog={{ catalog, shared: true }} quiet signedIn personalStore={store}
       emailAuth={{ enabled: true, busy: false, error: null, message: null, accounts: true, requestCode: async () => true, verifyCode: async () => true, signOut }} />)
     await screen.findAllByText('Ceramics')

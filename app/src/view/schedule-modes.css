@@ -64,6 +64,12 @@
 
 .sqm-open { margin-top: 14px; }
 .sqm-open .sq-stub { box-shadow: 0 10px 26px rgba(48,36,33,.14); }
+/* The picked ticket is one ticket, not a list on the day's rail: no rail gap, no bullet, full width. */
+.sqm-open .sq-stubs.sqm-open-ticket { margin: 0; padding: 0; list-style: none; }
+.sqm-open .sq-stubs.sqm-open-ticket > li { margin: 0; padding: 0; }
+/* The overlap line is a sentence. It wraps inside the body and never runs under the picture. */
+.sqm-open .sq-stub-body { min-width: 0; }
+.sqm-open .sq-pill-overlap { flex-shrink: 1; min-width: 0; max-width: 100%; white-space: normal; text-wrap: balance; line-height: 1.35; }
 .sqm-openhead { display: flex; justify-content: space-between; align-items: center; font: 800 11px var(--font-sans); letter-spacing: .14em; color: var(--sq-muted); margin-bottom: 6px; }
 .sqm-openhead button { all: unset; cursor: pointer; font: 700 13px var(--font-sans); letter-spacing: 0; color: var(--sq-red); }
 

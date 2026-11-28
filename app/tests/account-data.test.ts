@@ -3,7 +3,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   createAccountBusyController, createAccountScheduleController, createAccountSomedayController,
-  marksToRanges, planBusySync, rangesToMarks,
+  calendarMarksOf, calendarWithin, marksToRanges, planBusySync, rangesToMarks,
 } from '../src/controller/accountData'
 import { createServerPersonalStore } from '../src/controller/personalClient'
 import { CELL, DAY_START } from '../src/controller/freeMarks'
@@ -140,5 +140,36 @@ describe('server adapter in the browser', () => {
     expect(calls[0].init.credentials).toBe('omit')
     const signedOut = createServerPersonalStore(async () => null, fetchImpl)
     await expect(signedOut.listPlans()).rejects.toMatchObject({ kind: 'signed-out' })
+  })
+})
+
+// Nov 27, Cyn (P2): Google busy time is coloured apart. These steps are for drawing only; saving never reads them.
+describe('busy time from Google Calendar is known apart, for colour only', () => {
+  const row = (id: string, start: string, end: string, source: 'typed' | 'calendar') => ({ id, date: '2030-11-08', start, end, source })
+  const step = (hhmm: string) => { const [h, m] = hhmm.split(':').map(Number); return (h * 60 + m - DAY_START) / CELL }
+  const cells = (from: string, to: string) => Array.from({ length: step(to) - step(from) }, (_, i) => step(from) + i)
+
+  it('lists only the steps that came from Google', () => {
+    const rows = [row('g', '09:00', '10:00', 'calendar'), row('t', '14:00', '15:00', 'typed')]
+    expect(calendarMarksOf(rows)).toEqual({ '2030-11-08': cells('09:00', '10:00') })
+    expect(calendarMarksOf([])).toEqual({})
+  })
+
+  it('drops Google steps the bar no longer marks, and keeps the rest', () => {
+    const calendar = { '2030-11-08': cells('09:00', '10:00') }
+    expect(calendarWithin(calendar, { '2030-11-08': cells('09:30', '11:00') })).toEqual({ '2030-11-08': cells('09:30', '10:00') })
+    expect(calendarWithin(calendar, {})).toEqual({})
+  })
+
+  it('load and save report the Google steps beside the marks', async () => {
+    const tables = createMemoryPersonalTables()
+    await tables.forUser(A).addBusy({ date: '2030-11-08', start: '09:00', end: '10:00', source: 'calendar' })
+    const busy = createAccountBusyController(tables.forUser(A))
+    const loaded = await busy.load()
+    expect(loaded.calendar).toEqual({ '2030-11-08': cells('09:00', '10:00') })
+    const saved = await busy.save({ '2030-11-08': [...cells('09:00', '10:00'), ...cells('14:00', '15:00')] })
+    expect(saved.calendar).toEqual({ '2030-11-08': cells('09:00', '10:00') })
+    const cleared = await busy.save({})
+    expect(cleared.calendar).toEqual({})
   })
 })

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SideQuest flow and demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Urbanist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a working map of the app for two people deciding what to cut; calm, plain, one job per block.
+   IDEA: the app's own ticket stubs, laid out as a route you can walk in demo order.
+   PICTURE: the real screens, in order, joined by a dotted trail; red stubs mark the repeats.
+   COLOUR and TYPE: SideQuest maroon, gold and paper; Instrument Serif titles, Urbanist text.
+   LAYOUT: overview chart, then one lane per flow, then the repeats to decide, then edge cases. */
+:root{color-scheme:light dark;--bg:light-dark(#fbf6ed,#1d1214);--paper:light-dark(#fffaf2,#2a1b1e);--ink:light-dark(#302421,#f3e7dc);--muted:light-dark(#6d625b,#c9b8ab);--red:light-dark(#751728,#e08a98);--gold:#e8aa24;--line:light-dark(#d9c8b8,#4a3236);--warn:light-dark(#a32035,#ff8fa0)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Urbanist,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:"Instrument Serif",Georgia,serif;font-weight:400;line-height:1.05;text-wrap:balance;margin:0}
+h1{font-size:clamp(38px,6vw,56px)}h2{font-size:clamp(30px,4vw,40px)}h3{font-size:24px}
+.band{padding:clamp(28px,4vw,56px) max(5vw,16px)}
+.top{background:var(--red);color:#fff6e2;padding-bottom:40px}
+.top h1{color:#fff6e2}.top p{max-width:62ch;margin:10px 0 0;font-size:17px;color:#f6dfc9}
+.toc{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:22px}
+.toc a{color:#f3c95c;font-weight:700;text-decoration:none;border-bottom:2px solid transparent}.toc a:hover{border-color:#f3c95c}
+.wrap{max-width:1240px;margin:0 auto}
+.lede{color:var(--muted);max-width:66ch;margin:8px 0 18px}
+/* presentation outline */
+.talk{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:18px}
+.part{background:var(--paper);border:1.5px solid var(--line);border-radius:4px;padding:14px 16px}
+.part b{display:block;font:400 22px/1.1 "Instrument Serif",serif}.part .t{font-weight:800;color:var(--red);font-size:13px}
+.part ul{margin:6px 0 0;padding-left:18px}.part li{margin:2px 0}
+/* overview */
+.chart{background:var(--paper);border:1.5px solid var(--line);border-radius:4px;padding:16px;overflow-x:auto}
+.chart svg{max-width:none}
+/* lanes */
+.flow{margin-top:34px}
+.flowhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.flowhead .time{font-weight:800;color:var(--red);font-size:14px}
+.lane{display:flex;gap:0;overflow-x:auto;scroll-snap-type:x mandatory;padding:14px 4px 16px;margin:0 -4px}
+.step{flex:none;width:236px;scroll-snap-align:start;display:flex;align-items:stretch}
+.step+.step::before{content:"";flex:none;width:30px;align-self:center;height:0;border-top:3px dotted var(--gold);margin:0 2px}
+.card{flex:1;background:var(--paper);border:1.5px solid var(--line);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.card button.shot{all:unset;cursor:zoom-in;display:block;border-radius:4px;overflow:hidden;border:1px solid var(--line);aspect-ratio:390/600;background:#e9dccb}
+.card button.shot:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.card img{width:100%;display:block}
+.card .n{font-weight:800;font-size:13px;color:var(--red)}
+.card p{margin:0;font-size:15px;line-height:1.4}
+.card .id{font-size:13px;color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:4px}
+.tag{all:unset;cursor:pointer;font-weight:800;font-size:12.5px;color:#fff;background:var(--warn);padding:2px 7px;border-radius:2px}
+.tag:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+/* culprits */
+.culprits{display:grid;gap:16px;margin-top:10px}
+.cul{background:var(--paper);border:1.5px solid var(--line);border-left:0;border-radius:6px;display:grid;grid-template-columns:auto minmax(0,1fr);overflow:hidden}
+.cul .code{background:var(--warn);color:#fff;font:400 34px/1 "Instrument Serif",serif;padding:16px 14px;display:grid;align-content:start;min-width:72px;text-align:center}
+.cul .body{padding:14px 18px 16px}
+.cul h3{font-size:25px}
+.cul .what{margin:6px 0}
+.cul .prop{margin:6px 0 10px}.cul .prop b{color:var(--red)}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.thumbs button{all:unset;cursor:zoom-in;width:92px;border:1px solid var(--line);border-radius:3px;overflow:hidden;aspect-ratio:390/600;background:#e9dccb}
+.thumbs button:focus-visible{outline:3px solid var(--gold)}
+.thumbs img{width:100%;display:block}
+.decide{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.decide span{font-weight:700;font-size:14px;margin-right:4px}
+.decide button{font:700 14px Urbanist,sans-serif;min-height:44px;padding:0 16px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);border-radius:3px;cursor:pointer}
+.decide button[aria-pressed=true]{background:var(--red);border-color:var(--red);color:#fff6e2}
+.decide button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.copyrow{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:18px}
+.copyrow button{font:800 15px Urbanist,sans-serif;min-height:48px;padding:0 22px;background:var(--red);color:#fff6e2;border:0;border-radius:3px;cursor:pointer}
+.copyrow output{color:var(--muted);font-size:14px}
+/* edge cases grid */
+.edges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:14px}
+.edges .card{padding:8px}.edges p{font-size:14px}
+/* status */
+.now{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:14px}
+.now section{background:var(--paper);border:1.5px solid var(--line);border-radius:6px;padding:14px 18px}
+.now h3{font-size:26px;margin-bottom:6px}
+.now ul{margin:0;padding:0;list-style:none}
+.now li{display:grid;grid-template-columns:26px minmax(0,1fr);gap:6px;padding:7px 0;border-top:1.5px dashed var(--line)}
+.now li:first-child{border-top:0}
+.now li i{font-style:normal;font-weight:800;color:var(--red)}
+.key{display:flex;flex-wrap:wrap;gap:8px 16px;margin:10px 0 0;font-size:14px;font-weight:700}
+.st{display:inline-block;font-weight:800;font-size:12.5px;padding:2px 7px;border-radius:2px;border:1.5px solid var(--line);color:var(--muted);white-space:nowrap}
+.st.change{border-color:var(--red);color:var(--red)}
+.st.build{border:1.5px dashed #b8860b;color:light-dark(#7a5a06,#f3c95c);background:light-dark(#fff3d0,transparent)}
+.st.cut{background:var(--warn);border-color:var(--warn);color:#fff}
+.done{font-weight:800;color:var(--red)}
+/* words */
+.words{display:grid;gap:10px;margin-top:14px}
+.word{display:grid;grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr);gap:10px;align-items:center;background:var(--paper);border:1.5px solid var(--line);border-radius:4px;padding:10px 14px}
+.word s{color:var(--muted);text-decoration-color:var(--warn)}
+.word b{font-weight:700}
+.word span{color:var(--gold);font-weight:800;text-align:center}
+.word small{display:block;color:var(--muted);font-size:13px;font-weight:500}
+@media(max-width:600px){.word{grid-template-columns:1fr}.word span{display:none}}
+/* her answers, saved as she types */
+.ans{width:100%;font:500 16px/1.4 Urbanist,sans-serif;color:var(--ink);background:light-dark(#fff,#1d1214);border:1.5px solid var(--line);border-radius:4px;padding:10px 12px;min-height:44px;margin-top:8px;resize:vertical}
+.ans:focus-visible{outline:3px solid var(--gold);outline-offset:1px;border-color:var(--red)}
+.ans::placeholder{color:var(--muted)}
+.now li .ans{grid-column:2}
+.word .pickrow{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.word .pickrow button,.pickbtn{font:700 14px Urbanist,sans-serif;min-height:44px;padding:0 14px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);border-radius:3px;cursor:pointer}
+.word .pickrow button[aria-pressed=true]{background:var(--red);border-color:var(--red);color:#fff6e2}
+.word .pickrow .ans{flex:1 1 220px;margin-top:0}
+#save{position:fixed;right:12px;bottom:12px;z-index:20;font:800 13px Urbanist,sans-serif;padding:8px 12px;border-radius:3px;background:var(--ink);color:var(--bg);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+#save[data-s=local]{background:var(--warn);color:#fff}
+/* q&a */
+.qgrid{display:grid;gap:14px;margin-top:14px}
+.q{background:var(--paper);border:1.5px solid var(--line);border-radius:6px;padding:0}
+.q summary{cursor:pointer;padding:14px 18px;font:400 23px/1.15 "Instrument Serif",serif;min-height:44px}
+.q summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.q ol{margin:0;padding:0 18px 14px 40px}
+.q li{padding:6px 0;border-top:1.5px dashed var(--line)}
+.q li b{display:block}
+.qnote{padding:0 18px 16px}.qnote .ans{margin-top:0}
+.q li em{font-style:normal;font-weight:800;font-size:12.5px;color:#fff;background:var(--warn);padding:1px 6px;border-radius:2px;margin-left:6px}
+
+.qa{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:14px}
+.qa div{background:var(--paper);border:1.5px solid var(--line);border-radius:4px;padding:12px 14px}
+.qa b{display:block;margin-bottom:4px}
+.note{font-size:13px;color:var(--muted);margin-top:24px}
+.word.done{opacity:1}.word .inapp{grid-column:1/-1;text-align:left;font:650 13px/1.3 var(--sans,system-ui);color:#2f6b3a}
+details.worddone{margin-top:14px;border-top:1px dashed #cdbfae;padding-top:10px}details.worddone>summary{cursor:pointer;font:650 15px/1.4 var(--sans,system-ui);color:#751728;min-height:44px;display:flex;align-items:center}
+.thumbs button.big{width:min(100%,300px);height:auto;aspect-ratio:auto}.thumbs button.big img{width:100%;height:auto;object-fit:contain;display:block}
+/* lightbox */
+dialog{border:0;padding:0;background:transparent;max-width:min(96vw,1300px)}
+dialog::backdrop{background:rgba(20,10,12,.82)}
+.lb{background:var(--paper);color:var(--ink);border-radius:8px;padding:12px;display:grid;gap:10px}
+.lb .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lb .bar b{margin-right:auto;font:400 22px/1.1 "Instrument Serif",serif}
+.lb .bar button{font:700 14px Urbanist,sans-serif;min-height:44px;padding:0 14px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);border-radius:3px;cursor:pointer}
+.lb .bar button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.lb img{max-height:80vh;max-width:100%;display:block;margin:0 auto;border:1px solid var(--line)}
+@media print{.top{background:none;color:#000}.top h1,.top p{color:#000}.lane{flex-wrap:wrap;overflow:visible}.decide,.copyrow{display:none}.flow{break-inside:avoid}}
+@media(max-width:600px){.step{width:200px}.cul{grid-template-columns:1fr}.cul .code{padding:8px 14px;text-align:left}}
+@media(prefers-reduced-motion:no-preference){.lane{scroll-behavior:smooth}}
+</style>
+</head>
+<body>
+<header class="band top"><div class="wrap">
+  <h1>SideQuest, start to finish</h1>
+  <p>The app as a route you can walk: what is decided, every flow with its real screens, what still repeats, and what to say on Dec 2. It is updated each time the UI changes.</p>
+  <nav class="toc" aria-label="Sections"><a href="#status">Decided and open</a><a href="#map">Whole app</a><a href="#flows">Flows</a><a href="#repeats">Repeats</a><a href="#words">Words</a><a href="#talk">The talk</a><a href="#qa">Q&amp;A</a><a href="#edges">Edge cases</a></nav>
+</div></header>
+<main>
+<section class="band" id="status"><div class="wrap">
+  <h2>Decided, and still open</h2>
+  <p class="lede">Updated 27 November. Type your call under any open item. Everything you tap or type on this page saves by itself, and Claude reads it from here.</p>
+  <div class="now" id="nowList"></div>
+</div></section>
+
+<section class="band" id="map" style="background:light-dark(#f3eadb,#241619)"><div class="wrap">
+  <h2>Where the app is going</h2>
+  <p class="lede">Open the app and you see events. Your week lives in My Schedule. Setup shows only when we know nothing about your time.</p>
+  <div class="chart"><!--CHART--><svg aria-roledescription="flowchart-v2" role="graphics-document document" viewBox="-8 -8 1706.57763671875 591.8046875" style="max-width: 1706.57763671875px;" xmlns="http://www.w3.org/2000/svg" width="100%" id="overview"><style>#overview{font-family:Urbanist,Helvetica,sans-serif;font-size:15px;fill:#302421;}#overview .error-icon{fill:hsl(216.9230769231, 100%, 100%);}#overview .error-text{fill:#000000;stroke:#000000;}#overview .edge-thickness-normal{stroke-width:2px;}#overview .edge-thickness-thick{stroke-width:3.5px;}#overview .edge-pattern-solid{stroke-dasharray:0;}#overview .edge-pattern-dashed{stroke-dasharray:3;}#overview .edge-pattern-dotted{stroke-dasharray:2;}#overview .marker{fill:#b08a3e;stroke:#b08a3e;}#overview .marker.cross{stroke:#b08a3e;}#overview svg{font-family:Urbanist,Helvetica,sans-serif;font-size:15px;}#overview .label{font-family:Urbanist,Helvetica,sans-serif;color:#302421;}#overview .cluster-label text{fill:#000000;}#overview .cluster-label span,#overview p{color:#000000;}#overview .label text,#overview span,#overview p{fill:#302421;color:#302421;}#overview .node rect,#overview .node circle,#overview .node ellipse,#overview .node polygon,#overview .node path{fill:#fffaf2;stroke:#751728;stroke-width:1px;}#overview .flowchart-label text{text-anchor:middle;}#overview .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#overview .node .label{text-align:center;}#overview .node.clickable{cursor:pointer;}#overview .arrowheadPath{fill:#0b0b0b;}#overview .edgePath .path{stroke:#b08a3e;stroke-width:2.0px;}#overview .flowchart-link{stroke:#b08a3e;fill:none;}#overview .edgeLabel{background-color:hsl(-83.0769230769, 100%, 97.4509803922%);text-align:center;}#overview .edgeLabel rect{opacity:0.5;background-color:hsl(-83.0769230769, 100%, 97.4509803922%);fill:hsl(-83.0769230769, 100%, 97.4509803922%);}#overview .labelBkg{background-color:rgba(250.0000000001, 242.0000000002, 255, 0.5);}#overview .cluster rect{fill:hsl(216.9230769231, 100%, 100%);stroke:hsl(216.9230769231, 60%, 90%);stroke-width:1px;}#overview .cluster text{fill:#000000;}#overview .cluster span,#overview p{color:#000000;}#overview div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:Urbanist,Helvetica,sans-serif;font-size:12px;background:hsl(216.9230769231, 100%, 100%);border:1px solid hsl(216.9230769231, 60%, 90%);border-radius:2px;pointer-events:none;z-index:100;}#overview .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#302421;}#overview :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#overview .build rect{stroke:#b8860b!important;stroke-width:3px!important;stroke-dasharray:6 4!important;fill:#fff3d0!important;}#overview .build polygon{stroke:#b8860b!important;stroke-width:3px!important;stroke-dasharray:6 4!important;fill:#fff3d0!important;}#overview .build ellipse{stroke:#b8860b!important;stroke-width:3px!important;stroke-dasharray:6 4!important;fill:#fff3d0!important;}#overview .build circle{stroke:#b8860b!important;stroke-width:3px!important;stroke-dasharray:6 4!important;fill:#fff3d0!important;}#overview .build path{stroke:#b8860b!important;stroke-width:3px!important;stroke-dasharray:6 4!important;fill:#fff3d0!important;}#overview .change rect{stroke:#751728!important;stroke-width:3px!important;}#overview .change polygon{stroke:#751728!important;stroke-width:3px!important;}#overview .change ellipse{stroke:#751728!important;stroke-width:3px!important;}#overview .change circle{stroke:#751728!important;stroke-width:3px!important;}#overview .change path{stroke:#751728!important;stroke-width:3px!important;}</style><g><marker orient="auto" markerHeight="12" markerWidth="12" markerUnits="userSpaceOnUse" refY="5" refX="6" viewBox="0 0 10 10" class="marker flowchart" id="overview_flowchart-pointEnd"><path style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 0 0 L 10 5 L 0 10 z"></path></marker><marker orient="auto" markerHeight="12" markerWidth="12" markerUnits="userSpaceOnUse" refY="5" refX="4.5" viewBox="0 0 10 10" class="marker flowchart" id="overview_flowchart-pointStart"><path style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 0 5 L 10 10 L 10 0 z"></path></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5" refX="11" viewBox="0 0 10 10" class="marker flowchart" id="overview_flowchart-circleEnd"><circle style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" r="5" cy="5" cx="5"></circle></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5" refX="-1" viewBox="0 0 10 10" class="marker flowchart" id="overview_flowchart-circleStart"><circle style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" r="5" cy="5" cx="5"></circle></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5.2" refX="12" viewBox="0 0 11 11" class="marker cross flowchart" id="overview_flowchart-crossEnd"><path style="stroke-width: 2; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9"></path></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5.2" refX="-1" viewBox="0 0 11 11" class="marker cross flowchart" id="overview_flowchart-crossStart"><path style="stroke-width: 2; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path marker-end="url(#overview_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-open LE-q" id="L-open-q-0" d="M134.986,140.25L139.153,140.25C143.319,140.25,151.653,140.25,159.186,140.316C166.72,140.382,173.453,140.514,176.82,140.58L180.187,140.646"></path><path marker-end="url(#overview_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-q LE-setup" id="L-q-setup-0" d="M375.357,161.488L384.288,163.615C393.218,165.742,411.078,169.996,424.683,172.123C438.287,174.25,447.635,174.25,452.309,174.25L456.983,174.25"></path><path marker-end="url(#overview_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-q LE-disc" id="L-q-disc-0" d="M375.357,120.012L384.288,117.718C393.218,115.425,411.078,110.837,445.161,108.544C479.244,106.25,529.548,106.25,578.462,106.25C627.376,106.25,674.9,106.25,703.798,107.68C732.695,109.11,742.967,111.969,748.103,113.399L753.239,114.829"></path><path marker-end="url(#overview_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-setup LE-disc" id="L-setup-disc-0" d="M697.423,174.25L701.59,174.25C705.757,174.25,714.09,174.25,723.393,172.82C732.695,171.39,742.967,168.531,748.103,167.101L753.239,165.671"></path><path marker-end="url(#overview_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-disc LE-card" id="L-disc-card-0" d="M941.689,140.25L945.856,140.25C950.022,140.25,958.356,140.25,965.806,140.25C973.256,140.25,979.822,140.25,983.106,140.25L986.389,140.25"></path><path marker-end="url(#overview_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-card LE-plan" id="L-card-plan-0" d="M1077.754,123.75L1085.641,119.667C1093.529,115.583,1109.303,107.417,1122.859,103.333C1136.414,99.25,1147.751,99.25,1153.419,99.25L1159.087,99.25"></path><path marker-end="url(#overview_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-card LE-walk" id="L-card-walk-0" d="M1077.754,156.75L1085.641,160.833C1093.529,164.917,1109.303,173.083,1120.474,177.167C1131.644,181.25,1138.211,181.25,1141.494,181.25L1144.778,181.25"></path><path marker-end="url(#overview_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-plan LE-sched" id="L-plan-sched-0" d="M1221.909,99.25L1228.46,99.25C1235.012,99.25,1248.115,99.25,1257.95,99.25C1267.785,99.25,1274.352,99.25,1277.635,99.25L1280.918,99.25"></path><path marker-end="url(#overview_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-sched LE-edit" id="L-sched-edit-0" d="M1413.402,75.25L1427.361,65.458C1441.32,55.667,1469.238,36.083,1491.414,26.292C1513.59,16.5,1530.023,16.5,1538.24,16.5L1546.457,16.5"></path><path marker-end="url(#overview_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-sched LE-rm" id="L-sched-rm-0" d="M1472.156,99.447L1476.322,99.456C1480.489,99.465,1488.822,99.482,1496.272,99.491C1503.722,99.5,1510.289,99.5,1513.572,99.5L1516.856,99.5"></path><path marker-end="url(#overview_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-sched LE-clash" id="L-sched-clash-0" d="M1413.402,123.25L1427.361,133.042C1441.32,142.833,1469.238,162.417,1492.595,172.208C1515.952,182,1534.748,182,1544.147,182L1553.545,182"></path><path marker-end="url(#overview_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-sched LE-some" id="L-sched-some-0" d="M1396.32,123.25L1413.126,146.792C1429.932,170.333,1463.544,217.417,1487.801,240.958C1512.058,264.5,1526.961,264.5,1534.412,264.5L1541.864,264.5"></path><path marker-end="url(#overview_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-groups LE-gweek" id="L-groups-gweek-0" d="M86.048,377.805L98.371,366.846C110.694,355.888,135.34,333.971,154.74,323.013C174.141,312.055,188.296,312.055,195.374,312.055L202.451,312.055"></path><path marker-end="url(#overview_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-groups LE-invite" id="L-groups-invite-0" d="M99.594,394.391L109.66,394.419C119.725,394.446,139.855,394.5,159.707,394.527C179.558,394.555,199.13,394.555,208.916,394.555L218.701,394.555"></path><path marker-end="url(#overview_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-map LE-fits" id="L-map-fits-0" d="M89.587,477.305L101.32,477.305C113.053,477.305,136.519,477.305,160.334,477.305C184.149,477.305,208.312,477.305,220.393,477.305L232.475,477.305"></path><path marker-end="url(#overview_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-post LE-food" id="L-post-food-0" d="M121.273,559.805L127.726,559.805C134.178,559.805,147.082,559.805,162.555,559.805C178.029,559.805,196.072,559.805,205.094,559.805L214.116,559.805"></path></g><g class="edgeLabels"><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><rect height="0" width="0" ry="0" rx="0"></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve"></tspan></text></g></g><g transform="translate(428.93896484375, 174.25)" class="edgeLabel"><g transform="translate(-8.34375, -8.5)" class="label"><rect height="16.201690673828125" width="16.665800094604492" ry="0" rx="0"></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">no</tspan></text></g></g><g transform="translate(579.85302734375, 106.25)" class="edgeLabel"><g transform="translate(-11.671875, -9)" class="label"><rect height="17.551830291748047" width="23.920026779174805" ry="0" rx="0"></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">yes</tspan></text></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><rect height="0" width="0" ry="0" rx="0"></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve"></tspan></text></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><rect height="0" width="0" ry="0" rx="0"></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve"></tspan></text></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><rect height="0" width="0" ry="0" rx="0"></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve"></tspan></text></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><rect height="0" width="0" ry="0" rx="0"></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve"></tspan></text></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><rect height="0" width="0" ry="0" rx="0"></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve"></tspan></text></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><rect height="0" width="0" ry="0" rx="0"></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve"></tspan></text></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><rect height="0" width="0" ry="0" rx="0"></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve"></tspan></text></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><rect height="0" width="0" ry="0" rx="0"></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve"></tspan></text></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><rect height="0" width="0" ry="0" rx="0"></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve"></tspan></text></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><rect height="0" width="0" ry="0" rx="0"></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve"></tspan></text></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><rect height="0" width="0" ry="0" rx="0"></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve"></tspan></text></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><rect height="0" width="0" ry="0" rx="0"></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve"></tspan></text></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><rect height="0" width="0" ry="0" rx="0"></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve"></tspan></text></g></g></g><g class="nodes"><g transform="translate(67.492919921875, 140.25)" data-id="open" data-node="true" id="flowchart-open-0" class="node default default flowchart-label"><rect height="33" width="134.98583984375" y="-16.5" x="-67.492919921875" ry="16.5" rx="16.5" style=""></rect><g transform="translate(0, -9)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Open SideQuest</tspan></text></g></g><g transform="translate(290.29052734375, 140.25)" data-id="q" data-node="true" id="flowchart-q-1" class="node default default flowchart-label"><polygon style="" transform="translate(-105.3046875,105.3046875)" class="label-container" points="105.3046875,0 210.609375,-105.3046875 105.3046875,-210.609375 0,-105.3046875"></polygon><g transform="translate(0, -16.5)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Any busy time</tspan><tspan class="row" x="0" dy="1em" xml:space="preserve">or Google connected?</tspan></text></g></g><g transform="translate(579.85302734375, 174.25)" data-id="setup" data-node="true" id="flowchart-setup-3" class="node default build flowchart-label"><rect height="48" width="235.140625" y="-24" x="-117.5703125" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -16.5)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Setup pop-up</tspan><tspan class="row" x="0" dy="1em" xml:space="preserve">connect Google or add busy time</tspan></text></g></g><g transform="translate(844.55615234375, 140.25)" data-id="disc" data-node="true" id="flowchart-disc-5" class="node default default flowchart-label"><rect height="48" width="194.265625" y="-24" x="-97.1328125" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -16.5)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Discover</tspan><tspan class="row" x="0" dy="1em" xml:space="preserve">events that fit, filters on top</tspan></text></g></g><g transform="translate(1045.88330078125, 140.25)" data-id="card" data-node="true" id="flowchart-card-9" class="node default default flowchart-label"><rect height="33" width="108.388671875" y="-16.5" x="-54.1943359375" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -9)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Opened ticket</tspan></text></g></g><g transform="translate(1193.14794921875, 99.25)" data-id="plan" data-node="true" id="flowchart-plan-11" class="node default default flowchart-label"><rect height="32" width="57.52197265625" y="-16" x="-28.760986328125" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -8.5)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Plan it</tspan></text></g></g><g transform="translate(1193.14794921875, 181.25)" data-id="walk" data-node="true" id="flowchart-walk-13" class="node default default flowchart-label"><rect height="32" width="86.140625" y="-16" x="-43.0703125" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -8.5)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Walk there</tspan></text></g></g><g transform="translate(1379.18701171875, 99.25)" data-id="sched" data-node="true" id="flowchart-sched-15" class="node default change flowchart-label"><rect height="48" width="185.9375" y="-24" x="-92.96875" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -16.5)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">My Schedule</tspan><tspan class="row" x="0" dy="1em" xml:space="preserve">your week and your plans</tspan></text></g></g><g transform="translate(1606.36669921875, 16.5)" data-id="edit" data-node="true" id="flowchart-edit-17" class="node default change flowchart-label"><rect height="33" width="109.21875" y="-16.5" x="-54.609375" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -9)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Edit busy time</tspan></text></g></g><g transform="translate(1606.36669921875, 99.5)" data-id="rm" data-node="true" id="flowchart-rm-19" class="node default default flowchart-label"><rect height="33" width="168.421875" y="-16.5" x="-84.2109375" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -9)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Open or remove a plan</tspan></text></g></g><g transform="translate(1606.36669921875, 182)" data-id="clash" data-node="true" id="flowchart-clash-21" class="node default default flowchart-label"><rect height="32" width="95.0439453125" y="-16" x="-47.52197265625" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -8.5)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Clash sheet</tspan></text></g></g><g transform="translate(1606.36669921875, 264.5)" data-id="some" data-node="true" id="flowchart-some-23" class="node default default flowchart-label"><rect height="33" width="118.40625" y="-16.5" x="-59.203125" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -9)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Someday ideas</tspan></text></g></g><g transform="translate(67.492919921875, 394.3046875)" data-id="groups" data-node="true" id="flowchart-groups-24" class="node default default flowchart-label"><rect height="33" width="64.203125" y="-16.5" x="-32.1015625" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -9)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Groups</tspan></text></g></g><g transform="translate(290.29052734375, 312.0546875)" data-id="gweek" data-node="true" id="flowchart-gweek-25" class="node default default flowchart-label"><rect height="33" width="165.078125" y="-16.5" x="-82.5390625" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -9)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">When is everyone free</tspan></text></g></g><g transform="translate(290.29052734375, 394.5546875)" data-id="invite" data-node="true" id="flowchart-invite-27" class="node default default flowchart-label"><rect height="32" width="132.578125" y="-16" x="-66.2890625" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -8.5)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Invite and answer</tspan></text></g></g><g transform="translate(67.492919921875, 477.3046875)" data-id="map" data-node="true" id="flowchart-map-28" class="node default default flowchart-label"><rect height="33" width="44.1875" y="-16.5" x="-22.09375" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -9)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Map</tspan></text></g></g><g transform="translate(290.29052734375, 477.3046875)" data-id="fits" data-node="true" id="flowchart-fits-29" class="node default default flowchart-label"><rect height="33" width="105.03125" y="-16.5" x="-52.515625" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -9)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Only what fits</tspan></text></g></g><g transform="translate(67.492919921875, 559.8046875)" data-id="post" data-node="true" id="flowchart-post-30" class="node default default flowchart-label"><rect height="32" width="107.56103515625" y="-16" x="-53.780517578125" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -8.5)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Post an event</tspan></text></g></g><g transform="translate(290.29052734375, 559.8046875)" data-id="food" data-node="true" id="flowchart-food-31" class="node default default flowchart-label"><rect height="32" width="141.75" y="-16" x="-70.875" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(0, -8.5)" style="" class="label"><rect></rect><text style=""><tspan class="row" x="0" dy="1em" xml:space="preserve">Share leftover food</tspan></text></g></g></g></g></g></svg><!--/CHART--></div>
+  <p class="key"><span><span class="st">stays</span> as it is</span><span><span class="st change">changes</span> moves or merges</span><span><span class="st build">to build</span> not made yet</span><span><span class="st cut">cut</span> goes away</span></p>
+</div></section>
+
+<section class="band" id="flows"><div class="wrap">
+  <h2>Flows, in demo order</h2>
+  <p class="lede">One real screen per step. Tap a screen to see it large, on a phone or a laptop.</p>
+  <div id="flowList"></div>
+</div></section>
+
+<section class="band" id="repeats" style="background:light-dark(#f3eadb,#241619)"><div class="wrap">
+  <h2>Repeats and extra steps</h2>
+  <p class="lede">Places where a student meets the same thing twice, or has to choose between two ways to do one job. Some are decided. For the rest, pick and add a note if you like.</p>
+  <div class="culprits" id="culList"></div>
+  <label for="general" style="display:block;margin-top:22px;font-weight:800">Anything else</label>
+  <textarea class="ans" id="general" data-path="general" rows="3" placeholder="Anything this page missed"></textarea>
+</div></section>
+
+<section class="band" id="words"><div class="wrap">
+  <h2>Words to fix</h2>
+  <p class="lede">Messages that explain too much or sound written by a machine, next to how a shipped app would say it. Tap one for each, or write your own.</p>
+  <div class="words" id="wordList"></div>
+</div></section>
+
+<section class="band" id="talk" style="background:light-dark(#f3eadb,#241619)"><div class="wrap">
+  <h2>The talk, in four parts</h2>
+  <p class="lede">The demo follows flows A to F on this page, so nothing gets forgotten.</p>
+  <div class="talk" id="talkParts"></div>
+</div></section>
+
+<section class="band" id="qa"><div class="wrap">
+  <h2>Q&amp;A: four answers ready for each question</h2>
+  <p class="lede">Each answer is one claim and the proof behind it, about a minute when spoken. A red tag marks an answer that needs a fact only the team has. Type it in the box under it.</p>
+  <div class="qgrid" id="qaList"></div>
+</div></section>
+
+<section class="band" id="edges" style="background:light-dark(#f3eadb,#241619)"><div class="wrap">
+  <h2>Edge cases to click through</h2>
+  <p class="lede">Outside the main demo, but each should still look finished.</p>
+  <div class="edges" id="edgeList"></div>
+  <p class="note">Screens come from the design review build with sample data (Tuesday 24 November, 10:40am). Google Calendar time in them is sample data: the connect button is not on a screen yet.</p>
+</div></section>
+</main>
+
+<div id="save" role="status" aria-live="polite" hidden></div>
+<dialog id="lb" aria-label="Screen"><div class="lb">
+  <div class="bar"><b id="lbTitle"></b><button type="button" data-v="p" aria-pressed="true">Phone</button><button type="button" data-v="d" aria-pressed="false">Laptop</button><button type="button" id="lbClose">Close</button></div>
+  <img id="lbImg" alt="">
+</div></dialog>
+<script src="data.js"></script>
+<script>
+{
+const img = (id, v = 'p') => `shots/${id}-${v}.webp`
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+const ST = { stays: ['', 'stays'], change: ['change', 'changes'], build: ['build', 'to build'], cut: ['cut', 'cut'] }
+const st = k => `<span class="st ${ST[k][0]}">${ST[k][1]}</span>`
+const CHOICES = [['keep', 'Keep as is'], ['fix', 'Do the proposal'], ['talk', 'Talk first']]
+const WCH = [['use', 'Use this'], ['keep', 'Keep the old one']]
+const choice = (path, list) => list.map(([v, l]) => `<button type="button" data-path="${path}" data-val="${v}" aria-pressed="false">${l}</button>`).join('')
+const field = (path, placeholder, rows = 1) => `<textarea class="ans" data-path="${path}" rows="${rows}" placeholder="${esc(placeholder)}" aria-label="${esc(placeholder)}"></textarea>`
+
+document.getElementById('nowList').innerHTML =
+  `<section><h3>Decided</h3><ul>${DECIDED.map(t => `<li><i aria-hidden="true">✓</i><span>${esc(t)}</span></li>`).join('')}</ul></section>` +
+  `<section><h3>Still open</h3><ul>${OPEN.map(([k, t]) => `<li><i aria-hidden="true">?</i><span>${esc(t)}</span>${field('open.' + k, 'Your call')}</li>`).join('')}</ul></section>`
+document.getElementById('talkParts').innerHTML = TALK.map(([t, name, items]) => `<div class="part"><span class="t">${t}</span><b>${name}</b><ul>${items.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')
+document.getElementById('flowList').innerHTML = FLOWS.map(([k, name, time, steps]) => `<article class="flow" id="flow-${k.toLowerCase()}"><div class="flowhead"><h3>${k}. ${esc(name)}</h3><span class="time">${time}</span></div><div class="lane">${steps.map(([id, what, state, note, tags], i) => `<div class="step"><div class="card"><button type="button" class="shot" data-id="${id}" data-t="${esc(what)}" aria-label="See larger: ${esc(what)}"><img src="${img(id)}" alt=""></button><span class="n">${k}${i + 1} ${st(state)}</span><p>${esc(what)}</p>${note ? `<span class="id">${esc(note)}</span>` : ''}${tags.length ? `<div class="tags">${tags.map(c => `<button type="button" class="tag" data-go="${c}">${c}</button>`).join('')}</div>` : ''}</div></div>`).join('')}</div></article>`).join('')
+document.getElementById('culList').innerHTML = CUL.map(([c, title, what, prop, shots, decided]) => `<article class="cul" id="${c}"><div class="code">${c}</div><div class="body"><h3>${esc(title)}</h3><p class="what">${esc(what)}</p>${decided ? `<p class="prop"><b>${decided[0] === '~' ? 'My view:' : 'Decided:'}</b> ${esc(decided.replace(/^~/, ''))}</p>` : ''}${prop ? `<p class="prop"><b>Proposal:</b> ${esc(prop)}</p>` : ''}<div class="thumbs">${shots.map(id => `<button type="button"${id.startsWith('x-') ? ' class="big"' : ''} data-id="${id}" data-t="${esc(title)}" aria-label="See ${id} larger"><img src="${img(id)}" alt=""></button>`).join('')}</div>${prop ? `<div class="decide" role="group" aria-label="Your pick for ${c}"><span>Your pick:</span>${choice('repeats.' + c + '.pick', CHOICES)}</div>` : ''}${field('repeats.' + c + '.note', 'Add a note')}</div></article>`).join('')
+const wordRow = ([k, where, was, now, done]) => done
+  ? `<div class="word done"><div><small>${k} · ${esc(where)}</small>${done === 'KEPT' ? '' : `<s>${esc(was)}</s>`}</div><span aria-hidden="true">${done === 'KEPT' ? '' : '→'}</span><b>${done === 'KEPT' ? esc(was) : done === 'CUT' ? 'Cut' : esc(done)}</b><span class="inapp">${done === 'KEPT' ? '✓ Kept, your pick' : '✓ In the app'}</span></div>`
+  : `<div class="word"><div><small>${k} · ${esc(where)}</small><s>${esc(was)}</s></div><span aria-hidden="true">→</span><b>${now ? esc(now) : 'Cut. The screen already shows it.'}</b><div class="pickrow" role="group" aria-label="Your pick for this message">${choice('words.' + k + '.pick', WCH)}${field('words.' + k + '.own', 'Or write your own')}</div></div>`
+const wordsOpen = WORDS.filter(w => !w[4]), wordsDone = WORDS.filter(w => w[4])
+document.getElementById('wordList').innerHTML = wordsOpen.map(wordRow).join('') + (wordsDone.length ? `<details class="worddone"><summary>${wordsDone.length} already changed in the app</summary>${wordsDone.map(wordRow).join('')}</details>` : '')
+document.getElementById('edgeList').innerHTML = EDGES.map(([id, what]) => `<div class="card"><button type="button" class="shot" data-id="${id}" data-t="${esc(what)}" aria-label="See larger: ${esc(what)}"><img src="${img(id)}" alt="" loading="lazy"></button><p>${esc(what)}</p></div>`).join('')
+document.getElementById('qaList').innerHTML = QA.map(([q, answers], i) => `<details class="q"${i === 0 ? ' open' : ''}><summary>${esc(q)}</summary><ol>${answers.map(([a, proof, needs], n) => `<li><b>${esc(a)}${needs ? '<em>needs your facts</em>' : ''}</b>${esc(proof)}${needs ? field('qa.q' + (i + 1) + 'a' + (n + 1), 'Type the facts here', 2) : ''}</li>`).join('')}</ol>${field('qa.q' + (i + 1) + 'note', 'A note on this question, or an answer of your own')}</details>`).join('')
+
+// ---- Her answers: kept in one object, saved on this device at once and to the page's own store after a pause.
+let S = { repeats: {}, open: {}, words: {}, qa: {}, general: '' }
+const LS = 'sq-flow-answers'
+const isObj = v => v && typeof v === 'object' && !Array.isArray(v)
+const merge = (base, over) => { const out = { ...base }; for (const k in over) out[k] = isObj(over[k]) && isObj(base[k]) ? merge(base[k], over[k]) : over[k]; return out }
+const getPath = path => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), S)
+const setPath = (path, val) => { const ks = path.split('.'); let o = S; for (const k of ks.slice(0, -1)) o = isObj(o[k]) ? o[k] : (o[k] = {}); o[ks[ks.length - 1]] = val }
+const fill = () => {
+  document.querySelectorAll('textarea[data-path]').forEach(el => { if (el !== document.activeElement) el.value = getPath(el.dataset.path) || '' })
+  document.querySelectorAll('button[data-path]').forEach(b => b.setAttribute('aria-pressed', String(getPath(b.dataset.path) === b.dataset.val)))
+}
+try { S = merge(S, JSON.parse(localStorage.getItem(LS) || '{}')) } catch (e) {}
+try { const old = JSON.parse(localStorage.getItem('sq-flow-picks') || '{}'); for (const c in old) if (old[c] && !(S.repeats[c] || {}).pick) setPath('repeats.' + c + '.pick', old[c]) } catch (e) {}
+fill()
+
+const badge = document.getElementById('save')
+const say = (s, text) => { badge.hidden = false; badge.dataset.s = s; badge.textContent = text }
+let doc = null, dirty = false, writing = false, again = false, timer = 0
+const write = async () => {
+  if (!doc) { say('local', 'Saved on this device only'); return }
+  if (writing) { again = true; return }
+  writing = true; say('busy', 'Saving…')
+  try { await doc.set({ ...S, savedAt: new Date().toISOString() }); say('ok', 'Saved') }
+  catch (e) { say('local', 'Saved on this device only') }
+  writing = false
+  if (again) { again = false; write() }
+}
+const changed = () => { dirty = true; try { localStorage.setItem(LS, JSON.stringify(S)) } catch (e) {} clearTimeout(timer); timer = setTimeout(write, 900) }
+document.addEventListener('input', e => { const el = e.target.closest('textarea[data-path]'); if (el) { setPath(el.dataset.path, el.value); changed() } })
+;(async () => {
+  let db = null
+  try { db = window.claude && await window.claude.use('db') } catch (e) {}
+  if (!db) { if (dirty) say('local', 'Saved on this device only'); return }
+  doc = db.doc('review/answers')
+  try {
+    const snap = await doc.get()
+    const stored = snap.exists ? snap.data() : null
+    // What was typed since the page opened wins. Otherwise the stored copy wins over this device's copy.
+    if (stored) { S = dirty ? merge(stored, S) : merge(S, stored); delete S.savedAt; fill(); try { localStorage.setItem(LS, JSON.stringify(S)) } catch (e) {} }
+    const has = Object.keys(S.repeats).length || Object.keys(S.open).length || Object.keys(S.words).length || Object.keys(S.qa).length || S.general
+    if (dirty || (!stored && has)) write(); else if (stored) say('ok', 'Saved')
+  } catch (e) { doc = null; if (dirty) say('local', 'Saved on this device only') }
+})()
+
+const lb = document.getElementById('lb'), lbImg = document.getElementById('lbImg'), lbTitle = document.getElementById('lbTitle')
+let cur = null
+const show = (id, t, v) => { cur = id; lbTitle.textContent = t; lbImg.src = img(id, v); lbImg.alt = t; lb.querySelectorAll('[data-v]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v))) }
+document.addEventListener('click', e => {
+  const s = e.target.closest('[data-id]')
+  if (s && !e.target.closest('dialog')) { show(s.dataset.id, s.dataset.t, 'p'); lb.showModal(); return }
+  const v = e.target.closest('dialog [data-v]'); if (v && cur) { show(cur, lbTitle.textContent, v.dataset.v); return }
+  if (e.target.id === 'lbClose' || e.target === lb) { lb.close(); return }
+  const g = e.target.closest('[data-go]'); if (g) { document.getElementById(g.dataset.go).scrollIntoView({ block: 'start' }); return }
+  const d = e.target.closest('button[data-path]')
+  if (d) { setPath(d.dataset.path, getPath(d.dataset.path) === d.dataset.val ? '' : d.dataset.val); fill(); changed() }
+})
+}
+</script>
+</body>
+</html>

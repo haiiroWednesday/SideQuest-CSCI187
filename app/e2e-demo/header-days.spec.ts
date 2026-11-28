@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { noSidewaysScroll, open } from './helpers'
 
-// Plain header, and Discover's day picker: paper leaves standing as notebook tabs (D0 + D11, Nov 24).
+// The ticket header, and Discover's day picker: paper leaves standing as notebook tabs (D0 + D11, Nov 24).
 
 const MAROON = 'rgb(117, 23, 40)'
 const CREAM = 'rgb(255, 250, 242)'
@@ -10,12 +10,27 @@ const bg = (page: import('@playwright/test').Page, sel: string) =>
   page.locator(sel).evaluate(e => getComputedStyle(e).backgroundColor)
 
 for (const width of [390, 1280]) {
-  test(`header is the plain maroon band, every tab visible (${width}px)`, async ({ page }) => {
-    await open(page, 'discover', width)
+  test(`header is the maroon glass ticket with a clock behind the logo, every tab visible (${width}px)`, async ({ page }) => {
+    await open(page, 'discover/when', width)
     const head = page.locator('header.sq-masthead')
-    // The ticket, clock and star header (headfuse.css) was set aside on Nov 24; the plain band is back.
-    const clock = await head.evaluate(e => getComputedStyle(e.querySelector('.sq-brand')!, '::before').backgroundImage)
-    expect(clock).not.toContain('svg')
+    // The ticket, clock and star header (headfuse.css, Cyn's Nov 24 picks) came back on Nov 26.
+    const look = await head.evaluate(e => {
+      const s = getComputedStyle(e), after = getComputedStyle(e, '::after')
+      const brand = getComputedStyle(e.querySelector('.sq-brand')!, '::before')
+      return { image: s.backgroundImage, mask: s.maskImage, edge: after.backgroundImage, clock: brand.backgroundImage, clockOpacity: Number(brand.opacity) }
+    })
+    expect(look.image).toContain('linear-gradient')
+    // Bites and perforation are painted, never masked: a mask would hide whatever sits inside the header.
+    expect(look.mask).toBe('none')
+    expect(look.edge).toContain('radial-gradient')
+    expect(look.edge).toContain('repeating-linear-gradient')
+    expect(look.clock).toContain('svg')
+    expect(look.clockOpacity).toBeLessThan(0.8)
+    // The whole logo sits above the perforation, and nothing of the header is drawn below its own edge.
+    const box = (await head.boundingBox())!, logo = (await page.locator('.sq-brand img').boundingBox())!
+    expect(logo.y).toBeGreaterThanOrEqual(box.y - 1)
+    expect(logo.y + logo.height).toBeLessThanOrEqual(box.y + box.height - 11)
+    if (width > 760) expect(await head.evaluate(e => getComputedStyle(e).overflowY)).toBe('clip')
     const tabs = await page.locator('.sq-masthead .sq-tab:visible').all()
     expect(tabs.length).toBeGreaterThanOrEqual(4)
     for (const tab of tabs) {
@@ -24,11 +39,12 @@ for (const width of [390, 1280]) {
       expect(hit).toBe(true)
       await expect(tab).toBeVisible()
     }
+    await noSidewaysScroll(page)
   })
 }
 
 test('the week is paper leaves on one line: today the maroon leaf, the chosen leaf pulled forward', async ({ page }) => {
-  await open(page, 'discover', 390)
+  await open(page, 'discover/when', 390)
   await expect(page.locator('.sq-dayleaf')).toHaveCount(7)
   await expect(page.locator('.sq-dayleaf').first()).toHaveAttribute('data-today', 'true')
   await expect(page.locator('.sq-dayleaf[data-today]')).toHaveCount(1)
@@ -54,11 +70,12 @@ test('the week is paper leaves on one line: today the maroon leaf, the chosen le
 })
 
 test('a day with busy time carries a small hatch on its leaf', async ({ page }) => {
-  await open(page, 'discover', 390)
+  await open(page, 'discover/when', 390)
   await expect(page.locator('.sq-dayleaf').nth(3).locator('.sq-dayleaf-dab')).toHaveCount(0)
   await page.locator('.sq-dayleaf').nth(3).click()
-  const bar = (await page.locator('.sq-mbar').boundingBox())!
-  await page.mouse.click(bar.x + bar.width * 0.08, bar.y + bar.height / 2)
+  // A tap near the top of the open day in the week marks an hour of busy time.
+  const day = (await page.locator('.sq-wk-open').boundingBox())!
+  await page.mouse.click(day.x + day.width / 2, day.y + day.height * 0.08)
   await expect(page.locator('.sq-dayleaf').nth(3).locator('.sq-dayleaf-dab')).toHaveCount(1)
   const hatch = await page.locator('.sq-dayleaf').nth(3).locator('.sq-dayleaf-dab').evaluate(e => getComputedStyle(e).backgroundImage)
   expect(hatch).toContain('repeating-linear-gradient')
@@ -66,7 +83,7 @@ test('a day with busy time carries a small hatch on its leaf', async ({ page }) 
 
 for (const width of [320, 390, 1280]) {
   test(`day leaves fit and are easy to tap (${width}px)`, async ({ page }) => {
-    await open(page, 'discover', width)
+    await open(page, 'discover/when', width)
     await noSidewaysScroll(page)
     const days = (await page.locator('.sq-marks-left .sq-days').boundingBox())!
     const line = days.y + days.height
@@ -83,7 +100,7 @@ for (const width of [320, 390, 1280]) {
 }
 
 test('a day leaf shows a focus ring for keyboard users', async ({ page }) => {
-  await open(page, 'discover', 1280)
+  await open(page, 'discover/when', 1280)
   await page.locator('.sq-dayleaf').nth(1).focus()
   await page.keyboard.press('Tab')
   await page.keyboard.press('Shift+Tab')

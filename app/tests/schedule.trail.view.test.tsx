@@ -38,6 +38,9 @@ describe('My Schedule trail view: draws the Controller screen', () => {
     expect(screen.getAllByRole('button', { name: /Overlaps .* by 30 min$/ })).toHaveLength(3)
     expect(within(next).getByRole('button', { name: /^Overlaps .* by 30 min$/ }).getAttribute('aria-haspopup')).toBe('dialog')
     expect(screen.getByText('An event you planned')).toBeTruthy()
+    // A record the catalog confirms is gone is explained without guessing why, and is never called a network error.
+    expect(screen.getByText('It may have been cancelled or moved.')).toBeTruthy()
+    expect(screen.queryByText(/could not be loaded/)).toBeNull()
   })
 
   it('reveals complete legacy text in upcoming cards and Next up without losing removal', () => {

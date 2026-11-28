@@ -486,7 +486,8 @@
 .sq-overlap-note { display: inline-flex; margin-left: 14px; padding: 5px 12px; border-radius: 999px; background: var(--sq-sticky); color: var(--sq-red); font: 700 14px var(--font-sans); font-style: normal; vertical-align: middle; }
 .sq-pill-overlap { background: var(--sq-red); color: #fff; white-space: normal; line-height: 1.25; padding-top: 5px; padding-bottom: 5px; }
 .sq-pill-overlap::before { display: none; }
-.sq-stub-missing { background: transparent; border: 2px dashed var(--sq-rule-strong); cursor: default; }
+/* Opaque paper: the ticket edge is drawn with drop-shadows on .sq-edge, which would outline the text on a see-through card. */
+.sq-stub-missing { background: var(--sq-paper-card, #fffaf2); border: 2px dashed var(--sq-rule-strong); cursor: default; }
 .sq-stub-missing:hover { transform: none; box-shadow: none; }
 .sq-stub-missing .sq-stub-time { background: transparent; color: var(--sq-muted); }
 .sq-bubble-missing { background: var(--sq-paper) !important; border: 2px dashed var(--sq-rule-strong); color: var(--sq-muted) !important; }

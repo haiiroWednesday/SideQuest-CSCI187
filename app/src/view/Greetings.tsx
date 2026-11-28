@@ -46,13 +46,18 @@ export function stampFormatFor(key: string): StampFormat {
   return (['wide', 'square', 'flyer'] as const)[n % 3]
 }
 
-export function Greetings({ location, small = false, format }: { location: string; small?: boolean; format?: StampFormat }) {
+/** `sky`: the opened card's top (H3, Cyn Nov 26). A landmark's drawing stands in a sunset sky that fades into the
+ *  maroon time band, with no paper and no caption: the venue is named in the facts just below. */
+export function Greetings({ location, small = false, format, sky = false }: { location: string; small?: boolean; format?: StampFormat; sky?: boolean }) {
   const id = useId().replace(/:/g, '')
   const hit = LANDMARK.find(([re]) => re.test(location))
   const word = hit ? hit[1] : venueWord(location)
   const [W, H] = format ? SIZES[format] : small ? [96, 130] : [300, 170]
   small = small || Boolean(format)
   const it = small ? 11 : 20
+  if (hit && sky) {
+    return <span className="sq-greet sq-greet-sky" role="img" aria-label={`Greetings from ${word.toLowerCase()}`}><img src={hit[2]} alt="" /></span>
+  }
   if (hit) {
     // A landmark: its drawn front on warm paper, with a small caption underneath.
     const band = Math.max(small ? 22 : 34, H * .2)

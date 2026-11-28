@@ -72,7 +72,7 @@ test('inside SideQuest with location blocked: Walk there offers a pretend spot, 
   const before = await page.evaluate(() => JSON.stringify(localStorage))
   await page.getByRole('link', { name: /^Walk there/ }).click()
   const map = page.frameLocator('.sq-map-frame')
-  await expect(map.locator('#meNote')).toContainText('no route', { timeout: 10_000 })
+  await expect(map.locator('#meNote')).toContainText('Turn on location to get directions.', { timeout: 10_000 })
   await map.getByRole('button', { name: 'Pick a spot to start from' }).click()
   await map.locator('#q').fill('Benson')
   await map.locator('#hits button').first().click()

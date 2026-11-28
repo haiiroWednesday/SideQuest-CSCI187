@@ -32,10 +32,10 @@ for (const width of [390, 1280]) {
 
     // Find a time: locked until you share; then only the overlap, and who has not shared.
     const ft = page.locator('.sq-ft')
-    await expect(ft).toContainText('You see when everyone is free once you share yours.')
+    await expect(ft).toContainText("Share your free time to see everyone's.")
     await expect(ft.locator('.sq-ft-list')).toHaveCount(0)
     await ft.getByText('Share my free time with Swig 7th floor').click()
-    await expect(ft).toContainText('Free or busy only, next 7 days. Never what or where.')
+    await expect(ft).toContainText("Shares when you're free for the next 7 days.")
     await expect(ft.locator('.sq-ft-who')).toContainText('Not shared: Theo')
     await expect(ft.locator('.sq-ft-days .sq-dayleaf')).toHaveCount(7)
     const asks = ft.locator('.sq-ft-list').getByRole('button', { name: "Who's in?" })
@@ -81,18 +81,20 @@ for (const width of [390, 1280]) {
     expect(kept).not.toMatch(/"(lat|lng|lon|latitude|longitude|coords|position)"/)
   })
 
-  test(`quick-add from a free stretch on Discover, and the inbox count (${width}px)`, async ({ page }, info) => {
+  test(`quick-add starts in Groups, never from a Discover slip, and the inbox count (${width}px)`, async ({ page }, info) => {
     const shot = shooter(page, info)
-    await open(page, 'discover', width)
+    await open(page, 'discover/when', width)
     // A friend's open invite is waiting: the Groups tab says so.
     const groupsTab = page.locator('.sq-tab-groups')
     await expect(groupsTab.locator('.sq-badge-inbox')).toHaveText('1')
     await expect(groupsTab).toContainText('1 new')
 
-    const who = page.locator('.sq-slip-free').first().getByRole('button', { name: /Who's in/ })
-    await who.scrollIntoViewIfNeeded()
+    // "Who's in?" has one entrance (Nov 27): Groups. The free slips on Discover carry no button.
+    await expect(page.locator('.sq-slip-free').first()).toBeVisible()
+    await expect(page.locator('.sq-slip-free').getByRole('button', { name: /Who's in/ })).toHaveCount(0)
     await shot('slip')
-    await who.click()
+    await groupsTab.click()
+    await page.getByRole('button', { name: "I'm free, who's in?" }).click()
     const sheet = page.getByRole('dialog', { name: "I'm free, who's in?" })
     await expect(sheet).toBeVisible()
     await shot('compose')
@@ -103,7 +105,6 @@ for (const width of [390, 1280]) {
     await page.keyboard.press('Enter')
     await expect(sheet).toHaveCount(0)
 
-    await groupsTab.click()
     await expect(page.getByTestId('open-invite').filter({ has: page.locator('.sq-by b', { hasText: /^You$/ }) })).toHaveCount(1)
     // Opening Groups reads the inbox.
     await expect(page.locator('.sq-tab-groups .sq-badge-inbox')).toHaveCount(0)

@@ -43,7 +43,9 @@ for (const [route, width] of [['discover', 390], ['discover', 1280], ['groups', 
     const n = Math.min(await stubs.count(), 4)
     for (let i = 0; i < n; i++) {
       const stub = stubs.nth(i)
-      await stub.scrollIntoViewIfNeeded()
+      // Centred, so all four edges sit inside the sheet: flush with the sheet's bottom, the outline under the
+      // ticket is clipped by the sheet itself and the check would only pass by the colour of the page behind.
+      await stub.evaluate(el => el.scrollIntoView({ block: 'center' }))
       await page.waitForTimeout(120)
       const box = (await stub.boundingBox())!
       const seam = await stub.evaluate(el => {

@@ -34,7 +34,7 @@ for (const width of [390, 1280]) {
 
 test('group preview never assumes consent, and a note goes with its If', async ({ page }) => {
   await open(page, 'groups')
-  await expect(page.getByText('Preview only. Nothing is sent.')).toBeVisible()
+  await expect(page.getByText('Preview only', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'New group' }).click()
   await page.getByLabel('Group name').fill('Privacy review')
   await page.getByLabel("Who's in it").fill('Ana')

@@ -218,7 +218,7 @@ export function FindATime({ groupId, groupName, band = null, onBand, timetable }
         <input type="checkbox" checked={on} onChange={e => api.setSharing(groupId, e.target.checked)} />
         <span className="sq-share-box" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9" /></svg></span>
         <span className="sq-share-text"><b>Share my free time with {groupName}</b>
-          <small>{on ? 'Free or busy only, next 7 days. Never what or where.' : 'You see when everyone is free once you share yours.'}</small></span>
+          <small>{on ? "Shares when you're free for the next 7 days." : "Share your free time to see everyone's."}</small></span>
       </label>
       <p className="sq-ft-who">
         {c.shared.length > 0 && <span>Shared: {c.shared.map(n => n === api.you ? 'you' : n).join(', ')}</span>}

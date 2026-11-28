@@ -20,31 +20,6 @@
 }
 
 /* ---------- Our pick: the same anatomy as a ticket (time on a stub, the event beside it) ---------- */
-.sq-onepicks { margin: 22px 0 10px; }
-.sq-onepick { padding: 0; }
-.sq-onepick::before {
-  -webkit-mask: none; mask: none; filter: none; background: #fffaf2;
-  border: 1.5px solid rgba(110, 74, 60, .5); border-radius: 3px;
-  outline: 1px solid rgba(110, 74, 60, .22); outline-offset: -6px;
-}
-.sq-onepick-when { margin: 0; padding: 14px 20px 0; font: 400 22px/1.2 var(--font-display); -webkit-text-stroke: .7px currentColor; color: var(--sq-ink, #302421); }
-.sq-onepick-when b { -webkit-text-stroke: 0; font: 800 12px var(--font-sans); letter-spacing: .14em; color: #8a5a12; margin-right: 8px; vertical-align: 2px; }
-.sq-onepick-main { display: grid; grid-template-columns: max-content 1fr; gap: 0; padding: 12px 20px 16px; align-items: start; }
-.sq-onepick-stub {
-  padding: 4px 14px 4px 0; margin-right: 16px; border-right: 1.5px dotted rgba(110, 74, 60, .5);
-  color: var(--sq-red-deep, #751728); align-self: stretch; display: grid; align-content: start; gap: 2px;
-}
-.sq-onepick-stub b { font: 400 21px/1.15 var(--font-display); -webkit-text-stroke: .7px currentColor; white-space: nowrap; }
-.sq-onepick-stub small { font: 500 15px/1.2 var(--font-sans); color: var(--sq-ink, #302421); white-space: nowrap; }
-.sq-onepick-body { display: grid; gap: 3px; min-width: 0; }
-.sq-onepick-label { display: inline-flex; align-items: center; gap: 6px; color: #8a5a12; }
-.sq-onepick-label::before { content: "✦" / ""; color: #e8aa24; font-size: 14px; letter-spacing: 0; }
-.sq-onepick-facts { font: 650 15px/1.35 var(--font-sans); }
-.sq-onepick-why { font: 500 15px/1.4 var(--font-sans); }
-.sq-onepick-more { font-size: 14px; }
-.sq-onepick-more { margin: 0; padding: 0 20px 14px; }
-.sq-onepick-plan { margin: 0 20px; padding: 14px 0 16px; border-top: 1.5px dotted rgba(110, 74, 60, .5); }
-.sq-onepick-est { font-size: 12px; opacity: .8; }
 
 /* ---------- My Schedule: plans speak first, prompts whisper ---------- */
 /* "3 hr free" invites; it should not outshout the plans around it. */
@@ -141,7 +116,7 @@ button.sq-dab-link::after, button.sq-text-button::after, .sq-remove::after { con
 .sq-plan-button:focus-visible, .primary-button:focus-visible, .sq-someday-add:focus-visible {
   outline: 3px solid #fffaf2 !important; outline-offset: -7px !important;
 }
-button.sq-stub:focus-visible, .sq-stub > button:focus-visible, .sq-stub[tabindex]:focus-visible, .sq-ans:focus-visible, .sq-onepick-main:focus-visible {
+button.sq-stub:focus-visible, .sq-stub > button:focus-visible, .sq-stub[tabindex]:focus-visible, .sq-ans:focus-visible{
   outline: 3px solid var(--sq-focus, #751728) !important; outline-offset: -7px !important;
 }
 
@@ -229,7 +204,8 @@ button.sq-stub:focus-visible, .sq-stub > button:focus-visible, .sq-stub[tabindex
 .sq-quiet-top .sq-pic-plate .sq-greet { width: 100% !important; height: auto; display: block; }
 .sq-quiet-top .sq-quiet-stamp { left: auto; right: 22px; bottom: auto; top: calc(100% + 16px); transform: rotate(-10deg); }
 /* the close button now sits on the picture, so it gets a paper disc to stay readable */
-:root .sq-sticker-card:has(.sq-pic-plate) .sq-sheet-close { background: #fffaf2 !important; border-radius: 50% !important; box-shadow: 0 1px 3px rgba(48, 36, 33, .3) !important; color: var(--sq-ink, #302421); }
+:root .sq-sticker-card:has(.sq-pic-plate) .sq-sheet-close { background: #fffaf2 !important; border-radius: 50% !important; box-shadow: 0 1px 3px rgba(48, 36, 33, .3) !important; color: var(--sq-ink, #302421);
+  display: grid !important; place-items: center; padding: 0 !important; font-size: 26px !important; line-height: 1 !important; }
 
 /* "N going" is a fact row (FriendsGoing.GoingFact): icon column like host and place, same size. */
 
@@ -308,3 +284,46 @@ button.sq-stub:focus-visible, .sq-stub > button:focus-visible, .sq-stub[tabindex
 /* My Schedule's resting card is a grid item, so its z-index 40 (meant for the phone sheet) put it over the
    bottom bar. At rest it takes no layer of its own. */
 :root .sq-sticker-static { z-index: auto !important; }
+
+
+/* H3 as picked (Nov 26): a landmark's drawing stands in a sunset sky that runs into the maroon band,
+   and the date stamp on the band is crisp cream, a size up, without the rubber-ink grain. */
+.sq-quiet-top .sq-pic-plate .sq-greet-sky { position: relative; display: block; width: 100% !important; aspect-ratio: 300 / 190; overflow: hidden;
+  background: linear-gradient(#f3c9a0, #e9a07a 55%, var(--sq-red-deep, #751728)); }
+.sq-quiet-top .sq-pic-plate .sq-greet-sky img { position: absolute; left: 50%; bottom: 7%; width: 88%; max-height: 86%; object-fit: contain; object-position: 50% 100%; transform: translateX(-50%); }
+:root .sq-sticker-card .sq-quiet-top .sq-quiet-stamp { width: 88px; height: 88px; }
+:root .sq-sticker-card .sq-quiet-top .sq-quiet-stamp .sq-datestamp g { filter: none !important; }
+
+/* H2 with the round ticket cuts (Cyn, Nov 26): the opened card is maroon from the picture down, with cream
+   words and gold icons. The gold seam gives way to a perforation with a half-circle bite at each edge, like
+   every ticket, and Plan it is gold. Gold stays on icons and the button, never on words (contrast). */
+:root .sq-sticker-card:has(> .sq-quiet-top) { --h2: var(--sq-red-deep, #751728); --h2-ink: #fff6e2; --h2-soft: #f6dcc0;
+  background: var(--h2) !important; color: var(--h2-ink); }
+:root .sq-sticker-card:has(> .sq-quiet-top) .sq-quiet-top { position: relative; border-bottom: 0 !important; padding-bottom: 26px !important; margin-bottom: 4px; }
+:root .sq-sticker-card:has(> .sq-quiet-top) .sq-quiet-top::before { display: none !important; }
+:root .sq-sticker-card:has(> .sq-quiet-top) .sq-quiet-top::after { content: ""; display: block !important; position: absolute; left: 0; right: 0; bottom: 0; width: auto; height: 22px; border: 0; border-radius: 0; clip-path: none; pointer-events: none; z-index: 3;
+  background:
+    radial-gradient(circle at 0 50%, var(--sq-paper, #fbf6ed) 10px, #9b8b7e 10px 11.5px, transparent 12px) left center / 24px 22px no-repeat,
+    radial-gradient(circle at 100% 50%, var(--sq-paper, #fbf6ed) 10px, #9b8b7e 10px 11.5px, transparent 12px) right center / 24px 22px no-repeat,
+    repeating-linear-gradient(90deg, rgba(255, 246, 226, .42) 0 7px, transparent 7px 13px) 22px center / calc(100% - 44px) 2px no-repeat; }
+:root .sq-sticker-card:has(> .sq-quiet-top) :is(#sq-detail-title, .sq-quiet-facts, .sq-quiet-facts li, .sq-quiet-facts a, .sq-sticker-desc, .sq-dropin-line, .sq-onward-words b, .sq-share-going, .sq-share-text, .sq-share-text *, .sq-quiet-planned, .sq-quiet-planned *:not(svg *), .sq-card-remove) { color: var(--h2-ink) !important; }
+:root .sq-sticker-card:has(> .sq-quiet-top) :is(.sq-onward-words small, .sq-source-line, .sq-source-line *) { color: var(--h2-soft) !important; }
+:root .sq-sticker-card:has(> .sq-quiet-top) .sq-quiet-facts svg { stroke: var(--sq-gold, #e8aa24) !important; }
+:root .sq-sticker-card:has(> .sq-quiet-top) .sq-quiet-facts a { text-decoration-color: rgba(232, 170, 36, .8) !important; }
+:root .sq-sticker-card:has(> .sq-quiet-top) .sq-onward-day .sq-onward-bead { background: var(--h2-ink); color: var(--h2); }
+:root .sq-sticker-card:has(> .sq-quiet-top) .sq-onward::before { border-color: rgba(255, 246, 226, .5) !important; }
+:root .sq-sticker-card:has(> .sq-quiet-top) .sq-quiet-act { background: var(--h2) !important; border-top: 1.5px dashed rgba(255, 246, 226, .3) !important; }
+:root .sq-sticker-card:has(> .sq-quiet-top) .sq-share-box { border-color: var(--h2-ink); background: transparent; }
+:root .sq-sticker-card:has(> .sq-quiet-top) .sq-share-box svg { stroke: var(--sq-gold, #e8aa24); }
+:root .sq-sticker-card:has(> .sq-quiet-top) .sq-plan-button { --brush: var(--sq-gold, #e8aa24); background-color: var(--sq-gold, #e8aa24) !important; color: #3a2408 !important; }
+:root .sq-sticker-card:has(> .sq-quiet-top) .sq-quiet-planned .sq-bookmark { filter: drop-shadow(0 0 0 #fff6e2) drop-shadow(1px 0 0 #fff6e2) drop-shadow(-1px 0 0 #fff6e2); }
+:root .sq-sticker-card:has(> .sq-quiet-top) .sq-detail-extras { background: var(--h2); }
+
+/* The planned ribbon on an opened card hangs from the top left, as on the resting ticket (Nov 26). */
+:root .sq-sticker-card .sq-quiet-top .sq-card-planned { position: absolute; top: -4px; left: 18px; right: auto !important; z-index: 5; }
+:root .sq-sticker-card .sq-quiet-top .sq-card-planned .sq-bookmark { transform: scale(1.25); transform-origin: 50% 0;
+  filter: drop-shadow(1px 0 0 #fff6e2) drop-shadow(-1px 0 0 #fff6e2) drop-shadow(0 1px 0 #fff6e2) drop-shadow(0 3px 3px rgba(48, 36, 33, .35)); }
+:root .sq-sticker-card:has(> .sq-quiet-top) .sq-detail-extras :is(p, span, small, li, div) { color: var(--h2-soft); }
+:root .sq-sticker-card .sq-quiet-planned { justify-content: flex-start; min-height: 0; margin: 4px 0 6px !important; }
+:root .sq-sticker-card:has(> .sq-quiet-top) .sq-going-words :is(small, span) { color: var(--h2-soft) !important; }
+:root .sq-sticker-card:has(> .sq-quiet-top) .sq-going-words b { color: var(--h2-ink) !important; }

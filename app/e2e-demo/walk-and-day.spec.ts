@@ -12,7 +12,7 @@ test('Walk there draws a route on our map from your location and says how far', 
   await page.getByRole('link', { name: /^Walk there/ }).click()
   const map = page.frameLocator('.sq-map-frame')
   await expect(map.locator('#meNote')).toContainText(/\d+ m to Ricard Observatory/, { timeout: 10_000 })
-  await expect(map.locator('#meNote')).toContainText('Paths not checked on foot yet')
+  await expect(map.locator('#meNote')).toContainText('Walking times are estimates')
   const frame = page.frames().find(f => f.url().includes('map/index.html'))!
   const walk = await frame.evaluate(() => { const w = (window as unknown as { __map: { WALK: { pts: number[] | null; m: number } } }).__map.WALK; return { n: w.pts ? w.pts.length / 2 : 0, m: w.m } })
   expect(walk.n).toBeGreaterThan(1)
@@ -22,13 +22,13 @@ test('Walk there draws a route on our map from your location and says how far', 
   await expect(map.locator('#meNote')).toBeHidden()
 })
 
-test('with location off, Walk there draws no route and says so', async ({ page }) => {
+test('with location off, Walk there draws no route and says how to get one', async ({ page }) => {
   await open(page, 'discover', 390)
   const card = page.getByRole('button', { name: 'View details for Stargazing at Ricard' })
   await card.scrollIntoViewIfNeeded(); await card.click()
   await page.getByRole('link', { name: /^Walk there/ }).click()
   const map = page.frameLocator('.sq-map-frame')
-  await expect(map.locator('#meNote')).toContainText('no route', { timeout: 10_000 })
+  await expect(map.locator('#meNote')).toContainText('Turn on location to get directions.', { timeout: 10_000 })
   await expect(map.locator('#meNote a[href*="google"]')).toHaveCount(0)
 })
 

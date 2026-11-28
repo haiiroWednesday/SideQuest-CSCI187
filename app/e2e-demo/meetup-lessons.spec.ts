@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { open } from './helpers'
+import { open, toStep, busyFirstGap } from './helpers'
 
 // Nov 24: learn from Meetup's map and "friends going", without letting anyone stalk anyone.
 
@@ -21,10 +21,14 @@ async function mapFrame(page: Page) {
 for (const width of [390, 1280]) {
   test(`from Discover, the map shows only the events that fit, and a marker opens its card (${width}px)`, async ({ page }) => {
     await open(page, 'discover', width)
-    await expect(page.locator('.sq-mbar-busy').first()).toBeAttached()
+    await expect(page.locator('[data-flip-id]').first()).toBeVisible()
     const everything = await page.locator('[data-flip-id]').count()
     // The time tags are gone (Nov 25): marking a gap busy is what narrows Discover to what fits.
-    await page.getByRole('button', { name: /^Mark busy, Today/ }).first().click()
+    // Busy time is marked on the When step; the list is on Events (Nov 27).
+    await toStep(page, 'when')
+    await expect(page.locator('.sq-wk-plan').first()).toBeAttached()
+    await busyFirstGap(page)
+    await toStep(page, 'events')
     await expect.poll(() => page.locator('[data-flip-id]').count()).toBeLessThan(everything)
     const listed = await page.locator('[data-flip-id]').evaluateAll(els => els.map(e => e.getAttribute('data-flip-id')))
     expect(listed.length).toBeGreaterThan(0)
@@ -50,15 +54,16 @@ for (const width of [390, 1280]) {
       { intervals: [250] }).toBe(true)
     const target = await readTarget()
     await page.frameLocator('.sq-map-frame').locator('canvas').first().click({ position: { x: target.x, y: target.y } })
-    await expect(page).toHaveURL(/#discover$/)
+    await expect(page).toHaveURL(/#discover\/events$/)
     await expect(page.locator('.sq-board')).toBeVisible()
     await expect(page.locator('#sq-detail-title')).toHaveText(target.title)
   })
 }
 
 test('the map key names the ink marker: events that fit with the filter on, other events with it off', async ({ page }) => {
-  await open(page, 'discover', 1280)
-  await page.getByRole('button', { name: /^Mark busy, Today/ }).first().click()
+  await open(page, 'discover/when', 1280)
+  await busyFirstGap(page)
+  await toStep(page, 'events')
   await page.getByRole('link', { name: 'See these on the map' }).click()
   const frame = await mapFrame(page)
   await frame.locator('#legendBtn').click()
@@ -106,7 +111,7 @@ test("Let my groups see I'm going is off by default, per event, and stores no pl
   await expect(share).not.toBeChecked()
   await share.check()
   await expect(share).toBeChecked()
-  await expect(page.locator('.sq-share-going')).toContainText('Never where you are')
+  await expect(page.locator('.sq-share-going')).toContainText("Your groups can see you're going.")
   const stored = await page.evaluate(() => localStorage.getItem('sidequest.demo-going-share.v1'))
   const ids = JSON.parse(stored ?? '[]') as string[]
   expect(ids).toHaveLength(1)

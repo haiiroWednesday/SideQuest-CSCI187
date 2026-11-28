@@ -69,7 +69,7 @@ export function ShareGoing({ eventId, planned }: { eventId: string; planned: boo
       <span className="sq-share-text">
         <b>Let my groups see I'm going</b>
         {/* Short while off (the default). Once on, say exactly who sees what. */}
-        {on && <small>{planned ? 'Your groups see your name. Never where you are.' : 'Your groups see your name once you plan it. Never where you are.'}</small>}
+        {on && <small>{planned ? "Your groups can see you're going." : 'Plan it to let your groups know.'}</small>}
       </span>
     </label>
   )

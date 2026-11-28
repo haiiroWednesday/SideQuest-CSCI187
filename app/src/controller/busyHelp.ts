@@ -34,7 +34,7 @@ export async function busyFromWords(text: string, today: string, useAi: boolean,
     const value = await res.json() as { proposals?: unknown; unclear?: unknown }
     const proposals = checkProposals(Array.isArray(value.proposals) ? value.proposals : [], range)
     const unclear = Array.isArray(value.unclear) ? value.unclear.filter((q): q is string => typeof q === 'string').slice(0, 4) : []
-    return { proposals, unclear, via: 'ai', note: 'Read by AI. Check each time before you add it.' }
+    return { proposals, unclear, via: 'ai', note: 'Review before adding.' }
   } catch {
     return local('AI help could not be reached, so this was read on your device.')
   }

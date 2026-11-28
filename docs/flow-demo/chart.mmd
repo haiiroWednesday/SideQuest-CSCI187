@@ -1,0 +1,19 @@
+flowchart LR
+  open([Open SideQuest]) --> q{Any busy time<br/>or Google connected?}
+  q -- no --> setup[Setup pop-up<br/>connect Google or add busy time]:::build
+  q -- yes --> disc[Discover<br/>events that fit, filters on top]
+  setup --> disc
+  disc --> card[Opened ticket]
+  card --> plan[Plan it]
+  card --> walk[Walk there]
+  plan --> sched[My Schedule<br/>your week and your plans]:::change
+  sched --> edit[Edit busy time]:::change
+  sched --> rm[Open or remove a plan]
+  sched --> clash[Clash sheet]
+  sched --> some[Someday ideas]
+  groups[Groups] --> gweek[When is everyone free]
+  groups --> invite[Invite and answer]
+  map[Map] --> fits[Only what fits]
+  post[Post an event] --> food[Share leftover food]
+  classDef build stroke:#b8860b,stroke-width:3px,stroke-dasharray:6 4,fill:#fff3d0
+  classDef change stroke:#751728,stroke-width:3px

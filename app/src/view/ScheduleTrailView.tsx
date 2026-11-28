@@ -98,7 +98,8 @@ export function ScheduleTrailView({ screen, accountStorage = false, onRemove, on
     // Closing hands focus back to the button that opened the sheet, when it is still on the page.
     if (!key) requestAnimationFrame(() => { const o = clashOpener.current; if (o?.isConnected) o.focus(); else document.querySelector<HTMLElement>('.sqm-clash-open')?.focus() })
   }
-  const dayClashes = clashKey ? screen.days.find(d => d.date === clashKey)?.clashes ?? [] : []
+  const clashDay = clashKey ? screen.days.find(d => d.date === clashKey) ?? null : null
+  const dayClashes = clashDay?.clashes ?? []
   const setMode = (m: ScheduleMode) => { setModeState(m); saveScheduleMode(m) }
   const allStubs = screen.days.flatMap(day => day.events)
   const openDay = (date: string) => { setMode('tickets'); requestAnimationFrame(() => document.getElementById(`sqm-day-${date}`)?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })) }
@@ -234,13 +235,17 @@ export function ScheduleTrailView({ screen, accountStorage = false, onRemove, on
                       {mode === 'tickets' && open && (
                         <div className={`sqm-open${open.preview ? ' sqm-open-preview' : ''}`}>
                           <div className="sqm-openhead"><span>{open.preview ? 'NOT PLANNED YET' : 'PICKED'}</span><button type="button" onClick={() => setOpenId(null)}>Close</button></div>
-                          <EventStub face stub={open}>
-                            {open.overlap && <span className="sq-pill sq-pill-overlap">{open.overlap.text}</span>}
-                            {!open.preview && <ScheduleEventDetails event={open} />}
-                            {open.preview
-                              ? onPlan && <button type="button" className="sq-plan-button sqm-preview-plan" onClick={() => onPlan(open.id)}>Plan it</button>
-                              : remove(open.id, open.title)}
-                          </EventStub>
+                          {/* The shared ticket, inside the list shape every ticket sits in, so the picture stays in its own
+                              column on the right here too (Cyn, Nov 26: it had dropped under the time stub). */}
+                          <ul className="sq-stubs sq-stubs-one sqm-open-ticket" role="presentation"><li role="presentation">
+                            <EventStub face stub={open}>
+                              {open.overlap && <span className="sq-pill sq-pill-overlap">{open.overlap.text}</span>}
+                              {!open.preview && <ScheduleEventDetails event={open} />}
+                              {open.preview
+                                ? onPlan && <button type="button" className="sq-plan-button sqm-preview-plan" onClick={() => onPlan(open.id)}>Plan it</button>
+                                : remove(open.id, open.title)}
+                            </EventStub>
+                          </li></ul>
                         </div>
                       )}
                     </section>
@@ -250,7 +255,7 @@ export function ScheduleTrailView({ screen, accountStorage = false, onRemove, on
               {screen.missing.length > 0 && (
                 <section className="sq-trail-day sq-trail-missing" aria-label="No longer listed">
                   <div className="sq-bubble sq-bubble-missing" aria-hidden="true"><b>?</b></div>
-                  <h3 className="sq-day"><span>NO LONGER LISTED</span>Gone from the event list</h3>
+                  <h3 className="sq-day">No longer listed</h3>
                   <ol className="sq-stubs">
                     {screen.missing.map(item => (
                       <li key={item.id}>
@@ -258,7 +263,7 @@ export function ScheduleTrailView({ screen, accountStorage = false, onRemove, on
                           <span className="sq-stub-time"><b>?</b></span>
                           <span className="sq-stub-body">
                             <strong>An event you planned</strong>
-                            <span className="sq-by">This event is no longer available in the catalog.</span>
+                            <span className="sq-by">It may have been cancelled or moved.</span>
                             {remove(item.id, `unavailable event ${item.id}`)}
                           </span>
                         </div></div>
@@ -290,7 +295,8 @@ export function ScheduleTrailView({ screen, accountStorage = false, onRemove, on
         <span>SideQuest</span>
         <span>Santa Clara · California</span>
       </footer>
-      {dayClashes.length > 0 && onRemove && <ClashSheet clashes={dayClashes} onClose={() => setClashKey(null)} onRemove={onRemove} onRemoveMany={onRemoveMany} />}
+      {dayClashes.length > 0 && onRemove && <ClashSheet clashes={dayClashes} onClose={() => setClashKey(null)} onRemove={onRemove} onRemoveMany={onRemoveMany}
+        trail={clashDay?.timeline ? { events: clashDay.events, timeline: clashDay.timeline, isToday: clashDay.isToday, date: clashDay.date, now } : undefined} />}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { expect, test, type Frame, type Page } from '@playwright/test'
-import { open } from './helpers'
+import { open, toStep, busyFirstGap } from './helpers'
 
 // Nov 25: one campus map. Discover's List/Map switch is gone. The Map tab is sent every listed event
 // and has one event filter, "Fits my free time", first in its row of chips.
@@ -23,13 +23,17 @@ const listedOnDiscover = (page: Page) => page.locator('[data-flip-id]').evaluate
 
 /** Marks the first free gap today as busy, so Discover narrows to what fits. Returns the ids it lists and its count line. */
 async function tellFreeTime(page: Page) {
-  await expect(page.locator('.sq-mbar-busy').first()).toBeAttached()
+  // Discover is three steps (Nov 27): count on Events, mark busy on When, then back to Events.
+  await expect(page.locator('[data-flip-id]').first()).toBeVisible()
   const everything = await page.locator('[data-flip-id]').count()
-  await page.getByRole('button', { name: /^Mark busy, Today/ }).first().click()
+  await toStep(page, 'when')
+  await expect(page.locator('.sq-wk-plan').first()).toBeAttached()
+  await busyFirstGap(page)
+  await toStep(page, 'events')
   await expect.poll(() => page.locator('[data-flip-id]').count()).toBeLessThan(everything)
   const listed = await listedOnDiscover(page)
   expect(listed.length).toBeGreaterThan(0)
-  return { listed, everything, line: (await page.locator('.sq-fit-note').innerText()).trim() }
+  return { listed, everything, line: (await page.locator('.sq-step-head-events p').innerText()).replace(/\s*Show all events$/, '').trim() }
 }
 const toMapTab = (page: Page) => page.locator('.sq-tab-map').click()
 
@@ -137,6 +141,8 @@ for (const width of [390, 1280]) {
 
     // Discover's link turns it on again.
     await page.locator('.sq-tab-discover').click()
+    // The Discover tab opens the When step; the link sits above the list on Events (Nov 27).
+    await toStep(page, 'events')
     await page.getByRole('link', { name: 'See these on the map' }).click()
     await expect(page).toHaveURL(/#map-fits$/)
     await expect(page.locator('.sq-tab-map')).toHaveAttribute('aria-current', 'page')
@@ -194,6 +200,6 @@ test('an event Discover is not listing still opens from the map', async ({ page 
   expect(target).not.toBeNull()
   expect(listed).not.toContain(target!.id)
   await frame.locator(`.evs [data-ev="${target!.id}"]`).click()
-  await expect(page).toHaveURL(/#discover$/)
+  await expect(page).toHaveURL(/#discover\/events$/)
   await expect(page.locator('#sq-detail-title')).toHaveText(target!.title)
 })

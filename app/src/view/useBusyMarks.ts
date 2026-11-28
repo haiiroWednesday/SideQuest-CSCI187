@@ -3,13 +3,17 @@
 // account and every change is saved there. Free time marked in Free mode and the Busy/Free
 // switch last for this visit.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createAccountBusyController } from '../controller/accountData'
+import { calendarMarksOf, calendarWithin, createAccountBusyController, rangesToMarks } from '../controller/accountData'
 import type { FreeMarks, MarkMode } from '../controller/freeMarks'
-import type { PersonalStorePort } from '../controller/personalClient'
+import type { BusyRange, PersonalStorePort } from '../controller/personalClient'
 
-export function useBusyMarks(store?: PersonalStorePort | null) {
+
+/** `seed` is design-review sample busy time for a signed-out page; it is never saved. */
+export function useBusyMarks(store?: PersonalStorePort | null, seed?: readonly BusyRange[]) {
   const account = useMemo(() => store ? createAccountBusyController(store) : null, [store])
-  const [marks, setLocal] = useState<FreeMarks>({})
+  const [marks, setLocal] = useState<FreeMarks>(() => store || !seed ? {} : rangesToMarks(seed))
+  // Steps that came from Google Calendar, coloured apart on the bar. Display only.
+  const [calendar, setCalendar] = useState<FreeMarks>(() => store || !seed ? {} : calendarMarksOf(seed))
   const [open, setOpen] = useState<FreeMarks>({})
   const [mode, setMode] = useState<MarkMode>('busy')
   const [error, setError] = useState<string | null>(null)
@@ -18,20 +22,21 @@ export function useBusyMarks(store?: PersonalStorePort | null) {
   const live = useRef(account)
   live.current = account
   useEffect(() => {
-    setLocal({}); setError(null)
-    if (!account) return
-    void account.load().then(result => { if (live.current !== account) return; setLocal(result.marks); setError(result.error) })
+    if (!account) { if (!seed) { setLocal({}); setCalendar({}) } setError(null); return }
+    setLocal({}); setCalendar({}); setError(null)
+    void account.load().then(result => { if (live.current !== account) return; setLocal(result.marks); setCalendar(result.calendar); setError(result.error) })
   }, [account])
   const setMarks = useCallback((next: FreeMarks) => {
     setLocal(next)
+    setCalendar(current => calendarWithin(current, next))
     setError(null)
     if (!account) return
     void account.save(next).then(result => {
       if (live.current !== account) return
       // Only the newest save settles the bar. A refused one still takes its own change back now.
-      if (result.error) { setError(result.error); setLocal(result.marks) }
-      else if (!result.stale) setLocal(result.marks)
+      if (result.error) { setError(result.error); setLocal(result.marks); setCalendar(result.calendar) }
+      else if (!result.stale) { setLocal(result.marks); setCalendar(result.calendar) }
     })
   }, [account])
-  return { marks, setMarks, open, setOpen, mode, setMode, error }
+  return { marks, calendar, setMarks, open, setOpen, mode, setMode, error }
 }

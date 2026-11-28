@@ -121,7 +121,7 @@ export function SomedayView({
               <div className="sq-bringin-row">
                 <button type="button" className="sq-plan-button sq-bringin-go" disabled={said.trim().length < 3 || drafting} onClick={() => void makeCard()}>{drafting ? 'Making it…' : 'Make a card'}</button>
               </div>
-              <p className="sq-bringin-fine">{ai ? 'Your words go to our server and an AI writes the card. ' : ''}Nothing is saved until you press Save the idea.</p>
+              <p className="sq-bringin-fine">{ai ? 'Drafted by AI. Edit before saving. ' : ''}Nothing is saved until you press Save the idea.</p>
             </section>
 
             <form className="sq-someday-form" onSubmit={submit}>
@@ -173,7 +173,7 @@ export function SomedayView({
 
             <section className="sq-someday-list" aria-labelledby="sq-ideas-heading">
               <h2 id="sq-ideas-heading">{quiet ? 'Ideas' : 'Saved possibilities'} <small>{ideas.length}</small></h2>
-              {ideas.length === 0 && !quiet && <p className="sq-empty-card">Nothing saved yet. Start with an activity you want to remember.</p>}
+              {ideas.length === 0 && !quiet && <p className="sq-empty-card">Start with an idea you want to remember</p>}
               <ol>
                 {ideas.map(idea => {
                   const event = idea.eventId ? available.get(idea.eventId) : null

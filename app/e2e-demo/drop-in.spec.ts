@@ -169,7 +169,7 @@ for (const width of [390, 1280]) {
     await noSidewaysScroll(page)
 
     // On Discover its ticket says "Drop in", and 45 free minutes inside it are enough.
-    await page.goto('/demo.html#discover')
+    await page.goto('/demo.html#discover/events')
     const fair = ticket(page, 'Zine fair')
     await expect(fair.locator('.sq-stub-time em')).toHaveText(/^drop in any time$/i)
     await onlyFree(page, '19:00', '19:45')

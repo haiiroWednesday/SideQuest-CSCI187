@@ -5,19 +5,38 @@ import { Fragment, useEffect, useRef, type CSSProperties } from 'react'
 import { goingCell, rowsBelowTickets, whatDiffers, type ClashModel } from '../controller/presentClash'
 import { categoryStyle } from './categoryColors'
 import { EventStub } from './DiscoverView'
+import { ScheduleDayModes } from './ScheduleModes'
+import type { DayTimeline } from '../controller/scheduleTimeline'
+import type { PlanStubModel } from '../controller/presentScreens'
 import { useGoing } from './FriendsGoing'
 import './clash.css'
 import './clash-chooser.css'
 
 const listed = (names: readonly string[]) => names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
 
-export function ClashSheet({ clashes, onClose, onRemove, onRemoveMany }: {
+/** The day's own trail, so the sheet draws each clash exactly as My Schedule draws it (Cyn, Nov 26: the clash
+ *  picture must match the other timelines). Each clash shows only its own plans. */
+export type ClashTrail = { events: PlanStubModel[]; timeline: DayTimeline; isToday: boolean; date: string; now?: Date }
+
+/** The day's trail cut down to one clash: only its plans, from the hour before it starts to the hour after it ends. */
+function clashTimeline(day: DayTimeline, ids: readonly string[]): DayTimeline {
+  const items = day.items.filter(t => ids.includes(t.id))
+  if (!items.length) return day
+  return {
+    items,
+    firstMinute: Math.floor(Math.min(...items.map(t => t.startMinute)) / 60) * 60,
+    lastMinute: Math.ceil(Math.max(...items.map(t => t.endMinute)) / 60) * 60,
+  }
+}
+
+export function ClashSheet({ clashes, onClose, onRemove, onRemoveMany, trail }: {
   /** Every clash on one day. */
   clashes: ClashModel[]
   onClose: () => void
   onRemove: (id: string) => void
   /** "Keep this one" as one change, so one toast names every plan removed and one Undo brings them back. */
   onRemoveMany?: (ids: readonly string[]) => void
+  trail?: ClashTrail
 }) {
   const ref = useRef<HTMLDialogElement>(null)
   // Friends going shows only where the page provides it (your groups, opted in). Without it the row is left out.
@@ -48,22 +67,30 @@ export function ClashSheet({ clashes, onClose, onRemove, onRemoveMany }: {
           return (
             <section key={clash.key} className="sq-clash-group" aria-label={clash.summary}>
               {many && <h3 className="sq-clash-when">{clash.summary}</h3>}
-              <figure className={`sq-clash-ruler sq-clash-strip${clash.overlaps.length > 1 ? ' sq-clash-strip-many' : ''}`} aria-label={`${clash.summary}. Overlap ${clash.overlaps.map(o => o.label).join(' and ')}.`}>
-                <div className="sq-clash-lanes" aria-hidden="true" style={{ '--lanes': clash.plans.length } as CSSProperties}>
-                  {clash.plans.map(p => (
-                    <Fragment key={p.id}>
-                      <span className="sq-clash-name">{p.title}</span>
-                      <div className="sq-clash-row" style={categoryStyle(p.category)}>
-                        <span className="sq-clash-bar" style={{ left: p.left + '%', width: p.width + '%' }} />
-                      </div>
-                    </Fragment>
-                  ))}
-                  <div className="sq-clash-bands">
-                    {clash.overlaps.map(o => <i key={o.left} className="sq-clash-band" style={{ left: o.left + '%', width: o.width + '%' }}><b>{o.label}</b></i>)}
+              {trail ? (
+                <figure className="sq-clash-ruler sq-clash-trail" aria-label={`${clash.summary}. Overlap ${clash.overlaps.map(o => o.label).join(' and ')}.`}>
+                  <ScheduleDayModes mode="trail" events={trail.events.filter(e => clash.plans.some(p => p.id === e.id))}
+                    timeline={clashTimeline(trail.timeline, clash.plans.map(p => p.id))}
+                    now={trail.now} isToday={trail.isToday} date={trail.date} selectedId={null} onOpen={() => {}} onOpenTickets={() => {}} />
+                </figure>
+              ) : (
+                <figure className={`sq-clash-ruler sq-clash-strip${clash.overlaps.length > 1 ? ' sq-clash-strip-many' : ''}`} aria-label={`${clash.summary}. Overlap ${clash.overlaps.map(o => o.label).join(' and ')}.`}>
+                  <div className="sq-clash-lanes" aria-hidden="true" style={{ '--lanes': clash.plans.length } as CSSProperties}>
+                    {clash.plans.map(p => (
+                      <Fragment key={p.id}>
+                        <span className="sq-clash-name">{p.title}</span>
+                        <div className="sq-clash-row" style={categoryStyle(p.category)}>
+                          <span className="sq-clash-bar" style={{ left: p.left + '%', width: p.width + '%' }} />
+                        </div>
+                      </Fragment>
+                    ))}
+                    <div className="sq-clash-bands">
+                      {clash.overlaps.map(o => <i key={o.left} className="sq-clash-band" style={{ left: o.left + '%', width: o.width + '%' }}><b>{o.label}</b></i>)}
+                    </div>
+                    <div className="sq-clash-ticks">{clash.ticks.map(t => <span key={t.left} style={{ left: t.left + '%' }}>{t.label}</span>)}</div>
                   </div>
-                  <div className="sq-clash-ticks">{clash.ticks.map(t => <span key={t.left} style={{ left: t.left + '%' }}>{t.label}</span>)}</div>
-                </div>
-              </figure>
+                </figure>
+              )}
 
               <ul className={`sq-clash-choices ${pair ? 'sq-clash-pair' : 'sq-clash-list'}`} style={{ '--rows': rows.length } as CSSProperties}>
                 {clash.plans.map((p, i) => (

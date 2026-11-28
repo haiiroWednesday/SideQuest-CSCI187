@@ -4,12 +4,16 @@ import { open, shooter } from './helpers'
 const family = (el: Element) => getComputedStyle(el).fontFamily.split(',')[0].trim()
 
 for (const width of [390, 1280]) {
-  test(`opening "Stargazing at Ricard" keeps the serif title and shows the observatory drawing (${width}px)`, async ({ page }, info) => {
+  test(`opening "Stargazing at Ricard" keeps the serif title and shows its host photo (${width}px)`, async ({ page }, info) => {
     const shot = shooter(page, info)
     await open(page, 'discover', width)
     const card = page.getByRole('button', { name: 'View details for Stargazing at Ricard' })
     await card.scrollIntoViewIfNeeded()
-    await expect(card.locator('.sq-greet-front[aria-label="Greetings from ricard"]')).toBeVisible()
+    // The review build gives this event a host photo (demo.tsx); events without one keep the drawn card.
+    await expect(card.locator('.sq-stub-stamp img.sq-photo')).toBeVisible()
+    await expect(card.locator('.sq-greet-front')).toHaveCount(0)
+    const library = page.getByRole('button', { name: 'View details for Poetry Reading' })
+    await expect(library.locator('.sq-greet-front[aria-label="Greetings from library"]')).toBeVisible()
     await shot('closed')
     const closed = await card.locator('strong').first().evaluate(family)
     await card.click()

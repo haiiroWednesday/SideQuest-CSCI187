@@ -1554,7 +1554,7 @@ function onFix(pos){const c=pos.coords;ME.fix=ll2d(c.longitude,c.latitude);ME.ac
   if(ME.follow){if(ME.first)flyToMe();else{const[x,y]=ME.fix;cam.x=x/10;cam.y=y/10;}}
   meEl.hidden=false;meSync();dirty();}
 function onErr(e){if(ME.pretend)return;const pick=` <span class="nbs"><button type="button" class="nb" data-act="pick">Pick a spot to start from</button></span>`;const alone=EMBED?` <a href="${location.pathname}${WALK.place?'?walk='+encodeURIComponent(WALK.place.label):''}" target="_blank" rel="noopener">Open the map on its own</a>`:'';
-  if(e.code===1){ME.on=false;ME.follow=false;meSync();meNote(WALK.place?`Location is off, so there is no route. ${esc(WALK.place.label)} is marked on the map.`+alone+pick:'Location is off here.'+alone+pick);}
+  if(e.code===1){ME.on=false;ME.follow=false;meSync();meNote(WALK.place?'Turn on location to get directions.'+alone+pick:'Location is off here.'+alone+pick);}
   else if(!ME.fix)meNote("Can't find you yet");}
 function onOrient(e){let h=null;
   if(typeof e.webkitCompassHeading==='number'&&!isNaN(e.webkitCompassHeading))h=e.webkitCompassHeading;
@@ -1619,7 +1619,7 @@ function noteSet(key,html,fill){if(meNoteEl.dataset.k!==key||meNoteEl.hidden){me
 function walkNote(){const p=WALK.place;if(!p||!WALK.pts)return;meNoteEl.classList.add('walking');
   const hop=()=>WALK.hop>40?`, ${metres(WALK.hop)} of it before you reach a campus path`:'';
   const btns=SIM.state==='play'?nb('pause','Pause')+nb('stop','Stop'):SIM.state==='pause'?nb('play','Keep walking',1)+nb('stop','Stop'):ME.pretend?nb('walkit','Walk it for me',1)+nb('pick','Move spot')+nb('stop','Stop'):nb('stop','Stop');
-  noteSet(`w|${p.label}|${SIM.state}|${ME.pretend}`,`<b data-w="m">${metres(WALK.m)}</b> to ${esc(p.label)}<span data-w="hop">${hop()}</span>. ${ME.pretend?'From your pretend spot. ':''}Paths not checked on foot yet.<span class="nbs">${btns}</span>`,
+  noteSet(`w|${p.label}|${SIM.state}|${ME.pretend}`,`<b data-w="m">${metres(WALK.m)}</b> to ${esc(p.label)}<span data-w="hop">${hop()}</span>. ${ME.pretend?'From your pretend spot. ':''}Walking times are estimates.<span class="nbs">${btns}</span>`,
     ()=>{meNoteEl.querySelector('[data-w="m"]').textContent=metres(WALK.m);meNoteEl.querySelector('[data-w="hop"]').textContent=hop();});}
 function offNote(){meNoteEl.classList.add('walking');noteSet('off',`You're off campus. Pick a spot to start from.<span class="nbs">${nb('pick','Pick a spot',1)}${nb('stop','Stop')}</span>`,()=>{});}
 function stopWalk(){stopSim();WALK.place=null;WALK.run=null;WALK.pts=null;WALK.at=null;meNoteEl.classList.remove('walking');meNoteEl.dataset.k='';meNote('');if(S.sel)render();dirty();}

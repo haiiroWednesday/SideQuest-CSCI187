@@ -44,7 +44,7 @@ export function startDictation(onWords: (text: string) => void, onEnd: (why: Dic
 }
 
 export const DICTATION_SAY: Record<Exclude<DictationEnd, 'done'>, string> = {
-  denied: 'The microphone is blocked for SideQuest. You can type it instead.',
+  denied: 'Microphone access is off.',
   'no-speech': 'Nothing was heard. Tap the mic and try again.',
   unsupported: 'This browser has no speech typing. You can type it instead.',
   failed: 'Speech typing stopped. You can type it instead.',

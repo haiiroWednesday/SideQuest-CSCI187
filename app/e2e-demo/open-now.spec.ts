@@ -53,7 +53,7 @@ test('map and app agree on every place at several moments (one set of rules, two
 
 for (const width of [390, 1280]) {
   test(`Discover: a free stretch carries one quiet "open" idea that opens our own map (${width}px)`, async ({ page }, info) => {
-    await open(page, 'discover', width) // Tuesday Nov 24, 10:40, Thanksgiving week hours
+    await open(page, 'discover/when', width) // Tuesday Nov 24, 10:40, Thanksgiving week hours
     const ideas = page.locator('.sq-open-now')
     await expect(ideas.first()).toBeVisible()
     const texts = await ideas.allInnerTexts()

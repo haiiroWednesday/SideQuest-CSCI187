@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // Discover has no map of its own any more (owner decision, Nov 25): one campus map, on the Map tab.
 // In place of the List/Map switch sits one ink link, shown only while something fits.
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import { DiscoverView, type DiscoverEvent, type MarkerProps } from '../src/view/DiscoverView'
 import { presentDiscover } from '../src/controller/presentScreens'
@@ -22,12 +22,14 @@ const routes = { discover: '#discover', map: '#map', schedule: '#schedule' }
 const blank: MarkInput = { events: [talk, late], plannedIds: [], now: NOW, marks: {}, open: {}, mode: 'free' }
 const input: MarkInput = { ...blank, open: addBusy({ ...blank, marks: {}, date: DAY }, '13:10', '13:55')! }
 const marker: MarkerProps = {
-  model: presentMarks(input), onDate: () => {}, onWhen: () => {}, onAddBusy: () => true, onFillGap: () => {},
+  model: presentMarks(input), onDate: () => {}, onWhen: () => {}, onAddBusy: () => true,
   onUnbusy: () => {}, onReshape: () => {}, onClear: () => {},
 }
 const link = () => screen.queryByRole('link', { name: 'See these on the map' })
 
 describe("Discover's link to the one campus map", () => {
+  // The list, and the link above it, are on the Events step (Nov 27).
+  beforeEach(() => { location.hash = '#discover/events' })
   it('shows above the list while events fit, and goes to the Map tab with the filter on', () => {
     render(<DiscoverView screen={presentDiscover({ events: [talk, late], freeWindows: freeWindows(input), now: NOW })} marker={marker} routes={routes} />)
     expect(link()?.getAttribute('href')).toBe(MAP_FITS_ROUTE)
@@ -51,6 +53,7 @@ describe("Discover's link to the one campus map", () => {
     expect(document.querySelector('.sq-board')!.hasAttribute('hidden')).toBe(false)
   })
   it('the free-time header link, in the look that shows it, goes to the same place', () => {
+    location.hash = '#discover'
     render(<DiscoverView screen={presentDiscover({ events: [talk, late], freeWindows: freeWindows(input), now: NOW })} marker={marker} routes={routes} />)
     expect(document.querySelector('.sq-look-link-map')?.getAttribute('href')).toBe(MAP_FITS_ROUTE)
   })

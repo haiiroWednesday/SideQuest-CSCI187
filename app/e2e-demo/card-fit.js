@@ -133,7 +133,8 @@
     const who = name(card), add = (kind, detail) => out.push({ card: who, kind, detail })
     if (L.r.height < 44 || L.r.width < 44) add('too small to tap', `${Math.round(L.r.width)}x${Math.round(L.r.height)}`)
     const bites = bitesOf(card)
-    const skip = e => e.closest('.sq-planned-mark, .sq-bookmark')
+    // The opened card's plate (drawing or host photo) is full-bleed under the close button by design.
+    const skip = e => e.closest('.sq-planned-mark, .sq-bookmark, .sq-pic-plate')
     const obstacles = []
     for (const p of card.querySelectorAll('.sq-stamp-paper, .sq-going-faces, img')) {
       if (!visible(p) || skip(p)) continue

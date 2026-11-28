@@ -1,11 +1,9 @@
 // VIEW: the extras around fitting events on Discover. Tag chips, live "food now" notices,
-// one pick and a short plan per free stretch, and the host's "leftover food" control.
+// and the host's "leftover food" control.
 // All decisions come from controller/presentAdvice.ts; this file only draws them.
-import type { StretchAdvice, FoodNoticeModel } from '../controller/presentAdvice'
+import type { FoodNoticeModel } from '../controller/presentAdvice'
 import type { TagFiltersModel } from '../controller/screenModels'
 import { LEAVE_NOTE_LABEL } from '../controller/presentAdvice'
-import type { FitMarkModel } from '../controller/presentFitMark'
-import { FitMark } from './FitMark'
 import './foodtime.css'
 
 export function TagFilters({ model, onChange }: { model: TagFiltersModel; onChange: (tags: string[]) => void }) {
@@ -26,79 +24,12 @@ export function TagFilters({ model, onChange }: { model: TagFiltersModel; onChan
   )
 }
 
-/** Live notices from hosts: food left at an event happening now. Shown on the page, never pushed. */
-export function FoodNowBoard({ notices, onOpen }: { notices: readonly FoodNoticeModel[]; onOpen: (id: string) => void }) {
-  if (!notices.length) return null
-  return (
-    <section className="sq-foodnow" aria-labelledby="sq-foodnow-h">
-      <h2 id="sq-foodnow-h"><i className="sq-foodnow-dot" aria-hidden="true" />Food left, come now</h2>
-      <ul>
-        {notices.map(n => (
-          <li key={n.eventId}>
-            <button type="button" className="sq-foodnow-item" onClick={() => onOpen(n.eventId)}>
-              <strong>{n.title}</strong>
-              <span>{n.location}</span>
-              <small>{n.minutesLeft} min left</small>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )
-}
 
-/** "7:45pm to 8:45pm" as the start and the end, so the stub can stack them like a ticket's. */
-const pickTimes = (time: string): string[] => time.split(' to ')
-
-/** One pick per free stretch, and when two or more chain, a plan for the whole stretch. */
-export function StretchAdviceList({ items, onOpen, onPlanAll, blocked, fitMarks }: {
-  /** The pick's fit mark, the same one its ticket carries in the list below, keyed by event ID. */
-  fitMarks?: ReadonlyMap<string, FitMarkModel>
-  items: readonly StretchAdvice[]
-  onOpen: (id: string) => void
-  onPlanAll: (ids: string[]) => void
-  blocked?: boolean
-}) {
-  if (!items.length) return null
-  return (
-    <section className="sq-onepicks" aria-labelledby="sq-onepicks-h">
-      <h2 id="sq-onepicks-h" className="sq-visually-hidden">One pick for each free stretch</h2>
-      {items.map(item => (
-        <article key={item.id} className="sq-onepick" aria-label={`Free ${item.label}`}>
-          <p className="sq-onepick-when"><b>Free</b> {item.label}</p>
-          {/* Laid out like the ticket everywhere else: the time on a stub, the event beside it. */}
-          <button type="button" className="sq-onepick-main" onClick={() => onOpen(item.pick.id)}>
-            <span className="sq-onepick-stub">{pickTimes(item.pick.time).map((part, i) => i ? <small key={i}>to {part}</small> : <b key={i}>{part}</b>)}</span>
-            <span className="sq-onepick-body">
-              <span className="sq-onepick-label">Our pick</span>
-              <strong>{item.pick.title}</strong>
-              <span className="sq-onepick-facts">{item.pick.location}</span>
-              {fitMarks?.has(item.pick.id) && <FitMark mark={fitMarks.get(item.pick.id)!} />}
-              <span className="sq-onepick-why">{item.pick.reason}</span>
-            </span>
-          </button>
-          {item.count > 1 && <p className="sq-onepick-more">{item.count - 1} more {item.count === 2 ? 'fits' : 'fit'} this time, below.</p>}
-          {item.plan && (
-            <div className="sq-onepick-plan">
-              <p className="sq-onepick-plan-h">Or fill it</p>
-              <ol>
-                {item.plan.stops.map(stop => (
-                  <li key={stop.id}>
-                    {stop.walk && <span className="sq-onepick-walk">{stop.walk}</span>}
-                    <span className="sq-onepick-stop"><b>{stop.time}</b> {stop.title}</span>
-                  </li>
-                ))}
-              </ol>
-              <button type="button" className="sq-plan-button sq-onepick-planall" disabled={blocked} onClick={() => onPlanAll(item.plan!.ids)}>
-                Plan all {item.plan.ids.length}
-              </button>
-              <small className="sq-onepick-est">{LEAVE_NOTE_LABEL}</small>
-            </div>
-          )}
-        </article>
-      ))}
-    </section>
-  )
+/** "Food left · 24 min" on the event's own ticket, for as long as the host's notice lasts. It used to be a
+ *  block of its own above the list (kept in docs/removed/food-board). */
+export function FoodLeftNote({ minutes }: { minutes: number | undefined }) {
+  if (minutes === undefined) return null
+  return <span className="sq-foodleft"><i className="sq-foodnow-dot" aria-hidden="true" />Food left · {minutes} min</span>
 }
 
 /** "Leave by 1:42pm for Chem lab" on a fitting card. A warning when the walk makes you late. */
@@ -130,7 +61,7 @@ export function FoodNowControl({ state, onShare }: { state: 'available' | 'share
         {state === 'available' ? 'Share leftover food' : 'Food shared'}
       </button>
       {/* Said once it is shared, so the live card stays short before that. */}
-      {state !== 'available' && <small>{state === 'too-soon' ? 'Shared already. Try again in a few minutes.' : 'On Discover for 30 minutes. No alerts sent.'}</small>}
+      {state !== 'available' && <small>{state === 'too-soon' ? 'Shared already. Try again in a few minutes.' : 'Showing on Discover for 30 minutes'}</small>}
     </div>
   )
 }

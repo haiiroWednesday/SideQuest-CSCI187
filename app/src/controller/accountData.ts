@@ -197,9 +197,27 @@ export function planBusySync(rows: readonly BusyRange[], marks: FreeMarks): { re
   }
 }
 
+/** The steps that came from Google Calendar, so a View can colour them apart. Display only: saving never reads it. */
+export function calendarMarksOf(rows: readonly BusyRange[]): FreeMarks {
+  return rangesToMarks(rows.filter(row => row.source === 'calendar'))
+}
+
+/** Keeps only the calendar steps the bar still marks busy, after a drag took some away. */
+export function calendarWithin(calendar: FreeMarks, marks: FreeMarks): FreeMarks {
+  const out: Record<string, number[]> = {}
+  for (const [date, cells] of Object.entries(calendar)) {
+    const kept = new Set(marks[date] ?? [])
+    const left = cells.filter(cell => kept.has(cell))
+    if (left.length) out[date] = left
+  }
+  return out
+}
+
 export type BusySaveResult = {
   /** What the bar should show now: the newest change asked for, minus any change the server refused. */
   marks: FreeMarks
+  /** The steps among `marks` that came from Google Calendar. */
+  calendar: FreeMarks
   error: string | null
   /** True when a newer change was asked for after this one; only the newest result settles the bar. */
   stale: boolean
@@ -213,9 +231,9 @@ export function createAccountBusyController(store: PersonalStorePort) {
   let wanted: FreeMarks = {}
   let sequence = 0
   return {
-    async load(): Promise<{ marks: FreeMarks; error: string | null }> {
-      try { rows = await store.listBusy(); wanted = rangesToMarks(rows); return { marks: wanted, error: null } }
-      catch (error) { return { marks: rangesToMarks(rows), error: problem(error, 'Your busy time could not be loaded.') } }
+    async load(): Promise<{ marks: FreeMarks; calendar: FreeMarks; error: string | null }> {
+      try { rows = await store.listBusy(); wanted = rangesToMarks(rows); return { marks: wanted, calendar: calendarMarksOf(rows), error: null } }
+      catch (error) { return { marks: rangesToMarks(rows), calendar: calendarMarksOf(rows), error: problem(error, 'Your busy time could not be loaded.') } }
     },
     /** Saves run one after another. A refused save takes back only its own change. */
     save(marks: FreeMarks): Promise<BusySaveResult> {
@@ -232,11 +250,11 @@ export function createAccountBusyController(store: PersonalStorePort) {
             rows = rows.filter(item => item.id !== row.id)
           }
           for (const draft of plan.add) rows = [...rows, await store.addBusy(draft)]
-          return { marks: wanted, error: null, stale: id !== sequence }
+          return { marks: wanted, calendar: calendarWithin(calendarMarksOf(rows), wanted), error: null, stale: id !== sequence }
         } catch (error) {
           // Only this change is taken back. The next save syncs the server to the bar again.
           wanted = undoChange(wanted, before, marks)
-          return { marks: wanted, error: problem(error, 'Your busy time was not saved. Try again.'), stale: id !== sequence }
+          return { marks: wanted, calendar: calendarWithin(calendarMarksOf(rows), wanted), error: problem(error, 'Your busy time was not saved. Try again.'), stale: id !== sequence }
         }
       })
       queue = run

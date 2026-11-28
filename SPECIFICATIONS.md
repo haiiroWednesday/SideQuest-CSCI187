@@ -1,6 +1,6 @@
-# SideQuest — Current M2 MVP Technical Specifications
+# SideQuest: Technical Specifications
 
-**Updated November 4, 2026.** Implements [REQUIREMENTS.md](REQUIREMENTS.md). Historic walking-skeleton specifications are retained at [docs/M1_HISTORICAL_SPECIFICATIONS.md](docs/M1_HISTORICAL_SPECIFICATIONS.md).
+**Updated November 26, 2026.** Implements [REQUIREMENTS.md](REQUIREMENTS.md). Sections S1 to S5 started as the M2 contract and are updated where the final project changed them. Features agreed but not built are listed in [REQUIREMENTS.md, Deferred](REQUIREMENTS.md#deferred-agreed-not-built-yet) and in S12 below. Historic walking-skeleton specifications are retained at [docs/M1_HISTORICAL_SPECIFICATIONS.md](docs/M1_HISTORICAL_SPECIFICATIONS.md).
 
 ## Technology and runtime
 - React + TypeScript + Vite UI, Node.js **22.12+** (24 recommended).
@@ -38,16 +38,18 @@ getById(id: string): Promise<CampusEvent | null>
 - `event.end <= available.end`
 - both event and free-time intervals valid, with `start < end`.
 
-Only full scheduled events match. Search rejects invalid dates and reversed/zero-length windows. Blank inputs browse all upcoming events; incomplete inputs explain that no filter is active. A complete no-match window offers **Show all events**, which clears the filter without changing plans or catalog data. The presentation helper `presentation/formatEvents.ts` displays `M/D/YYYY` and `h:mmam/pm` without changing stored data.
+Only full scheduled events match, except host-marked drop-in events (S7). **Free time (final project):** `controller/freeMarks.ts` turns busy marks on one or more days into free stretches (five-minute steps, 8am to 11pm, My Schedule's plans count as busy). Busy blocks can also come from an .ics file (`model/icsBusy.ts`), a sentence (`model/busySentence.ts`, optional server AI in `server/aiAssist.ts`) or Google Calendar; each proposal is shown for the student to keep or drop (`controller/busyHelp.ts`). **Every catalog row is one scheduled showing and is matched on its own; no grouping happens before or after matching.** Search rejects invalid dates and reversed/zero-length windows. Blank inputs browse all upcoming events; incomplete inputs explain that no filter is active. A complete no-match window offers **Show all events**, which clears the filter without changing plans or catalog data. The presentation helper `presentation/formatEvents.ts` displays `M/D/YYYY` and `h:mmam/pm` without changing stored data.
 
 ## S4 — Personal Schedule (R4)
-- `model/schedule.ts`: `sidequest.planned-event-ids.v1` stores **only IDs** in the current browser. Model checks IDs, sorts resolved event details, calculates overlaps and enforces the provisional 100-plan limit.
+- **Where plans live (final project):** without sign-in, `sidequest.planned-event-ids.v1` keeps IDs in this browser. A signed-in student's plans, Someday ideas and busy time go through `controller/accountData.ts` and `controller/personalClient.ts` to the same-origin `/api/me`, where the server forwards the student's own token and Supabase RLS decides access (`my_plans.event_id` references `public.events.id`).
+- `model/schedule.ts`: stores **only IDs**. Model checks IDs, sorts resolved event details, calculates overlaps and enforces the provisional 100-plan limit.
 - `controller/personalSchedule.ts` preserves synchronous local plan writes. `controller/sharedSchedule.ts` coordinates `getById()` reads, distinguishes missing/failed/timed-out details, and rejects obsolete results without changing saved IDs.
 - `view/ScheduleTrailView.tsx` renders controller-prepared plans, conflicts, error/loading/retry states and remove controls. Removal edits only locally stored planned IDs, never the catalog.
 - Compact Schedule cards preserve list-text clamping and provide keyboard-accessible disclosures for full upcoming and past event text, including legacy-length records. This uses resolved presenter data without another catalog lookup or changed plan storage.
 - Public M2 event details must pass the M2 storage ceiling (including a 2,000-character description), not the stricter posting limits, even though older M1 records used a 500-character limit. Legacy records remain readable where applicable.
 - The Schedule presenter also calculates exact start/end minutes and disjoint layout lanes for a proportional daily timeline; the View renders a visual overview above the existing accessible event list. Displayed bar height is 1.2 pixels per minute, so 120 minutes has twice the height of 60 minutes. Collision groups share their lane count; adjacent events may reuse lanes. Historical and unresolved plans keep their existing list/retry behavior.
-- Consecutive events with end == next start do not overlap; real overlaps warn without blocking the user.
+- Consecutive events with end == next start do not overlap. Overlaps are drawn side by side with a neutral tint, and the My Schedule tab badge counts them. Nothing is blocked.
+- **Missing events:** a successful lookup that returns no event means the record is gone from the catalog. My Schedule then says the event may have been cancelled or moved, and keeps the saved ID until the student removes it. A failed or timed-out lookup is reported as a connection problem with retry, never as a missing event.
 
 ## S5 — Persistence, permissions, and failures (R1–R5)
 - Proposed SQL migration: `supabase/migrations/20261103000000_create_events.sql` creates one `public.events` table with `id` UUID PK, `title`, `host_name`, `description`, `location`, `event_date`, `start_time`, `end_time`, `created_at`. It enables row-level security and grants anonymous SELECT and bounded INSERT, **not UPDATE/DELETE**.
@@ -103,13 +105,18 @@ Request bodies are limited to 16 KiB, browser cross-origin writes are rejected, 
 - `view/CategoryFilters.tsx` renders accessible pressed-state filter controls, responsive horizontal scrolling and an All activities recovery action. Decorative symbols are temporary placeholders for curated illustrated category artwork, pending final design selection.
 - Future server-set or organizer-selected categories require a reviewed, backward-compatible Event contract and SQL migration. Do not silently reinterpret these provisional keyword suggestions as verified event metadata.
 
-## S9 — Google Calendar draft export (new final-project draft)
+## S9 — Google Calendar (final project)
+**Current:** `server/googleCalendar.ts` runs Google OAuth as a server web flow with state and PKCE. Google tokens stay on the server, sealed with AES-256-GCM. It is off unless `SIDEQUEST_GOOGLE_CALENDAR_ENABLED=true` and every credential is present. The earlier draft-link export below remains as the fallback.
+
+**Earlier draft export:**
 - `controller/calendarExport.ts` derives a Google Calendar event-draft link from existing verified CampusEvent title, description, location, date and start/end in `America/Los_Angeles`. It does not require OAuth, read a calendar, issue an API request or mutate attendance.
 - California wall clock resolves to UTC only when unique. Spring DST gaps and autumn repeated local times return no link rather than silently creating a draft at the wrong instant.
 - Event details and expanded Schedule event text expose a separate `Open Google Calendar draft` link with safe encoded fields. The student must review and manually save the draft in Google Calendar; opening it does not register them for the campus event.
 - Reference: [Google Calendar event-draft link guidance](https://developers.google.com/workspace/calendar/api/concepts/inviting-attendees-to-events). Real Calendar free/busy, calendar synchronization and secure OAuth remain independent, approval-gated features.
 
-## S10 — SCU campus map and route-foundation (new final-project draft)
+## S10 — SCU campus map and route-foundation
+**Current:** the in-app map shows the student's own plans and posts (`controller/presentMap.ts`). An opened ticket's My day and Walk there rows open SideQuest's own `#day/` and `#walk/` screens. The external links below remain in the opened ticket as a fallback (see Deferred).
+
 - `model/campusRoutes.ts` implements deterministic shortest pedestrian paths on an explicitly supplied graph of campus junctions/buildings and surveyed, evidenced walkways. Only verified edges with positive measured lengths can be routed, and accessible-only planning excludes unapproved paths; unknown sites, missing evidence, disconnected routes and invalid data return unavailable instead of imaginary straight-line distances. **No actual SCU pedestrian graph or real campus distance is loaded yet.** Test graph measurements are synthetic fixtures only.
 - `controller/campusMapLinks.ts` supplies the [official SCU campus map](https://www.scu.edu/map/) and safely encoded, literal venue-search links using [documented Google Maps URLs](https://developers.google.com/maps/documentation/urls/get-started). They never imply a verified pin, path or travel time.
 - Discover event details and Schedule's expanded full text offer those external map entrypoints, with keyboard access on phone and desktop. Nonphysical/unspecified venues do not receive misleading Google Maps searches.
@@ -122,3 +129,10 @@ Request bodies are limited to 16 KiB, browser cross-origin writes are rejected, 
 - `app/src/view/GroupPlanningView.tsx` and `GroupPlanPanel.tsx` contain the corresponding list/create/response/revocation/confirmation interface. The current invitation form uses technical account UUIDs pending a consent-based member discovery or invite-claim system.
 - `supabase/proposals/` contains **review-only** schema/RPC files, verified under simulated PostgreSQL Auth subjects. They are outside real migrations, deny table access by default, and cannot be called operational for students without reviewed Auth, real session tests, account lifecycle and SQL deployment.
 - Since this feature is disabled by default, none of the proposed account/group work changes the established M2 public EventCatalog or device-local Schedule/Someday semantics. No WebSocket collaboration or verified shared-plan deployment is claimed.
+
+## S12 — Deferred items and their guardrails
+- **Showings stay separate records.** `public.events` keeps one row per scheduled showing. No `event_series` table exists. Discover stays grouped by day, and every showing is fit-checked on its own (S3).
+- **"Also showing" (being explored):** an opened ticket may list other showings only when both events carry the same production-specific source page. Shared titles, venues and general calendar or listing URLs never link events.
+- **Cancelled showings:** `server/scuCalendar.ts` skips rows with `is_canceled`. Keeping them with a status needs a reviewed column on `public.events`.
+- **No published end time:** `end` stays required. Unknown-end evaluation in `model/fitAssessment.ts` is groundwork only.
+- The full list, with dates and reasons, is in [REQUIREMENTS.md](REQUIREMENTS.md#deferred-agreed-not-built-yet).

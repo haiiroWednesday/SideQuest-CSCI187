@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 // seeded with a sample week so My Schedule has something to show.
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import type { BusyRange } from './controller/personalClient'
 import App from './App'
 import { LOCAL_CATALOG_KEY, createBrowserEventTable } from './model/browserEventTable'
 import { accessStatement, createEventCatalog } from './model/eventCatalog'
@@ -12,9 +13,27 @@ import { DISCOVER_LAYOUT_KEY } from './controller/viewPreferences'
 import { POSTED_IDS_KEY } from './controller/myPosts'
 import { browserCatalogStorage } from './controller/postEvent'
 import './style.css'
+import { registerEventPhotos } from './controller/eventPhotos'
+import guitarUrl from './demo-photos/guitar.webp'
+import climbUrl from './demo-photos/climb.webp'
+import nightSkyUrl from './demo-photos/nightsky.webp'
+import marketUrl from './demo-photos/market.webp'
+import gardenUrl from './demo-photos/garden.webp'
+import citrusUrl from './demo-photos/citrus.webp'
 import './view/look/fonts'
 import { LookPanel, applyLook } from './view/look/LookPanel'
 import { readLook } from './controller/lookPreferences'
+
+// Six sample events carry a real photo, so the review build shows tickets with photos next to tickets
+// with the drawn "Greetings from" card (Cyn, Nov 26). Sources: demo-photos/README.md.
+registerEventPhotos({
+  'Open Mic Night': { src: guitarUrl, alt: 'The head of a guitar, close up', shape: 'wide' },
+  'Climbing Club Intro': { src: climbUrl, alt: 'A climber on a rock face under a night sky', shape: 'flyer' },
+  'Stargazing at Ricard': { src: nightSkyUrl, alt: 'A crescent moon over a city at dusk', shape: 'wide' },
+  'Night market tasting': { src: marketUrl, alt: 'Cherries and lemons piled together', shape: 'wide' },
+  'Garden shift': { src: gardenUrl, alt: 'Purple lupines in a meadow', shape: 'wide' },
+  'Brunch club': { src: citrusUrl, alt: 'A basket of oranges and limes on a checked cloth', shape: 'square' },
+})
 
 const SEED_KEY = 'sidequest.demo-seed.v7'
 const ORGANIZERS = ['Maya Chen', 'Jun Park', 'Priya Nair', 'Theo Alvarez', 'Elena Rossi', 'Sam Okafor', 'Nora Kim', 'Diego Ramos']
@@ -162,7 +181,20 @@ function LookWhenAsked() {
   }, [])
   return on ? <LookPanel /> : null
 }
+// ?google shows busy time brought in from Google Calendar beside busy time you added, so the
+// review can check both colours. Sample only: it is never saved.
+function sampleBusy(): BusyRange[] {
+  const day = (k: number) => { const d = now(); d.setDate(d.getDate() + k); return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d) }
+  return [
+    { id: 'g1', date: day(0), start: '12:00', end: '13:00', source: 'calendar' },
+    { id: 't1', date: day(0), start: '15:00', end: '16:30', source: 'typed' },
+    { id: 'g2', date: day(1), start: '09:00', end: '10:00', source: 'calendar' },
+    { id: 'g3', date: day(1), start: '11:15', end: '12:00', source: 'calendar' },
+    { id: 't2', date: day(1), start: '14:00', end: '15:00', source: 'typed' },
+  ]
+}
+const seedBusy = new URLSearchParams(location.search).has('google') ? sampleBusy() : undefined
 // Groups, open invites and friends going (sample groups included) load here only, never in main.tsx.
 void import('./view/DesignReview').then(({ kit }) => {
-  createRoot(root).render(<StrictMode><App catalog={catalog} now={now} designReview designKit={kit} initialFoodNotices={initialFoodNotices} /><LookWhenAsked /></StrictMode>)
+  createRoot(root).render(<StrictMode><App catalog={catalog} now={now} designReview designKit={kit} initialFoodNotices={initialFoodNotices} seedBusy={seedBusy} /><LookWhenAsked /></StrictMode>)
 })

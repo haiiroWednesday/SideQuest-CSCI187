@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { open } from './helpers'
+import { open, busyFirstGap } from './helpers'
 
 // Nov 24: "we have to keep it consistent, as well as the names and all the font styles."
 // type-census.js sorts every piece of interface text on a screen into a role. Here each role is held
@@ -28,8 +28,9 @@ export const STATES: Record<string, State> = {
   'Discover': { route: 'discover' },
   // Nov 25: Discover's own map is gone. With free time told, a "See these on the map" link sits above the list.
   // Only the link is censused here: the rest of Discover is the 'Discover' state's job.
-  'Discover, link to the map': { route: 'discover', go: tap(/^Mark busy, Today/), root: '.sq-fit-map-links' },
-  "Who's in sheet": { route: 'discover', go: async page => { await page.locator('.sq-slip-who').first().click(); await page.waitForTimeout(700) }, root: '[role=dialog]' },
+  // Discover is two steps (Nov 27): busy time is marked on When, the list and its map link are on Events.
+  'Discover, link to the map': { route: 'discover/when', go: async page => { await busyFirstGap(page); await page.evaluate(() => { location.hash = '#discover/events' }); await page.waitForTimeout(700) }, root: '.sq-fit-map-links' },
+  "Who's in sheet": { route: 'groups', go: async page => { await page.getByRole('button', { name: "I'm free, who's in?" }).click(); await page.waitForTimeout(700) }, root: '[role=dialog]' },
   'opened event': { route: 'discover', go: async page => { await page.locator('.sq-stub').first().click(); await page.waitForTimeout(800) }, root: '.sq-sticker-card' },
   'My Schedule, Trail': { route: 'schedule', go: tap(/^Trail$/) },
   'My Schedule, Tickets': { route: 'schedule', go: tap(/^Tickets$/) },

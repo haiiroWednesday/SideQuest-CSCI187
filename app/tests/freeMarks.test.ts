@@ -149,3 +149,54 @@ describe('busy blocks you can pick up on the bar', () => {
     expect(marks['2026-11-24']).toEqual(steps('18:00', '19:30'))
   })
 })
+
+// Nov 27, Cyn (P2): busy time that came from Google Calendar is drawn in Google's blue.
+describe('Google busy time on the bar', () => {
+  const tomorrow = '2026-11-25'
+  const at = (from: string, to: string) => ({ [tomorrow]: steps(from, to) })
+
+  it('marks the Google part of busy time, and only inside busy time', () => {
+    const m = presentMarks({ ...base, date: tomorrow, marks: { [tomorrow]: [...steps('09:00', '10:00'), ...steps('14:00', '15:00')] }, calendar: at('09:00', '10:00') })
+    expect(m.google.map(r => `${r.start}-${r.end}`)).toEqual(['09:00-10:00'])
+    expect(m.mine.map(r => `${r.start}-${r.end}`)).toEqual(['09:00-10:00', '14:00-15:00'])
+  })
+
+  it('keeps exact Google minutes that fall on the steps', () => {
+    const m = presentMarks({ ...base, date: tomorrow, marks: at('11:15', '12:00'), calendar: at('11:15', '12:00') })
+    expect(m.google.map(r => r.label)).toEqual(m.mine.map(r => r.label))
+  })
+
+  it('draws no Google time where busy time was taken away, in the past, or in Free mode', () => {
+    expect(presentMarks({ ...base, date: tomorrow, marks: {}, calendar: at('09:00', '10:00') }).google).toEqual([])
+    expect(presentMarks({ ...base, marks: { '2026-11-24': steps('09:00', '10:00') }, calendar: { '2026-11-24': steps('09:00', '10:00') } }).google).toEqual([])
+    expect(presentMarks({ ...base, date: tomorrow, mode: 'free', marks: at('09:00', '10:00'), calendar: at('09:00', '10:00') }).google).toEqual([])
+  })
+
+  it('without calendar steps there is no Google time', () => {
+    expect(presentMarks({ ...base, date: tomorrow, marks: at('09:00', '10:00') }).google).toEqual([])
+  })
+})
+
+// Nov 27 (D7): the week view reads every day of the week from one model.
+describe('the week', () => {
+  const tomorrow = '2026-11-25'
+  it('has seven days, today first and the open day marked', () => {
+    const m = presentMarks({ ...base, date: tomorrow, marks: {} })
+    expect(m.week).toHaveLength(7)
+    expect(m.week[0]).toMatchObject({ date: '2026-11-24', today: true, selected: false })
+    expect(m.week[1]).toMatchObject({ date: tomorrow, selected: true })
+  })
+  it('gives each day its own busy time, Google time and free stretches, not only the open day', () => {
+    const m = presentMarks({ ...base, marks: { [tomorrow]: [...steps('09:00', '10:00'), ...steps('14:00', '15:00')] }, calendar: { [tomorrow]: steps('09:00', '10:00') } })
+    const day = m.week[1]
+    expect(day.mine.map(r => `${r.start}-${r.end}`)).toEqual(['09:00-10:00', '14:00-15:00'])
+    expect(day.google.map(r => `${r.start}-${r.end}`)).toEqual(['09:00-10:00'])
+    expect(day.free.length).toBeGreaterThan(0)
+    expect(day.free.every(f => !day.mine.some(b => f.first <= b.last && b.first <= f.last))).toBe(true)
+  })
+  it('greys out the past only on today', () => {
+    const m = presentMarks({ ...base, marks: {} })
+    expect(m.week[0].past).toBeGreaterThan(0)
+    expect(m.week.slice(1).every(d => d.past === 0)).toBe(true)
+  })
+})

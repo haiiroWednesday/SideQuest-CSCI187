@@ -1,11 +1,10 @@
 // @vitest-environment jsdom
 // The fit mark as drawn: one image with one name, parts placed by the Controller's numbers,
 // on the Discover ticket in place of the old "Fits your free time" line, and on "Our pick".
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen, within } from '@testing-library/react'
 import { FitMark } from '../src/view/FitMark'
 import { DiscoverView, type DiscoverEvent, type MarkerProps } from '../src/view/DiscoverView'
-import { StretchAdviceList } from '../src/view/TimeAdvice'
 import { presentDiscover } from '../src/controller/presentScreens'
 import { presentFitMark } from '../src/controller/presentFitMark'
 import { addBusy, freeWindows, presentMarks, type MarkInput } from '../src/controller/freeMarks'
@@ -64,10 +63,13 @@ describe('the mark on Discover', () => {
   const blank: MarkInput = { events, plannedIds: [], now: NOW, marks: {}, open: {}, mode: 'free' }
   const input: MarkInput = { ...blank, open: addBusy({ ...blank, marks: {}, date: DAY }, '13:10', '13:55')! }
   const marker = (clear: boolean): MarkerProps => ({
-    model: presentMarks(input), onDate: () => {}, onWhen: () => {}, onAddBusy: () => true, onFillGap: () => {},
+    model: presentMarks(input), onDate: () => {}, onWhen: () => {}, onAddBusy: () => true,
     onUnbusy: () => {}, onReshape: () => {}, onClear: clear ? () => {} : null,
   })
   const ticket = (title: string) => screen.getByRole('button', { name: `View details for ${title}` })
+  // The list is on the Events step (Nov 27).
+  beforeEach(() => { location.hash = '#discover/events' })
+  afterEach(() => { location.hash = '' })
 
   it('shows every event with its own mark, and none on a day with nothing marked', () => {
     render(<DiscoverView screen={presentDiscover({ events, now: NOW })} marker={marker(false)} />)
@@ -87,14 +89,5 @@ describe('the mark on Discover', () => {
     expect(quick.getAttribute('aria-describedby')).toBe(mark.id)
     expect(document.querySelectorAll(`[id="${mark.id}"]`)).toHaveLength(1)
   })
-  it('puts the same mark on "Our pick"', () => {
-    const fitMark = presentFitMark(talk, [free('13:10', '13:55')])!
-    const pick = { id: 'talk', title: 'Quick talk', time: '1:15pm to 1:45pm', location: 'Benson', reason: 'The one event that fits this free time' }
-    const items = [{ id: `${DAY}-13:10`, label: '1:10–1:55pm', count: 1, pick, plan: null }]
-    const { rerender } = render(<StretchAdviceList items={items} onOpen={() => {}} onPlanAll={() => {}} fitMarks={new Map([['talk', fitMark]])} />)
-    const card = screen.getByRole('article', { name: 'Free 1:10–1:55pm' })
-    expect(within(card).getByRole('img', { name: fitMark.say }).textContent).toBe('15 min spare')
-    rerender(<StretchAdviceList items={items} onOpen={() => {}} onPlanAll={() => {}} />)
-    expect(card.querySelector('.sq-fitmark')).toBeNull()
-  })
+  // The "Our pick" card was removed Nov 27 (docs/removed/stretch-advice). Its fit-mark test is kept there.
 })

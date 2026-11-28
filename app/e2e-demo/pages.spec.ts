@@ -77,7 +77,7 @@ test('Post: the Art Club posts "Moonlight Sketch Walk" for tomorrow 7–8:30pm a
   await expect(main.getByRole('button', { name: 'End, 8:30pm' })).toBeVisible()
   await shot('filled', true)
   await page.getByRole('button', { name: /Post event/ }).click()
-  await page.goto('/demo.html#discover')
+  await page.goto('/demo.html#discover/events')
   const card = page.getByRole('button', { name: 'View details for Moonlight Sketch Walk' })
   await card.scrollIntoViewIfNeeded()
   await expect(card).toContainText('7:00')

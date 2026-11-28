@@ -7,6 +7,10 @@ import { aiSearchAvailable } from '../controller/aiDiscovery'
 import './bring-in.css'
 
 
+/** Nov 27, Cyn: downloading a calendar file and uploading it is too much trouble, so the option is off the
+ *  screen. The reader (model/icsBusy.ts) and its tests stay, behind the same port Google Calendar uses. */
+export const CALENDAR_FILE_ON = false
+
 export function BringInBusy({ today, onAdd }: {
   /** The first of the 7 days, YYYY-MM-DD. */
   today: string
@@ -77,12 +81,14 @@ export function BringInBusy({ today, onAdd }: {
         {micNote && <p className="sq-bringin-note" role="alert">{micNote}</p>}
         <div className="sq-bringin-row">
           <button type="button" className="sq-plan-button sq-bringin-go" disabled={!words.trim() || working} onClick={() => void read()}>{working ? 'Reading…' : 'Read it'}</button>
-          <span className="sq-bringin-or" aria-hidden="true">or</span>
-          <button type="button" className="sq-bringin-file" onClick={() => file.current?.click()}>Open a calendar file (.ics)</button>
-          <input ref={file} type="file" accept=".ics,text/calendar" hidden aria-hidden="true" tabIndex={-1}
-            onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) { setWorking(true); try { show(await busyFromFile(f, today)) } finally { setWorking(false) } } }} />
+          {CALENDAR_FILE_ON && <>
+            <span className="sq-bringin-or" aria-hidden="true">or</span>
+            <button type="button" className="sq-bringin-file" onClick={() => file.current?.click()}>Open a calendar file (.ics)</button>
+            <input ref={file} type="file" accept=".ics,text/calendar" hidden aria-hidden="true" tabIndex={-1}
+              onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) { setWorking(true); try { show(await busyFromFile(f, today)) } finally { setWorking(false) } } }} />
+          </>}
         </div>
-        <p className="sq-bringin-fine">{ai ? 'Typed or spoken words go to our server and an AI reads them. ' : ''}Calendar files are read on this device and never uploaded.{mic ? ' Your browser may turn speech into words on its own servers.' : ''}</p>
+        {(ai || mic || CALENDAR_FILE_ON) && <p className="sq-bringin-fine">{ai ? 'Processed by AI. ' : ''}{CALENDAR_FILE_ON ? 'Calendar files are read on this device and never uploaded. ' : ''}{mic ? 'Your browser may turn speech into words on its own servers.' : ''}</p>}
       </>}
 
       {help && <>
