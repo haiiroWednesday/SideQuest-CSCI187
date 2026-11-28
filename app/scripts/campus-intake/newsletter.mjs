@@ -25,9 +25,9 @@ function links(html) {
 export function parseTimeRange(text) {
   // Match complete clock tokens, not substrings of malformed clocks. "Noon"
   // is explicit; midnight without a date boundary is held by the interval rules.
-  const token = '(?<![\\d:])(?:noon|midnight|\\d{1,2}(?::\\d{2})?\\s*(?:a\\.?m\\.?|p\\.?m\\.?)?)(?![\\d:])'
+  const token = '(?<![\\d:])(?:\\bnoon\\b|\\bmidnight\\b|\\d{1,2}(?::\\d{2})?\\s*(?:a\\.?m\\.?|p\\.?m\\.?)?)(?![\\d:])'
   const range = new RegExp('(' + token + ')\\s*(?:-|–|—|\\bto\\b)\\s*(' + token + ')', 'gi')
-  const single = new RegExp('(?<![\\d:])(?:noon|midnight|\\d{1,2}(?::\\d{2})?\\s*(?:a\\.?m\\.?|p\\.?m\\.?))(?![\\d:])', 'i')
+  const single = new RegExp('(?<![\\d:])(?:\\bnoon\\b|\\bmidnight\\b|\\d{1,2}(?::\\d{2})?\\s*(?:a\\.?m\\.?|p\\.?m\\.?))(?![\\d:])', 'i')
   function clock(raw) {
     const t = raw.trim().toLowerCase()
     if (t === 'noon') return { hour: 12, minute: 0, mer: 'p' }
