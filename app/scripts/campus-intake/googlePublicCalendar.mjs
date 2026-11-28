@@ -91,6 +91,6 @@ export async function collectPublicGoogleCalendar(source, {
   // The calendar owner must still confirm actual attendance eligibility and host identity.
   return {...snapshot,complete:true,pages,received,excludedMissingStart,excludedOther,
     cancellations:[...cancellations],records:snapshot.records.filter(row=>row.start !== null).map(row=>({
-      ...row,reviewState:'held',reasons:[...row.reasons,'attendance-and-host-review'],
+      ...row,sourceUrl,reviewState:'held',reasons:[...row.reasons,'attendance-and-host-review'],
     }))}
 }
