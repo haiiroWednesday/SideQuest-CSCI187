@@ -1,13 +1,13 @@
 // VIEW: participant and organizer controls for an authorized plan projection.
 // Caller identity is supplied by a verified session layer, never entered here.
 import { useEffect, useState, type FormEvent } from 'react'
-import { MAX_GROUP_INVITEES, MAX_IF_CONDITION, type GroupAction, type GroupDetail, type GroupResponse } from '../controller/groupClient'
+import { MAX_GROUP_INVITEES, MAX_IF_CONDITION, ifConditionLength, type GroupAction, type GroupDetail, type GroupResponse } from '../controller/groupClient'
 import './group-planning.css'
 
 const responseText: Record<GroupResponse, string> = {
-  works: 'Works',
+  works: 'Works for me',
   if: 'If…',
-  cant: "Can't",
+  cant: "Can't make it",
 }
 const responseDescription: Record<GroupResponse, string> = {
   works: 'Available',
@@ -38,29 +38,32 @@ export function GroupPlanPanel({
   const organizer = plan.organizerId === actorId
   const self = plan.participants.find(participant => participant.userId === actorId)
   // No response must remain unselected until the participant explicitly chooses.
-  const [choice, setChoice] = useState<GroupResponse | null>(self?.response ?? null)
+  const choice = self?.response ?? null
   const [condition, setCondition] = useState(self?.response === 'if' ? self.ifCondition ?? '' : '')
   const [invitee, setInvitee] = useState('')
   // When a refresh or another browser changes our saved answer, show the server's
   // current value. Unrelated participants' changes do not reset an unsaved draft.
   useEffect(() => {
-    setChoice(self?.response ?? null)
     setCondition(self?.response === 'if' ? self.ifCondition ?? '' : '')
   }, [actorId, plan.id, self?.response, self?.ifCondition])
-  const conditionLength = condition.trim().length
-  const conditionInvalid = choice === 'if' && (conditionLength === 0 || conditionLength > MAX_IF_CONDITION)
+  const conditionLength = ifConditionLength(condition)
+  const conditionInvalid = conditionLength > MAX_IF_CONDITION
+  const conditionChanged = condition.trim() !== (self?.ifCondition ?? '')
   const member = organizer || Boolean(self)
+  const invited = !member && plan.invitations.includes(actorId)
   const actionable = plan.status === 'proposed' && !busy
-  const allWork = plan.participants.length > 0 &&
+  const allWork = plan.invitations.length === 0 && plan.participants.length > 0 &&
     plan.participants.every(participant => participant.response === 'works')
-  const onRespond = (event: FormEvent) => {
+  const onRespond = (response: GroupResponse) => {
+    if (!actionable || !self || response === choice) return
+    onAction({ action: 'respond', expectedRevision: plan.revision, response })
+  }
+  const onSaveCondition = (event: FormEvent) => {
     event.preventDefault()
-    if (!actionable || !self || !choice || conditionInvalid) return
+    if (!actionable || !self || choice !== 'if' || conditionInvalid || !conditionChanged) return
     onAction({
-      action: 'respond',
-      expectedRevision: plan.revision,
-      response: choice,
-      ...(choice === 'if' ? { condition: condition.trim() } : {}),
+      action: 'respond', expectedRevision: plan.revision, response: 'if',
+      condition: condition.trim(),
     })
   }
   const onInvite = (event: FormEvent) => {
@@ -69,6 +72,17 @@ export function GroupPlanPanel({
     onAction({ action: 'invite', expectedRevision: plan.revision, inviteeId: invitee })
   }
 
+  if (invited && plan.status === 'proposed') return (
+    <section className="sq-group-plan" aria-labelledby={'sq-group-invitation-' + plan.id}>
+      <h2 id={'sq-group-invitation-' + plan.id}>Invitation: {eventTitle}</h2>
+      <p>Accept to join this group. Your attendance response will remain unanswered until you choose it. Declining does not join the group.</p>
+      {error && <p role="alert" className="sq-group-error">{error}</p>}
+      <div className="sq-group-actions">
+        <button type="button" disabled={busy} onClick={() => onAction({ action: 'accept', expectedRevision: plan.revision })}>Accept invitation</button>
+        <button type="button" disabled={busy} onClick={() => onAction({ action: 'decline', expectedRevision: plan.revision })}>Decline invitation</button>
+      </div>
+    </section>
+  )
   if (!member) return <p role="alert">You do not have access to this plan.</p>
 
   return (
@@ -80,8 +94,8 @@ export function GroupPlanPanel({
         </div>
         <span className={'sq-group-state sq-group-state-' + plan.status}>{statusText[plan.status]}</span>
       </header>
-      <p>Everyone can respond independently. No response means the invitation is still pending.</p>
-      <p className="sq-group-privacy">Everyone in the plan sees your answer and your If note.</p>
+      <p>Accepted participants can respond independently. No response means attendance is undecided.</p>
+      <p className="sq-group-privacy">The organizer and other participants see your response, and your If note goes to the group too.</p>
       {error && <div role="alert" className="sq-group-error">{error}</div>}
 
       <section aria-label="Participant responses" className="sq-group-members">
@@ -97,12 +111,12 @@ export function GroupPlanPanel({
                   {participant.response === null ? 'Awaiting response' : responseDescription[participant.response]}
                 </span>
                 {participant.response === 'if' && participant.ifCondition && (
-                    <p className="sq-group-condition">If: {participant.ifCondition}</p>
+                    <p className="sq-group-condition">{participant.userId === actorId ? 'Your note' : 'Note'}: {participant.ifCondition}</p>
                   )}
                 {organizer && participant.userId !== actorId && actionable && (
                   <button type="button" className="sq-group-link"
                     onClick={() => onAction({ action: 'remove', expectedRevision: plan.revision, inviteeId: participant.userId })}>
-                    Revoke invitation for {participantName(participant.userId)}
+                    Remove participant {participantName(participant.userId)}
                   </button>
                 )}
               </li>
@@ -111,27 +125,41 @@ export function GroupPlanPanel({
         )}
       </section>
 
+      {organizer && plan.status === 'proposed' && plan.invitations.length > 0 && (
+        <section className="sq-group-members" aria-label="Pending invitations">
+          <h3>Pending invitations</h3>
+          <p>An invitation does not establish whether an account exists. Only acceptance creates membership.</p>
+          <ul>{plan.invitations.map(id => (
+            <li key={id}>
+              <span>{participantName(id)}: Awaiting acceptance</span>
+              <button type="button" disabled={!actionable}
+                onClick={() => onAction({ action: 'remove', expectedRevision: plan.revision, inviteeId: id })}>
+                Revoke invitation for {participantName(id)}
+              </button>
+            </li>
+          ))}</ul>
+        </section>
+      )}
+
       {self && plan.status === 'proposed' && (
-        <form className="sq-group-form" onSubmit={onRespond}>
+        <form className="sq-group-form" onSubmit={onSaveCondition}>
           <h3>Your response</h3>
           <fieldset disabled={!actionable}>
             <legend>Can you attend?</legend>
             <div className="sq-group-choices">
               {(['works', 'if', 'cant'] as const).map(value => (
-                <label key={value}>
-                  <input type="radio" name={'group-response-' + plan.id}
-                    value={value} checked={choice === value}
-                    onChange={() => setChoice(value)} />
-                  <span>{responseText[value]}</span>
-                </label>
+                <button key={value} type="button" aria-pressed={choice === value}
+                  onClick={() => onRespond(value)}>
+                  {responseText[value]}
+                </button>
               ))}
             </div>
             {choice === 'if' && <>
-              <label htmlFor={'group-condition-' + plan.id}>Your If note</label>
+              <label htmlFor={'group-condition-' + plan.id}>Your note for the group (optional)</label>
               <p id={'group-condition-hint-' + plan.id} className="sq-group-privacy">
-                Up to {MAX_IF_CONDITION} characters. Overlong text stays editable but cannot be submitted.
+                Your group sees this note. Leave it blank or save up to {MAX_IF_CONDITION} characters.
               </p>
-              <textarea id={'group-condition-' + plan.id} required
+              <textarea id={'group-condition-' + plan.id}
                 aria-describedby={'group-condition-hint-' + plan.id}
                 aria-invalid={conditionLength > MAX_IF_CONDITION}
                 value={condition} onChange={e => setCondition(e.target.value)}
@@ -140,10 +168,11 @@ export function GroupPlanPanel({
               {conditionLength > MAX_IF_CONDITION && <p role="alert" className="sq-group-error">
                 Shorten your condition to {MAX_IF_CONDITION} characters before saving.
               </p>}
+              <button type="submit" disabled={conditionInvalid || !conditionChanged}>
+                {busy ? 'Saving note…' : 'Save note'}
+              </button>
             </>}
-            <button type="submit" disabled={!choice || conditionInvalid}>
-              {busy ? 'Saving response…' : 'Save response'}
-            </button>
+            <p role="status">{busy ? 'Saving response…' : choice ? 'Current response: ' + responseText[choice] : 'Choose one response.'}</p>
           </fieldset>
         </form>
       )}
@@ -152,9 +181,9 @@ export function GroupPlanPanel({
         <div className="sq-group-organizer">
           <form className="sq-group-form" onSubmit={onInvite}>
             <h3>Invite a participant</h3>
-            <p>Invitations must refer to a verified member account. A shareable link cannot impersonate someone.</p>
-            <fieldset disabled={!actionable || plan.participants.length >= MAX_GROUP_INVITEES}>
-              <label htmlFor={'group-invite-' + plan.id}>Verified participant account ID</label>
+            <p>Use an account ID shared with you by its owner. Invitations expire after seven days; acceptance is required to join.</p>
+            <fieldset disabled={!actionable || plan.participants.length + plan.invitations.length >= MAX_GROUP_INVITEES}>
+              <label htmlFor={'group-invite-' + plan.id}>Participant account ID</label>
               <input id={'group-invite-' + plan.id} value={invitee}
                 onChange={e => setInvitee(e.target.value)} required
                 pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
@@ -167,13 +196,19 @@ export function GroupPlanPanel({
               onClick={() => onAction({ action: 'confirm', expectedRevision: plan.revision })}>
               Confirm group outing
             </button>
-            {!allWork && <p>Confirmation is available when every invited participant explicitly answers “Works.”</p>}
+            {!allWork && <p>Confirmation is available when every invited participant accepts and explicitly responds “Works for me.”</p>}
             <button type="button" className="sq-group-secondary" disabled={!actionable}
               onClick={() => onAction({ action: 'cancel', expectedRevision: plan.revision })}>
               Cancel proposal
             </button>
           </div>
         </div>
+      )}
+      {self && !organizer && (
+        <button type="button" className="sq-group-secondary" disabled={busy}
+          onClick={() => onAction({ action: 'leave', expectedRevision: plan.revision })}>
+          Leave group{plan.status === 'confirmed' ? ' (cancels confirmation)' : ''}
+        </button>
       )}
       <button type="button" className="sq-group-link" onClick={onRefresh} disabled={busy}>
         Refresh responses

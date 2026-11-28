@@ -20,6 +20,7 @@ export interface EmailOtpGateway {
   verifyCode(email: string, code: string): Promise<VerifiedEmailSession | null>
   /** Checks an access token that came back in a sign-in link with Supabase Auth. */
   sessionFromLink?(accessToken: string): Promise<VerifiedEmailSession | null>
+  signOut?(token: string): Promise<void>
 }
 
 /** The email provider refused to send for a reason that says nothing about the account. */
@@ -122,7 +123,7 @@ export function createEmailAuthApi(
     let path: string
     try { path = new URL(req.url ?? '/', 'http://sidequest.local').pathname }
     catch { return false }
-    if (!['/api/auth/status', '/api/auth/request-code', '/api/auth/verify-code', '/api/auth/link-session'].includes(path)) {
+    if (!['/api/auth/status', '/api/auth/request-code', '/api/auth/verify-code', '/api/auth/link-session', '/api/auth/sign-out'].includes(path)) {
       return false
     }
     if (path === '/api/auth/status') {
@@ -150,11 +151,23 @@ export function createEmailAuthApi(
       const allowed = options.publicOrigin
         ? originUrl?.origin === options.publicOrigin
         : originUrl?.host === req.headers.host
-      if (!allowed) {
+      if (!allowed || !originUrl || !['http:', 'https:'].includes(originUrl.protocol) || originUrl.origin !== origin) {
         throw new AuthHttpError(403, 'Use the SideQuest site to sign in.')
       }
       const request = await body(req)
       const ip = clientIp(req)
+      if (path === '/api/auth/sign-out') {
+        const auth = req.headers.authorization
+        const token = typeof auth === 'string' && auth.length <= 8200
+          ? /^Bearer ([A-Za-z0-9._~-]{20,8192})$/.exec(auth)?.[1] : undefined
+        if (!token) throw new AuthHttpError(401, 'Sign in before ending a session.')
+        if (Object.keys(request).length !== 0) throw new AuthHttpError(400, 'Unexpected sign-out fields.')
+        if (!gateway.signOut) throw new AuthHttpError(503, 'Session revocation is unavailable.')
+        count('sign-out:' + hashed(ip), 40, 60_000)
+        await gateway.signOut(token)
+        json(res, 200, { revoked: true })
+        return true
+      }
       if (path === '/api/auth/link-session') {
         // A sign-in link put a token in the app's address. The app sends it here once and the
         // server asks Supabase Auth who it belongs to before the app may use it.

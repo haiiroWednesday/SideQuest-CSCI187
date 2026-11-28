@@ -350,7 +350,7 @@ export default function App({ catalog, now, groupSession, emailAuth, realtimeEna
       ) : page === 'groups' && designReview && !groupSession ? (
         designKit ? <designKit.GroupsPage events={events.events} routes={routes} plannedCount={plans.schedule.ids.length} plannedIds={plans.schedule.ids} /> : null
       ) : page === 'groups' && groupSession && groupClient ? (
-        <GroupPlanningView actorId={groupSession.actorId} client={groupClient}
+        <GroupPlanningView key={groupSession.actorId} actorId={groupSession.actorId} client={groupClient}
           events={events.events} routes={routes} />
       ) : page === 'post' ? (
         <div className="sq-discover-page sq-post-page">

@@ -10,7 +10,7 @@ const planId = '44444444-4444-4444-8444-444444444444'
 const eventId = '55555555-5555-4555-8555-555555555555'
 const basePlan: GroupDetail = {
   id: planId, eventId, organizerId: orgId, status: 'proposed', revision: 0,
-  participants: [],
+  participants: [], invitations: [],
 }
 const events = [{
   id: eventId, title: 'Music workshop', hostName: 'SCU Music',
@@ -29,6 +29,9 @@ describe('authenticated group page: proposal, participant and recoverable errors
       act: vi.fn(async () => basePlan),
     }
     render(<GroupPlanningView actorId={orgId} client={client} events={events} routes={routes} />)
+    const ownId = screen.getByRole<HTMLInputElement>('textbox', { name: 'Your account ID' })
+    expect(ownId.value).toBe(orgId)
+    expect(ownId.readOnly).toBe(true)
     await waitFor(() => expect(client.list).toHaveBeenCalledOnce())
     fireEvent.change(screen.getByLabelText('Choose a real campus event'), {
       target: { value: eventId },
@@ -80,6 +83,26 @@ describe('authenticated group page: proposal, participant and recoverable errors
     expect(screen.getAllByRole('alert')).toHaveLength(1)
   })
 
+
+  it('keeps an unsaved group note when refreshing the same authorized plan', async () => {
+    const plan: GroupDetail = {
+      ...basePlan, participants: [{ userId: amy, response: 'if', ifCondition: 'Original' }],
+    }
+    const client: GroupClientPort = {
+      list: vi.fn(async () => [plan]),
+      create: vi.fn(async () => plan),
+      get: vi.fn().mockResolvedValueOnce(plan).mockResolvedValueOnce({ ...plan, revision: 1 }),
+      act: vi.fn(async () => plan),
+    }
+    render(<GroupPlanningView actorId={amy} client={client} events={events} routes={routes} />)
+    fireEvent.click(await screen.findByRole('button', { name: /Music workshop/ }))
+    const note = await screen.findByRole<HTMLTextAreaElement>('textbox', { name: /Your note for the group/ })
+    fireEvent.change(note, { target: { value: 'Draft before refresh' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh responses' }))
+    await waitFor(() => expect(client.get).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save note' }).hasAttribute('disabled')).toBe(false))
+    expect(note.value).toBe('Draft before refresh')
+  })
 
   it('distinguishes a failed group-list request from a genuinely empty list and recovers on retry', async () => {
     const client: GroupClientPort = {

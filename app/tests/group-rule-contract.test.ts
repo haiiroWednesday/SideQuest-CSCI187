@@ -14,10 +14,10 @@ const rpc = readFileSync(
 )
 
 describe('group domain / SQL proposal parity', () => {
-  it('has one group size: 12 people, the organizer included', () => {
+  it('counts the organizer in the twelve-person limit', () => {
+    expect(GROUP_SIZE_LIMIT).toBe(12)
     expect(MAX_GROUP_INVITEES + 1).toBe(GROUP_SIZE_LIMIT)
   })
-
   it('uses the same participant capacity in the domain and SQL authorization function', () => {
     expect(rpc).toContain(`>= ${MAX_GROUP_INVITEES}`)
   })

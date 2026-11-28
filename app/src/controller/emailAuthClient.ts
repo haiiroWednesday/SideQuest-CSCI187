@@ -4,12 +4,13 @@
 
 export type AuthStatus = { enabled?: boolean; groups?: boolean; accounts?: boolean }
 
-export async function authRequest(path: string, payload: unknown): Promise<Record<string, unknown>> {
+export async function authRequest(path: string, payload: unknown, token?: string): Promise<Record<string, unknown>> {
   let response: Response
   try {
     response = await fetch(path, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+      redirect: 'error', signal: AbortSignal.timeout(15000),
       body: JSON.stringify(payload),
       cache: 'no-store',
       credentials: 'omit',
