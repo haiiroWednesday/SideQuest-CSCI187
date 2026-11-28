@@ -150,6 +150,19 @@ try {
   const catalog = await json(await app('/api/events'), 200, 'Public catalog read')
   check(catalog.some(e => e.id === event.id), 'Real catalog did not persist the event.')
   pass('Public anonymous catalog still works against real Supabase')
+  // All account creation and password sign-in use only the disposable loopback stack.
+  const outsideEmail = 'sq-outside-' + runId + '@example.test'
+  const outsidePassword = randomUUID() + 'aA1!'
+  const outside = await admin.auth.admin.createUser({ email: outsideEmail, password: outsidePassword, email_confirm: true })
+  check(!outside.error && outside.data.user?.id, 'Could not provision outside-domain fixture.')
+  const outsideClient = createClient(supabase, anon, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } })
+  const outsideLogin = await outsideClient.auth.signInWithPassword({ email: outsideEmail, password: outsidePassword })
+  check(!outsideLogin.error && outsideLogin.data.session?.access_token, 'Outside-domain fixture did not get a real JWT.')
+  const outsideToken = outsideLogin.data.session.access_token
+  await denied(await rpc('sidequest_group_create', outsideToken, { p_event_id: event.id }), 'Outside-domain direct RPC create')
+  await denied(await rpc('sidequest_group_list', outsideToken, {}), 'Outside-domain direct RPC list')
+  await denied(await app('/api/groups', outsideToken), 'Outside-domain Node gateway')
+  pass('Real verified outside-domain JWT cannot bypass the group allowlist')
   const plan = await json(await app('/api/groups', a.token, { eventId: event.id }), 201, 'Create group')
   const path = '/api/groups/' + plan.id
   const act = (user, revision, action, extra = {}) => app(path + '/actions', user.token, {
