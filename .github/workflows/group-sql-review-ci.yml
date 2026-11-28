@@ -52,7 +52,7 @@ jobs:
           create role anon nologin;
           create role authenticated nologin;
           create schema auth;
-          create table auth.users(id uuid primary key);
+          create table auth.users(id uuid primary key, email text, email_confirmed_at timestamptz);
           create table auth.sessions(id uuid primary key, user_id uuid references auth.users(id) on delete cascade, not_after timestamptz);
           -- Stub only: assign one fixture session per user. The real Supabase CI
           -- independently tests actual issued JWTs and real session deletion.
