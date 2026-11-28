@@ -17,10 +17,9 @@ begin;
 
 \ir ../../tests/fixture/sqtest.sql
 
-insert into auth.users values
-  ('00000000-0000-0000-0000-00000000000a'), ('00000000-0000-0000-0000-00000000000b'),
-  ('00000000-0000-0000-0000-00000000000c'), ('00000000-0000-0000-0000-00000000000d'),
-  ('00000000-0000-0000-0000-00000000000e'), ('00000000-0000-0000-0000-00000000000f');
+insert into auth.users(id,email,email_confirmed_at)
+select ('00000000-0000-0000-0000-00000000000' || suffix)::uuid, suffix || '@scu.edu', now()
+from unnest(array['a','b','c','d','e','f']) as t(suffix);
 insert into public.circles (id, name, created_by)
   values ('11111111-1111-1111-1111-111111111111', 'Swig', '00000000-0000-0000-0000-00000000000a'),
          ('22222222-2222-2222-2222-222222222222', 'Benson', '00000000-0000-0000-0000-00000000000f');
@@ -166,8 +165,23 @@ begin
 end $$;
 reset role;
 
+-- A revoked member still has a signed subject but no active session.
+delete from auth.sessions where user_id='00000000-0000-0000-0000-00000000000b';
+set local role authenticated;
+select sqtest.as_user('00000000-0000-0000-0000-00000000000b');
+do $$
+begin
+  perform sqtest.eq('Revoked member sees no circles', (select count(*) from public.circles), 0);
+  perform sqtest.eq('Revoked member sees no activities', (select count(*) from public.activities), 0);
+  perform sqtest.eq('Revoked member sees no windows', (select count(*) from public.free_windows), 0);
+  perform sqtest.eq('Revoked member sees no common time', (select count(*) from public.sidequest_common_free('11111111-1111-1111-1111-111111111111')), 0);
+  perform sqtest.refused('Revoked member cannot join',
+    format('select public.sidequest_join_invite(%L)', current_setting('sqtest.activity')), '42501');
+end $$;
+reset role;
+
 -- ---------- The cap: 12 per circle, invites included
-insert into auth.users select ('00000000-0000-0000-0000-0000000001' || lpad(g::text, 2, '0'))::uuid from generate_series(1, 9) g;
+insert into auth.users(id) select ('00000000-0000-0000-0000-0000000001' || lpad(g::text, 2, '0'))::uuid from generate_series(1, 9) g;
 insert into public.circle_members
   select '11111111-1111-1111-1111-111111111111', ('00000000-0000-0000-0000-0000000001' || lpad(g::text, 2, '0'))::uuid, 'invited', null, null
   from generate_series(1, 8) g;
