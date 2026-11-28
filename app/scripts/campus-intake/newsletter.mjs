@@ -2,10 +2,7 @@
 // Every value keeps the passage it came from, so a reviewer can check it against the email.
 // Rows become review candidates. They never become public events by themselves.
 //
-// Shape (checked Nov 24, 2026 on f26w7 and f26w9): an "Upcoming Student Events" h3, then per event a
-// small table with the month and day, followed by plain paragraphs: title, "time | location" line,
-// description, and a last "Register" / "More info" link. Earlier "Extra Bytes" announcements are
-// two-column tables: an image cell and a cell with a bold title, a <br> and a paragraph.
+// Current issues use nested event cards. Older samples use date tables and paragraphs.
 
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 const MAX_BYTES = 1_000_000
@@ -23,21 +20,41 @@ function links(html) {
 
 /** "4:00-5:30 p.m.", "1-3 p.m.", "10:00 a.m. to 3:00 p.m.", "10:45 a.m.-12:15 p.m.", "8:00 p.m." (no end). */
 export function parseTimeRange(text) {
-  const m = /(\d{1,2})(?::(\d\d))?\s*(a\.?m\.?|p\.?m\.?)?\s*(?:-|–|—|to)\s*(\d{1,2})(?::(\d\d))?\s*(a\.?m\.?|p\.?m\.?)/i.exec(text)
-  const hm = (h, min, mer) => {
-    let hour = Number(h) % 12
-    if (/p/i.test(mer)) hour += 12
-    return String(hour).padStart(2, '0') + ':' + (min ?? '00')
+  // Match complete clock tokens, not substrings of malformed clocks. "Noon"
+  // is explicit; midnight without a date boundary is held by the interval rules.
+  const token = '(?<![\\d:])(?:\\bnoon\\b|\\bmidnight\\b|\\d{1,2}(?::\\d{2})?\\s*(?:a\\.?m\\.?|p\\.?m\\.?)?)(?![\\d:])'
+  const range = new RegExp('(' + token + ')\\s*(?:-|–|—|\\bto\\b)\\s*(' + token + ')', 'gi')
+  const single = new RegExp('(?<![\\d:])(?:\\bnoon\\b|\\bmidnight\\b|\\d{1,2}(?::\\d{2})?\\s*(?:a\\.?m\\.?|p\\.?m\\.?))(?![\\d:])', 'i')
+  function clock(raw) {
+    const t = raw.trim().toLowerCase()
+    if (t === 'noon') return { hour: 12, minute: 0, mer: 'p' }
+    if (t === 'midnight') return { hour: 12, minute: 0, mer: 'a' }
+    const m = /^(\d{1,2})(?::(\d{2}))?\s*(?:([ap])\.?m\.?)?$/.exec(t)
+    if (!m || +m[1] < 1 || +m[1] > 12 || +(m[2] ?? 0) > 59) return null
+    return { hour: +m[1], minute: +(m[2] ?? 0), mer: m[3] ?? null }
   }
-  if (m) {
-    const endMer = m[6]
-    let startMer = m[3] ?? endMer
-    // "11-1 p.m." means 11 a.m. to 1 p.m.: a start hour above the end hour flips to morning.
-    if (!m[3] && Number(m[1]) % 12 > Number(m[4]) % 12) startMer = 'a.m.'
-    return { start: hm(m[1], m[2], startMer), end: hm(m[4], m[5], endMer), passage: m[0] }
+  const minutes = (c, mer) => c.hour % 12 * 60 + c.minute + (mer === 'p' ? 720 : 0)
+  const format = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0')
+  for (const m of text.matchAll(range)) {
+    const a = clock(m[1]), b = clock(m[2])
+    // A bare range (e.g. date 11-13) is not a clock. Fall through to an
+    // explicitly marked range or start elsewhere in the sentence.
+    if (a && b && (a.mer || b.mer)) {
+      const options = []
+      for (const am of a.mer ? [a.mer] : ['a','p']) for (const bm of b.mer ? [b.mer] : ['a','p']) {
+        const x = minutes(a, am), y = minutes(b, bm)
+        if (y > x) options.push([x,y])
+      }
+      options.sort((x,y) => (x[1]-x[0]) - (y[1]-y[0]))
+      if (options.length) return { start: format(options[0][0]), end: format(options[0][1]), passage: m[0].trim() }
+      return null
+    }
+    // An explicitly marked but invalid range must never fall back to its end.
+    if (/[ap]\.?m\.?|noon|midnight/i.test(m[0])) return null
   }
-  const single = /(\d{1,2})(?::(\d\d))?\s*(a\.?m\.?|p\.?m\.?)/i.exec(text)
-  return single ? { start: hm(single[1], single[2], single[3]), end: null, passage: single[0] } : null
+  const s = single.exec(text)
+  const c = s ? clock(s[0]) : null
+  return c?.mer ? { start: format(minutes(c,c.mer)), end: null, passage: s[0].trim() } : null
 }
 
 function isoDate(monthName, day, issueDate) {
@@ -90,22 +107,49 @@ function speakerFrom(text) {
   return m ? { value: m[1].replace(/[.,]$/, '').trim(), passage: m[0].trim() } : null
 }
 
-/** Calendar block: "Upcoming Student Events". */
-function calendarRows(html, issue) {
-  const at = html.search(/<h3[^>]*>\s*Upcoming Student Events\s*<\/h3>/i)
-  if (at < 0) return []
-  const section = html.slice(at)
-  const out = []
-  const blocks = section.split(/(?=<table\b)/i).slice(1)
-  for (const block of blocks) {
+// Published issues put date and event fields in a nested presentation table.
+// Limit links and evidence to the event cell, even in the final card before the footer.
+function* calendarBlocks(section) {
+  const cards = section.split(/<table\b[^>]*\bclass=["']cal-table["'][^>]*>/i)
+  if (cards.length > 1) {
+    for (const card of cards.slice(1)) {
+      const eventCell = /<td\b[^>]*\bclass=["']cal-event-block["'][^>]*>([\s\S]*?)<\/td>/i.exec(card)?.[1]
+      if (!eventCell) continue
+      const month = /<div class="cal-date-month">([^<]+)<\/div>/i.exec(card)?.[1]?.trim()
+      const day = /<div class="cal-date-day">(\d{1,2})<\/div>/i.exec(card)?.[1]
+      const title = /<div class="cal-event-title">([\s\S]*?)<\/div>/i.exec(eventCell)
+      if (!month || !day || !title || !clean(title[1])) continue
+      const summaries = [...eventCell.matchAll(/<div class="cal-event-summary">([\s\S]*?)<\/div>/gi)]
+      yield { cells: [month, day], paragraphs: [title, ...summaries].map(m => ({ text: clean(m[1]) })), after: eventCell }
+    }
+    return
+  }
+  for (const block of section.split(/(?=<table\b)/i).slice(1)) {
     const cells = [...block.matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi)].map(c => clean(c[1])).filter(Boolean)
     if (cells.length < 2 || !/^[A-Za-z]{3,9}\.?$/.test(cells[0]) || !/^\d{1,2}$/.test(cells[1])) continue
     const after = block.slice(block.search(/<\/table>/i) + 8)
-    const paragraphs = [...after.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].map(p => ({ html: p[1], text: clean(p[1]) })).filter(p => p.text)
+    const paragraphs = [...after.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].map(p => ({ text: clean(p[1]) })).filter(p => p.text)
+    yield { cells, after, paragraphs }
+  }
+}
+
+const EVENT_HEADING = /<h3\b[^>]*>\s*(?:<strong>\s*)?Upcoming Student Events\s*(?:<\/strong>\s*)?<\/h3>/i
+
+function calendarRows(html, issue) {
+  const at = html.search(EVENT_HEADING)
+  if (at < 0) return []
+  const out = []
+  for (const { cells, after, paragraphs } of calendarBlocks(html.slice(at))) {
     if (!paragraphs.length) continue
     const [title, info, ...rest] = paragraphs
     const time = info ? parseTimeRange(info.text) : null
-    const location = info && info.text.includes('|') ? info.text.split('|').slice(1).join('|').trim() || null : null
+    const location = info && time ? (() => {
+      const at = info.text.indexOf(time.passage)
+      if (at < 0) return null
+      const before = info.text.slice(0,at).match(/^(.*?)\s*[,|]\s*$/)?.[1]?.trim()
+      const after = info.text.slice(at + time.passage.length).match(/^\s*[,|]\s*(.+)$/)?.[1]?.trim()
+      return before || after || null
+    })() : null
     // Per paragraph, so a sentence never runs into the next line's link text.
     const speaker = rest.map(p => speakerFrom(p.text)).find(Boolean) ?? null
     const access = rest.map(p => accessFrom(p.text)).find(Boolean) ?? null
@@ -126,7 +170,7 @@ function calendarRows(html, issue) {
 
 /** Announcement tables: bold title, then a paragraph with the date, time, place and speaker in prose. */
 function announcementRows(html, issue) {
-  const end = html.search(/<h3[^>]*>\s*Upcoming Student Events/i)
+  const end = html.search(EVENT_HEADING)
   const body = end < 0 ? html : html.slice(0, end)
   const out = []
   for (const cell of body.matchAll(/<td[^>]*>\s*<(?:strong|b)>([\s\S]*?)<\/(?:strong|b)>\s*(?:<br\s*\/?>)?([\s\S]*?)<\/td>/gi)) {
